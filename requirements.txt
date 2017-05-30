@@ -1,0 +1,10 @@
+setuptools==35.0.2
+connexion==1.0.129
+Flask==0.12.1
+Flask_Cors==3.0.2
+SQLAlchemy_Utils==0.32.14
+SQLAlchemy==1.1.10
+six==1.10.0
+pycrypto==2.6.1
+python_dateutil==2.6.0
+PyYAML==3.12
