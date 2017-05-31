@@ -4,6 +4,7 @@ Flask_Cors==3.0.2
 SQLAlchemy_Utils==0.32.14
 SQLAlchemy==1.1.10
 six==1.10.0
+psycopg2==2.7.1
 pycrypto==2.6.1
 python_dateutil==2.6.0
 PyYAML==3.12
