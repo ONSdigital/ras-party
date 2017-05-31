@@ -1,0 +1,12 @@
+---
+services:
+  - name: ras-party-db
+    service: rds
+    plan: shared-psql
+
+applications:
+- name: ras-party-v2
+  memory: 128M
+  host: ras-party-v2
+  services:
+  - ras-party-db

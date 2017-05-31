@@ -1,0 +1,5 @@
+applications:
+- memory: 128M
+  name: ras-party-v2
+  services:
+  - ras-party-db
