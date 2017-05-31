@@ -48,6 +48,9 @@ def enrolment_codes_post(party=None):
 
     :rtype: None
     """
+
+    # TODO: see ras-party set_enrolment_code_as_redeemed_from_db
+
     if connexion.request.is_json:
         party = EnrolmentCode.from_dict(connexion.request.get_json())
     return 'do some magic!'
@@ -76,6 +79,9 @@ def get_business_by_id(id):
 
     :rtype: Business
     """
+
+    # TODO: see ras-party get-business-by-id
+
     return 'do some magic!'
 
 
@@ -88,6 +94,9 @@ def get_business_by_ref(ref):
 
     :rtype: Business
     """
+
+    # TODO: see ras-party get-business-by-ref
+
     return 'do some magic!'
 
 

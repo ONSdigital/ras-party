@@ -97,6 +97,10 @@ def enrolment_codes_get(searchString=None, skip=None, limit=None):
 
     :rtype: None
     """
+
+    # TODO: see ras-party get_enrolment_code_response
+    # TODO: what's the format of the search string?
+
     return 'do some magic!'
 
 
