@@ -14,7 +14,7 @@ class Party(Base):
     __tablename__ = 'party'
 
     id = Column(Integer, primary_key=True)
-    party_id = Column(GUID)
+    party_id = Column(GUID, unique=True)
     respondent = relationship('Respondent', uselist=False, back_populates='party')
     business = relationship('Business', uselist=False, back_populates='party')
 
@@ -26,7 +26,7 @@ class Business(Base):
     __tablename__ = 'business'
 
     id = Column(Integer, primary_key=True)
-    ru_ref = Column(Text)
+    ru_ref = Column(Text, unique=True)
     attributes = Column(JsonColumn())
     party_id = Column(Integer, ForeignKey('party.id'))
     party = relationship('Party', back_populates='business')

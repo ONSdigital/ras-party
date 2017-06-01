@@ -24,14 +24,18 @@ def businesses_post(party_data):
     ru_ref = party_data['reference']
     attributes = party_data['attributes']
 
-    party = Party(party_id)
-    business = Business(ru_ref, attributes, party)
+    party = db.session.query(Party).filter(party_id == party_id).first()
+    if not party:
+        party = Party(party_id)
 
-    db.session.merge(party)
-    db.session.merge(business)
+    business = db.session.query(Business).filter(ru_ref == ru_ref).first()
+    if not business:
+        business = Business(ru_ref, attributes, party)
+        db.session.add(business)
+
     db.session.commit()
 
-    return make_response(jsonify("Ok, business entity created"), 201)
+    return make_response(jsonify("Ok, business entity created"), 200)
 
 
 #
