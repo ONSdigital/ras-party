@@ -10,11 +10,11 @@ from swagger_server.test import BaseTestCase
 class TestParties(BaseTestCase):
     """ BackstageController integration test stubs """
 
-    def test_post_valid_party_returns_200(self):
+    def test_post_valid_party_returns_201(self):
         mock_party = {
-            "attributes": {},
-            "id": "65d8c6ed-ab01-4a17-a329-46a1903a2df7",   # -> party_id
-            "reference": "49900001234",   # -> ru_ref
+            "attributes": {'source': 'test_post_valid_party_returns_201'},
+            "id": "65d8c6ed-ab01-4a17-a329-46a1903a2df7",  # -> party_id
+            "reference": "49900001234",  # -> ru_ref
             "sampleUnitType": "B"
         }
         response = self.client.open('/party-api/1.0.0/parties',
@@ -23,10 +23,30 @@ class TestParties(BaseTestCase):
                                     content_type='application/vnd.ons.business+json')
         self.assertStatus(response, 201, "Response body is : " + response.data.decode('utf-8'))
 
+    def test_post_existing_party_returns_201(self):
+        mock_party = {
+            "attributes": {'source': 'test_post_existing_party_returns_201'},
+            "id": "65d8c6ed-ab01-4a17-a329-46a1903a2df7",  # -> party_id
+            "reference": "49900001234",  # -> ru_ref
+            "sampleUnitType": "B"
+        }
+        self.client.open('/party-api/1.0.0/parties',
+                         method='POST',
+                         data=json.dumps(mock_party),
+                         content_type='application/vnd.ons.business+json')
+
+        mock_party['reference'] = '123'
+
+        response = self.client.open('/party-api/1.0.0/parties',
+                                    method='POST',
+                                    data=json.dumps(mock_party),
+                                    content_type='application/vnd.ons.business+json')
+        self.assertStatus(response, 201, "Response body is : " + response.data.decode('utf-8'))
+
     def test_post_party_without_unit_type_returns_400(self):
         mock_party = {
-            "attributes": {},
-            "id": "65d8c6ed-ab01-4a17-a329-46a1903a2df7",   # -> party_id
+            "attributes": {'source': 'test_post_party_without_unit_type_returns_400'},
+            "id": "65d8c6ed-ab01-4a17-a329-46a1903a2df7",  # -> party_id
             "reference": "49900001234"
         }
         response = self.client.open('/party-api/1.0.0/parties',
@@ -38,4 +58,5 @@ class TestParties(BaseTestCase):
 
 if __name__ == '__main__':
     import unittest
+
     unittest.main()

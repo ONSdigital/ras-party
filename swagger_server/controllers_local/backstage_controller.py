@@ -21,10 +21,11 @@ def businesses_post(party_data):
     """
 
     party_id = party_data['id']
+    ru_ref = party_data['reference']
     attributes = party_data['attributes']
 
     party = Party(party_id)
-    business = Business(attributes, party)
+    business = Business(ru_ref, attributes, party)
 
     db.session.merge(party)
     db.session.merge(business)

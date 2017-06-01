@@ -26,6 +26,7 @@ class Business(Base):
     __tablename__ = 'business'
 
     id = Column(Integer, primary_key=True)
+    ru_ref = Column(Text)
     attributes = Column(JsonColumn())
     party_id = Column(Integer, ForeignKey('party.id'))
     party = relationship('Party', back_populates='business')
@@ -50,7 +51,8 @@ class Business(Base):
     # turnover = Column(Integer)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, attributes, party, respondents=None):
+    def __init__(self, ru_ref, attributes, party, respondents=None):
+        self.ru_ref = ru_ref
         self.attributes = attributes
         self.party = party
         # self.respondents = respondents
