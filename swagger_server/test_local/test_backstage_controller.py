@@ -2,11 +2,8 @@
 
 from __future__ import absolute_import
 
-import uuid
-
 from flask import json
 
-from swagger_server.models.party import Party
 from swagger_server.test_local import BaseTestCase
 
 
