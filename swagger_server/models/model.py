@@ -5,9 +5,9 @@ from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
-from swagger_server.models_local.base import Base
-from swagger_server.models_local.guid import GUID
-from swagger_server.models_local.json_column import JsonColumn
+from swagger_server.models.base import Base
+from swagger_server.models.guid import GUID
+from swagger_server.models.json_column import JsonColumn
 
 
 class Party(Base):

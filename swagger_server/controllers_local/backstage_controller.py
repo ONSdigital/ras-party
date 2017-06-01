@@ -5,7 +5,7 @@
 from flask import make_response, jsonify
 
 from swagger_server.configuration import ons_env
-from swagger_server.models_local.model import Business, Party
+from swagger_server.models.model import Business, Party
 
 db = ons_env
 
@@ -26,8 +26,8 @@ def businesses_post(party_data):
     party = Party(party_id)
     business = Business(attributes, party)
 
-    db.session.add(party)
-    db.session.add(business)
+    db.session.merge(party)
+    db.session.merge(business)
     db.session.commit()
 
     return make_response(jsonify("Ok, business entity created"), 201)

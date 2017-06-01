@@ -1,14 +1,4 @@
 import connexion
-from swagger_server.models.business import Business
-from swagger_server.models.enrolment_code import EnrolmentCode
-from swagger_server.models.enrolment_invitation import EnrolmentInvitation
-from swagger_server.models.error import Error
-from swagger_server.models.respondent import Respondent
-from swagger_server.models.vnd_collectionjson import VndCollectionjson
-from datetime import date, datetime
-from typing import List, Dict
-from six import iteritems
-from ..util import deserialize_date, deserialize_datetime
 
 
 def businesses_get(searchString=None, skip=None, limit=None):
@@ -48,11 +38,6 @@ def enrolment_codes_post(party=None):
 
     :rtype: None
     """
-
-    # TODO: see ras-party set_enrolment_code_as_redeemed_from_db
-
-    if connexion.request.is_json:
-        party = EnrolmentCode.from_dict(connexion.request.get_json())
     return 'do some magic!'
 
 
@@ -65,8 +50,6 @@ def enrolment_invitations_post(party=None):
 
     :rtype: None
     """
-    if connexion.request.is_json:
-        party = EnrolmentInvitation.from_dict(connexion.request.get_json())
     return 'do some magic!'
 
 
@@ -123,6 +106,4 @@ def respondents_post(party=None):
 
     :rtype: None
     """
-    if connexion.request.is_json:
-        party = Respondent.from_dict(connexion.request.get_json())
     return 'do some magic!'

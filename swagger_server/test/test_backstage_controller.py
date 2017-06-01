@@ -4,7 +4,7 @@ from __future__ import absolute_import
 
 from flask import json
 
-from swagger_server.test_local import BaseTestCase
+from swagger_server.test import BaseTestCase
 
 
 class TestParties(BaseTestCase):

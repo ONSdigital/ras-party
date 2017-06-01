@@ -1,10 +1,5 @@
 import connexion
 
-from swagger_server.models.business import Business
-from swagger_server.models.party import Party
-from swagger_server.models.respondent import Respondent
-from swagger_server.models.vnd_collectionjson import VndCollectionjson
-
 
 def businesses_get(searchString=None, skip=None, limit=None):
     """
@@ -75,8 +70,6 @@ def businesses_post(party=None):
 
     :rtype: None
     """
-    if connexion.request.is_json:
-        party = Party.from_dict(connexion.request.get_json())
     return 'do some magic!'
 
 
@@ -93,10 +86,6 @@ def enrolment_codes_get(searchString=None, skip=None, limit=None):
 
     :rtype: None
     """
-
-    # TODO: see ras-party get_enrolment_code_response
-    # TODO: what's the format of the search string?
-
     return 'do some magic!'
 
 
@@ -173,8 +162,6 @@ def parties_post(party=None):
 
     :rtype: None
     """
-    if connexion.request.is_json:
-        party = Party.from_dict(connexion.request.get_json())
     return 'do some magic!'
 
 
@@ -245,6 +232,4 @@ def respondents_post(party=None):
 
     :rtype: None
     """
-    if connexion.request.is_json:
-        party = Respondent.from_dict(connexion.request.get_json())
     return 'do some magic!'
