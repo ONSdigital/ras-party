@@ -4,6 +4,7 @@ import connexion
 import logging
 from ..configuration import ons_env
 
+
 class BaseTestCase(TestCase):
 
     def create_app(self):

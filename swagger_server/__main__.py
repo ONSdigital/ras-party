@@ -10,8 +10,9 @@
 ##############################################################################
 from connexion import App
 from flask_cors import CORS
-from .encoder import JSONEncoder
-from .configuration import ons_env
+
+from swagger_server.configuration import ons_env
+from swagger_server.encoder import JSONEncoder
 
 if __name__ == '__main__':
     ons_env.activate()
@@ -19,7 +20,7 @@ if __name__ == '__main__':
     CORS(app.app)
     app.app.json_encoder = JSONEncoder
     app.add_api('swagger.yaml', arguments={'title': 'ONS Microservice'})
-    app.run(host='0.0.0.0', port=ons_env.port)
+    app.run(host='0.0.0.0', port=ons_env.port, debug=ons_env.debug)
 
     #from twisted.internet import reactor
     #from flask_twisted import Twisted

@@ -100,22 +100,14 @@ class ONSEnvironment(object):
         use by the listener if we're running locally.
         """
         self._crypto_key = getenv('ONS_CRYPTOKEY', self.get('crypto_key'))
-        config = './swagger_server/swagger/swagger.yaml'
-        if not Path(config).is_file():
-            raise Exception('%% swagger configuration is missing')
-        with open(config) as io:
-            code = load(io)
-        if len(code['host'].split(':')) > 1:
-            self._port = code['host'].split(':')[1]
 
         cf_app_env = getenv('VCAP_APPLICATION')
         if cf_app_env is not None:
             host = loads(cf_app_env)['application_uris'][0]
-            code['host'] = host
             if len(host.split(':')) > 1:
                 self._port = int(host.split(':')[1])
-            with open(config, 'w') as io:
-                io.write(dump(code))
+
+        self._port = int(getenv('PORT', self._port))
 
         cf_app_services = getenv('VCAP_SERVICES')
         if cf_app_services is not None:
@@ -123,8 +115,6 @@ class ONSEnvironment(object):
             db_config = CfServices(loads(cf_app_services)).get(db_name)
             # override the configured db_connection with the CloudFoundry value:
             self.set('db_connection', db_config['uri'])
-
-        self._port = getenv('PORT', self._port)
 
     def get(self, key, default=None):
         """
@@ -160,6 +150,9 @@ class ONSEnvironment(object):
     @property
     def cipher(self):
         return self._ons_cipher
+
+    def __getattr__(self, item):
+        return self.get(item)
 
 
 ons_env = ONSEnvironment()
