@@ -110,85 +110,83 @@ class Respondent(Base):
         self.telephone = telephone
 
 
-# class EnrolmentStatus(enum.Enum):
-#     PENDING = 0
-#     ENABLED = 1
-#     DISABLED = 2
-#     SUSPENDED = 3
-#
-#
-# class Enrolment(Base):
-#
-#     __tablename__ = 'enrolment'
-#
-#     id = Column(Integer, primary_key=True)
-#     business_association_id = Column(Integer)
-#     survey_id = Column(Text)
-#     status = Column('status', Enum(EnrolmentStatus))
-#     created_on = Column(DateTime, default=datetime.datetime.utcnow)
-#
-#     def __init__(self, business_association_id, survey_id, status):
-#         self.business_association_id = business_association_id
-#         self.survey_id = survey_id
-#         self.status = status
+class EnrolmentStatus(enum.Enum):
+    PENDING = 0
+    ENABLED = 1
+    DISABLED = 2
+    SUSPENDED = 3
 
 
+class Enrolment(Base):
+
+    __tablename__ = 'enrolment'
+
+    id = Column(Integer, primary_key=True)
+    business_association_id = Column(Integer)
+    survey_id = Column(Text)
+    status = Column('status', Enum(EnrolmentStatus))
+    created_on = Column(DateTime, default=datetime.datetime.utcnow)
+
+    def __init__(self, business_association_id, survey_id, status):
+        self.business_association_id = business_association_id
+        self.survey_id = survey_id
+        self.status = status
 
 
-# class EnrolmentCodeStatus(enum.Enum):
-#     ACTIVE = 0
-#     REDEEMED = 1
-#     REVOKED = 2
-#
-#
-# class EnrolmentCode(Base):
-#
-#     __tablename__ = 'enrolment_code'
-#
-#     id = Column(Integer, primary_key=True)
-#     business_id = Column(Integer, ForeignKey('business.id'))
-#     respondent_id = Column(Integer, ForeignKey('respondent.id'))
-#     survey_id = Column(Text)
-#     iac = Column(Text)
-#     status = Column('status', Enum(EnrolmentCodeStatus))
-#     created_on = Column(DateTime, default=datetime.datetime.utcnow)
-#
-#     def __init__(self, respondent_id, business_id, survey_id, iac, status):
-#         self.respondent_id = respondent_id
-#         self.business_id = business_id
-#         self.survey_id = survey_id
-#         self.status = status
-#         self.iac = iac
-#
-#
-# class EnrolmentInvitationStatus(enum.Enum):
-#     ACTIVE = 0
-#     REDEEMED = 1
-#     REVOKED = 2
-#
-#
-# class EnrolmentInvitation(Base):
-#
-#     __tablename__ = 'enrolment_invitation'
-#
-#     id = Column(Integer, primary_key=True)
-#     business_id = Column(Integer, ForeignKey('business.id'))
-#     respondent_id = Column(Integer, ForeignKey('respondent.id'))
-#     survey_id = Column(Text)
-#     target_email = Column(Text)
-#     verification_token = Column(GUID)
-#     sms_verification_token = Column(Integer)
-#     effective_from = Column(DateTime, default=datetime.datetime.utcnow)
-#     effective_to = Column(DateTime, default=datetime.datetime.utcnow() + datetime.timedelta(days=2))
-#     status = Column('status', Enum(EnrolmentInvitationStatus))
-#     created_on = Column(DateTime, default=datetime.datetime.utcnow)
-#
-#     def __init__(self, respondent_id, business_id, survey_id, target_email,
-#                  verification_token, sms_verification_token, status):
-#         self.respondent_id = respondent_id
-#         self.business_id = business_id
-#         self.survey_id = survey_id
-#         self.target_email = target_email
-#         self.verification_token = verification_token
-#         self.sms_verification_token = sms_verification_token
-#         self.status = status
+class EnrolmentCodeStatus(enum.Enum):
+    ACTIVE = 0
+    REDEEMED = 1
+    REVOKED = 2
+
+
+class EnrolmentCode(Base):
+
+    __tablename__ = 'enrolment_code'
+
+    id = Column(Integer, primary_key=True)
+    business_id = Column(Integer, ForeignKey('business.id'))
+    respondent_id = Column(Integer, ForeignKey('respondent.id'))
+    survey_id = Column(Text)
+    iac = Column(Text)
+    status = Column('status', Enum(EnrolmentCodeStatus))
+    created_on = Column(DateTime, default=datetime.datetime.utcnow)
+
+    def __init__(self, respondent_id, business_id, survey_id, iac, status):
+        self.respondent_id = respondent_id
+        self.business_id = business_id
+        self.survey_id = survey_id
+        self.status = status
+        self.iac = iac
+
+
+class EnrolmentInvitationStatus(enum.Enum):
+    ACTIVE = 0
+    REDEEMED = 1
+    REVOKED = 2
+
+
+class EnrolmentInvitation(Base):
+
+    __tablename__ = 'enrolment_invitation'
+
+    id = Column(Integer, primary_key=True)
+    business_id = Column(Integer, ForeignKey('business.id'))
+    respondent_id = Column(Integer, ForeignKey('respondent.id'))
+    survey_id = Column(Text)
+    target_email = Column(Text)
+    verification_token = Column(GUID)
+    sms_verification_token = Column(Integer)
+    effective_from = Column(DateTime, default=datetime.datetime.utcnow)
+    effective_to = Column(DateTime, default=datetime.datetime.utcnow() + datetime.timedelta(days=2))
+    status = Column('status', Enum(EnrolmentInvitationStatus))
+    created_on = Column(DateTime, default=datetime.datetime.utcnow)
+
+    def __init__(self, respondent_id, business_id, survey_id, target_email,
+                 verification_token, sms_verification_token, status):
+        self.respondent_id = respondent_id
+        self.business_id = business_id
+        self.survey_id = survey_id
+        self.target_email = target_email
+        self.verification_token = verification_token
+        self.sms_verification_token = sms_verification_token
+        self.status = status
