@@ -14,12 +14,12 @@ class Party(Base):
     __tablename__ = 'party'
 
     id = Column(Integer, primary_key=True)
-    party_id = Column(GUID, unique=True)
+    party_uuid = Column(GUID, unique=True)
     respondent = relationship('Respondent', uselist=False, back_populates='party')
     business = relationship('Business', uselist=False, back_populates='party')
 
-    def __init__(self, party_id):
-        self.party_id = party_id
+    def __init__(self, party_uuid):
+        self.party_uuid = party_uuid
 
 
 class Business(Base):
@@ -103,8 +103,8 @@ class Respondent(Base):
     telephone = Column(Text)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, party_id, status, email_address, first_name, last_name, telephone):
-        self.party_id = party_id
+    def __init__(self, party, status, email_address, first_name, last_name, telephone):
+        self.party = party
         self.status = status
         self.email_address = email_address
         self.first_name = first_name

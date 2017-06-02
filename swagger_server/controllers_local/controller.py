@@ -20,13 +20,15 @@ def businesses_post(party_data):
     """
 
     # TODO: deal with missing id or reference
-    party_id = party_data['id']
+    party_uuid = party_data['id']
     ru_ref = party_data['reference']
     attributes = party_data.get('attributes', {})
 
-    party = db.session.query(Party).filter(Party.party_id == party_id).first()
+    # TODO: validate received uuid
+
+    party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
     if not party:
-        party = Party(party_id)
+        party = Party(party_uuid)
 
     business = db.session.query(Business).filter(Business.ru_ref == ru_ref).first()
     # TODO: update/replace the existing business attributes
@@ -253,7 +255,7 @@ def get_business_by_ref(ref):
 
     business = db.session.query(Business).filter(Business.ru_ref == ref).first()
     d = {
-        'id': business.party.party_id,
+        'id': business.party.party_uuid,
         'reference': business.ru_ref,
         'sampleUnitType': 'B',
         'attributes': business.attributes
