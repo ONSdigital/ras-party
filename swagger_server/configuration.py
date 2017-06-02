@@ -16,13 +16,12 @@ from json import loads
 from os import getenv
 from pathlib import Path
 
-from sqlalchemy import create_engine, event, DDL
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy_utils import database_exists, create_database
 from yaml import load, dump
 
 from swagger_server import ons_logger
+from swagger_server import database
 from .controllers_local.encryption import ONSCryptographer
 
 
@@ -41,8 +40,7 @@ class ONSEnvironment(object):
     def __init__(self):
         """
         Nothing actually happens at this point, we're just setting up variables
-        for future reference. In particular _base and _env are critical to the
-        setup of other components.
+        for future reference.
         """
         self._port = 0
         self._crypto_key = None
@@ -53,22 +51,10 @@ class ONSEnvironment(object):
         self._env = getenv('ONS_ENV', 'development')
         self._parse_manifest()
         self._session = scoped_session(sessionmaker())
-        self._base = declarative_base()
-        #
-        #   If we're using postgres, make sure we create the appropriate Schema if it
-        #   doesn't already exist.
-        #
-        schema = self.get('db_schema')
-        if schema:
-            event.listen(
-                self._base.metadata,
-                "before_create",
-                DDL('CREATE SCHEMA IF NOT EXISTS {}'.format(schema)).execute_if(dialect='postgresql')
-            )
+
         self._engine = None
         self.logger = ons_logger.create(self)
         self.logger.info("Running with '{}' configuration".format(self._env))
-        print("Running with '{}' configuration".format(self._env))
 
     def _parse_manifest(self):
         """
@@ -100,31 +86,12 @@ class ONSEnvironment(object):
         """
         if self.get('db_name') is not None:
             self.logger.info("Connecting to '{}'".format(self.get('db_connection')))
-            print("Connecting to '{}'".format(self.get('db_connection')))
             self._engine = create_engine(self.get('db_connection'), convert_unicode=True)
             self._session.remove()
             self._session.configure(bind=self._engine, autoflush=False, autocommit=False, expire_on_commit=False)
-            self._create_database()
             if self.if_drop_database:
-                self._base.metadata.drop_all(self._engine)
-            self._base.metadata.create_all(self._engine)
-
-    def _create_database(self):
-        do_create_database = self.get('create_database')
-
-        if not do_create_database.lower() in ['yes', 'true']:
-            self.logger.info('Database create not required.')
-            print('Database create not required.')
-            return
-        self.logger.info('Checking database exists.')
-        print('Checking database exists.')
-        if database_exists(self.get('db_connection')):
-            self.logger.info('Database already exists.')
-            print('Database already exists.')
-        else:
-            create_database(self.get('db_connection'))
-            self.logger.info('Database did not exist. Created.')
-            print('Database did not exist. Created.')
+                database.drop(self, self._engine, self.logger)
+            database.create(self, self._engine, self.logger)
 
     def _activate_cf(self):
         """
@@ -181,10 +148,6 @@ class ONSEnvironment(object):
         if not drop:
             return False
         return drop.lower() in ['yes', 'true']
-
-    @property
-    def base(self):
-        return self._base
 
     @property
     def session(self):
