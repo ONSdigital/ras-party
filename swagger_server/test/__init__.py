@@ -1,8 +1,7 @@
 from flask_testing import TestCase
 import connexion
 import logging
-
-from swagger_server.configuration import ons_env
+from ..configuration import ons_env
 
 
 class BaseTestCase(TestCase):

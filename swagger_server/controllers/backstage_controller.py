@@ -1,4 +1,3 @@
-import connexion
 
 
 def businesses_get(searchString=None, skip=None, limit=None):
@@ -19,8 +18,8 @@ def businesses_get(searchString=None, skip=None, limit=None):
 
 def businesses_id_id_business_associations_get(id, skip=None, limit=None):
     """
-    Returns the known business associations for a business
-    Returns the known business associations for a business
+    Returns the known respondent associations for a business
+    Returns the known respondent associations for a business
     :param id: ID of Business to return
     :type id: str
     :param skip: number of records to skip for pagination
@@ -129,12 +128,14 @@ def get_business_by_ref(ref):
     return 'do some magic!'
 
 
-def get_party_by_ref(ref):
+def get_party_by_ref(ref, sampleUnitType):
     """
     Get a Party by its unique reference (ruref / uprn)
     Returns a single Party
     :param ref: Reference of the Party to return
     :type ref: str
+    :param sampleUnitType: 
+    :type sampleUnitType: str
 
     :rtype: Party
     """

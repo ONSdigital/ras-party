@@ -148,6 +148,7 @@ definitions:
       href: {example: /party/id/12345678, type: string}
       rel: {example: self, type: string}
       type: {example: application/vnd.ons.party+json, type: string}
+
 info:
   contact: {email: ras@ons.gov.uk}
   description: Initial API for the Party microservice.
@@ -178,7 +179,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: searches Businesses
       tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     post:
       consumes: [application/vnd.ons.business+json]
       description: Adds a new Business, or updates an existing Business based on the
@@ -212,7 +213,7 @@ paths:
       - accessCode: [write]
       summary: adds a reporting unit of type Business
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /businesses/id/{id}:
     get:
       description: Returns a single Party
@@ -235,7 +236,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: Get a Business by its Party ID
       tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     options:
       operationId: businesses_id_id_options
       parameters:
@@ -253,7 +254,7 @@ paths:
         404: {description: Business not found}
       summary: View the available representations for a given Business
       tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     put:
       consumes: [multipart/form-data]
       description: Updates the representation for an existing Business
@@ -280,10 +281,10 @@ paths:
       - accessCode: [write]
       summary: Update the representation for an existing Business
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /businesses/id/{id}/business-associations:
     get:
-      description: Returns the known business associations for a business
+      description: Returns the known respondent associations for a business
       operationId: businesses_id_id_business_associations_get
       parameters:
       - {description: ID of Business to return, in: path, name: id, required: true,
@@ -298,9 +299,9 @@ paths:
         404:
           description: Business not found
           schema: {$ref: '#/definitions/error'}
-      summary: Returns the known business associations for a business
+      summary: Returns the known respondent associations for a business
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /businesses/ref/{ref}:
     get:
       description: Returns a single Business
@@ -329,7 +330,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: Get a Business by its unique business reference
       tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /enrolment-codes:
     get:
       description: 'By passing in the appropriate options, you can search for available
@@ -350,7 +351,7 @@ paths:
         400: {description: bad input parameter}
       summary: searches enrolment codes
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     post:
       consumes: [application/vnd.ons.enrolment-code+json]
       description: Redeems an Enrolment Code
@@ -374,7 +375,7 @@ paths:
       - accessCode: [write]
       summary: redeems an Enrolment Code
       tags: [frontstage]
-      x-swagger-router-controller: swagger_server.controllers.frontstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /enrolment-invitations:
     get:
       description: 'By passing in the appropriate options, you can search for available
@@ -395,7 +396,7 @@ paths:
         400: {description: bad input parameter}
       summary: searches enrolment invitations
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     post:
       consumes: [application/vnd.ons.enrolment-invitation+json]
       description: Stores an invitation to Enrol another Respondent to a Survey
@@ -420,7 +421,7 @@ paths:
       - accessCode: [write]
       summary: stores an invitation to Enrol another Respondent to a Survey
       tags: [frontstage]
-      x-swagger-router-controller: swagger_server.controllers.frontstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /parties:
     post:
       consumes: [application/vnd.ons.party+json]
@@ -456,7 +457,7 @@ paths:
       summary: given a sampleUnitType B | H this adds a reporting unit of type Business
         or Household
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /parties/ref/{ref}:
     get:
       description: Returns a single Party
@@ -464,6 +465,7 @@ paths:
       parameters:
       - {description: Reference of the Party to return, in: path, name: ref, required: true,
         type: string}
+      - {in: query, name: sampleUnitType, required: true, type: string}
       produces: [application/vnd.ons.party+json]
       responses:
         200:
@@ -485,7 +487,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: Get a Party by its unique reference (ruref / uprn)
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /residences:
     get:
       description: 'By passing in the appropriate options, you can search for available
@@ -629,7 +631,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: searches Respondents
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     post:
       consumes: [application/vnd.ons.respondent+json]
       description: Adds a Respondent to the system
@@ -654,7 +656,7 @@ paths:
       - accessCode: [write]
       summary: adds a Respondent
       tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /respondents/id/{id}:
     get:
       description: Returns a single Party
@@ -678,7 +680,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: Get a Respondent by its Party ID
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     options:
       operationId: respondents_id_id_options
       parameters:
@@ -694,7 +696,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: View the available representations for a given Respondent
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     put:
       consumes: [application/vnd.ons.respondent+json]
       description: Updates the representation for an existing Respondent. To be used
@@ -724,7 +726,7 @@ paths:
       - accessCode: [write]
       summary: Update the representation for an existing Respondent.
       tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /respondents/id/{id}/business-associations:
     get:
       description: Returns the known business associations for a respondent
@@ -743,7 +745,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: Returns the known business associations for a respondent
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
 schemes: [https]
 security:
 - accessCode: [read]
