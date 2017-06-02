@@ -29,7 +29,7 @@ http://localhost:8080/party-api/1.0.0/swagger.json
 ## Database
 
 The database will automatically be created when starting the application. It is also possible to drop/create the
-database via create_db.py. Run `python create_db.py` in the project root to see further guidance.
+database via create_db.py. Run `python database.py` in the project root to see further guidance.
 
 
 [Confluence]: https://digitaleq.atlassian.net/wiki/display/RASB/Party
