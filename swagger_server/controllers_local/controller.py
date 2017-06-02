@@ -63,7 +63,7 @@ def parties_post(party):
 #
 # /parties/ref/{ref}
 #
-def get_party_by_ref(sampleUnitType, ref):
+def get_party_by_ref(sampleUnitType, sampleUnitRef):
     """
     Get a Party by its unique reference (ruref / uprn)
     Returns a single Party
@@ -74,7 +74,7 @@ def get_party_by_ref(sampleUnitType, ref):
     """
 
     if sampleUnitType == 'B':
-        return get_business_by_ref(ref)
+        return get_business_by_ref(sampleUnitRef)
 
 
 #
@@ -357,3 +357,50 @@ def respondents_post(party=None):
     :rtype: None
     """
     return 'do some magic!'
+
+
+#
+# /parties/uprn/{uprn}:
+#
+def get_party_by_uprn(urpn):
+    return "Please implement me"
+
+
+#
+# /parties/{id}
+#
+def get_party_by_id(id):
+    return "Please implement me"
+
+
+#
+# /residences/uprn/{uprn}
+#
+def get_residence_by_uprn(uprn):
+    return "Please implement me"
+
+
+#
+# /residences/id/{id}
+#
+def get_residence_by_id(id):
+    return "Please implement me"
+
+
+#
+# /residences
+#
+def residences_id_id_put(residences_data):
+    return "Please implement me"
+
+
+def residences_id_id_options():
+    return "Please implement me"
+
+
+def residences_get(searchString, skip, limit):
+    return "Please implement me"
+
+
+def residences_post(residences_data):
+    return "Please implement me"

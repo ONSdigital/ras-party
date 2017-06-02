@@ -23,19 +23,20 @@ def parties():
 
 class TestParties(BaseTestCase):
     def post_to_parties(self, payload, expected_status):
-        response = self.client.open('/party-api/1.0.0/parties',
+        response = self.client.open('/party-api/1.0.1/parties',
                                     method='POST',
                                     data=json.dumps(payload),
                                     content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
 
     def get_party_by_ref(self, party_type, ref):
-        query_string = [('sampleUnitType', party_type)]
-        response = self.client.open('/party-api/1.0.0/parties/ref/{}'.format(ref),
-                                    method='GET',
-                                    query_string=query_string)
+        response = self.client.open('/party-api/1.0.1/parties/type/{}/ref/{}'.format(party_type, ref),
+                                    method='GET')
         self.assert200(response, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
+
+    def get_party_by_id(self, party_type, id):
+        query_string = ['']
 
     def test_post_valid_party_adds_to_db(self):
         mock_party = {
@@ -105,10 +106,20 @@ class TestParties(BaseTestCase):
         result = self.get_party_by_ref('B', '49900001234')
         self.assertDictEqual(result, mock_party)
 
-    def test_get_business_party_by_id_returns_corresponding_business(self):
-        pass
+    # def test_get_party_by_id_returns_corresponding_business(self):
+    #     party_id = str(uuid.uuid4())
+    #     mock_party = {
+    #         'attributes': {'source': 'test_post_party_persists_attributes'},
+    #         'id': party_id,  # -> party_uuid
+    #         'reference': '49900001235',
+    #         'sampleUnitType': 'B'
+    #     }
+    #     self.post_to_parties(mock_party, 200)
+    #
+    #     result = self.get_party_by_id('B', party_id)
+    #     self.assertDictEqual(result, mock_party)
 
-    def test_get_respondent_party_by_id_returns_corresponding_respondent(self):
+    def test_get_party_by_id_returns_corresponding_respondent(self):
         pass
 
 
