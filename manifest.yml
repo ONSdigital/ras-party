@@ -1,3 +1,4 @@
+---
 applications:
 - memory: 128M
   name: ras-party-v2

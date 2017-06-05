@@ -47,7 +47,7 @@ class ONSEnvironment(object):
         self._ons_cipher = None
         self._config = ConfigParser()
         self._config._interpolation = ExtendedInterpolation()
-        self._config.read('config.ini')
+        self._config.read(['local.ini', 'config.ini'])
         self._env = getenv('ONS_ENV', 'development')
         self._parse_manifest()
         self._session = scoped_session(sessionmaker())
@@ -55,6 +55,7 @@ class ONSEnvironment(object):
         self._engine = None
         self.logger = ons_logger.create(self)
         self.logger.info("Running with '{}' configuration".format(self._env))
+        print("Running with '{}' configuration".format(self._env))
 
     def _parse_manifest(self):
         """
@@ -111,7 +112,7 @@ class ONSEnvironment(object):
 
         cf_app_services = getenv('VCAP_SERVICES')
         if cf_app_services is not None:
-            db_name = self.get('db_name')
+            db_name = self.get('cf_db_service')
             db_config = CfServices(loads(cf_app_services)).get(db_name)
             # override the configured db_connection with the CloudFoundry value:
             self.set('db_connection', db_config['uri'])
@@ -138,6 +139,10 @@ class ONSEnvironment(object):
         if not drop:
             return False
         return drop.lower() in ['yes', 'true']
+
+    @property
+    def is_secure(self):
+        return self.get('authentication', 'true').lower() in ['yes', 'true']
 
     @property
     def session(self):

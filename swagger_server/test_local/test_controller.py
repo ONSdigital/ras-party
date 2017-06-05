@@ -7,8 +7,8 @@ import uuid
 from flask import json
 
 from swagger_server.configuration import ons_env
-from swagger_server.models.model import Business, Party
-from swagger_server.test import BaseTestCase
+from swagger_server.models_local.model import Business, Party
+from swagger_server.test_local import BaseTestCase
 
 db = ons_env
 
@@ -23,20 +23,20 @@ def parties():
 
 class TestParties(BaseTestCase):
     def post_to_parties(self, payload, expected_status):
-        response = self.client.open('/party-api/1.0.1/parties',
+        response = self.client.open('/party-api/1.0.4/parties',
                                     method='POST',
                                     data=json.dumps(payload),
                                     content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
 
     def get_party_by_ref(self, party_type, ref):
-        response = self.client.open('/party-api/1.0.1/parties/type/{}/ref/{}'.format(party_type, ref),
+        response = self.client.open('/party-api/1.0.4/parties/type/{}/ref/{}'.format(party_type, ref),
                                     method='GET')
         self.assert200(response, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
     def get_party_by_id(self, party_type, id):
-        query_string = ['']
+        pass
 
     def test_post_valid_party_adds_to_db(self):
         mock_party = {
