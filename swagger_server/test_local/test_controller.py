@@ -37,16 +37,21 @@ class MockParty:
 
     def __init__(self, unitType):
         self.party = {
-            'attributes': {},
             'id': str(uuid.uuid4()),  # -> party_uuid
-            'reference': str(self.reference),  # -> ru_ref
             'sampleUnitType': unitType
         }
 
-        self.reference += 1
+        if unitType == Business.UNIT_TYPE:
+            self.party['reference'] = str(self.reference)
+            self.party['attributes'] = {}
+            self.reference += 1
 
     def attributes(self, **kwargs):
         self.party['attributes'].update(kwargs)
+        return self
+
+    def properties(self, **kwargs):
+        self.party.update(kwargs)
         return self
 
     def build(self):
@@ -85,7 +90,7 @@ class TestParties(BaseTestCase):
         self.assertEqual(len(parties()), 1)
 
     def test_post_valid_respondent_adds_to_db(self):
-        mock_respondent = MockParty('BI').attributes(source='test_post_valid_respondent_adds_to_db').build()
+        mock_respondent = MockParty('BI').build()
 
         self.post_to_parties(mock_respondent, 200)
         self.assertEqual(len(respondents()), 1)
@@ -143,7 +148,15 @@ class TestParties(BaseTestCase):
         self.assertDictEqual(result, mock_business)
 
     def test_get_party_by_id_returns_corresponding_respondent(self):
-        pass
+        mock_respondent = MockParty('BI')\
+            .properties(first_name='Bruce', last_name='Forsyth')\
+            .build()
+
+        party_id = mock_respondent['id']
+
+        self.post_to_parties(mock_respondent, 200)
+        result = self.get_party_by_id('BI', party_id)
+        self.assertDictEqual(result, mock_respondent)
 
 
 class TestBusinesses(BaseTestCase):

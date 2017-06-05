@@ -100,7 +100,7 @@ def parties_post(party):
     """
     if 'sampleUnitType' not in party:
         return make_response(jsonify("sampleUnitType attribute is missing from the supplied JSON party."), 400)
-
+    # TODO: deal with unknown sampleUnitType
     if party['sampleUnitType'] == Business.UNIT_TYPE:
         return businesses_post(party)
     elif party['sampleUnitType'] == Respondent.UNIT_TYPE:
@@ -119,7 +119,7 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
 
     :rtype: Party
     """
-
+    # TODO: deal with unknown sampleUnitType
     if sampleUnitType == Business.UNIT_TYPE:
         return get_business_by_ref(sampleUnitRef)
 
@@ -128,8 +128,11 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
 # /parties/{id}
 #
 def get_party_by_id(sampleUnitType, id):
+    # TODO: deal with unknown sampleUnitType
     if sampleUnitType == Business.UNIT_TYPE:
         return get_business_by_id(id)
+    elif sampleUnitType == Respondent.UNIT_TYPE:
+        return get_respondent_by_id(id)
 
 
 #
@@ -239,7 +242,20 @@ def get_respondent_by_id(id):
 
     :rtype: Respondent
     """
-    return 'do some magic!'
+    party = db.session.query(Party).filter(Party.party_uuid == id).first()
+    d = {
+        'id': party.party_uuid,
+        'sampleUnitType': Respondent.UNIT_TYPE,
+        'status': party.respondent.status,
+        'email_address': party.respondent.email_address,
+        'first_name': party.respondent.first_name,
+        'last_name': party.respondent.last_name,
+        'telephone': party.respondent.telephone
+    }
+
+    response_doc = {k: v for k, v in d.items() if v}
+
+    return make_response(jsonify(response_doc), 200)
 
 
 #
@@ -312,7 +328,7 @@ def get_business_by_ref(ref):
     d = {
         'id': business.party.party_uuid,
         'reference': business.ru_ref,
-        'sampleUnitType': 'B',
+        'sampleUnitType': Business.UNIT_TYPE,
         'attributes': business.attributes
     }
 
@@ -331,8 +347,6 @@ def get_business_by_id(id):
 
     :rtype: Business
     """
-
-    # TODO: see ras-party get-business-by-id
 
     party = db.session.query(Party).filter(Party.party_uuid == id).first()
     d = {

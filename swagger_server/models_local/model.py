@@ -58,7 +58,7 @@ class Business(Base):
         self.party = party
 
 
-class BusinessRespondentStatus(enum.Enum):
+class BusinessRespondentStatus(enum.IntEnum):
     ACTIVE = 0
     INACTIVE = 1
     SUSPENDED = 2
@@ -82,7 +82,7 @@ class BusinessRespondent(Base):
         self.effective_to = effective_to
 
 
-class RespondentStatus(enum.Enum):
+class RespondentStatus(enum.IntEnum):
     CREATED = 0
     ACTIVE = 1
     SUSPENDED = 2
@@ -109,7 +109,7 @@ class Respondent(Base):
         self.party = party
 
 
-class EnrolmentStatus(enum.Enum):
+class EnrolmentStatus(enum.IntEnum):
     PENDING = 0
     ENABLED = 1
     DISABLED = 2
@@ -132,7 +132,7 @@ class Enrolment(Base):
         self.status = status
 
 
-class EnrolmentCodeStatus(enum.Enum):
+class EnrolmentCodeStatus(enum.IntEnum):
     ACTIVE = 0
     REDEEMED = 1
     REVOKED = 2
@@ -158,7 +158,7 @@ class EnrolmentCode(Base):
         self.iac = iac
 
 
-class EnrolmentInvitationStatus(enum.Enum):
+class EnrolmentInvitationStatus(enum.IntEnum):
     ACTIVE = 0
     REDEEMED = 1
     REVOKED = 2
