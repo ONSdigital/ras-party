@@ -25,6 +25,8 @@ class Party(Base):
 class Business(Base):
     __tablename__ = 'business'
 
+    UNIT_TYPE = 'B'
+
     id = Column(Integer, primary_key=True)
     ru_ref = Column(Text, unique=True)
     attributes = Column(JsonColumn())
@@ -51,11 +53,9 @@ class Business(Base):
     # turnover = Column(Integer)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, ru_ref, attributes, party, respondents=None):
+    def __init__(self, ru_ref, party):
         self.ru_ref = ru_ref
-        self.attributes = attributes
         self.party = party
-        # self.respondents = respondents
 
 
 class BusinessRespondentStatus(enum.Enum):
@@ -92,24 +92,21 @@ class Respondent(Base):
 
     __tablename__ = 'respondent'
 
+    UNIT_TYPE = 'BI'
+
     id = Column(Integer, primary_key=True)
     businesses = relationship('Business', secondary='business_respondent', back_populates='respondents')
     party_id = Column(Integer, ForeignKey('party.id'))
     party = relationship('Party', back_populates='respondent')
-    status = Column('status', Enum(RespondentStatus))
+    status = Column('status', Enum(RespondentStatus), default=RespondentStatus.CREATED)
     email_address = Column(Text)
     first_name = Column(Text)
     last_name = Column(Text)
     telephone = Column(Text)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, party, status, email_address, first_name, last_name, telephone):
+    def __init__(self, party):
         self.party = party
-        self.status = status
-        self.email_address = email_address
-        self.first_name = first_name
-        self.last_name = last_name
-        self.telephone = telephone
 
 
 class EnrolmentStatus(enum.Enum):
