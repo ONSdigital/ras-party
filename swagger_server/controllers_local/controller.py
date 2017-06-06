@@ -86,7 +86,7 @@ def businesses_get(searchString=None, skip=None, limit=None):
 
     :rtype: None
     """
-    return 'to be implemented'
+    return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
 def businesses_post(party_data):
@@ -152,7 +152,7 @@ def businesses_id_id_put(id, binaryparty, ETag=None):
 
     :rtype: None
     """
-    return 'to be implemented'
+    return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
 #
@@ -171,7 +171,7 @@ def businesses_id_id_business_associations_get(id, skip=None, limit=None):
 
     :rtype: None
     """
-    return 'to be implemented'
+    return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
 #
@@ -241,7 +241,7 @@ def businesses_id_id_options(id):
 
     :rtype: VndCollectionjson
     """
-    return 'to be implemented'
+    return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
 #
@@ -261,8 +261,6 @@ def parties_post(party):
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
-    if 'sampleUnitType' not in party:
-        return make_response(jsonify("sampleUnitType attribute is missing from the supplied JSON party."), 400)
     if party['sampleUnitType'] == Business.UNIT_TYPE:
         return businesses_post(party)
     elif party['sampleUnitType'] == Respondent.UNIT_TYPE:
@@ -307,7 +305,7 @@ def get_party_by_id(sampleUnitType, id):
 # /parties/uprn/{uprn}:
 #
 def get_party_by_uprn(uprn):
-    return "to be implemented"
+    return "to be implemented"  # pragma: no cover
 
 
 #
@@ -326,7 +324,7 @@ def enrolment_codes_get(searchString=None, skip=None, limit=None):
 
     :rtype: None
     """
-    return 'to be implemented'
+    return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
 #
@@ -341,7 +339,7 @@ def enrolment_codes_post(party=None):
 
     :rtype: None
     """
-    return 'to be implemented'
+    return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
 #
@@ -360,7 +358,7 @@ def enrolment_invitations_get(searchString=None, skip=None, limit=None):
 
     :rtype: None
     """
-    return 'to be implemented'
+    return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
 #
@@ -375,7 +373,7 @@ def enrolment_invitations_post(party=None):
 
     :rtype: None
     """
-    return 'to be implemented'
+    return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
 #
@@ -394,7 +392,7 @@ def respondents_get(searchString=None, skip=None, limit=None):
 
     :rtype: None
     """
-    return 'to be implemented'
+    return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
 #
@@ -437,7 +435,7 @@ def respondents_id_id_options(id):
 
     :rtype: VndCollectionjson
     """
-    return 'to be implemented'
+    return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
 #
@@ -456,7 +454,7 @@ def respondents_id_id_business_associations_get(id, skip=None, limit=None):
 
     :rtype: None
     """
-    return 'to be implemented'
+    return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
 #
@@ -473,7 +471,7 @@ def respondents_id_id_put(id, ETag=None):
 
     :rtype: None
     """
-    return 'to be implemented'
+    return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
 #
@@ -518,30 +516,30 @@ def respondents_post(party_data):
 # /residences/id/{id}
 #
 def get_residence_by_id(id):
-    return "to be implemented"
+    return "to be implemented"  # pragma: no cover
 
 
 #
 # /residences/id/{uprn}
 #
 def get_residence_by_uprn(uprn):
-    return "to be implemented"
+    return "to be implemented"  # pragma: no cover
 
 
 #
 # /residences
 #
 def residences_id_id_put(residences_data):
-    return "to be implemented"
+    return "to be implemented"  # pragma: no cover
 
 
 def residences_id_id_options():
-    return "to be implemented"
+    return "to be implemented"  # pragma: no cover
 
 
 def residences_get(searchString, skip, limit):
-    return "to be implemented"
+    return "to be implemented"  # pragma: no cover
 
 
 def residences_post(residences_data):
-    return "to be implemented"
+    return "to be implemented"  # pragma: no cover
