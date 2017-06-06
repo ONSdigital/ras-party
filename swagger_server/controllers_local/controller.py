@@ -86,7 +86,7 @@ def businesses_get(searchString=None, skip=None, limit=None):
 
     :rtype: None
     """
-    return 'do some magic!'
+    return 'to be implemented'
 
 
 def businesses_post(party_data):
@@ -98,9 +98,6 @@ def businesses_post(party_data):
 
     :rtype: None
     """
-
-    # TODO: deal with missing id or reference
-
     v = validate.Validator(validate.Exists('id', 'reference'), validate.IsUuid('id'))
     if not v.validate(party_data):
         return make_response(jsonify(v.errors), 400)
@@ -108,8 +105,6 @@ def businesses_post(party_data):
     party_uuid = party_data['id']
     ru_ref = party_data['reference']
     associations = party_data.get('associations')
-
-    # TODO: validate received uuid
 
     party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
     if not party:
@@ -133,7 +128,6 @@ def businesses_post(party_data):
             business_respondent = BusinessRespondent()
             business_respondent.respondent = assoc_party.respondent
             business_respondent.business = business
-            # business.respondents.append(assoc_party.respondent)
             # TODO: check the association doesn't already exist?
             db.session.add(business_respondent)
 
@@ -158,7 +152,7 @@ def businesses_id_id_put(id, binaryparty, ETag=None):
 
     :rtype: None
     """
-    return 'do some magic!'
+    return 'to be implemented'
 
 
 #
@@ -177,7 +171,7 @@ def businesses_id_id_business_associations_get(id, skip=None, limit=None):
 
     :rtype: None
     """
-    return 'do some magic!'
+    return 'to be implemented'
 
 
 #
@@ -247,7 +241,7 @@ def businesses_id_id_options(id):
 
     :rtype: VndCollectionjson
     """
-    return 'do some magic!'
+    return 'to be implemented'
 
 
 #
@@ -266,9 +260,9 @@ def parties_post(party):
     v = validate.Validator(validate.Exists('sampleUnitType'), validate.IsIn('sampleUnitType', 'B', 'BI'))
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
+
     if 'sampleUnitType' not in party:
         return make_response(jsonify("sampleUnitType attribute is missing from the supplied JSON party."), 400)
-    # TODO: deal with unknown sampleUnitType
     if party['sampleUnitType'] == Business.UNIT_TYPE:
         return businesses_post(party)
     elif party['sampleUnitType'] == Respondent.UNIT_TYPE:
@@ -287,7 +281,10 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
 
     :rtype: Party
     """
-    # TODO: deal with unknown sampleUnitType
+    v = validate.Validator(validate.IsIn('sampleUnitType', 'B', 'BI'))
+    if not v.validate({'sampleUnitType': sampleUnitType}):
+        return make_response(jsonify(v.errors), 400)
+
     if sampleUnitType == Business.UNIT_TYPE:
         return get_business_by_ref(sampleUnitRef)
 
@@ -296,7 +293,10 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
 # /parties/{id}
 #
 def get_party_by_id(sampleUnitType, id):
-    # TODO: deal with unknown sampleUnitType
+    v = validate.Validator(validate.IsIn('sampleUnitType', 'B', 'BI'))
+    if not v.validate({'sampleUnitType': sampleUnitType}):
+        return make_response(jsonify(v.errors), 400)
+
     if sampleUnitType == Business.UNIT_TYPE:
         return get_business_by_id(id)
     elif sampleUnitType == Respondent.UNIT_TYPE:
@@ -307,7 +307,7 @@ def get_party_by_id(sampleUnitType, id):
 # /parties/uprn/{uprn}:
 #
 def get_party_by_uprn(uprn):
-    return "Please implement me"
+    return "to be implemented"
 
 
 #
@@ -326,7 +326,7 @@ def enrolment_codes_get(searchString=None, skip=None, limit=None):
 
     :rtype: None
     """
-    return 'do some magic!'
+    return 'to be implemented'
 
 
 #
@@ -341,7 +341,7 @@ def enrolment_codes_post(party=None):
 
     :rtype: None
     """
-    return 'do some magic!'
+    return 'to be implemented'
 
 
 #
@@ -360,7 +360,7 @@ def enrolment_invitations_get(searchString=None, skip=None, limit=None):
 
     :rtype: None
     """
-    return 'do some magic!'
+    return 'to be implemented'
 
 
 #
@@ -375,7 +375,7 @@ def enrolment_invitations_post(party=None):
 
     :rtype: None
     """
-    return 'do some magic!'
+    return 'to be implemented'
 
 
 #
@@ -394,7 +394,7 @@ def respondents_get(searchString=None, skip=None, limit=None):
 
     :rtype: None
     """
-    return 'do some magic!'
+    return 'to be implemented'
 
 
 #
@@ -437,7 +437,7 @@ def respondents_id_id_options(id):
 
     :rtype: VndCollectionjson
     """
-    return 'do some magic!'
+    return 'to be implemented'
 
 
 #
@@ -456,7 +456,7 @@ def respondents_id_id_business_associations_get(id, skip=None, limit=None):
 
     :rtype: None
     """
-    return 'do some magic!'
+    return 'to be implemented'
 
 
 #
@@ -473,7 +473,7 @@ def respondents_id_id_put(id, ETag=None):
 
     :rtype: None
     """
-    return 'do some magic!'
+    return 'to be implemented'
 
 
 #
@@ -488,8 +488,6 @@ def respondents_post(party_data):
 
     :rtype: None
     """
-    # TODO: deal with missing id
-
     v = validate.Validator(validate.Exists('id'),
                            validate.IsUuid('id'),
                            validate.Exists('email_address', 'first_name', 'last_name', 'telephone')
@@ -498,9 +496,6 @@ def respondents_post(party_data):
         return make_response(jsonify(v.errors), 400)
 
     party_uuid = party_data['id']
-
-    # TODO: validate received uuid
-
     party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
     if not party:
         party = Party(party_uuid)
@@ -509,10 +504,10 @@ def respondents_post(party_data):
     else:
         respondent = party.respondent
 
-    respondent.email_address = party_data.get('email_address')
-    respondent.first_name = party_data.get('first_name')
-    respondent.last_name = party_data.get('last_name')
-    respondent.telephone = party_data.get('telephone')
+    respondent.email_address = party_data['email_address']
+    respondent.first_name = party_data['first_name']
+    respondent.last_name = party_data['last_name']
+    respondent.telephone = party_data['telephone']
 
     db.session.commit()
 
@@ -523,30 +518,30 @@ def respondents_post(party_data):
 # /residences/id/{id}
 #
 def get_residence_by_id(id):
-    return "Please implement me"
+    return "to be implemented"
 
 
 #
 # /residences/id/{uprn}
 #
 def get_residence_by_uprn(uprn):
-    return "Please implement me"
+    return "to be implemented"
 
 
 #
 # /residences
 #
 def residences_id_id_put(residences_data):
-    return "Please implement me"
+    return "to be implemented"
 
 
 def residences_id_id_options():
-    return "Please implement me"
+    return "to be implemented"
 
 
 def residences_get(searchString, skip, limit):
-    return "Please implement me"
+    return "to be implemented"
 
 
 def residences_post(residences_data):
-    return "Please implement me"
+    return "to be implemented"
