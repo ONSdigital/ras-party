@@ -258,6 +258,25 @@ class TestParties(BaseTestCase):
         self.assertIn(validate.Exists.ERROR_MESSAGE.format('last_name'), response['errors'])
         self.assertIn(validate.Exists.ERROR_MESSAGE.format('telephone'), response['errors'])
 
+    def test_post_existing_respondent_updates_details(self):
+        mock_respondent = MockRespondent().build()
+
+        self.post_to_parties(mock_respondent, 200)
+        persisted = respondents()
+        self.assertEqual(len(persisted), 1)
+        self.assertEqual(len(parties()), 1)
+
+        self.assertEqual(persisted[0].first_name, 'A')
+
+        mock_respondent['first_name'] = 'Z'
+        self.post_to_parties(mock_respondent, 200)
+        persisted = respondents()
+        self.assertEqual(len(persisted), 1)
+        self.assertEqual(len(parties()), 1)
+
+        self.assertEqual(persisted[0].first_name, 'Z')
+
+
     ''' TODO:
     Post business with associations, party uuid doesn't exist
     Post business with association already exists -> should this do an update?
