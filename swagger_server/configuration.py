@@ -55,7 +55,6 @@ class ONSEnvironment(object):
         self._engine = None
         self.logger = ons_logger.create(self)
         self.logger.info("Running with '{}' configuration".format(self._env))
-        print("Running with '{}' configuration".format(self._env))
 
     def _parse_manifest(self):
         """

@@ -7,7 +7,7 @@ import uuid
 from flask import json
 
 from swagger_server.configuration import ons_env
-from swagger_server.models_local.model import Business, Party, Respondent
+from swagger_server.models_local.model import Business, Party, Respondent, BusinessRespondent
 from swagger_server.test_local import BaseTestCase
 
 db = ons_env
@@ -25,6 +25,11 @@ def parties():
 
 def respondents():
     return db.session.query(Respondent).all()
+
+
+def business_respondent_associations():
+    return db.session.query(BusinessRespondent).all()
+
 
 ''' TODO:
 /parties response should include respondents (if they exist)
@@ -158,17 +163,66 @@ class TestParties(BaseTestCase):
         result = self.get_party_by_id('BI', party_id)
         self.assertDictEqual(result, mock_respondent)
 
+    def test_adding_business_with_associations_is_persisted(self):
+        mock_respondent = MockParty('BI').build()
+        respondent_association = {
+            'sampleUnitType': mock_respondent['sampleUnitType'],
+            'id': mock_respondent['id']
+        }
+        mock_business = MockParty('B')\
+            .properties(associations=[respondent_association])\
+            .attributes(source='test_post_valid_business_adds_to_db')\
+            .build()
 
-class TestBusinesses(BaseTestCase):
+        self.post_to_parties(mock_respondent, 200)
+        self.post_to_parties(mock_business, 200)
 
-    def test_get_business_by_id_returns_corresponding_business(self):
-        pass
+        self.assertEqual(len(businesses()), 1)
+        self.assertEqual(len(respondents()), 1)
+        self.assertEqual(len(parties()), 2)
+        self.assertEqual(len(business_respondent_associations()), 1)
 
+    def test_retrieve_business_with_associations(self):
+        mock_respondent_1 = MockParty('BI').build()
+        respondent_association_1 = {
+            'sampleUnitType': mock_respondent_1['sampleUnitType'],
+            'id': mock_respondent_1['id']
+        }
+        mock_respondent_2 = MockParty('BI').build()
+        respondent_association_2 = {
+            'sampleUnitType': mock_respondent_2['sampleUnitType'],
+            'id': mock_respondent_2['id']
+        }
+        mock_business = MockParty('B')\
+            .properties(associations=[respondent_association_1, respondent_association_2])\
+            .attributes(source='test_post_valid_business_adds_to_db')\
+            .build()
 
-class TestRespondents(BaseTestCase):
+        self.post_to_parties(mock_respondent_1, 200)
+        self.post_to_parties(mock_respondent_2, 200)
+        self.post_to_parties(mock_business, 200)
 
-    def test_get_respondent_by_id_returns_corresponding_business(self):
-        pass
+        party_id = mock_business['id']
+
+        result = self.get_party_by_id('B', party_id)
+
+        self.assertIn('associations', result)
+
+        associations = result['associations']
+        self.assertEqual(len(associations), 2)
+
+        ids = [a['id'] for a in associations]
+
+        self.assertIn(mock_respondent_1['id'], ids)
+        self.assertIn(mock_respondent_2['id'], ids)
+
+    ''' TODO:
+    Post business with missing id
+    Post business with missing ruref
+    Post business/respondent with associations, party uuid doesn't exist
+    Post business/respondent with association already exists -> should this do an update?
+    Post party with unknown unit type
+    '''
 
 
 if __name__ == '__main__':

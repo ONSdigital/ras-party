@@ -1,7 +1,7 @@
 import datetime
 import enum
 
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
@@ -32,7 +32,8 @@ class Business(Base):
     attributes = Column(JsonColumn())
     party_id = Column(Integer, ForeignKey('party.id'))
     party = relationship('Party', back_populates='business')
-    respondents = relationship('Respondent', secondary='business_respondent', back_populates='businesses')
+    # TODO: this is actually linking to BusinessRespondent instances, rename to associations?
+    respondents = relationship('BusinessRespondent', back_populates='business')
     # business_ref = Column(Text)
     # name = Column(Text)
     # trading_name = Column(Text)
@@ -68,18 +69,21 @@ class BusinessRespondentStatus(enum.IntEnum):
 class BusinessRespondent(Base):
     __tablename__ = 'business_respondent'
 
-    id = Column(Integer, primary_key=True)
-    business_id = Column(Integer, ForeignKey('business.id'))
-    respondent_id = Column(Integer, ForeignKey('respondent.id'))
+    business_id = Column(Integer, ForeignKey('business.id'), primary_key=True)
+    respondent_id = Column(Integer, ForeignKey('respondent.id'), primary_key=True)
     status = Column('status', Enum(BusinessRespondentStatus))
     effective_from = Column(DateTime, default=datetime.datetime.utcnow)
     effective_to = Column(DateTime)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, status, effective_from, effective_to):
-        self.status = status
-        self.effective_from = effective_from
-        self.effective_to = effective_to
+    business = relationship('Business', back_populates='respondents')
+    respondent = relationship('Respondent', back_populates='businesses')
+
+    # __table_args__ = (UniqueConstraint('business_id', 'respondent_id', name='_business_respondent_uc'),)
+
+    def __init__(self):
+        # TODO: what to use for effective_to?
+        self.effective_to = datetime.datetime.now() + datetime.timedelta(days=7)
 
 
 class RespondentStatus(enum.IntEnum):
@@ -95,7 +99,7 @@ class Respondent(Base):
     UNIT_TYPE = 'BI'
 
     id = Column(Integer, primary_key=True)
-    businesses = relationship('Business', secondary='business_respondent', back_populates='respondents')
+    businesses = relationship('BusinessRespondent', back_populates='respondent')
     party_id = Column(Integer, ForeignKey('party.id'))
     party = relationship('Party', back_populates='respondent')
     status = Column('status', Enum(RespondentStatus), default=RespondentStatus.CREATED)

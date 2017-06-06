@@ -1,25 +1,26 @@
 #
 # /businesses
 #
+import functools
 from flask import make_response, jsonify
 
 from swagger_server.configuration import ons_env
-from swagger_server.models_local.model import Business, Party, Respondent
+from swagger_server.models_local.model import Business, Party, Respondent, BusinessRespondent
 
 db = ons_env
 
 """
 /businesses
     GET = businesses_get
-    POST = businesses_post
+    POST = businesses_post √
 /businesses/id/{id}
-    GET = get_business_by_id
+    GET = get_business_by_id √
     OPTIONS = businesses_id_id_options
     PUT = businesses_id_id_put
 /businesses/id/{id}/business-associations
     GET = businesses_id_id_business_associations_get
 /businesses/ref/{ref}
-    GET = get_business_by_ref
+    GET = get_business_by_ref √
 /enrolment-codes
     GET = enrolment_codes_get
     POST = enrolment_codes_post
@@ -27,11 +28,11 @@ db = ons_env
     GET = enrolment_invitations_get
     POST = enrolment_invitations_post
 /parties
-    POST = parties_post
+    POST = parties_post √
 /parties/type/{sampleUnitType}/id/{id}
-    GET = get_party_by_id
+    GET = get_party_by_id √
 /parties/type/{sampleUnitType}/ref/{sampleUnitRef}
-    GET = get_party_by_ref
+    GET = get_party_by_ref √
 /residences
     GET = residences_get
     POST = residences_post
@@ -43,14 +44,29 @@ db = ons_env
     GET = get_residence_by_uprn
 /respondents
     GET = respondents_get
-    POST = respondents_post
+    POST = respondents_post √
 /respondents/id/{id}
-    GET = get_respondent_by_id
+    GET = get_respondent_by_id √
     OPTIONS = respondents_id_id_options
     PUT = respondents_id_id_put
 /respondents/id/{id}/business-associations
     GET = respondents_id_id_business_associations_get
 """
+
+
+def filter_dict(d, cb):
+    """
+    Filter a dictionary based on passed function.
+
+    :param d: The dictionary to be filtered
+    :param cb: A function which is called back for each k, v pair of the dictionary. Should return Truthy or Falsey
+    :return: The filtered dictionary (new instance)
+    """
+
+    return {k: v for k, v in d.items() if cb(k, v)}
+
+
+filter_falsey_values = functools.partial(filter_dict, cb=lambda _, v: v)
 
 
 def businesses_post(party_data):
@@ -66,7 +82,7 @@ def businesses_post(party_data):
     # TODO: deal with missing id or reference
     party_uuid = party_data['id']
     ru_ref = party_data['reference']
-    attributes = party_data.get('attributes', {})
+    associations = party_data.get('associations')
 
     # TODO: validate received uuid
 
@@ -80,6 +96,21 @@ def businesses_post(party_data):
         db.session.add(business)
 
     business.attributes = party_data.get('attributes', {})
+
+    if associations:
+        for assoc in associations:
+            assoc_type = assoc['sampleUnitType']
+            assoc_id = assoc['id']
+
+            assoc_party = db.session.query(Party).filter(Party.party_uuid == assoc_id).first()
+            # TODO: deal with missing party
+            # TODO: assumes a BI association, implied by the table BusinessRespondent, but can there be others?
+            business_respondent = BusinessRespondent()
+            business_respondent.respondent = assoc_party.respondent
+            business_respondent.business = business
+            # business.respondents.append(assoc_party.respondent)
+            # TODO: check the association doesn't already exist?
+            db.session.add(business_respondent)
 
     db.session.commit()
 
@@ -253,9 +284,9 @@ def get_respondent_by_id(id):
         'telephone': party.respondent.telephone
     }
 
-    response_doc = {k: v for k, v in d.items() if v}
+    result = filter_falsey_values(d)
 
-    return make_response(jsonify(response_doc), 200)
+    return make_response(jsonify(result), 200)
 
 
 #
@@ -332,7 +363,9 @@ def get_business_by_ref(ref):
         'attributes': business.attributes
     }
 
-    return make_response(jsonify(d), 200)
+    result = filter_falsey_values(d)
+
+    return make_response(jsonify(result), 200)
 
 
 #
@@ -349,14 +382,19 @@ def get_business_by_id(id):
     """
 
     party = db.session.query(Party).filter(Party.party_uuid == id).first()
+    business = party.business
+    associations = business.respondents
     d = {
         'id': party.party_uuid,
         'reference': party.business.ru_ref,
         'sampleUnitType': 'B',
-        'attributes': party.business.attributes
+        'attributes': party.business.attributes,
+        'associations': [{'id': a.respondent.party.party_uuid} for a in associations]
     }
 
-    return make_response(jsonify(d), 200)
+    response = filter_falsey_values(d)
+
+    return make_response(jsonify(response), 200)
 
 
 #
