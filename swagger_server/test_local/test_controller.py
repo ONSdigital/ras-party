@@ -45,16 +45,16 @@ class TestParties(BaseTestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
-    def get_party_by_ref(self, party_type, ref):
+    def get_party_by_ref(self, party_type, ref, expected_status=200):
         response = self.client.open('/party-api/{}/parties/type/{}/ref/{}'.format(API_VERSION, party_type, ref),
                                     method='GET')
-        self.assert200(response, "Response body is : " + response.data.decode('utf-8'))
+        self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
-    def get_party_by_id(self, party_type, id):
+    def get_party_by_id(self, party_type, id, expected_status=200):
         response = self.client.open('/party-api/{}/parties/type/{}/id/{}'.format(API_VERSION, party_type, id),
                                     method='GET')
-        self.assert200(response, "Response body is : " + response.data.decode('utf-8'))
+        self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
     def test_post_valid_business_adds_to_db(self):
@@ -111,6 +111,12 @@ class TestParties(BaseTestCase):
 
         result = self.get_party_by_ref('B', mock_business['reference'])
         self.assertDictEqual(result, mock_business)
+
+    def test_get_party_by_id_with_invalid_type_is_error(self):
+        self.get_party_by_id('BX', '123', 400)
+
+    def test_get_party_by_ref_with_invalid_type_is_error(self):
+        self.get_party_by_ref('BX', '123', 400)
 
     def test_get_party_by_id_returns_corresponding_business(self):
         mock_business = MockBusiness() \
