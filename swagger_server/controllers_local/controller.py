@@ -5,6 +5,7 @@ import functools
 from flask import make_response, jsonify
 
 from swagger_server.configuration import ons_env
+from swagger_server.controllers_local import validate
 from swagger_server.models_local.model import Business, Party, Respondent, BusinessRespondent
 
 db = ons_env
@@ -69,6 +70,25 @@ def filter_dict(d, cb):
 filter_falsey_values = functools.partial(filter_dict, cb=lambda _, v: v)
 
 
+#
+# /businesses
+#
+def businesses_get(searchString=None, skip=None, limit=None):
+    """
+    searches Businesses
+    By passing in the appropriate options, you can search for available Businesses
+    :param searchString: pass an optional search string for looking up Businesses
+    :type searchString: str
+    :param skip: number of records to skip for pagination
+    :type skip: int
+    :param limit: maximum number of records to return
+    :type limit: int
+
+    :rtype: None
+    """
+    return 'do some magic!'
+
+
 def businesses_post(party_data):
     """
     adds a reporting unit of type Business
@@ -80,6 +100,11 @@ def businesses_post(party_data):
     """
 
     # TODO: deal with missing id or reference
+
+    v = validate.Validator(validate.Exists('id', 'reference'), validate.IsUuid('id'))
+    if not v.validate(party_data):
+        return make_response(jsonify(v.errors), 400)
+
     party_uuid = party_data['id']
     ru_ref = party_data['reference']
     associations = party_data.get('associations')
@@ -115,55 +140,6 @@ def businesses_post(party_data):
     db.session.commit()
 
     return make_response(jsonify("Ok, business entity created"), 200)
-
-
-#
-# /parties
-#
-def parties_post(party):
-    """
-    given a sampleUnitType B | H this adds a reporting unit of type Business or Household
-    Adds a new Party of type sampleUnitType or updates an existing Party based on the reference provided
-    :param party: Party to add
-    :type party: dict | bytes
-
-    :rtype: None
-    """
-    if 'sampleUnitType' not in party:
-        return make_response(jsonify("sampleUnitType attribute is missing from the supplied JSON party."), 400)
-    # TODO: deal with unknown sampleUnitType
-    if party['sampleUnitType'] == Business.UNIT_TYPE:
-        return businesses_post(party)
-    elif party['sampleUnitType'] == Respondent.UNIT_TYPE:
-        return respondents_post(party)
-
-
-#
-# /parties/ref/{ref}
-#
-def get_party_by_ref(sampleUnitType, sampleUnitRef):
-    """
-    Get a Party by its unique reference (ruref / uprn)
-    Returns a single Party
-    :param ref: Reference of the Party to return
-    :type ref: str
-
-    :rtype: Party
-    """
-    # TODO: deal with unknown sampleUnitType
-    if sampleUnitType == Business.UNIT_TYPE:
-        return get_business_by_ref(sampleUnitRef)
-
-
-#
-# /parties/{id}
-#
-def get_party_by_id(sampleUnitType, id):
-    # TODO: deal with unknown sampleUnitType
-    if sampleUnitType == Business.UNIT_TYPE:
-        return get_business_by_id(id)
-    elif sampleUnitType == Respondent.UNIT_TYPE:
-        return get_respondent_by_id(id)
 
 
 #
@@ -205,6 +181,136 @@ def businesses_id_id_business_associations_get(id, skip=None, limit=None):
 
 
 #
+# /businesses/ref/{ref}
+#
+def get_business_by_ref(ref):
+    """
+    Get a Business by its unique business reference
+    Returns a single Business
+    :param ref: Reference of the Business to return
+    :type ref: str
+
+    :rtype: Business
+    """
+
+    business = db.session.query(Business).filter(Business.ru_ref == ref).first()
+    d = {
+        'id': business.party.party_uuid,
+        'reference': business.ru_ref,
+        'sampleUnitType': Business.UNIT_TYPE,
+        'attributes': business.attributes
+    }
+
+    result = filter_falsey_values(d)
+
+    return make_response(jsonify(result), 200)
+
+
+#
+# /businesses/id/{id}
+#
+def get_business_by_id(id):
+    """
+    Get a Business by its Party ID
+    Returns a single Party
+    :param id: ID of Party to return
+    :type id: str
+
+    :rtype: Business
+    """
+
+    party = db.session.query(Party).filter(Party.party_uuid == id).first()
+    business = party.business
+    associations = business.respondents
+    d = {
+        'id': party.party_uuid,
+        'reference': party.business.ru_ref,
+        'sampleUnitType': 'B',
+        'attributes': party.business.attributes,
+        'associations': [{'id': a.respondent.party.party_uuid} for a in associations]
+    }
+
+    response = filter_falsey_values(d)
+
+    return make_response(jsonify(response), 200)
+
+
+#
+# /businesses/id/{id}
+#
+def businesses_id_id_options(id):
+    """
+    View the available representations for a given Business
+
+    :param id: ID of Business to return
+    :type id: str
+
+    :rtype: VndCollectionjson
+    """
+    return 'do some magic!'
+
+
+#
+# /parties
+#
+def parties_post(party):
+    """
+    given a sampleUnitType B | H this adds a reporting unit of type Business or Household
+    Adds a new Party of type sampleUnitType or updates an existing Party based on the reference provided
+    :param party: Party to add
+    :type party: dict | bytes
+
+    :rtype: None
+    """
+
+    v = validate.Validator(validate.Exists('sampleUnitType'), validate.IsIn('sampleUnitType', 'B', 'BI'))
+    if not v.validate(party):
+        return make_response(jsonify(v.errors), 400)
+    if 'sampleUnitType' not in party:
+        return make_response(jsonify("sampleUnitType attribute is missing from the supplied JSON party."), 400)
+    # TODO: deal with unknown sampleUnitType
+    if party['sampleUnitType'] == Business.UNIT_TYPE:
+        return businesses_post(party)
+    elif party['sampleUnitType'] == Respondent.UNIT_TYPE:
+        return respondents_post(party)
+
+
+#
+# /parties/ref/{ref}
+#
+def get_party_by_ref(sampleUnitType, sampleUnitRef):
+    """
+    Get a Party by its unique reference (ruref / uprn)
+    Returns a single Party
+    :param ref: Reference of the Party to return
+    :type ref: str
+
+    :rtype: Party
+    """
+    # TODO: deal with unknown sampleUnitType
+    if sampleUnitType == Business.UNIT_TYPE:
+        return get_business_by_ref(sampleUnitRef)
+
+
+#
+# /parties/{id}
+#
+def get_party_by_id(sampleUnitType, id):
+    # TODO: deal with unknown sampleUnitType
+    if sampleUnitType == Business.UNIT_TYPE:
+        return get_business_by_id(id)
+    elif sampleUnitType == Respondent.UNIT_TYPE:
+        return get_respondent_by_id(id)
+
+
+#
+# /parties/uprn/{uprn}:
+#
+def get_party_by_uprn(uprn):
+    return "Please implement me"
+
+
+#
 # /enrolment-codes
 #
 def enrolment_codes_get(searchString=None, skip=None, limit=None):
@@ -224,6 +330,21 @@ def enrolment_codes_get(searchString=None, skip=None, limit=None):
 
 
 #
+# /enrolment-codes
+#
+def enrolment_codes_post(party=None):
+    """
+    redeems an Enrolment Code
+    Redeems an Enrolment Code
+    :param party: Enrolment Code to redeem
+    :type party: dict | bytes
+
+    :rtype: None
+    """
+    return 'do some magic!'
+
+
+#
 # /enrolment-invitations
 #
 def enrolment_invitations_get(searchString=None, skip=None, limit=None):
@@ -236,6 +357,21 @@ def enrolment_invitations_get(searchString=None, skip=None, limit=None):
     :type skip: int
     :param limit: maximum number of records to return
     :type limit: int
+
+    :rtype: None
+    """
+    return 'do some magic!'
+
+
+#
+# /enrolment-invitations
+#
+def enrolment_invitations_post(party=None):
+    """
+    stores an invitation to Enrol another Respondent to a Survey
+    Stores an invitation to Enrol another Respondent to a Survey
+    :param party: Enrolment Invitation to store
+    :type party: dict | bytes
 
     :rtype: None
     """
@@ -324,125 +460,6 @@ def respondents_id_id_business_associations_get(id, skip=None, limit=None):
 
 
 #
-# /businesses
-#
-def businesses_get(searchString=None, skip=None, limit=None):
-    """
-    searches Businesses
-    By passing in the appropriate options, you can search for available Businesses
-    :param searchString: pass an optional search string for looking up Businesses
-    :type searchString: str
-    :param skip: number of records to skip for pagination
-    :type skip: int
-    :param limit: maximum number of records to return
-    :type limit: int
-
-    :rtype: None
-    """
-    return 'do some magic!'
-
-
-#
-# /businesses/ref/{ref}
-#
-def get_business_by_ref(ref):
-    """
-    Get a Business by its unique business reference
-    Returns a single Business
-    :param ref: Reference of the Business to return
-    :type ref: str
-
-    :rtype: Business
-    """
-
-    business = db.session.query(Business).filter(Business.ru_ref == ref).first()
-    d = {
-        'id': business.party.party_uuid,
-        'reference': business.ru_ref,
-        'sampleUnitType': Business.UNIT_TYPE,
-        'attributes': business.attributes
-    }
-
-    result = filter_falsey_values(d)
-
-    return make_response(jsonify(result), 200)
-
-
-#
-# /businesses/id/{id}
-#
-def get_business_by_id(id):
-    """
-    Get a Business by its Party ID
-    Returns a single Party
-    :param id: ID of Party to return
-    :type id: str
-
-    :rtype: Business
-    """
-
-    party = db.session.query(Party).filter(Party.party_uuid == id).first()
-    business = party.business
-    associations = business.respondents
-    d = {
-        'id': party.party_uuid,
-        'reference': party.business.ru_ref,
-        'sampleUnitType': 'B',
-        'attributes': party.business.attributes,
-        'associations': [{'id': a.respondent.party.party_uuid} for a in associations]
-    }
-
-    response = filter_falsey_values(d)
-
-    return make_response(jsonify(response), 200)
-
-
-#
-# /businesses/id/{id}
-#
-def businesses_id_id_options(id):
-    """
-    View the available representations for a given Business
-
-    :param id: ID of Business to return
-    :type id: str
-
-    :rtype: VndCollectionjson
-    """
-    return 'do some magic!'
-
-
-#
-# /enrolment-codes
-#
-def enrolment_codes_post(party=None):
-    """
-    redeems an Enrolment Code
-    Redeems an Enrolment Code
-    :param party: Enrolment Code to redeem
-    :type party: dict | bytes
-
-    :rtype: None
-    """
-    return 'do some magic!'
-
-
-#
-# /enrolment-invitations
-#
-def enrolment_invitations_post(party=None):
-    """
-    stores an invitation to Enrol another Respondent to a Survey
-    Stores an invitation to Enrol another Respondent to a Survey
-    :param party: Enrolment Invitation to store
-    :type party: dict | bytes
-
-    :rtype: None
-    """
-    return 'do some magic!'
-
-
-#
 # /respondents/id/{id}
 #
 def respondents_id_id_put(id, ETag=None):
@@ -472,6 +489,14 @@ def respondents_post(party_data):
     :rtype: None
     """
     # TODO: deal with missing id
+
+    v = validate.Validator(validate.Exists('id'),
+                           validate.IsUuid('id'),
+                           validate.Exists('email_address', 'first_name', 'last_name', 'telephone')
+                           )
+    if not v.validate(party_data):
+        return make_response(jsonify(v.errors), 400)
+
     party_uuid = party_data['id']
 
     # TODO: validate received uuid
@@ -492,13 +517,6 @@ def respondents_post(party_data):
     db.session.commit()
 
     return make_response(jsonify("Ok, business entity created"), 200)
-
-
-#
-# /parties/uprn/{uprn}:
-#
-def get_party_by_uprn(urpn):
-    return "Please implement me"
 
 
 #
