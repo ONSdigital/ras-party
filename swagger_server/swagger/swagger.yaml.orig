@@ -2,12 +2,12 @@
 swagger: "2.0"
 info:
   description: "Initial API for the Party microservice."
-  version: "1.0.0"
+  version: "1.0.4"
   title: "Party API"
   contact:
     email: "ras@ons.gov.uk"
 host: "localhost:8083\n"
-basePath: "/party-api/1.0.0"
+basePath: "/party-api/1.0.4"
 tags:
 - name: "backstage"
   description: "Operations available to internal business roles (i.e. Respondent Liason,\
@@ -39,7 +39,7 @@ paths:
         description: "Party to add"
         required: false
         schema:
-          $ref: "#/definitions/party"
+          $ref: "#/definitions/createparty"
       responses:
         200:
           description: "item updated"
@@ -70,19 +70,70 @@ paths:
       - accessCode:
         - "write"
       x-swagger-router-controller: "swagger_server.controllers.backstage_controller"
-  /parties/ref/{ref}:
+  /parties/type/{sampleUnitType}/ref/{sampleUnitRef}:
     get:
       tags:
       - "backstage"
-      summary: "Get a Party by its unique reference (ruref / uprn)"
-      description: "Returns a single Party"
+      summary: "Get a Party and any associated parties by its unique reference (ruref\
+        \ for business, uprn for household)"
+      description: "Returns a Party and associated parties"
       operationId: "get_party_by_ref"
       produces:
       - "application/vnd.ons.party+json"
       parameters:
-      - name: "ref"
+      - name: "sampleUnitType"
         in: "path"
-        description: "Reference of the Party to return"
+        description: "Sample Unit Type [ B BI I H ]"
+        required: true
+        type: "string"
+      - name: "sampleUnitRef"
+        in: "path"
+        description: "Reference of the Party to return e.g. ruref for business, uprn\
+          \ for household"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Party representation"
+          schema:
+            $ref: "#/definitions/party"
+          headers:
+            ETag:
+              type: "string"
+              description: "The current ETag for the Party, e.g. \"5635635636356356\""
+        401:
+          description: "Unauthorized"
+          schema:
+            $ref: "#/definitions/error"
+        403:
+          description: "Forbidden - in the context of frontstage use, this response\
+            \ would indicate the Respondent does not have an ACTIVE association with\
+            \ this business"
+          schema:
+            $ref: "#/definitions/error"
+        404:
+          description: "Business not found"
+          schema:
+            $ref: "#/definitions/error"
+      x-swagger-router-controller: "swagger_server.controllers.backstage_controller"
+  /parties/type/{sampleUnitType}/id/{id}:
+    get:
+      tags:
+      - "backstage"
+      summary: "Get a Party by its UUID"
+      description: "Returns a single Party"
+      operationId: "get_party_by_id"
+      produces:
+      - "application/vnd.ons.party+json"
+      parameters:
+      - name: "sampleUnitType"
+        in: "path"
+        description: "Sample Unit Type [ B BI I H ]"
+        required: true
+        type: "string"
+      - name: "id"
+        in: "path"
+        description: "ID of the Party to return"
         required: true
         type: "string"
       responses:
@@ -982,24 +1033,58 @@ definitions:
         example: "NT23 7TN"
         description: "This is the Postcode for the address. Currently a postcode is\
           \ needed for Sorting Office to begin parsing the address."
-  party:
+  createparty:
     type: "object"
     properties:
       sampleUnitType:
         type: "string"
         example: "B"
-        description: "Sample Unit Type [ B | H ]"
+        description: "Sample Unit Type [ B BI | H ]"
       reference:
         type: "string"
         example: "49900001234"
         description: "The reference of the sample unit ( <RUREF> | <URPN> )"
       id:
         type: "string"
-        format: "urn"
-        example: "urn:ons.gov.uk:id:business:00123456789"
+        format: "uuid"
+        example: "45297c23-763d-46a9-b4e5-c37ff5b4fbe7"
         description: "The id of the Party. This will not be required when posting"
       attributes:
         $ref: "#/definitions/attributes"
+  party:
+    type: "object"
+    properties:
+      sampleUnitType:
+        type: "string"
+        example: "B"
+        description: "Sample Unit Type [ B BI | H ]"
+      reference:
+        type: "string"
+        example: "49900001234"
+        description: "The reference of the sample unit ( <RUREF> | <URPN> )"
+      id:
+        type: "string"
+        format: "uuid"
+        example: "45297c23-763d-46a9-b4e5-c37ff5b4fbe7"
+        description: "The id of the Party. This will not be required when posting"
+      attributes:
+        $ref: "#/definitions/attributes"
+      associations:
+        type: "array"
+        items:
+          $ref: "#/definitions/partysummary"
+  partysummary:
+    type: "object"
+    properties:
+      sampleUnitType:
+        type: "string"
+        example: "BI"
+        description: "Sample Unit Type [ B BI | H ]"
+      id:
+        type: "string"
+        format: "uuid"
+        example: "45297c23-763d-46a9-b4e5-c37ff5b4fbe7"
+        description: "The id of the Party. This will not be required when posting"
   attributes:
     type: "object"
     description: "A dictionary of kv pairs from the sample file."
@@ -1013,8 +1098,8 @@ definitions:
     properties:
       id:
         type: "string"
-        format: "urn"
-        example: "urn:ons.gov.uk:id:business:001.234.56789"
+        format: "uuid"
+        example: "45297c23-763d-46a9-b4e5-c37ff5b4fbe7"
       address:
         $ref: "#/definitions/address"
       contactName:
@@ -1074,8 +1159,8 @@ definitions:
     properties:
       id:
         type: "string"
-        format: "urn"
-        example: "urn:ons.gov.uk:id:respondent:001.234.56789"
+        format: "uuid"
+        example: "45297c23-763d-46a9-b4e5-c37ff5b4fbe7"
       emailAddress:
         type: "string"
         format: "email"
@@ -1109,12 +1194,12 @@ definitions:
         example: ""
       businessId:
         type: "string"
-        format: "urn"
-        example: "urn:ons.gov.uk:id:business:001.234.56789"
+        format: "uuid"
+        example: "45297c23-763d-46a9-b4e5-c37ff5b4fbe7"
       respondentId:
         type: "string"
-        format: "urn"
-        example: "urn:ons.gov.uk:id:respondent:001.234.56789"
+        format: "uuid"
+        example: "45297c23-763d-46a9-b4e5-c37ff5b4fbe7"
       status:
         type: "string"
         example: "ACTIVE"
@@ -1132,8 +1217,8 @@ definitions:
     properties:
       surveyId:
         type: "string"
-        format: "urn"
-        example: "urn:ons.gov.uk:id:survey:001.234.56789"
+        format: "uuid"
+        example: "45297c23-763d-46a9-b4e5-c37ff5b4fbe7"
       status:
         type: "string"
         example: "ENABLED"

@@ -1,4 +1,4 @@
-basePath: /party-api/1.0.0
+basePath: /party-api/1.0.4
 definitions:
   address:
     properties:
@@ -33,7 +33,7 @@ definitions:
       enterpriseName: {example: ABC Limited, type: string}
       facsimile: {example: +44 1234 567890, type: string}
       fulltimeCount: {example: 35, type: integer}
-      id: {example: 'urn:ons.gov.uk:id:business:001.234.56789', format: urn, type: string}
+      id: {example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
       legalStatus:
         enum: [Community Interest Company (CIC), Charitable Incorporated Organisation
             (CIO), Industrial and provident society, General partnership, Limited
@@ -51,19 +51,27 @@ definitions:
     type: object
   businessAssociation:
     properties:
-      businessId: {example: 'urn:ons.gov.uk:id:business:001.234.56789', format: urn,
-        type: string}
+      businessId: {example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
       effectiveFrom: {example: '2010-11-17T00:00:00Z', format: date-time, type: string}
       effectiveTo: {example: '', format: date-time, type: string}
       enrolments:
         items: {$ref: '#/definitions/enrolment'}
         type: array
-      respondentId: {example: 'urn:ons.gov.uk:id:respondent:001.234.56789', format: urn,
+      respondentId: {example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid,
         type: string}
       status:
         enum: [ACTIVE, INACTIVE, SUSPENDED, ENDED]
         example: ACTIVE
         type: string
+    type: object
+  createparty:
+    properties:
+      attributes: {$ref: '#/definitions/attributes'}
+      id: {description: The id of the Party. This will not be required when posting,
+        example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
+      reference: {description: The reference of the sample unit ( <RUREF> | <URPN>
+          ), example: '49900001234', type: string}
+      sampleUnitType: {description: 'Sample Unit Type [ B BI | H ]', example: B, type: string}
     type: object
   enrolment:
     properties:
@@ -71,7 +79,7 @@ definitions:
         enum: [PENDING, ENABLED, DISABLED, SUSPENDED]
         example: ENABLED
         type: string
-      surveyId: {example: 'urn:ons.gov.uk:id:survey:001.234.56789', format: urn, type: string}
+      surveyId: {example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
     type: object
   enrolmentCode:
     properties:
@@ -92,12 +100,22 @@ definitions:
     type: object
   party:
     properties:
+      associations:
+        items: {$ref: '#/definitions/partysummary'}
+        type: array
       attributes: {$ref: '#/definitions/attributes'}
       id: {description: The id of the Party. This will not be required when posting,
-        example: 'urn:ons.gov.uk:id:business:00123456789', format: urn, type: string}
+        example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
       reference: {description: The reference of the sample unit ( <RUREF> | <URPN>
           ), example: '49900001234', type: string}
-      sampleUnitType: {description: 'Sample Unit Type [ B | H ]', example: B, type: string}
+      sampleUnitType: {description: 'Sample Unit Type [ B BI | H ]', example: B, type: string}
+    type: object
+  partysummary:
+    properties:
+      id: {description: The id of the Party. This will not be required when posting,
+        example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
+      sampleUnitType: {description: 'Sample Unit Type [ B BI | H ]', example: BI,
+        type: string}
     type: object
   residence:
     properties:
@@ -127,7 +145,7 @@ definitions:
     properties:
       emailAddress: {example: john.doe@abc-ltd.com, format: email, type: string}
       firstName: {example: John, type: string}
-      id: {example: 'urn:ons.gov.uk:id:respondent:001.234.56789', format: urn, type: string}
+      id: {example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
       lastName: {example: Doe, type: string}
       status:
         enum: [CREATED, ACTIVE, SUSPENDED]
@@ -148,14 +166,11 @@ definitions:
       href: {example: /party/id/12345678, type: string}
       rel: {example: self, type: string}
       type: {example: application/vnd.ons.party+json, type: string}
-host: 'localhost:8083
-
-  '
 info:
   contact: {email: ras@ons.gov.uk}
   description: Initial API for the Party microservice.
   title: Party API
-  version: 1.0.0
+  version: 1.0.4
 paths:
   /businesses:
     get:
@@ -181,7 +196,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: searches Businesses
       tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers.frontstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     post:
       consumes: [application/vnd.ons.business+json]
       description: Adds a new Business, or updates an existing Business based on the
@@ -215,7 +230,7 @@ paths:
       - accessCode: [write]
       summary: adds a reporting unit of type Business
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /businesses/id/{id}:
     get:
       description: Returns a single Party
@@ -238,7 +253,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: Get a Business by its Party ID
       tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers.frontstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     options:
       operationId: businesses_id_id_options
       parameters:
@@ -256,7 +271,7 @@ paths:
         404: {description: Business not found}
       summary: View the available representations for a given Business
       tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers.frontstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     put:
       consumes: [multipart/form-data]
       description: Updates the representation for an existing Business
@@ -283,7 +298,7 @@ paths:
       - accessCode: [write]
       summary: Update the representation for an existing Business
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /businesses/id/{id}/business-associations:
     get:
       description: Returns the known business associations for a business
@@ -303,7 +318,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: Returns the known business associations for a business
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /businesses/ref/{ref}:
     get:
       description: Returns a single Business
@@ -332,7 +347,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: Get a Business by its unique business reference
       tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers.frontstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /enrolment-codes:
     get:
       description: 'By passing in the appropriate options, you can search for available
@@ -353,7 +368,7 @@ paths:
         400: {description: bad input parameter}
       summary: searches enrolment codes
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     post:
       consumes: [application/vnd.ons.enrolment-code+json]
       description: Redeems an Enrolment Code
@@ -377,7 +392,7 @@ paths:
       - accessCode: [write]
       summary: redeems an Enrolment Code
       tags: [frontstage]
-      x-swagger-router-controller: swagger_server.controllers.frontstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /enrolment-invitations:
     get:
       description: 'By passing in the appropriate options, you can search for available
@@ -398,7 +413,7 @@ paths:
         400: {description: bad input parameter}
       summary: searches enrolment invitations
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     post:
       consumes: [application/vnd.ons.enrolment-invitation+json]
       description: Stores an invitation to Enrol another Respondent to a Survey
@@ -423,7 +438,7 @@ paths:
       - accessCode: [write]
       summary: stores an invitation to Enrol another Respondent to a Survey
       tags: [frontstage]
-      x-swagger-router-controller: swagger_server.controllers.frontstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /parties:
     post:
       consumes: [application/vnd.ons.party+json]
@@ -435,7 +450,7 @@ paths:
         in: body
         name: party
         required: false
-        schema: {$ref: '#/definitions/party'}
+        schema: {$ref: '#/definitions/createparty'}
       responses:
         200:
           description: item updated
@@ -459,13 +474,15 @@ paths:
       summary: given a sampleUnitType B | H this adds a reporting unit of type Business
         or Household
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
-  /parties/ref/{ref}:
+      x-swagger-router-controller: swagger_server.controllers_local.controller
+  /parties/type/{sampleUnitType}/id/{id}:
     get:
       description: Returns a single Party
-      operationId: get_party_by_ref
+      operationId: get_party_by_id
       parameters:
-      - {description: Reference of the Party to return, in: path, name: ref, required: true,
+      - {description: 'Sample Unit Type [ B BI I H ]', in: path, name: sampleUnitType,
+        required: true, type: string}
+      - {description: ID of the Party to return, in: path, name: id, required: true,
         type: string}
       produces: [application/vnd.ons.party+json]
       responses:
@@ -486,9 +503,41 @@ paths:
         404:
           description: Business not found
           schema: {$ref: '#/definitions/error'}
-      summary: Get a Party by its unique reference (ruref / uprn)
+      summary: Get a Party by its UUID
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
+  /parties/type/{sampleUnitType}/ref/{sampleUnitRef}:
+    get:
+      description: Returns a Party and associated parties
+      operationId: get_party_by_ref
+      parameters:
+      - {description: 'Sample Unit Type [ B BI I H ]', in: path, name: sampleUnitType,
+        required: true, type: string}
+      - {description: 'Reference of the Party to return e.g. ruref for business, uprn
+          for household', in: path, name: sampleUnitRef, required: true, type: string}
+      produces: [application/vnd.ons.party+json]
+      responses:
+        200:
+          description: Party representation
+          headers:
+            ETag: {description: 'The current ETag for the Party, e.g. "5635635636356356"',
+              type: string}
+          schema: {$ref: '#/definitions/party'}
+        401:
+          description: Unauthorized
+          schema: {$ref: '#/definitions/error'}
+        403:
+          description: Forbidden - in the context of frontstage use, this response
+            would indicate the Respondent does not have an ACTIVE association with
+            this business
+          schema: {$ref: '#/definitions/error'}
+        404:
+          description: Business not found
+          schema: {$ref: '#/definitions/error'}
+      summary: Get a Party and any associated parties by its unique reference (ruref
+        for business, uprn for household)
+      tags: [backstage]
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /residences:
     get:
       description: 'By passing in the appropriate options, you can search for available
@@ -509,7 +558,7 @@ paths:
         400: {description: bad input parameter}
       summary: searches Residences
       tags: [future]
-      x-swagger-router-controller: swagger_server.controllers.future_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     post:
       consumes: [application/vnd.ons.party+json]
       description: Adds a Residence to the system
@@ -533,7 +582,7 @@ paths:
       - accessCode: [write]
       summary: adds a reporting unit of type Residence
       tags: [future]
-      x-swagger-router-controller: swagger_server.controllers.future_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /residences/id/{id}:
     get:
       description: Returns a single Party
@@ -552,7 +601,7 @@ paths:
         404: {description: Party not found}
       summary: Get a Residence by its Party ID
       tags: [future]
-      x-swagger-router-controller: swagger_server.controllers.future_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     options:
       operationId: residences_id_id_options
       parameters:
@@ -566,7 +615,7 @@ paths:
         404: {description: Residence not found}
       summary: View the available representations for a given Residence
       tags: [future]
-      x-swagger-router-controller: swagger_server.controllers.future_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     put:
       consumes: [multipart/form-data]
       description: Updates the representation for an existing Residence
@@ -589,7 +638,7 @@ paths:
       - accessCode: [write]
       summary: Update the representation for an existing Residence
       tags: [future]
-      x-swagger-router-controller: swagger_server.controllers.future_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /residences/uprn/{uprn}:
     get:
       description: Returns a single Residence
@@ -609,7 +658,7 @@ paths:
         404: {description: Residence not found}
       summary: Get a Residence by its unique property reference
       tags: [future]
-      x-swagger-router-controller: swagger_server.controllers.future_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /respondents:
     get:
       description: 'By passing in the appropriate options, you can search for available
@@ -632,7 +681,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: searches Respondents
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     post:
       consumes: [application/vnd.ons.respondent+json]
       description: Adds a Respondent to the system
@@ -657,7 +706,7 @@ paths:
       - accessCode: [write]
       summary: adds a Respondent
       tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers.frontstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /respondents/id/{id}:
     get:
       description: Returns a single Party
@@ -681,7 +730,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: Get a Respondent by its Party ID
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     options:
       operationId: respondents_id_id_options
       parameters:
@@ -697,7 +746,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: View the available representations for a given Respondent
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
     put:
       consumes: [application/vnd.ons.respondent+json]
       description: Updates the representation for an existing Respondent. To be used
@@ -727,7 +776,7 @@ paths:
       - accessCode: [write]
       summary: Update the representation for an existing Respondent.
       tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers.frontstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
   /respondents/id/{id}/business-associations:
     get:
       description: Returns the known business associations for a respondent
@@ -746,7 +795,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: Returns the known business associations for a respondent
       tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers.backstage_controller
+      x-swagger-router-controller: swagger_server.controllers_local.controller
 schemes: [https]
 security:
 - accessCode: [read]
