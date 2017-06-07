@@ -188,6 +188,8 @@ def get_business_by_ref(ref):
     """
 
     business = db.session.query(Business).filter(Business.ru_ref == ref).first()
+    if not business:
+        return make_response(jsonify({'errors': "Business with ru_ref '{}' does not exist.".format(ref)}), 404)
     d = {
         'id': business.party.party_uuid,
         'reference': business.ru_ref,
@@ -218,6 +220,8 @@ def get_business_by_id(id):
         return make_response(jsonify(v.errors), 400)
 
     party = db.session.query(Party).filter(Party.party_uuid == id).first()
+    if not party:
+        return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
     business = party.business
     associations = business.respondents
     d = {
@@ -417,6 +421,8 @@ def get_respondent_by_id(id):
         return make_response(jsonify(v.errors), 400)
     
     party = db.session.query(Party).filter(Party.party_uuid == id).first()
+    if not party:
+        return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
     d = {
         'id': party.party_uuid,
         'sampleUnitType': Respondent.UNIT_TYPE,

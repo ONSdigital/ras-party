@@ -63,6 +63,12 @@ class TestParties(BaseTestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
+    def get_business_by_ref(self, ref, expected_status=200):
+        response = self.client.open('/party-api/{}/businesses/ref/{}'.format(API_VERSION, ref),
+                                    method='GET')
+        self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
+        return json.loads(response.data)
+
     def get_respondent_by_id(self, id, expected_status=200):
         response = self.client.open('/party-api/{}/respondents/id/{}'.format(API_VERSION, id),
                                     method='GET')
@@ -305,6 +311,15 @@ class TestParties(BaseTestCase):
         self.assertEqual(len(response['errors']), 1)
         expected_error = validate.IsUuid.ERROR_MESSAGE.format('123', 'id')
         self.assertIn(expected_error, response['errors'])
+
+    def test_get_non_existing_business_is_404(self):
+        self.get_business_by_id('31317c23-763d-46a9-b4e5-c37ff5b4fbe7', 404)
+
+        self.get_business_by_ref('123', 404)
+
+    def test_get_non_existing_respondent_is_404(self):
+        self.get_respondent_by_id('31317c23-763d-46a9-b4e5-c37ff5b4fbe7', 404)
+
 
     ''' TODO:
     Post business with associations, party uuid doesn't exist
