@@ -213,6 +213,10 @@ def get_business_by_id(id):
     :rtype: Business
     """
 
+    v = validate.Validator(validate.IsUuid('id'))
+    if not v.validate({'id': id}):
+        return make_response(jsonify(v.errors), 400)
+
     party = db.session.query(Party).filter(Party.party_uuid == id).first()
     business = party.business
     associations = business.respondents
@@ -407,6 +411,11 @@ def get_respondent_by_id(id):
 
     :rtype: Respondent
     """
+
+    v = validate.Validator(validate.IsUuid('id'))
+    if not v.validate({'id': id}):
+        return make_response(jsonify(v.errors), 400)
+    
     party = db.session.query(Party).filter(Party.party_uuid == id).first()
     d = {
         'id': party.party_uuid,

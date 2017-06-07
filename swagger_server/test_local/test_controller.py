@@ -57,6 +57,18 @@ class TestParties(BaseTestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
+    def get_business_by_id(self, id, expected_status=200):
+        response = self.client.open('/party-api/{}/businesses/id/{}'.format(API_VERSION, id),
+                                    method='GET')
+        self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
+        return json.loads(response.data)
+
+    def get_respondent_by_id(self, id, expected_status=200):
+        response = self.client.open('/party-api/{}/respondents/id/{}'.format(API_VERSION, id),
+                                    method='GET')
+        self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
+        return json.loads(response.data)
+
     def test_post_valid_business_adds_to_db(self):
         mock_business = MockBusiness().attributes(source='test_post_valid_business_adds_to_db').build()
 
@@ -276,6 +288,23 @@ class TestParties(BaseTestCase):
 
         self.assertEqual(persisted[0].first_name, 'Z')
 
+    def test_get_business_with_invalid_id_is_rejected(self):
+
+        response = self.get_business_by_id('123', 400)
+
+        self.assertIn('errors', response)
+        self.assertEqual(len(response['errors']), 1)
+        expected_error = validate.IsUuid.ERROR_MESSAGE.format('123', 'id')
+        self.assertIn(expected_error, response['errors'])
+
+    def test_get_respondent_with_invalid_id_is_rejected(self):
+
+        response = self.get_respondent_by_id('123', 400)
+
+        self.assertIn('errors', response)
+        self.assertEqual(len(response['errors']), 1)
+        expected_error = validate.IsUuid.ERROR_MESSAGE.format('123', 'id')
+        self.assertIn(expected_error, response['errors'])
 
     ''' TODO:
     Post business with associations, party uuid doesn't exist
