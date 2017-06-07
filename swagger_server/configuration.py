@@ -14,15 +14,14 @@
 from configparser import ConfigParser, ExtendedInterpolation
 from json import loads
 from os import getenv
-from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-from yaml import load, dump
+from yaml import load
 
-from swagger_server import ons_logger
 from swagger_server import database
-from .controllers_local.encryption import ONSCryptographer
+from swagger_server import ons_logger
+from swagger_server.controllers_local.encryption import ONSCryptographer
 
 
 class CfServices:
@@ -42,7 +41,7 @@ class ONSEnvironment(object):
         Nothing actually happens at this point, we're just setting up variables
         for future reference.
         """
-        self._port = 0
+        self._port = 8000
         self._crypto_key = None
         self._ons_cipher = None
         self._config = ConfigParser()

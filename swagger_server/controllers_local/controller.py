@@ -10,50 +10,6 @@ from swagger_server.models_local.model import Business, Party, Respondent, Busin
 
 db = ons_env
 
-"""
-/businesses
-    GET = businesses_get
-    POST = businesses_post √
-/businesses/id/{id}
-    GET = get_business_by_id √
-    OPTIONS = businesses_id_id_options
-    PUT = businesses_id_id_put
-/businesses/id/{id}/business-associations
-    GET = businesses_id_id_business_associations_get
-/businesses/ref/{ref}
-    GET = get_business_by_ref √
-/enrolment-codes
-    GET = enrolment_codes_get
-    POST = enrolment_codes_post
-/enrolment-invitations
-    GET = enrolment_invitations_get
-    POST = enrolment_invitations_post
-/parties
-    POST = parties_post √
-/parties/type/{sampleUnitType}/id/{id}
-    GET = get_party_by_id √
-/parties/type/{sampleUnitType}/ref/{sampleUnitRef}
-    GET = get_party_by_ref √
-/residences
-    GET = residences_get
-    POST = residences_post
-/residences/id/{id}
-    GET = get_residence_by_id
-    OPTIONS = residences_id_id_options
-    PUT = residences_id_id_put
-/residences/uprn/{uprn}
-    GET = get_residence_by_uprn
-/respondents
-    GET = respondents_get
-    POST = respondents_post √
-/respondents/id/{id}
-    GET = get_respondent_by_id √
-    OPTIONS = respondents_id_id_options
-    PUT = respondents_id_id_put
-/respondents/id/{id}/business-associations
-    GET = respondents_id_id_business_associations_get
-"""
-
 
 def filter_dict(d, cb):
     """
