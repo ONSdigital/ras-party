@@ -31,11 +31,6 @@ def business_respondent_associations():
     return db.session.query(BusinessRespondent).all()
 
 
-''' TODO:
-/parties response should include respondents (if they exist)
-'''
-
-
 class TestParties(BaseTestCase):
     def post_to_parties(self, payload, expected_status):
         response = self.client.open('/party-api/{}/parties'.format(API_VERSION),
@@ -319,7 +314,6 @@ class TestParties(BaseTestCase):
 
     def test_get_non_existing_respondent_is_404(self):
         self.get_respondent_by_id('31317c23-763d-46a9-b4e5-c37ff5b4fbe7', 404)
-
 
     ''' TODO:
     Post business with associations, party uuid doesn't exist
