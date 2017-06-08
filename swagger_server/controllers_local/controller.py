@@ -51,6 +51,11 @@ def businesses_post(party):
     address = party.get('address')
 
     db_party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
+
+    if db_party and not db_party.business:
+        return make_response(jsonify({'errors': "Existing party with '{}' does not identify a business."
+                                     .format(party_uuid)}), 400)
+
     if not db_party:
         db_party = Party(party_uuid)
 
@@ -169,6 +174,9 @@ def get_business_by_id(id):
     party = db.session.query(Party).filter(Party.party_uuid == id).first()
     if not party:
         return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
+    if not party.business:
+        return make_response(jsonify({'errors': "Party id '{}' is not associated with a business.".format(id)}), 404)
+
     business = party.business
     associations = business.respondents
     d = {
@@ -371,6 +379,9 @@ def get_respondent_by_id(id):
     party = db.session.query(Party).filter(Party.party_uuid == id).first()
     if not party:
         return make_response(jsonify({'errors': "Respondent with party id '{}' does not exist.".format(id)}), 404)
+    if not party.respondent:
+        return make_response(jsonify({'errors': "Party id '{}' is not associated with a respondent.".format(id)}), 404)
+
     d = {
         'id': party.party_uuid,
         'sampleUnitType': Respondent.UNIT_TYPE,
@@ -458,6 +469,11 @@ def respondents_post(party):
 
     party_uuid = party['id']
     db_party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
+
+    if db_party and not db_party.respondent:
+        return make_response(jsonify({'errors': "Existing party with '{}' does not identify a respondent."
+                                     .format(party_uuid)}), 400)
+
     if not db_party:
         db_party = Party(party_uuid)
         respondent = Respondent(db_party)
