@@ -26,6 +26,14 @@ class MockBusiness(MockParty):
     def __init__(self):
         super().__init__('B')
         self.party['reference'] = str(self.reference)
+        self.party['address'] = {
+            "saon": "Office 2a",
+            "paon": "Unit 5",
+            "street": "Milton Street",
+            "locality": "Green Industrial Park",
+            "town": "New Town",
+            "postcode": "NT23 7TN"
+        }
         self.reference += 1
 
     def attributes(self, **kwargs):

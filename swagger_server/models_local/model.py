@@ -22,6 +22,26 @@ class Party(Base):
         self.party_uuid = party_uuid
 
 
+class Address(Base):
+    __tablename__ = 'address'
+
+    id = Column(Integer, primary_key=True)
+    saon = Column(Text)
+    paon = Column(Text)
+    street = Column(Text)
+    locality = Column(Text)
+    town = Column(Text)
+    postcode = Column(Text)
+
+    def __init__(self, saon, paon, street, locality, town, postcode):
+        self.saon = saon
+        self.paon = paon
+        self.street = street
+        self.locality = locality
+        self.town = town
+        self.postcode = postcode
+
+
 class Business(Base):
     __tablename__ = 'business'
 
@@ -29,11 +49,13 @@ class Business(Base):
 
     id = Column(Integer, primary_key=True)
     ru_ref = Column(Text, unique=True)
-    attributes = Column(JsonColumn())
     party_id = Column(Integer, ForeignKey('party.id'))
     party = relationship('Party', back_populates='business')
     # TODO: this is actually linking to BusinessRespondent instances, rename to associations?
     respondents = relationship('BusinessRespondent', back_populates='business')
+    address_id = Column(Integer, ForeignKey('address.id'))
+    address = relationship('Address')
+    attributes = Column(JsonColumn())
     # business_ref = Column(Text)
     # name = Column(Text)
     # trading_name = Column(Text)

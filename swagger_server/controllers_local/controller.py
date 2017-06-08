@@ -1,29 +1,15 @@
 #
 # /businesses
 #
-import functools
+
 from flask import make_response, jsonify
 
 from swagger_server.configuration import ons_env
 from swagger_server.controllers_local import validate
-from swagger_server.models_local.model import Business, Party, Respondent, BusinessRespondent
+from swagger_server.controllers_local.util import filter_falsey_values, model_to_dict
+from swagger_server.models_local.model import Business, Party, Respondent, BusinessRespondent, Address
 
 db = ons_env
-
-
-def filter_dict(d, cb):
-    """
-    Filter a dictionary based on passed function.
-
-    :param d: The dictionary to be filtered
-    :param cb: A function which is called back for each k, v pair of the dictionary. Should return Truthy or Falsey
-    :return: The filtered dictionary (new instance)
-    """
-
-    return {k: v for k, v in d.items() if cb(k, v)}
-
-
-filter_falsey_values = functools.partial(filter_dict, cb=lambda _, v: v)
 
 
 #
@@ -45,33 +31,39 @@ def businesses_get(searchString=None, skip=None, limit=None):
     return "to be implemented"  # pragma: no cover  # pragma: no cover
 
 
-def businesses_post(party_data):
+def businesses_post(party):
     """
     adds a reporting unit of type Business
     Adds a new Business, or updates an existing Business based on the business reference provided
-    :param party_data: Business to add
-    :type party_data: dict | bytes
+    :param party: Business to add
+    :type party: dict | bytes
 
     :rtype: None
     """
+
     v = validate.Validator(validate.Exists('id', 'reference'), validate.IsUuid('id'))
-    if not v.validate(party_data):
+    if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
-    party_uuid = party_data['id']
-    ru_ref = party_data['reference']
-    associations = party_data.get('associations')
+    party_uuid = party['id']
+    ru_ref = party['reference']
+    associations = party.get('associations')
+    address = party.get('address')
 
-    party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
-    if not party:
-        party = Party(party_uuid)
+    db_party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
+    if not db_party:
+        db_party = Party(party_uuid)
 
+    # TODO: there's no attempt made to detect if an address already exists, just assumes new business means new address
     business = db.session.query(Business).filter(Business.ru_ref == ru_ref).first()
     if not business:
-        business = Business(ru_ref, party)
+        business = Business(ru_ref, db_party)
         db.session.add(business)
 
-    business.attributes = party_data.get('attributes', {})
+        db_address = Address(**address)
+        business.address = db_address
+
+    business.attributes = party.get('attributes', {})
 
     if associations:
         for assoc in associations:
@@ -150,7 +142,8 @@ def get_business_by_ref(ref):
         'id': business.party.party_uuid,
         'reference': business.ru_ref,
         'sampleUnitType': Business.UNIT_TYPE,
-        'attributes': business.attributes
+        'attributes': business.attributes,
+        'address': model_to_dict(business.address, exclude=['id'])
     }
 
     result = filter_falsey_values(d)
@@ -185,7 +178,8 @@ def get_business_by_id(id):
         'reference': party.business.ru_ref,
         'sampleUnitType': 'B',
         'attributes': party.business.attributes,
-        'associations': [{'id': a.respondent.party.party_uuid} for a in associations]
+        'associations': [{'id': a.respondent.party.party_uuid} for a in associations],
+        'address': model_to_dict(business.address, exclude=['id'])
     }
 
     response = filter_falsey_values(d)
@@ -448,7 +442,7 @@ def respondents_id_id_put(id, ETag=None):
 #
 # /respondents
 #
-def respondents_post(party_data):
+def respondents_post(party):
     """
     adds a Respondent
     Adds a Respondent to the system
@@ -461,22 +455,22 @@ def respondents_post(party_data):
                            validate.IsUuid('id'),
                            validate.Exists('email_address', 'first_name', 'last_name', 'telephone')
                            )
-    if not v.validate(party_data):
+    if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
-    party_uuid = party_data['id']
-    party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
-    if not party:
-        party = Party(party_uuid)
-        respondent = Respondent(party)
+    party_uuid = party['id']
+    db_party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
+    if not db_party:
+        db_party = Party(party_uuid)
+        respondent = Respondent(db_party)
         db.session.add(respondent)
     else:
-        respondent = party.respondent
+        respondent = db_party.respondent
 
-    respondent.email_address = party_data['email_address']
-    respondent.first_name = party_data['first_name']
-    respondent.last_name = party_data['last_name']
-    respondent.telephone = party_data['telephone']
+    respondent.email_address = party['email_address']
+    respondent.first_name = party['first_name']
+    respondent.last_name = party['last_name']
+    respondent.telephone = party['telephone']
 
     db.session.commit()
 
