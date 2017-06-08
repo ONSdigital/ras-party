@@ -18,7 +18,7 @@ if __name__ == '__main__':
     app = App(__name__, specification_dir='./swagger/')
     CORS(app.app)
     app.add_api('swagger.yaml', arguments={'title': 'ONS Microservice'})
-    app.run(host='0.0.0.0', port=ons_env.port, debug=ons_env.debug)
+    app.run(host='0.0.0.0', port=ons_env.port)
 
     #from twisted.internet import reactor
     #from flask_twisted import Twisted
