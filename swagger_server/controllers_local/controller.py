@@ -57,11 +57,9 @@ def businesses_post(party):
     # TODO: there's no attempt made to detect if an address already exists, just assumes new business means new address
     business = db.session.query(Business).filter(Business.ru_ref == ru_ref).first()
     if not business:
-        business = Business(ru_ref, db_party)
-        db.session.add(business)
-
         db_address = Address(**address)
-        business.address = db_address
+        business = Business(ru_ref, db_party, db_address)
+        db.session.add(business)
 
     business.attributes = party.get('attributes', {})
 

@@ -76,9 +76,10 @@ class Business(Base):
     # turnover = Column(Integer)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, ru_ref, party):
+    def __init__(self, ru_ref, party, address):
         self.ru_ref = ru_ref
         self.party = party
+        self.address = address
 
 
 class BusinessRespondentStatus(enum.IntEnum):
