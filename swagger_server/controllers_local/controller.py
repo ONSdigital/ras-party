@@ -370,14 +370,14 @@ def get_respondent_by_id(id):
     
     party = db.session.query(Party).filter(Party.party_uuid == id).first()
     if not party:
-        return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
+        return make_response(jsonify({'errors': "Respondent with party id '{}' does not exist.".format(id)}), 404)
     d = {
         'id': party.party_uuid,
         'sampleUnitType': Respondent.UNIT_TYPE,
         'status': party.respondent.status,
-        'email_address': party.respondent.email_address,
-        'first_name': party.respondent.first_name,
-        'last_name': party.respondent.last_name,
+        'emailAddress': party.respondent.email_address,
+        'firstName': party.respondent.first_name,
+        'lastName': party.respondent.last_name,
         'telephone': party.respondent.telephone
     }
 
@@ -451,7 +451,7 @@ def respondents_post(party):
     """
     v = validate.Validator(validate.Exists('id'),
                            validate.IsUuid('id'),
-                           validate.Exists('email_address', 'first_name', 'last_name', 'telephone')
+                           validate.Exists('emailAddress', 'firstName', 'lastName', 'telephone')
                            )
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
@@ -465,14 +465,14 @@ def respondents_post(party):
     else:
         respondent = db_party.respondent
 
-    respondent.email_address = party['email_address']
-    respondent.first_name = party['first_name']
-    respondent.last_name = party['last_name']
+    respondent.email_address = party['emailAddress']
+    respondent.first_name = party['firstName']
+    respondent.last_name = party['lastName']
     respondent.telephone = party['telephone']
 
     db.session.commit()
 
-    return make_response(jsonify("Ok, business entity created"), 200)
+    return make_response(jsonify("Ok, respondent entity created"), 200)
 
 
 #

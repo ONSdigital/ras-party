@@ -262,18 +262,18 @@ class TestParties(BaseTestCase):
 
     def test_post_respondent_with_missing_details_is_rejected(self):
         mock_respondent = MockRespondent().build()
-        del mock_respondent['first_name']
-        del mock_respondent['last_name']
+        del mock_respondent['firstName']
+        del mock_respondent['lastName']
         del mock_respondent['telephone']
-        del mock_respondent['email_address']
+        del mock_respondent['emailAddress']
 
         response = self.post_to_parties(mock_respondent, 400)
 
         self.assertIn('errors', response)
         self.assertEqual(len(response['errors']), 4)
-        self.assertIn(validate.Exists.ERROR_MESSAGE.format('email_address'), response['errors'])
-        self.assertIn(validate.Exists.ERROR_MESSAGE.format('first_name'), response['errors'])
-        self.assertIn(validate.Exists.ERROR_MESSAGE.format('last_name'), response['errors'])
+        self.assertIn(validate.Exists.ERROR_MESSAGE.format('emailAddress'), response['errors'])
+        self.assertIn(validate.Exists.ERROR_MESSAGE.format('firstName'), response['errors'])
+        self.assertIn(validate.Exists.ERROR_MESSAGE.format('lastName'), response['errors'])
         self.assertIn(validate.Exists.ERROR_MESSAGE.format('telephone'), response['errors'])
 
     def test_post_existing_respondent_updates_details(self):
@@ -286,7 +286,7 @@ class TestParties(BaseTestCase):
 
         self.assertEqual(persisted[0].first_name, 'A')
 
-        mock_respondent['first_name'] = 'Z'
+        mock_respondent['firstName'] = 'Z'
         self.post_to_parties(mock_respondent, 200)
         persisted = respondents()
         self.assertEqual(len(persisted), 1)

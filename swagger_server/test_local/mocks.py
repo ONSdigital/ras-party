@@ -50,5 +50,5 @@ class MockRespondent(MockParty):
         super().__init__('BI')
 
     def build(self):
-        self.properties(first_name='A', last_name='Z', email_address='a@z.com', telephone='123')
+        self.properties(firstName='A', lastName='Z', emailAddress='a@z.com', telephone='123')
         return super().build()
