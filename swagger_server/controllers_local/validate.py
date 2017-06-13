@@ -2,7 +2,7 @@ import itertools
 import uuid
 
 
-class Validator:
+class ValidatorBase:
 
     def __init__(self):
         self._errors = []
@@ -12,7 +12,7 @@ class Validator:
         return self._errors
 
 
-class Exists(Validator):
+class Exists(ValidatorBase):
 
     ERROR_MESSAGE = "Required key '{}' is missing."
 
@@ -27,7 +27,7 @@ class Exists(Validator):
         return len(self._diff) == 0
 
 
-class IsUuid(Validator):
+class IsUuid(ValidatorBase):
 
     ERROR_MESSAGE = "'{}' is not a valid UUID format for property '{}'."
 
@@ -46,7 +46,7 @@ class IsUuid(Validator):
         return True
 
 
-class IsIn(Validator):
+class IsIn(ValidatorBase):
 
     ERROR_MESSAGE = "'{}' is not a valid value for {}. Must be one of {}"
 
