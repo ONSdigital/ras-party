@@ -1,6 +1,7 @@
 #
 # /businesses
 #
+import uuid
 
 from flask import make_response, jsonify
 
@@ -68,11 +69,13 @@ def businesses_post(party):
     :rtype: None
     """
 
-    v = Validator(Exists('id', 'reference'), IsUuid('id'))
+    v = Validator(Exists('reference'))
+    if 'id' in party:
+        v.add_rule(IsUuid('id'))
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
-    party_uuid = party['id']
+    party_uuid = party.get('id', uuid.uuid4())
     ru_ref = party['reference']
     associations = party.get('associations')
     address = party.get('address')
@@ -452,13 +455,13 @@ def respondents_post(party):
 
     :rtype: None
     """
-    v = Validator(Exists('id'),
-                  IsUuid('id'),
-                  Exists('emailAddress', 'firstName', 'lastName', 'telephone'))
+    v = Validator(Exists('emailAddress', 'firstName', 'lastName', 'telephone'))
+    if 'id' in party:
+        v.add_rule(IsUuid('id'))
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
-    party_uuid = party['id']
+    party_uuid = party.get('id', uuid.uuid4())
     db_party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
 
     if db_party and not db_party.respondent:
