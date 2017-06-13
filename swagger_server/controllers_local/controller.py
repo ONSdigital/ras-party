@@ -5,8 +5,8 @@
 from flask import make_response, jsonify
 
 from swagger_server.configuration import ons_env
-from swagger_server.controllers_local import validate
 from swagger_server.controllers_local.util import filter_falsey_values, model_to_dict
+from swagger_server.controllers_local.validate import Validator, Exists, IsUuid, IsIn
 from swagger_server.models_local.model import Business, Party, Respondent, BusinessRespondent, Address
 
 db = ons_env
@@ -41,7 +41,7 @@ def businesses_post(party):
     :rtype: None
     """
 
-    v = validate.Validator(validate.Exists('id', 'reference'), validate.IsUuid('id'))
+    v = Validator(Exists('id', 'reference'), IsUuid('id'))
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
@@ -70,7 +70,6 @@ def businesses_post(party):
 
     if associations:
         for assoc in associations:
-            assoc_type = assoc['sampleUnitType']
             assoc_id = assoc['id']
 
             assoc_party = db.session.query(Party).filter(Party.party_uuid == assoc_id).first()
@@ -167,7 +166,7 @@ def get_business_by_id(id):
     :rtype: Business
     """
 
-    v = validate.Validator(validate.IsUuid('id'))
+    v = Validator(IsUuid('id'))
     if not v.validate({'id': id}):
         return make_response(jsonify(v.errors), 400)
 
@@ -221,7 +220,7 @@ def parties_post(party):
     :rtype: None
     """
 
-    v = validate.Validator(validate.Exists('sampleUnitType'), validate.IsIn('sampleUnitType', 'B', 'BI'))
+    v = Validator(Exists('sampleUnitType'), IsIn('sampleUnitType', 'B', 'BI'))
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
@@ -243,7 +242,7 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
 
     :rtype: Party
     """
-    v = validate.Validator(validate.IsIn('sampleUnitType', 'B', 'BI'))
+    v = Validator(IsIn('sampleUnitType', 'B', 'BI'))
     if not v.validate({'sampleUnitType': sampleUnitType}):
         return make_response(jsonify(v.errors), 400)
 
@@ -255,7 +254,7 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
 # /parties/{id}
 #
 def get_party_by_id(sampleUnitType, id):
-    v = validate.Validator(validate.IsIn('sampleUnitType', 'B', 'BI'))
+    v = Validator(IsIn('sampleUnitType', 'B', 'BI'))
     if not v.validate({'sampleUnitType': sampleUnitType}):
         return make_response(jsonify(v.errors), 400)
 
@@ -372,10 +371,10 @@ def get_respondent_by_id(id):
     :rtype: Respondent
     """
 
-    v = validate.Validator(validate.IsUuid('id'))
+    v = Validator(IsUuid('id'))
     if not v.validate({'id': id}):
         return make_response(jsonify(v.errors), 400)
-    
+
     party = db.session.query(Party).filter(Party.party_uuid == id).first()
     if not party:
         return make_response(jsonify({'errors': "Respondent with party id '{}' does not exist.".format(id)}), 404)
@@ -460,10 +459,9 @@ def respondents_post(party):
 
     :rtype: None
     """
-    v = validate.Validator(validate.Exists('id'),
-                           validate.IsUuid('id'),
-                           validate.Exists('emailAddress', 'firstName', 'lastName', 'telephone')
-                           )
+    v = Validator(Exists('id'),
+                  IsUuid('id'),
+                  Exists('emailAddress', 'firstName', 'lastName', 'telephone'))
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
