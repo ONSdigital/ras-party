@@ -218,18 +218,15 @@ class TestParties(BaseTestCase):
         expected_error = validate.IsUuid.ERROR_MESSAGE.format('123', 'id')
         self.assertIn(expected_error, response['errors'])
 
-    def test_post_party_with_missing_party_id_is_rejected(self):
+    def test_post_party_with_missing_party_id_creates_new_id(self):
         mock_business = MockBusiness()\
             .attributes(source='test_post_party_with_missing_party_id_is_rejected')\
             .build()
         del mock_business['id']
 
-        response = self.post_to_parties(mock_business, 400)
+        response = self.post_to_parties(mock_business, 200)
 
-        self.assertIn('errors', response)
-        self.assertEqual(len(response['errors']), 1)
-        expected_error = validate.Exists.ERROR_MESSAGE.format('id')
-        self.assertIn(expected_error, response['errors'])
+        self.assertIn('id', response)
 
     def test_post_party_with_missing_reference_is_rejected(self):
         mock_business = MockBusiness() \

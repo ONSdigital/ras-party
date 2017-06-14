@@ -1,6 +1,7 @@
 #
 # /businesses
 #
+import uuid
 
 from flask import make_response, jsonify
 
@@ -10,6 +11,33 @@ from swagger_server.controllers_local.validate import Validator, Exists, IsUuid,
 from swagger_server.models_local.model import Business, Party, Respondent, BusinessRespondent, Address
 
 db = ons_env
+
+
+def business_to_dict(business):
+    associations = business.respondents
+    d = {
+        'id': business.party.party_uuid,
+        'reference': business.party.business.ru_ref,
+        'sampleUnitType': 'B',
+        'attributes': business.party.business.attributes,
+        'associations': [{'id': a.respondent.party.party_uuid} for a in associations],
+        'address': model_to_dict(business.address, exclude=['id'])
+    }
+    return filter_falsey_values(d)
+
+
+def respondent_to_dict(respondent):
+    d = {
+        'id': respondent.party.party_uuid,
+        'sampleUnitType': Respondent.UNIT_TYPE,
+        'status': respondent.status,
+        'emailAddress': respondent.email_address,
+        'firstName': respondent.first_name,
+        'lastName': respondent.last_name,
+        'telephone': respondent.telephone
+    }
+
+    return filter_falsey_values(d)
 
 
 #
@@ -41,11 +69,13 @@ def businesses_post(party):
     :rtype: None
     """
 
-    v = Validator(Exists('id', 'reference'), IsUuid('id'))
+    v = Validator(Exists('reference'))
+    if 'id' in party:
+        v.add_rule(IsUuid('id'))
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
-    party_uuid = party['id']
+    party_uuid = party.get('id', uuid.uuid4())
     ru_ref = party['reference']
     associations = party.get('associations')
     address = party.get('address')
@@ -83,7 +113,7 @@ def businesses_post(party):
 
     db.session.commit()
 
-    return make_response(jsonify("Ok, business entity created"), 200)
+    return make_response(jsonify(business_to_dict(business)), 200)
 
 
 #
@@ -140,17 +170,8 @@ def get_business_by_ref(ref):
     business = db.session.query(Business).filter(Business.ru_ref == ref).first()
     if not business:
         return make_response(jsonify({'errors': "Business with ru_ref '{}' does not exist.".format(ref)}), 404)
-    d = {
-        'id': business.party.party_uuid,
-        'reference': business.ru_ref,
-        'sampleUnitType': Business.UNIT_TYPE,
-        'attributes': business.attributes,
-        'address': model_to_dict(business.address, exclude=['id'])
-    }
 
-    result = filter_falsey_values(d)
-
-    return make_response(jsonify(result), 200)
+    return make_response(jsonify(business_to_dict(business)), 200)
 
 
 #
@@ -176,20 +197,7 @@ def get_business_by_id(id):
     if not party.business:
         return make_response(jsonify({'errors': "Party id '{}' is not associated with a business.".format(id)}), 404)
 
-    business = party.business
-    associations = business.respondents
-    d = {
-        'id': party.party_uuid,
-        'reference': party.business.ru_ref,
-        'sampleUnitType': 'B',
-        'attributes': party.business.attributes,
-        'associations': [{'id': a.respondent.party.party_uuid} for a in associations],
-        'address': model_to_dict(business.address, exclude=['id'])
-    }
-
-    response = filter_falsey_values(d)
-
-    return make_response(jsonify(response), 200)
+    return make_response(jsonify(business_to_dict(party.business)), 200)
 
 
 #
@@ -381,19 +389,7 @@ def get_respondent_by_id(id):
     if not party.respondent:
         return make_response(jsonify({'errors': "Party id '{}' is not associated with a respondent.".format(id)}), 404)
 
-    d = {
-        'id': party.party_uuid,
-        'sampleUnitType': Respondent.UNIT_TYPE,
-        'status': party.respondent.status,
-        'emailAddress': party.respondent.email_address,
-        'firstName': party.respondent.first_name,
-        'lastName': party.respondent.last_name,
-        'telephone': party.respondent.telephone
-    }
-
-    result = filter_falsey_values(d)
-
-    return make_response(jsonify(result), 200)
+    return make_response(jsonify(respondent_to_dict(party.respondent)), 200)
 
 
 #
@@ -459,13 +455,13 @@ def respondents_post(party):
 
     :rtype: None
     """
-    v = Validator(Exists('id'),
-                  IsUuid('id'),
-                  Exists('emailAddress', 'firstName', 'lastName', 'telephone'))
+    v = Validator(Exists('emailAddress', 'firstName', 'lastName', 'telephone'))
+    if 'id' in party:
+        v.add_rule(IsUuid('id'))
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
-    party_uuid = party['id']
+    party_uuid = party.get('id', uuid.uuid4())
     db_party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
 
     if db_party and not db_party.respondent:
@@ -486,7 +482,7 @@ def respondents_post(party):
 
     db.session.commit()
 
-    return make_response(jsonify("Ok, respondent entity created"), 200)
+    return make_response(jsonify(respondent_to_dict(respondent)), 200)
 
 
 #
