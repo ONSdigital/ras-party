@@ -12,7 +12,7 @@ def drop(config, engine, logger):
     # fix-up the postgres schema:
     Base.metadata.schema = db_schema if db_connection.startswith('postgres') else None
 
-    from swagger_server.models_local import _model
+    from swagger_server.models_local import model
 
     logger.info("Dropping database tables.")
     if db_connection.startswith('postgres'):
@@ -30,7 +30,7 @@ def create(config, engine, logger):
     # fix-up the postgres schema:
     Base.metadata.schema = db_schema if db_connection.startswith('postgres') else None
 
-    from swagger_server.models_local import _model
+    from swagger_server.models_local import model
 
     logger.info("Creating database with uri '{}'".format(db_connection))
     if db_connection.startswith('postgres'):

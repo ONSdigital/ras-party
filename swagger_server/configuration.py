@@ -14,15 +14,14 @@
 from configparser import ConfigParser, ExtendedInterpolation
 from json import loads
 from os import getenv
-from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-from yaml import load, dump
+from yaml import load
 
-from swagger_server import ons_logger
 from swagger_server import database
-from .controllers_local.encryption import ONSCryptographer
+from swagger_server import ons_logger
+from swagger_server.controllers_local.encryption import ONSCryptographer
 
 
 class CfServices:
@@ -42,12 +41,12 @@ class ONSEnvironment(object):
         Nothing actually happens at this point, we're just setting up variables
         for future reference.
         """
-        self._port = 0
+        self._port = 8000
         self._crypto_key = None
         self._ons_cipher = None
         self._config = ConfigParser()
         self._config._interpolation = ExtendedInterpolation()
-        self._config.read('config.ini')
+        self._config.read(['local.ini', 'config.ini'])
         self._env = getenv('ONS_ENV', 'development')
         self._parse_manifest()
         self._session = scoped_session(sessionmaker())
@@ -100,31 +99,21 @@ class ONSEnvironment(object):
         use by the listener if we're running locally.
         """
         self._crypto_key = getenv('ONS_CRYPTOKEY', self.get('crypto_key'))
-        config = './swagger_server/swagger/swagger.yaml'
-        if not Path(config).is_file():
-            raise Exception('%% swagger configuration is missing')
-        with open(config) as io:
-            code = load(io)
-        if len(code['host'].split(':')) > 1:
-            self._port = code['host'].split(':')[1]
 
         cf_app_env = getenv('VCAP_APPLICATION')
         if cf_app_env is not None:
             host = loads(cf_app_env)['application_uris'][0]
-            code['host'] = host
             if len(host.split(':')) > 1:
                 self._port = int(host.split(':')[1])
-            with open(config, 'w') as io:
-                io.write(dump(code))
+
+        self._port = int(getenv('PORT', self._port))
 
         cf_app_services = getenv('VCAP_SERVICES')
         if cf_app_services is not None:
-            db_name = self.get('db_name')
+            db_name = self.get('cf_db_service')
             db_config = CfServices(loads(cf_app_services)).get(db_name)
             # override the configured db_connection with the CloudFoundry value:
             self.set('db_connection', db_config['uri'])
-
-        self._port = getenv('PORT', self._port)
 
     def get(self, key, default=None):
         """
@@ -150,6 +139,10 @@ class ONSEnvironment(object):
         return drop.lower() in ['yes', 'true']
 
     @property
+    def is_secure(self):
+        return self.get('authentication', 'true').lower() in ['yes', 'true']
+
+    @property
     def session(self):
         return self._session
 
@@ -160,6 +153,9 @@ class ONSEnvironment(object):
     @property
     def cipher(self):
         return self._ons_cipher
+
+    def __getattr__(self, item):
+        return self.get(item)
 
 
 ons_env = ONSEnvironment()

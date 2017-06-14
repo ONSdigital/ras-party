@@ -1,51 +1,115 @@
 import datetime
 import enum
 
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
 from swagger_server.models_local.base import Base
 from swagger_server.models_local.guid import GUID
-
-
-class BusinessRespondentStatus(enum.Enum):
-    ACTIVE = 0
-    INACTIVE = 1
-    SUSPENDED = 2
-    ENDED = 3
+from swagger_server.models_local.json_column import JsonColumn
 
 
 class Party(Base):
     __tablename__ = 'party'
 
     id = Column(Integer, primary_key=True)
-    party_id = Column(GUID)
-    respondent = relationship("Respondent", uselist=False, back_populates="party")
-    business = relationship("Business", uselist=False, back_populates="party")
+    party_uuid = Column(GUID, unique=True)
+    respondent = relationship('Respondent', uselist=False, back_populates='party')
+    business = relationship('Business', uselist=False, back_populates='party')
 
-    def __init__(self, party_id):
-        self.party_id = party_id
+    def __init__(self, party_uuid):
+        self.party_uuid = party_uuid
+
+
+class Address(Base):
+    __tablename__ = 'address'
+
+    id = Column(Integer, primary_key=True)
+    saon = Column(Text)
+    paon = Column(Text)
+    street = Column(Text)
+    locality = Column(Text)
+    town = Column(Text)
+    postcode = Column(Text)
+
+    def __init__(self, saon, paon, street, locality, town, postcode):
+        self.saon = saon
+        self.paon = paon
+        self.street = street
+        self.locality = locality
+        self.town = town
+        self.postcode = postcode
+
+
+class Business(Base):
+    __tablename__ = 'business'
+
+    UNIT_TYPE = 'B'
+
+    id = Column(Integer, primary_key=True)
+    ru_ref = Column(Text, unique=True)
+    party_id = Column(Integer, ForeignKey('party.id'))
+    party = relationship('Party', back_populates='business')
+    # TODO: this is actually linking to BusinessRespondent instances, rename to associations?
+    respondents = relationship('BusinessRespondent', back_populates='business')
+    address_id = Column(Integer, ForeignKey('address.id'))
+    address = relationship('Address')
+    attributes = Column(JsonColumn())
+    # business_ref = Column(Text)
+    # name = Column(Text)
+    # trading_name = Column(Text)
+    # enterprise_name = Column(Text)
+    # contact_name = Column(Text)
+    # address_line_1 = Column(Text)
+    # address_line_2 = Column(Text)
+    # address_line_3 = Column(Text)
+    # city = Column(Text)
+    # postcode = Column(Text)
+    # telephone = Column(Text)
+    # employee_count = Column(Integer)
+    # facsimile = Column(Text)
+    # fulltime_count = Column(Integer)
+    # legal_status = Column(Text)
+    # sic_2003 = Column(Text)
+    # sic_2007 = Column(Text)
+    # turnover = Column(Integer)
+    created_on = Column(DateTime, default=datetime.datetime.utcnow)
+
+    def __init__(self, ru_ref, party, address):
+        self.ru_ref = ru_ref
+        self.party = party
+        self.address = address
+
+
+class BusinessRespondentStatus(enum.IntEnum):
+    ACTIVE = 0
+    INACTIVE = 1
+    SUSPENDED = 2
+    ENDED = 3
 
 
 class BusinessRespondent(Base):
     __tablename__ = 'business_respondent'
 
-    id = Column(Integer, primary_key=True)
-    business_id = Column(Integer, ForeignKey('business.id'))
-    respondent_id = Column(Integer, ForeignKey('respondent.id'))
+    business_id = Column(Integer, ForeignKey('business.id'), primary_key=True)
+    respondent_id = Column(Integer, ForeignKey('respondent.id'), primary_key=True)
     status = Column('status', Enum(BusinessRespondentStatus))
     effective_from = Column(DateTime, default=datetime.datetime.utcnow)
     effective_to = Column(DateTime)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, status, effective_from, effective_to):
-        self.status = status
-        self.effective_from = effective_from
-        self.effective_to = effective_to
+    business = relationship('Business', back_populates='respondents')
+    respondent = relationship('Respondent', back_populates='businesses')
+
+    # __table_args__ = (UniqueConstraint('business_id', 'respondent_id', name='_business_respondent_uc'),)
+
+    def __init__(self):
+        # TODO: what to use for effective_to?
+        self.effective_to = datetime.datetime.now() + datetime.timedelta(days=7)
 
 
-class RespondentStatus(enum.Enum):
+class RespondentStatus(enum.IntEnum):
     CREATED = 0
     ACTIVE = 1
     SUSPENDED = 2
@@ -55,27 +119,24 @@ class Respondent(Base):
 
     __tablename__ = 'respondent'
 
+    UNIT_TYPE = 'BI'
+
     id = Column(Integer, primary_key=True)
-    businesses = relationship("Business", secondary=BusinessRespondent, back_populates='respondents')
+    businesses = relationship('BusinessRespondent', back_populates='respondent')
     party_id = Column(Integer, ForeignKey('party.id'))
-    party = relationship("Party", back_populates="party")
-    status = Column('status', Enum(RespondentStatus))
+    party = relationship('Party', back_populates='respondent')
+    status = Column('status', Enum(RespondentStatus), default=RespondentStatus.CREATED)
     email_address = Column(Text)
     first_name = Column(Text)
     last_name = Column(Text)
     telephone = Column(Text)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, party_id, status, email_address, first_name, last_name, telephone):
-        self.party_id = party_id
-        self.status = status
-        self.email_address = email_address
-        self.first_name = first_name
-        self.last_name = last_name
-        self.telephone = telephone
+    def __init__(self, party):
+        self.party = party
 
 
-class EnrolmentStatus(enum.Enum):
+class EnrolmentStatus(enum.IntEnum):
     PENDING = 0
     ENABLED = 1
     DISABLED = 2
@@ -98,60 +159,7 @@ class Enrolment(Base):
         self.status = status
 
 
-class Business(Base):
-
-    __tablename__ = 'business'
-
-    id = Column(Integer, primary_key=True)
-    respondents = relationship("Respondent", secondary=BusinessRespondent, back_populates='respondents')
-    party_id = Column(Integer, ForeignKey('party.id'))
-    party = relationship("Party", back_populates="party")
-    business_ref = Column(Text)
-    name = Column(Text)
-    trading_name = Column(Text)
-    enterprise_name = Column(Text)
-    contact_name = Column(Text)
-    address_line_1 = Column(Text)
-    address_line_2 = Column(Text)
-    address_line_3 = Column(Text)
-    city = Column(Text)
-    postcode = Column(Text)
-    telephone = Column(Text)
-    employee_count = Column(Integer)
-    facsimile = Column(Text)
-    fulltime_count = Column(Integer)
-    legal_status = Column(Text)
-    sic_2003 = Column(Text)
-    sic_2007 = Column(Text)
-    turnover = Column(Integer)
-    created_on = Column(DateTime, default=datetime.datetime.utcnow)
-
-    def __init__(self, business_ref, party_id, name, trading_name, enterprise_name,
-                 contact_name, address_line_1, address_line_2, address_line_3, city,
-                 postcode, telephone,    employee_count, facsimile, fulltime_count,
-                 legal_status, sic_2003, sic_2007, turnover):
-        self.business_ref = business_ref
-        self.party_id = party_id
-        self.name = name
-        self.trading_name = trading_name
-        self.enterprise_name = enterprise_name
-        self.contact_name = contact_name
-        self.address_line_1 = address_line_1
-        self.address_line_2 = address_line_2
-        self.address_line_3 = address_line_3
-        self.city = city
-        self.postcode = postcode
-        self.telephone = telephone
-        self.employee_count = employee_count
-        self.facsimile = facsimile
-        self.fulltime_count = fulltime_count
-        self.legal_status = legal_status
-        self.sic_2003 = sic_2003
-        self.sic_2007 = sic_2007
-        self.turnover = turnover
-
-
-class EnrolmentCodeStatus(enum.Enum):
+class EnrolmentCodeStatus(enum.IntEnum):
     ACTIVE = 0
     REDEEMED = 1
     REVOKED = 2
@@ -177,7 +185,7 @@ class EnrolmentCode(Base):
         self.iac = iac
 
 
-class EnrolmentInvitationStatus(enum.Enum):
+class EnrolmentInvitationStatus(enum.IntEnum):
     ACTIVE = 0
     REDEEMED = 1
     REVOKED = 2
