@@ -12,8 +12,6 @@ from swagger_server.test_local.mocks import MockParty, MockBusiness, MockRespond
 
 db = ons_env
 
-API_VERSION = '1.0.4'
-
 
 def businesses():
     return db.session.query(Business).all()
@@ -33,7 +31,7 @@ def business_respondent_associations():
 
 class TestParties(BaseTestCase):
     def post_to_parties(self, payload, expected_status):
-        response = self.client.open('/party-api/{}/parties'.format(API_VERSION),
+        response = self.client.open('/party-api/v1/parties',
                                     method='POST',
                                     data=json.dumps(payload),
                                     content_type='application/vnd.ons.business+json')
@@ -41,31 +39,31 @@ class TestParties(BaseTestCase):
         return json.loads(response.data)
 
     def get_party_by_ref(self, party_type, ref, expected_status=200):
-        response = self.client.open('/party-api/{}/parties/type/{}/ref/{}'.format(API_VERSION, party_type, ref),
+        response = self.client.open('/party-api/v1/parties/type/{}/ref/{}'.format(party_type, ref),
                                     method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
     def get_party_by_id(self, party_type, id, expected_status=200):
-        response = self.client.open('/party-api/{}/parties/type/{}/id/{}'.format(API_VERSION, party_type, id),
+        response = self.client.open('/party-api/v1/parties/type/{}/id/{}'.format(party_type, id),
                                     method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
     def get_business_by_id(self, id, expected_status=200):
-        response = self.client.open('/party-api/{}/businesses/id/{}'.format(API_VERSION, id),
+        response = self.client.open('/party-api/v1/businesses/id/{}'.format(id),
                                     method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
     def get_business_by_ref(self, ref, expected_status=200):
-        response = self.client.open('/party-api/{}/businesses/ref/{}'.format(API_VERSION, ref),
+        response = self.client.open('/party-api/v1/businesses/ref/{}'.format(ref),
                                     method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
     def get_respondent_by_id(self, id, expected_status=200):
-        response = self.client.open('/party-api/{}/respondents/id/{}'.format(API_VERSION, id),
+        response = self.client.open('/party-api/v1/respondents/id/{}'.format(id),
                                     method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
