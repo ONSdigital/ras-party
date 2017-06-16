@@ -85,15 +85,23 @@ class TestParties(BaseTestCase):
         self.assertEqual(len(parties()), 1)
 
     def test_post_existing_business_updates_db(self):
-        mock_business = MockBusiness().attributes(source='test_post_existing_business_updates_db').build()
+        mock_business = MockBusiness().attributes(source='test_post_existing_business_updates_db', version=1).build()
         self.post_to_parties(mock_business, 200)
 
-        mock_business['attributes'] = {'version': '2'}
+        business_id = mock_business['id']
 
+        response_1 = self.get_business_by_id(business_id)
+        self.assertEqual(response_1['attributes']['version'], 1)
+
+        mock_business['attributes']['version'] = 2
+        mock_business['attributes']['employeeCount'] = 100
         self.post_to_parties(mock_business, 200)
 
         self.assertEqual(len(businesses()), 1)
         self.assertEqual(len(parties()), 1)
+
+        response_2 = self.get_business_by_id(business_id)
+        self.assertEqual(response_2['attributes']['version'], 2)
 
     def test_post_party_without_unit_type_does_not_update_db(self):
         mock_business = MockBusiness().attributes(source='test_post_party_without_unit_type_does_not_update_db').build()

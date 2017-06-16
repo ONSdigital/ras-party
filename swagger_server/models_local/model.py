@@ -78,7 +78,7 @@ class Business(Base):
         associations = self.respondents
         d = {
             'id': self.party.party_uuid,
-            'businessRef': self.party.business.business_ref,
+            'businessRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
             'contactName': self.contact_name,
             'employeeCount': self.employee_count,
@@ -92,7 +92,7 @@ class Business(Base):
             'telephone': self.telephone,
             'tradingName': self.trading_name,
             'turnover': self.turnover,
-            'attributes': self.party.business.attributes,
+            'attributes': self.attributes,
             'associations': [{'id': a.respondent.party.party_uuid} for a in associations]
         }
         return filter_falsey_values(d)

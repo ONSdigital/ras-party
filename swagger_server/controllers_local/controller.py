@@ -12,25 +12,40 @@ from swagger_server.models_local.model import Business, Party, Respondent, Busin
 db = ons_env
 
 
-def businesses_post(party):
+def businesses_post(business):
     """
     adds a reporting unit of type Business
     Adds a new Business, or updates an existing Business based on the business reference provided
-    :param party: Business to add
-    :type party: dict | bytes
+    :param business: Business to add
+    :type business: dict | bytes
 
     :rtype: None
     """
 
-    v = Validator(Exists('businessRef', 'attributes'))
-    if 'id' in party:
+    v = Validator(Exists('businessRef',
+                         'attributes',
+                         'attributes.contactName',
+                         'attributes.employeeCount',
+                         'attributes.enterpriseName',
+                         'attributes.enterpriseName',
+                         'attributes.facsimile',
+                         'attributes.fulltimeCount',
+                         'attributes.legalStatus',
+                         'attributes.name',
+                         'attributes.sic2003',
+                         'attributes.sic2007',
+                         'attributes.telephone',
+                         'attributes.tradingName',
+                         'attributes.turnover'
+                         ))
+    if 'id' in business:
         v.add_rule(IsUuid('id'))
-    if not v.validate(party):
+    if not v.validate(business):
         return make_response(jsonify(v.errors), 400)
 
-    party_uuid = party.get('id', uuid.uuid4())
-    business_ref = party['businessRef']
-    associations = party.get('associations')
+    party_uuid = business.get('id', uuid.uuid4())
+    business_ref = business['businessRef']
+    associations = business.get('associations')
 
     db_party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
 
@@ -38,32 +53,30 @@ def businesses_post(party):
         return make_response(jsonify({'errors': "Existing party with '{}' does not identify a business."
                                      .format(party_uuid)}), 400)
 
-    if not db_party:
+    if db_party:
+        db_business = db_party.business
+    else:
         db_party = Party(party_uuid)
+        db_business = Business(business_ref, db_party)
+        db.session.add(db_business)
 
-    # TODO: there's no attempt made to detect if an address already exists, just assumes new business means new address
-
-    business = db.session.query(Business).filter(Business.business_ref == business_ref).first()
-    if not business:
-        business = Business(business_ref, db_party).from_dict(party['attributes'])
-        db.session.add(business)
+    db_business.from_dict(business['attributes'])
 
     if associations:
         for assoc in associations:
             assoc_id = assoc['id']
 
             assoc_party = db.session.query(Party).filter(Party.party_uuid == assoc_id).first()
-            # TODO: deal with missing party
-            # TODO: assumes a BI association, implied by the table BusinessRespondent, but can there be others?
             business_respondent = BusinessRespondent()
             business_respondent.respondent = assoc_party.respondent
-            business_respondent.business = business
+            business_respondent.business = db_business
             # TODO: check the association doesn't already exist?
             db.session.add(business_respondent)
 
+    # TODO: handle DB errors
     db.session.commit()
 
-    return make_response(jsonify(business.to_dict()), 200)
+    return make_response(jsonify(db_business.to_dict()), 200)
 
 
 #

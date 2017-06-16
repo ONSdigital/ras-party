@@ -21,8 +21,6 @@ security:
 paths:
   /parties:
     post:
-      tags:
-      - "backstage"
       summary: "given a sampleUnitType B | H this adds a reporting unit of type Business\
         \ or Household"
       description: "Adds a new Party of type sampleUnitType or updates an existing\
@@ -69,8 +67,6 @@ paths:
       x-swagger-router-controller: "swagger_server.controllers_local.controller"
   /parties/type/{sampleUnitType}/ref/{sampleUnitRef}:
     get:
-      tags:
-      - "backstage"
       summary: "Get a Party and any associated parties by its unique reference (ruref\
         \ for business, uprn for household)"
       description: "Returns a Party and associated parties"
@@ -115,8 +111,6 @@ paths:
       x-swagger-router-controller: "swagger_server.controllers_local.controller"
   /parties/type/{sampleUnitType}/id/{id}:
     get:
-      tags:
-      - "backstage"
       summary: "Get a Party by its UUID"
       description: "Returns a single Party"
       operationId: "get_party_by_id"
@@ -159,9 +153,6 @@ paths:
       x-swagger-router-controller: "swagger_server.controllers_local.controller"
   /businesses/ref/{ref}:
     get:
-      tags:
-      - "frontstage"
-      - "backstage"
       summary: "Get a Business by its unique business reference"
       description: "Returns a single Business"
       operationId: "get_business_by_ref"
@@ -195,9 +186,6 @@ paths:
       x-swagger-router-controller: "swagger_server.controllers_local.controller"
   /businesses/id/{id}:
     get:
-      tags:
-      - "frontstage"
-      - "backstage"
       summary: "Get a Business by its Party ID"
       description: "Returns a single Party"
       operationId: "get_business_by_id"
@@ -225,8 +213,6 @@ paths:
       x-swagger-router-controller: "swagger_server.controllers_local.controller"
   /businesses:
     post:
-      tags:
-      - "backstage"
       summary: "adds a reporting unit of type Business"
       description: "Adds a new Business, or updates an existing Business based on\
         \ the business reference provided"
@@ -235,11 +221,12 @@ paths:
       - "application/vnd.ons.business+json"
       parameters:
       - in: "body"
-        name: "party"
+        name: "business"
         description: "Business to add"
         required: false
         schema:
-          $ref: "#/definitions/business"
+          allOf:
+          - $ref: "#/definitions/businessCreate"
       responses:
         200:
           description: "item updated"
@@ -263,8 +250,6 @@ paths:
       x-swagger-router-controller: "swagger_server.controllers_local.controller"
   /respondents/id/{id}:
     get:
-      tags:
-      - "backstage"
       summary: "Get a Respondent by its Party ID"
       description: "Returns a single Party"
       operationId: "get_respondent_by_id"
@@ -292,9 +277,6 @@ paths:
       x-swagger-router-controller: "swagger_server.controllers_local.controller"
   /respondents:
     post:
-      tags:
-      - "frontstage"
-      - "backstage"
       summary: "adds a Respondent"
       description: "Adds a Respondent to the system"
       operationId: "respondents_post"
@@ -345,39 +327,6 @@ definitions:
         type: "array"
         items:
           $ref: "#/definitions/vnd.collectionjson_links"
-  address:
-    type: "object"
-    properties:
-      saon:
-        type: "string"
-        example: "Office 2a"
-        description: "The Secondary Addressable Object - this is usually something\
-          \ like a flat number or any other sub unit"
-      paon:
-        type: "string"
-        example: "Unit 5"
-        description: "The Primary Addressable Object - this is usually a house number\
-          \ or a building name"
-      street:
-        type: "string"
-        example: "Milton Street"
-        description: "The street where the building office resides"
-      locality:
-        type: "string"
-        example: "Green Industrial Park"
-        description: "Sometimes, an address is associated with a locality, which identifies\
-          \ the address with a smaller geographical area than the Post Town (see town)"
-      town:
-        type: "string"
-        example: "New Town"
-        description: "This is the Post Town where the address is located. This usually\
-          \ corresponds to the sorting office that handles the mail for the address,\
-          \ as may take in many smaller towns, urban districts and villages (see locality)."
-      postcode:
-        type: "string"
-        example: "NT23 7TN"
-        description: "This is the Postcode for the address. Currently a postcode is\
-          \ needed for Sorting Office to begin parsing the address."
   party:
     type: "object"
     properties:
@@ -391,14 +340,41 @@ definitions:
         description: "The reference of the sample unit ( <RUREF> | <URPN> )"
       id:
         type: "string"
-        format: "uuid"
-        example: "3b136c4b-7a14-4904-9e01-13364dd7b972"
+        format: "urn"
+        example: "urn:ons.gov.uk:id:business:00123456789"
         description: "The id of the Party. This will not be required when posting"
       attributes:
         $ref: "#/definitions/attributes"
   attributes:
     type: "object"
+    description: "A dictionary of kv pairs from the sample file."
+  businessCreate:
+    type: "object"
     properties:
+      id:
+        type: "string"
+        format: "uuid"
+        example: "3b136c4b-7a14-4904-9e01-13364dd7b972"
+      businessRef:
+        type: "string"
+        example: "0123456789"
+        description: "The unique business identifier recognised within ONS (previously\
+          \ referred to as the RU Ref)."
+      attributes:
+        type: "object"
+        properties: {}
+  business:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        format: "uuid"
+        example: "3b136c4b-7a14-4904-9e01-13364dd7b972"
+      businessRef:
+        type: "string"
+        example: "0123456789"
+        description: "The unique business identifier recognised within ONS (previously\
+          \ referred to as the RU Ref)."
       contactName:
         type: "string"
         example: "John Doe"
@@ -431,11 +407,6 @@ definitions:
       name:
         type: "string"
         example: "ABC Limited"
-      businessRef:
-        type: "string"
-        example: "0123456789"
-        description: "The unique business identifier recognised within ONS (previously\
-          \ referred to as the RU Ref)."
       sic2003:
         type: "string"
         example: "2520"
@@ -451,19 +422,6 @@ definitions:
       turnover:
         type: "integer"
         example: 350
-      additionalProperties:
-        type: "string"
-        example: "ACME LTD"
-    description: "A dictionary of kv pairs from the sample file."
-  business:
-    type: "object"
-    properties:
-      id:
-        type: "string"
-        format: "uuid"
-        example: "3b136c4b-7a14-4904-9e01-13364dd7b972"
-      address:
-        $ref: "#/definitions/address"
       attributes:
         $ref: "#/definitions/attributes"
   respondent:

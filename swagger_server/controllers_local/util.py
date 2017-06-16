@@ -40,3 +40,16 @@ def partition_dict(d, in_left):
             right[k] = v
 
     return left, right
+
+
+def flatten_keys(d, prefix=None):
+
+    prefix = prefix or ''
+    result = []
+
+    for k, v in d.items():
+        result.append('.'.join([prefix, k] if prefix else [k]))
+        if isinstance(v, dict):
+            result.extend(flatten_keys(v, prefix='.'.join([prefix, k] if prefix else [k])))
+
+    return result
