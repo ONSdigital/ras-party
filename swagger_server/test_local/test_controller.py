@@ -120,8 +120,26 @@ class TestParties(BaseTestCase):
             .build()
         self.post_to_parties(mock_business, 200)
 
-        result = self.get_party_by_ref('B', mock_business['reference'])
-        self.assertDictEqual(result, mock_business)
+        actual = self.get_party_by_ref('B', mock_business['businessRef'])
+        expected = {
+            'id': mock_business['id'],
+            'businessRef': mock_business['businessRef'],
+            'contactName': "John Doe",
+            'employeeCount': 50,
+            'enterpriseName': "ABC Limited",
+            'facsimile': "+44 1234 567890",
+            'fulltimeCount': 35,
+            'legalStatus': "Private Limited Company",
+            'name': "Bolts and Ratchets Ltd",
+            'sampleUnitType': mock_business['sampleUnitType'],
+            'sic2003': "2520",
+            'sic2007': "2520",
+            'telephone': "+44 1234 567890",
+            'tradingName': "ABC Trading Ltd",
+            'turnover': 350,
+            'attributes': {'source': 'test_get_party_by_ru_ref_returns_corresponding_business'}
+        }
+        self.assertDictEqual(actual, expected)
 
     def test_get_party_by_id_with_invalid_type_is_error(self):
         self.get_party_by_id('BX', '123', 400)
@@ -138,8 +156,26 @@ class TestParties(BaseTestCase):
 
         self.post_to_parties(mock_business, 200)
 
-        result = self.get_party_by_id('B', party_id)
-        self.assertDictEqual(result, mock_business)
+        actual = self.get_party_by_id('B', party_id)
+        expected = {
+            'id': mock_business['id'],
+            'businessRef': mock_business['businessRef'],
+            'contactName': "John Doe",
+            'employeeCount': 50,
+            'enterpriseName': "ABC Limited",
+            'facsimile': "+44 1234 567890",
+            'fulltimeCount': 35,
+            'legalStatus': "Private Limited Company",
+            'name': "Bolts and Ratchets Ltd",
+            'sampleUnitType': mock_business['sampleUnitType'],
+            'sic2003': "2520",
+            'sic2007': "2520",
+            'telephone': "+44 1234 567890",
+            'tradingName': "ABC Trading Ltd",
+            'turnover': 350,
+            'attributes': {'source': 'test_get_party_by_id_returns_corresponding_business'}
+        }
+        self.assertDictEqual(actual, expected)
 
     def test_get_party_by_id_returns_corresponding_respondent(self):
         mock_respondent = MockRespondent().build()
@@ -230,13 +266,13 @@ class TestParties(BaseTestCase):
         mock_business = MockBusiness() \
             .attributes(source='test_post_party_with_missing_reference_is_rejected') \
             .build()
-        del mock_business['reference']
+        del mock_business['businessRef']
 
         response = self.post_to_parties(mock_business, 400)
 
         self.assertIn('errors', response)
         self.assertEqual(len(response['errors']), 1)
-        expected_error = validate.Exists.ERROR_MESSAGE.format('reference')
+        expected_error = validate.Exists.ERROR_MESSAGE.format('businessRef')
         self.assertIn(expected_error, response['errors'])
 
     def test_post_party_with_unknown_unit_type_is_rejected(self):

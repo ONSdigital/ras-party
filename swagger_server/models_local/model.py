@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, UniqueConstr
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
+from swagger_server.controllers_local.util import filter_falsey_values, partition_dict
 from swagger_server.models_local.base import Base
 from swagger_server.models_local.guid import GUID
 from swagger_server.models_local.json_column import JsonColumn
@@ -22,64 +23,79 @@ class Party(Base):
         self.party_uuid = party_uuid
 
 
-class Address(Base):
-    __tablename__ = 'address'
-
-    id = Column(Integer, primary_key=True)
-    saon = Column(Text)
-    paon = Column(Text)
-    street = Column(Text)
-    locality = Column(Text)
-    town = Column(Text)
-    postcode = Column(Text)
-
-    def __init__(self, saon, paon, street, locality, town, postcode):
-        self.saon = saon
-        self.paon = paon
-        self.street = street
-        self.locality = locality
-        self.town = town
-        self.postcode = postcode
-
-
 class Business(Base):
     __tablename__ = 'business'
 
     UNIT_TYPE = 'B'
 
+    REQUIRED_ATTRIBUTES = [
+        'contactName', 'employeeCount', 'enterpriseName', 'facsimile', 'fulltimeCount', 'legalStatus', 'name',
+        'sic2003', 'sic2007', 'telephone', 'tradingName', 'turnover'
+    ]
+
     id = Column(Integer, primary_key=True)
-    ru_ref = Column(Text, unique=True)
+    business_ref = Column(Text, unique=True)
     party_id = Column(Integer, ForeignKey('party.id'))
     party = relationship('Party', back_populates='business')
-    # TODO: this is actually linking to BusinessRespondent instances, rename to associations?
     respondents = relationship('BusinessRespondent', back_populates='business')
-    address_id = Column(Integer, ForeignKey('address.id'))
-    address = relationship('Address')
+    contact_name = Column(Text)
+    employee_count = Column(Integer)
+    enterprise_name = Column(Text)
+    facsimile = Column(Text)
+    fulltime_count = Column(Integer)
+    legal_status = Column(Text)
+    name = Column(Text)
+    sic_2003 = Column(Text)
+    sic_2007 = Column(Text)
+    telephone = Column(Text)
+    trading_name = Column(Text)
+    turnover = Column(Integer)
     attributes = Column(JsonColumn())
-    # business_ref = Column(Text)
-    # name = Column(Text)
-    # trading_name = Column(Text)
-    # enterprise_name = Column(Text)
-    # contact_name = Column(Text)
-    # address_line_1 = Column(Text)
-    # address_line_2 = Column(Text)
-    # address_line_3 = Column(Text)
-    # city = Column(Text)
-    # postcode = Column(Text)
-    # telephone = Column(Text)
-    # employee_count = Column(Integer)
-    # facsimile = Column(Text)
-    # fulltime_count = Column(Integer)
-    # legal_status = Column(Text)
-    # sic_2003 = Column(Text)
-    # sic_2007 = Column(Text)
-    # turnover = Column(Integer)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, ru_ref, party, address):
-        self.ru_ref = ru_ref
+    def __init__(self, business_ref, party):
+        self.business_ref = business_ref
         self.party = party
-        self.address = address
+
+    def from_dict(self, d):
+        items, attrs = partition_dict(d, self.REQUIRED_ATTRIBUTES)
+        self.contact_name = items['contactName']
+        self.employee_count = int(items['employeeCount'])
+        self.enterprise_name = items['enterpriseName']
+        self.facsimile = items['facsimile']
+        self.fulltime_count = items['fulltimeCount']
+        self.legal_status = items['legalStatus']
+        self.name = items['name']
+        self.sic_2003 = items['sic2003']
+        self.sic_2007 = items['sic2007']
+        self.telephone = items['telephone']
+        self.trading_name = items['tradingName']
+        self.turnover = int(items['turnover'])
+        self.attributes = attrs
+        return self
+
+    def to_dict(self):
+        associations = self.respondents
+        d = {
+            'id': self.party.party_uuid,
+            'businessRef': self.party.business.business_ref,
+            'sampleUnitType': self.UNIT_TYPE,
+            'contactName': self.contact_name,
+            'employeeCount': self.employee_count,
+            'enterpriseName': self.enterprise_name,
+            'facsimile': self.facsimile,
+            'fulltimeCount': self.fulltime_count,
+            'legalStatus': self.legal_status,
+            'name': self.name,
+            'sic2003': self.sic_2003,
+            'sic2007': self.sic_2007,
+            'telephone': self.telephone,
+            'tradingName': self.trading_name,
+            'turnover': self.turnover,
+            'attributes': self.party.business.attributes,
+            'associations': [{'id': a.respondent.party.party_uuid} for a in associations]
+        }
+        return filter_falsey_values(d)
 
 
 class BusinessRespondentStatus(enum.IntEnum):
@@ -134,6 +150,19 @@ class Respondent(Base):
 
     def __init__(self, party):
         self.party = party
+
+    def to_dict(self):
+        d = {
+            'id': self.party.party_uuid,
+            'sampleUnitType': self.UNIT_TYPE,
+            'status': self.status,
+            'emailAddress': self.email_address,
+            'firstName': self.first_name,
+            'lastName': self.last_name,
+            'telephone': self.telephone
+        }
+
+        return filter_falsey_values(d)
 
 
 class EnrolmentStatus(enum.IntEnum):
@@ -216,3 +245,6 @@ class EnrolmentInvitation(Base):
         self.verification_token = verification_token
         self.sms_verification_token = sms_verification_token
         self.status = status
+
+
+

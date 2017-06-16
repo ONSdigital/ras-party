@@ -349,33 +349,6 @@ definitions:
             type:
               type: string
               example: "application/vnd.ons.party+json"
-  address:
-    type: object
-    properties:
-      saon:
-        type: string
-        description: The Secondary Addressable Object - this is usually something like a flat number or any other sub unit
-        example: "Office 2a"
-      paon:
-        type: string
-        description: The Primary Addressable Object - this is usually a house number or a building name
-        example: "Unit 5"
-      street:
-        type: string
-        description: The street where the building office resides
-        example: "Milton Street"
-      locality:
-        type: string
-        description: Sometimes, an address is associated with a locality, which identifies the address with a smaller geographical area than the Post Town (see town)
-        example: "Green Industrial Park"
-      town:
-        type: string
-        description: This is the Post Town where the address is located. This usually corresponds to the sorting office that handles the mail for the address, as may take in many smaller towns, urban districts and villages (see locality).
-        example: "New Town"
-      postcode:
-        type: string
-        description: This is the Postcode for the address. Currently a postcode is needed for Sorting Office to begin parsing the address.
-        example: "NT23 7TN"
 
   party:
     type: object
@@ -400,6 +373,20 @@ definitions:
     type: object
     description: A dictionary of kv pairs from the sample file.
     properties:
+
+
+
+  business:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 3b136c4b-7a14-4904-9e01-13364dd7b972
+      businessRef:
+        type: string
+        description: The unique business identifier recognised within ONS (previously referred to as the RU Ref).
+        example: "0123456789"
       contactName:
           type: string
           example: "John Doe"
@@ -432,10 +419,6 @@ definitions:
       name:
         type: string
         example: "ABC Limited"
-      businessRef:
-        type: string
-        description: The unique business identifier recognised within ONS (previously referred to as the RU Ref).
-        example: "0123456789"
       sic2003:
         type: string
         example: "2520"
@@ -451,20 +434,11 @@ definitions:
       turnover:
         type: integer
         example: 350
-      additionalProperties:
-        type: string
-        example: "ACME LTD"
-
-  business:
-    type: object
-    properties:
-      id:
-        type: string
-        format: uuid
-        example: 3b136c4b-7a14-4904-9e01-13364dd7b972
-      address:
-        $ref: '#/definitions/address'
       attributes:
+        type: array
+        items:
+          type: object
+
         $ref: '#/definitions/attributes'
 
   respondent:
