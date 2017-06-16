@@ -69,3 +69,9 @@ target/
 
 
 **/test.db
+
+
+.build/
+.idea/
+onsdb
+

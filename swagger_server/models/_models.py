@@ -7,8 +7,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
 from swagger_server.controllers_local.util import filter_falsey_values, partition_dict
-from swagger_server.models_local.guid import GUID
-from swagger_server.models_local.json_column import JsonColumn
+from swagger_server.models.guid import GUID
+from swagger_server.models.json_column import JsonColumn
 
 
 class Party(ons_env.db.base):

@@ -7,7 +7,7 @@ from flask import make_response, jsonify
 from ons_ras_common import ons_env
 
 from swagger_server.controllers_local.validate import Validator, Exists, IsUuid, IsIn
-from swagger_server.models_local.model import Business, Party, Respondent, BusinessRespondent
+from swagger_server.models._models import Business, Party, Respondent, BusinessRespondent
 
 db = ons_env.db
 
