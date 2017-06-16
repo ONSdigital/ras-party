@@ -3,14 +3,14 @@
 from __future__ import absolute_import
 
 from flask import json
+from ons_ras_common import ons_env
 
-from swagger_server.configuration import ons_env
 from swagger_server.controllers_local import validate
 from swagger_server.models_local.model import Business, Party, Respondent, BusinessRespondent
 from swagger_server.test_local import BaseTestCase
 from swagger_server.test_local.mocks import MockParty, MockBusiness, MockRespondent
 
-db = ons_env
+db = ons_env.db
 
 
 def businesses():

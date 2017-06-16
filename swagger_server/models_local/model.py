@@ -1,17 +1,17 @@
 import datetime
 import enum
 
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, UniqueConstraint
+from ons_ras_common import ons_env
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
 from swagger_server.controllers_local.util import filter_falsey_values, partition_dict
-from swagger_server.models_local.base import Base
 from swagger_server.models_local.guid import GUID
 from swagger_server.models_local.json_column import JsonColumn
 
 
-class Party(Base):
+class Party(ons_env.db.base):
     __tablename__ = 'party'
 
     id = Column(Integer, primary_key=True)
@@ -23,7 +23,7 @@ class Party(Base):
         self.party_uuid = party_uuid
 
 
-class Business(Base):
+class Business(ons_env.db.base):
     __tablename__ = 'business'
 
     UNIT_TYPE = 'B'
@@ -105,7 +105,7 @@ class BusinessRespondentStatus(enum.IntEnum):
     ENDED = 3
 
 
-class BusinessRespondent(Base):
+class BusinessRespondent(ons_env.db.base):
     __tablename__ = 'business_respondent'
 
     business_id = Column(Integer, ForeignKey('business.id'), primary_key=True)
@@ -131,7 +131,7 @@ class RespondentStatus(enum.IntEnum):
     SUSPENDED = 2
 
 
-class Respondent(Base):
+class Respondent(ons_env.db.base):
 
     __tablename__ = 'respondent'
 
@@ -172,7 +172,7 @@ class EnrolmentStatus(enum.IntEnum):
     SUSPENDED = 3
 
 
-class Enrolment(Base):
+class Enrolment(ons_env.db.base):
 
     __tablename__ = 'enrolment'
 
@@ -194,7 +194,7 @@ class EnrolmentCodeStatus(enum.IntEnum):
     REVOKED = 2
 
 
-class EnrolmentCode(Base):
+class EnrolmentCode(ons_env.db.base):
 
     __tablename__ = 'enrolment_code'
 
@@ -220,7 +220,7 @@ class EnrolmentInvitationStatus(enum.IntEnum):
     REVOKED = 2
 
 
-class EnrolmentInvitation(Base):
+class EnrolmentInvitation(ons_env.db.base):
 
     __tablename__ = 'enrolment_invitation'
 
