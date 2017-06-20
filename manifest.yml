@@ -1,6 +1,6 @@
 ---
 applications:
 - memory: 512M
-  name: ras-party-v2
+  name: ras-party-v2-dev
   services:
-  - ras-postgres
+  - ras-party-db-dev

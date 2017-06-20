@@ -1,6 +1,8 @@
 import itertools
 import uuid
 
+from swagger_server.controllers_local.util import flatten_keys
+
 
 class ValidatorBase:
 
@@ -22,7 +24,8 @@ class Exists(ValidatorBase):
         self._diff = []
 
     def __call__(self, data):
-        self._diff = self._keys.difference(data.keys())
+        keys = flatten_keys(data)
+        self._diff = self._keys.difference(keys)
         self._errors = [self.ERROR_MESSAGE.format(d) for d in self._diff]
         return len(self._diff) == 0
 

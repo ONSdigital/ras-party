@@ -3,16 +3,14 @@
 from __future__ import absolute_import
 
 from flask import json
+from ons_ras_common import ons_env
 
-from swagger_server.configuration import ons_env
 from swagger_server.controllers_local import validate
-from swagger_server.models_local.model import Business, Party, Respondent, BusinessRespondent
+from swagger_server.models._models import Business, Party, Respondent, BusinessRespondent
 from swagger_server.test_local import BaseTestCase
 from swagger_server.test_local.mocks import MockParty, MockBusiness, MockRespondent
 
-db = ons_env
-
-API_VERSION = '1.0.4'
+db = ons_env.db
 
 
 def businesses():
@@ -33,7 +31,7 @@ def business_respondent_associations():
 
 class TestParties(BaseTestCase):
     def post_to_parties(self, payload, expected_status):
-        response = self.client.open('/party-api/{}/parties'.format(API_VERSION),
+        response = self.client.open('/party-api/v1/parties',
                                     method='POST',
                                     data=json.dumps(payload),
                                     content_type='application/vnd.ons.business+json')
@@ -41,31 +39,31 @@ class TestParties(BaseTestCase):
         return json.loads(response.data)
 
     def get_party_by_ref(self, party_type, ref, expected_status=200):
-        response = self.client.open('/party-api/{}/parties/type/{}/ref/{}'.format(API_VERSION, party_type, ref),
+        response = self.client.open('/party-api/v1/parties/type/{}/ref/{}'.format(party_type, ref),
                                     method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
     def get_party_by_id(self, party_type, id, expected_status=200):
-        response = self.client.open('/party-api/{}/parties/type/{}/id/{}'.format(API_VERSION, party_type, id),
+        response = self.client.open('/party-api/v1/parties/type/{}/id/{}'.format(party_type, id),
                                     method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
     def get_business_by_id(self, id, expected_status=200):
-        response = self.client.open('/party-api/{}/businesses/id/{}'.format(API_VERSION, id),
+        response = self.client.open('/party-api/v1/businesses/id/{}'.format(id),
                                     method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
     def get_business_by_ref(self, ref, expected_status=200):
-        response = self.client.open('/party-api/{}/businesses/ref/{}'.format(API_VERSION, ref),
+        response = self.client.open('/party-api/v1/businesses/ref/{}'.format(ref),
                                     method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
 
     def get_respondent_by_id(self, id, expected_status=200):
-        response = self.client.open('/party-api/{}/respondents/id/{}'.format(API_VERSION, id),
+        response = self.client.open('/party-api/v1/respondents/id/{}'.format(id),
                                     method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.data.decode('utf-8'))
         return json.loads(response.data)
@@ -87,15 +85,23 @@ class TestParties(BaseTestCase):
         self.assertEqual(len(parties()), 1)
 
     def test_post_existing_business_updates_db(self):
-        mock_business = MockBusiness().attributes(source='test_post_existing_business_updates_db').build()
+        mock_business = MockBusiness().attributes(source='test_post_existing_business_updates_db', version=1).build()
         self.post_to_parties(mock_business, 200)
 
-        mock_business['attributes'] = {'version': '2'}
+        business_id = mock_business['id']
 
+        response_1 = self.get_business_by_id(business_id)
+        self.assertEqual(response_1['attributes']['version'], 1)
+
+        mock_business['attributes']['version'] = 2
+        mock_business['attributes']['employeeCount'] = 100
         self.post_to_parties(mock_business, 200)
 
         self.assertEqual(len(businesses()), 1)
         self.assertEqual(len(parties()), 1)
+
+        response_2 = self.get_business_by_id(business_id)
+        self.assertEqual(response_2['attributes']['version'], 2)
 
     def test_post_party_without_unit_type_does_not_update_db(self):
         mock_business = MockBusiness().attributes(source='test_post_party_without_unit_type_does_not_update_db').build()
@@ -122,8 +128,26 @@ class TestParties(BaseTestCase):
             .build()
         self.post_to_parties(mock_business, 200)
 
-        result = self.get_party_by_ref('B', mock_business['reference'])
-        self.assertDictEqual(result, mock_business)
+        actual = self.get_party_by_ref('B', mock_business['businessRef'])
+        expected = {
+            'id': mock_business['id'],
+            'businessRef': mock_business['businessRef'],
+            'contactName': "John Doe",
+            'employeeCount': 50,
+            'enterpriseName': "ABC Limited",
+            'facsimile': "+44 1234 567890",
+            'fulltimeCount': 35,
+            'legalStatus': "Private Limited Company",
+            'name': "Bolts and Ratchets Ltd",
+            'sampleUnitType': mock_business['sampleUnitType'],
+            'sic2003': "2520",
+            'sic2007': "2520",
+            'telephone': "+44 1234 567890",
+            'tradingName': "ABC Trading Ltd",
+            'turnover': 350,
+            'attributes': {'source': 'test_get_party_by_ru_ref_returns_corresponding_business'}
+        }
+        self.assertDictEqual(actual, expected)
 
     def test_get_party_by_id_with_invalid_type_is_error(self):
         self.get_party_by_id('BX', '123', 400)
@@ -140,8 +164,26 @@ class TestParties(BaseTestCase):
 
         self.post_to_parties(mock_business, 200)
 
-        result = self.get_party_by_id('B', party_id)
-        self.assertDictEqual(result, mock_business)
+        actual = self.get_party_by_id('B', party_id)
+        expected = {
+            'id': mock_business['id'],
+            'businessRef': mock_business['businessRef'],
+            'contactName': "John Doe",
+            'employeeCount': 50,
+            'enterpriseName': "ABC Limited",
+            'facsimile': "+44 1234 567890",
+            'fulltimeCount': 35,
+            'legalStatus': "Private Limited Company",
+            'name': "Bolts and Ratchets Ltd",
+            'sampleUnitType': mock_business['sampleUnitType'],
+            'sic2003': "2520",
+            'sic2007': "2520",
+            'telephone': "+44 1234 567890",
+            'tradingName': "ABC Trading Ltd",
+            'turnover': 350,
+            'attributes': {'source': 'test_get_party_by_id_returns_corresponding_business'}
+        }
+        self.assertDictEqual(actual, expected)
 
     def test_get_party_by_id_returns_corresponding_respondent(self):
         mock_respondent = MockRespondent().build()
@@ -232,13 +274,13 @@ class TestParties(BaseTestCase):
         mock_business = MockBusiness() \
             .attributes(source='test_post_party_with_missing_reference_is_rejected') \
             .build()
-        del mock_business['reference']
+        del mock_business['businessRef']
 
         response = self.post_to_parties(mock_business, 400)
 
         self.assertIn('errors', response)
         self.assertEqual(len(response['errors']), 1)
-        expected_error = validate.Exists.ERROR_MESSAGE.format('reference')
+        expected_error = validate.Exists.ERROR_MESSAGE.format('businessRef')
         self.assertIn(expected_error, response['errors'])
 
     def test_post_party_with_unknown_unit_type_is_rejected(self):

@@ -1,0 +1,521 @@
+swagger: '2.0'
+# basePath: /api
+info:
+  description: Initial API for the Party microservice.
+  version: "1.0.0"
+  title: Party API
+  contact:
+    email: ras@ons.gov.uk
+
+securityDefinitions:
+  accessCode:
+    type: oauth2
+    # This should be updated to the Token URL of your OAuth provider.
+    tokenUrl: http://uaa.ons.gov.uk/oauth/token
+    # This should be updated to the Authorization URL of your OAuth provider.
+    authorizationUrl: http://uaa.ons.gov.uk/oauth/auth
+    flow: accessCode
+    scopes:
+      write: allows modifying resources
+      read: allows reading resources
+
+security:
+  - accessCode:
+    - read
+
+tags:
+- name: backstage
+  description: Operations available to internal business roles (i.e. Respondent Liason, Survey Manager)
+- name: frontstage
+  description: Operations available to external business roles (i.e. Respondent)
+schemes:
+- https
+
+basePath: /party-api/v1
+
+paths:
+
+  /parties:
+    post:
+      summary: given a sampleUnitType B | H this adds a reporting unit of type Business or Household
+      description: Adds a new Party of type sampleUnitType or updates an existing Party based on the reference provided
+      security:
+        - accessCode:
+          - write
+      consumes:
+      - application/vnd.ons.party+json
+      parameters:
+      - in: body
+        name: party
+        description: Party to add
+        schema:
+          $ref: '#/definitions/party'
+      responses:
+        200:
+          description: item updated
+          headers:
+            ETag:
+              type: string
+              description: On successful update, the new ETag for the Party will be included as a header, e.g. "5635635636356356"
+        201:
+          description: item created
+          headers:
+            Location:
+              type: string
+              description: Location of the newly created resource
+            ETag:
+              type: string
+              description: On successful creation, the new ETag for the Party will be included as a header, e.g. "5635635636356356"
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: '#/definitions/error'
+        422:
+          description: an existing item already exists
+          schema:
+            $ref: '#/definitions/error'
+
+  /parties/type/{sampleUnitType}/ref/{sampleUnitRef}:
+    get:
+      summary: Get a Party and any associated parties by its unique reference (ruref for business, uprn for household)
+      description: Returns a Party and associated parties
+      operationId: getPartyByRef
+      produces:
+      - application/vnd.ons.party+json
+      parameters:
+      - name: sampleUnitType
+        in: path
+        description: Sample Unit Type [ B BI I H ]
+        required: true
+        type: string
+      - name: sampleUnitRef
+        in: path
+        description: Reference of the Party to return e.g. ruref for business, uprn for household
+        required: true
+        type: string
+      responses:
+        200:
+          description: Party representation
+          headers:
+            ETag:
+              type: string
+              description: The current ETag for the Party, e.g. "5635635636356356"
+          schema:
+            $ref: '#/definitions/party'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error'
+        403:
+          description: Forbidden - in the context of frontstage use, this response would indicate the Respondent does not have an ACTIVE association with this business
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Business not found
+          schema:
+            $ref: '#/definitions/error'
+
+
+  /parties/type/{sampleUnitType}/id/{id}:
+    get:
+      summary: Get a Party by its UUID
+      description: Returns a single Party
+      operationId: getPartyById
+      produces:
+      - application/vnd.ons.party+json
+      parameters:
+      - name: sampleUnitType
+        in: path
+        description: Sample Unit Type [ B BI I H ]
+        required: true
+        type: string
+      - name: id
+        in: path
+        description: ID of the Party to return
+        required: true
+        type: string
+      responses:
+        200:
+          description: Party representation
+          headers:
+            ETag:
+              type: string
+              description: The current ETag for the Party, e.g. "5635635636356356"
+          schema:
+            $ref: '#/definitions/party'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error'
+        403:
+          description: Forbidden - in the context of frontstage use, this response would indicate the Respondent does not have an ACTIVE association with this business
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Business not found
+          schema:
+            $ref: '#/definitions/error'
+
+  /businesses/ref/{ref}:
+    get:
+      summary: Get a Business by its unique business reference
+      description: Returns a single Business
+      operationId: getBusinessByRef
+      produces:
+      - application/vnd.ons.business+json
+      parameters:
+      - name: ref
+        in: path
+        description: Reference of the Business to return
+        required: true
+        type: string
+      responses:
+        200:
+          description: Business representation
+          schema:
+            $ref: '#/definitions/business'
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/error'
+        403:
+          description: Forbidden - in the context of frontstage use, this response would indicate the Respondent does not have an ACTIVE association with this business
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Business not found
+          schema:
+            $ref: '#/definitions/error'
+
+  /businesses/id/{id}:
+    get:
+      summary: Get a Business by its Party ID
+      description: Returns a single Party
+      operationId: getBusinessById
+      produces:
+      - application/vnd.ons.business+json
+      parameters:
+      - name: id
+        in: path
+        description: ID of Party to return
+        required: true
+        type: string
+      responses:
+        200:
+          description: Party representation
+          schema:
+            $ref: '#/definitions/business'
+
+        400:
+          description: Invalid ID supplied
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Party not found
+          schema:
+            $ref: '#/definitions/error'
+
+  /businesses:
+    post:
+      summary: adds a reporting unit of type Business
+      description: Adds a new Business, or updates an existing Business based on the business reference provided
+      security:
+        - accessCode:
+          - write
+      consumes:
+      - application/vnd.ons.business+json
+      parameters:
+      - in: body
+        name: business
+        description: Business to add
+      responses:
+        200:
+          description: item updated
+
+        201:
+          description: item created
+          headers:
+            Location:
+              type: string
+              description: Location of the newly created resource
+
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: '#/definitions/error'
+        422:
+          description: an existing item already exists
+          schema:
+            $ref: '#/definitions/error'
+
+  /respondents/id/{id}:
+    get:
+      summary: Get a Respondent by its Party ID
+      description: Returns a single Party
+      operationId: getRespondentById
+      produces:
+      - application/vnd.ons.respondent+json
+      parameters:
+      - name: id
+        in: path
+        description: ID of Respondent to return
+        required: true
+        type: string
+      responses:
+        200:
+          description: Respondent representation
+          schema:
+            $ref: '#/definitions/respondent'
+
+        400:
+          description: Invalid ID supplied
+          schema:
+            $ref: '#/definitions/error'
+        404:
+          description: Party not found
+          schema:
+            $ref: '#/definitions/error'
+
+  /respondents:
+    post:
+      summary: adds a Respondent
+      description: Adds a Respondent to the system
+      security:
+        - accessCode:
+          - write
+      consumes:
+      - application/vnd.ons.respondent+json
+      parameters:
+      - in: body
+        name: party
+        description: Respondent to add
+        schema:
+          $ref: '#/definitions/respondent'
+      responses:
+        201:
+          description: item created
+          headers:
+            Location:
+              type: string
+              description: Location of the newly created resource
+
+        400:
+          description: invalid input, object invalid
+          schema:
+            $ref: '#/definitions/error'
+
+definitions:
+  vnd.collection+json:
+    type: object
+    properties:
+      version:
+        type: string
+        example: "1.0"
+      href:
+        type: string
+        example: "/party/id/12345678"
+      links:
+        type: array
+        items:
+          type: object
+          properties:
+            rel:
+              type: string
+              example: "self"
+            href:
+              type: string
+              example: "/party/id/12345678"
+            type:
+              type: string
+              example: "application/vnd.ons.party+json"
+
+  party:
+    type: object
+    properties:
+      sampleUnitType:
+        type: string
+        description: Sample Unit Type [ B | H ]
+        example: "B"
+      reference:
+        type: string
+        description: The reference of the sample unit ( <RUREF> | <URPN> )
+        example: "49900001234"
+      id:
+        type: string
+        format: urn
+        description: The id of the Party. This will not be required when posting
+        example: urn:ons.gov.uk:id:business:00123456789
+      attributes:
+        $ref: '#/definitions/attributes'
+
+  attributes:
+    type: object
+    description: A dictionary of kv pairs from the sample file.
+    properties:
+
+  businessCreate:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 3b136c4b-7a14-4904-9e01-13364dd7b972
+      businessRef:
+        type: string
+        description: The unique business identifier recognised within ONS (previously referred to as the RU Ref).
+        example: "0123456789"
+      attributes:
+        type: object
+        properties:
+        contactName:
+            type: string
+            example: "John Doe"
+        employeeCount:
+          type: integer
+          example: 50
+        enterpriseName:
+          type: string
+          example: "ABC Limited"
+        facsimile:
+          type: string
+          example: "+44 1234 567890"
+        fulltimeCount:
+          type: integer
+          example: 35
+        legalStatus:
+          type: string
+          enum:
+            - "Community Interest Company (CIC)"
+            - "Charitable Incorporated Organisation (CIO)"
+            - "Industrial and provident society"
+            - "General partnership"
+            - "Limited liability partnership (LLP)"
+            - "Limited partnership (LP)"
+            - "Private Limited Company"
+            - "Public Limited Company"
+            - "Unlimited Company"
+            - "Sole proprietorship"
+          example: "Private Limited Company"
+        name:
+          type: string
+          example: "ABC Limited"
+        sic2003:
+          type: string
+          example: "2520"
+        sic2007:
+          type: string
+          example: "2520"
+        telephone:
+          type: string
+          example: "+44 1234 567890"
+        tradingName:
+          type: string
+          example: "ABC Trading Ltd"
+        turnover:
+          type: integer
+          example: 350
+
+  business:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 3b136c4b-7a14-4904-9e01-13364dd7b972
+      businessRef:
+        type: string
+        description: The unique business identifier recognised within ONS (previously referred to as the RU Ref).
+        example: "0123456789"
+      contactName:
+          type: string
+          example: "John Doe"
+      employeeCount:
+        type: integer
+        example: 50
+      enterpriseName:
+        type: string
+        example: "ABC Limited"
+      facsimile:
+        type: string
+        example: "+44 1234 567890"
+      fulltimeCount:
+        type: integer
+        example: 35
+      legalStatus:
+        type: string
+        enum:
+          - "Community Interest Company (CIC)"
+          - "Charitable Incorporated Organisation (CIO)"
+          - "Industrial and provident society"
+          - "General partnership"
+          - "Limited liability partnership (LLP)"
+          - "Limited partnership (LP)"
+          - "Private Limited Company"
+          - "Public Limited Company"
+          - "Unlimited Company"
+          - "Sole proprietorship"
+        example: "Private Limited Company"
+      name:
+        type: string
+        example: "ABC Limited"
+      sic2003:
+        type: string
+        example: "2520"
+      sic2007:
+        type: string
+        example: "2520"
+      telephone:
+        type: string
+        example: "+44 1234 567890"
+      tradingName:
+        type: string
+        example: "ABC Trading Ltd"
+      turnover:
+        type: integer
+        example: 350
+      attributes:
+        type: array
+        items:
+          type: object
+
+        $ref: '#/definitions/attributes'
+
+  respondent:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 3b136c4b-7a14-4904-9e01-13364dd7b972
+      emailAddress:
+        type: string
+        format: email
+        example: "john.doe@abc-ltd.com"
+      firstName:
+        type: string
+        example: "John"
+      lastName:
+        type: string
+        example: "Doe"
+      telephone:
+        type: string
+        example: "+44 1234 567890"
+      status:
+        type: string
+        enum:
+          - "CREATED"
+          - "ACTIVE"
+          - "SUSPENDED"
+        example: "ACTIVE"
+
+  error:
+    type: object
+    properties:
+      logref:
+        type: string
+        description: A unique identifier generated per error
+        example: "31317c23-763d-46a9-b4e5-c37ff5b4fbe7"
+      message:
+        type: string
+        description: Description of the error that occurred
+        example: "An error has occurred"

@@ -1,31 +1,9 @@
-basePath: /party-api/1.0.4
+basePath: /party-api/v1
 definitions:
-  address:
-    properties:
-      locality: {description: 'Sometimes, an address is associated with a locality,
-          which identifies the address with a smaller geographical area than the Post
-          Town (see town)', example: Green Industrial Park, type: string}
-      paon: {description: The Primary Addressable Object - this is usually a house
-          number or a building name, example: Unit 5, type: string}
-      postcode: {description: This is the Postcode for the address. Currently a postcode
-          is needed for Sorting Office to begin parsing the address., example: NT23
-          7TN, type: string}
-      saon: {description: The Secondary Addressable Object - this is usually something
-          like a flat number or any other sub unit, example: Office 2a, type: string}
-      street: {description: The street where the building office resides, example: Milton
-          Street, type: string}
-      town: {description: 'This is the Post Town where the address is located. This
-          usually corresponds to the sorting office that handles the mail for the
-          address, as may take in many smaller towns, urban districts and villages
-          (see locality).', example: New Town, type: string}
-    type: object
-  attributes:
-    additionalProperties: {example: ACME LTD, type: string}
-    description: A dictionary of kv pairs from the sample file.
-    type: object
+  attributes: {description: A dictionary of kv pairs from the sample file., type: object}
   business:
     properties:
-      address: {$ref: '#/definitions/address'}
+      attributes: {$ref: '#/definitions/attributes'}
       businessRef: {description: The unique business identifier recognised within
           ONS (previously referred to as the RU Ref)., example: 0123456789, type: string}
       contactName: {example: John Doe, type: string}
@@ -33,7 +11,7 @@ definitions:
       enterpriseName: {example: ABC Limited, type: string}
       facsimile: {example: +44 1234 567890, type: string}
       fulltimeCount: {example: 35, type: integer}
-      id: {example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
+      id: {example: 3b136c4b-7a14-4904-9e01-13364dd7b972, format: uuid, type: string}
       legalStatus:
         enum: [Community Interest Company (CIC), Charitable Incorporated Organisation
             (CIO), Industrial and provident society, General partnership, Limited
@@ -47,49 +25,15 @@ definitions:
       telephone: {example: +44 1234 567890, type: string}
       tradingName: {example: ABC Trading Ltd, type: string}
       turnover: {example: 350, type: integer}
-    required: [id]
     type: object
-  businessAssociation:
+  businessCreate:
     properties:
-      businessId: {example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
-      effectiveFrom: {example: '2010-11-17T00:00:00Z', format: date-time, type: string}
-      effectiveTo: {example: '', format: date-time, type: string}
-      enrolments:
-        items: {$ref: '#/definitions/enrolment'}
-        type: array
-      respondentId: {example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid,
-        type: string}
-      status:
-        enum: [ACTIVE, INACTIVE, SUSPENDED, ENDED]
-        example: ACTIVE
-        type: string
-    type: object
-  createparty:
-    properties:
-      attributes: {$ref: '#/definitions/attributes'}
-      id: {description: The id of the Party. This will not be required when posting,
-        example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
-      reference: {description: The reference of the sample unit ( <RUREF> | <URPN>
-          ), example: '49900001234', type: string}
-      sampleUnitType: {description: 'Sample Unit Type [ B BI | H ]', example: B, type: string}
-    type: object
-  enrolment:
-    properties:
-      status:
-        enum: [PENDING, ENABLED, DISABLED, SUSPENDED]
-        example: ENABLED
-        type: string
-      surveyId: {example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
-    type: object
-  enrolmentCode:
-    properties:
-      code: {example: 7689-4537-1928-4536, type: string}
-    type: object
-  enrolmentInvitation:
-    properties:
-      effectiveFrom: {example: '2017-03-29T09:15:00Z', format: date-time, type: string}
-      effectiveTo: {example: '2017-03-31T09:15:00Z', format: date-time, type: string}
-      targetEmail: {example: jane.doe@abc-ltd.com, format: email, type: string}
+      attributes:
+        properties: {}
+        type: object
+      businessRef: {description: The unique business identifier recognised within
+          ONS (previously referred to as the RU Ref)., example: 0123456789, type: string}
+      id: {example: 3b136c4b-7a14-4904-9e01-13364dd7b972, format: uuid, type: string}
     type: object
   error:
     properties:
@@ -100,52 +44,18 @@ definitions:
     type: object
   party:
     properties:
-      associations:
-        items: {$ref: '#/definitions/partysummary'}
-        type: array
       attributes: {$ref: '#/definitions/attributes'}
       id: {description: The id of the Party. This will not be required when posting,
-        example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
+        example: 'urn:ons.gov.uk:id:business:00123456789', format: urn, type: string}
       reference: {description: The reference of the sample unit ( <RUREF> | <URPN>
           ), example: '49900001234', type: string}
-      sampleUnitType: {description: 'Sample Unit Type [ B BI | H ]', example: B, type: string}
-    type: object
-  partysummary:
-    properties:
-      id: {description: The id of the Party. This will not be required when posting,
-        example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
-      sampleUnitType: {description: 'Sample Unit Type [ B BI | H ]', example: BI,
-        type: string}
-    type: object
-  residence:
-    properties:
-      addressLine1: {description: Address details., type: string}
-      addressLine2: {description: Address details., type: string}
-      category:
-        description: only if care home or hotel
-        enum: [HOTEL, CARE HOME]
-        type: string
-      eastings: {description: Easting or x-coordinate., type: integer}
-      estabType: {description: Communal Establishment type., type: string}
-      htc: {description: Hard to count code., type: integer}
-      ladCode: {description: GSS nine character LAD code., type: string}
-      latitude: {description: Position North or South of Equator., type: number}
-      longitude: {description: Position East or West of Greenwich Meridian., type: number}
-      lsoaArea: {description: Lower Layer Super Output Area code., type: string}
-      msoaArea: {description: Middle layer Super Output Area code., type: string}
-      northings: {description: Northing or y-coordinate., type: integer}
-      outputArea: {description: Geography Output Area code., type: string}
-      postcode: {description: Postal Code., type: string}
-      regionCode: {description: GSS nine character Region geography code., type: string}
-      townName: {description: Postal town name., type: string}
-      type: {description: 'Address type CE, HH, I.', type: string}
-      uprn: {description: Unique Property Reference Number., type: integer}
+      sampleUnitType: {description: 'Sample Unit Type [ B | H ]', example: B, type: string}
     type: object
   respondent:
     properties:
       emailAddress: {example: john.doe@abc-ltd.com, format: email, type: string}
       firstName: {example: John, type: string}
-      id: {example: 45297c23-763d-46a9-b4e5-c37ff5b4fbe7, format: uuid, type: string}
+      id: {example: 3b136c4b-7a14-4904-9e01-13364dd7b972, format: uuid, type: string}
       lastName: {example: Doe, type: string}
       status:
         enum: [CREATED, ACTIVE, SUSPENDED]
@@ -166,40 +76,13 @@ definitions:
       href: {example: /party/id/12345678, type: string}
       rel: {example: self, type: string}
       type: {example: application/vnd.ons.party+json, type: string}
-host: 'localhost:8083
-
-  '
 info:
   contact: {email: ras@ons.gov.uk}
   description: Initial API for the Party microservice.
   title: Party API
-  version: 1.0.4
+  version: 1.0.0
 paths:
   /businesses:
-    get:
-      description: 'By passing in the appropriate options, you can search for available
-        Businesses
-
-        '
-      operationId: businesses_get
-      parameters:
-      - {description: pass an optional search string for looking up Businesses, in: query,
-        name: searchString, required: false, type: string}
-      - {description: number of records to skip for pagination, format: int32, in: query,
-        minimum: 0, name: skip, required: false, type: integer}
-      - {description: maximum number of records to return, format: int32, in: query,
-        maximum: 50, minimum: 0, name: limit, required: false, type: integer}
-      produces: [application/vnd.collection+json]
-      responses:
-        200: {description: 'Search results matching criteria. For frontstage use,
-            the response will be filtered based on the ACTIVE business associations
-            for the Respondent'}
-        400:
-          description: Bad input parameter
-          schema: {$ref: '#/definitions/error'}
-      summary: searches Businesses
-      tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
     post:
       consumes: [application/vnd.ons.business+json]
       description: Adds a new Business, or updates an existing Business based on the
@@ -208,20 +91,16 @@ paths:
       parameters:
       - description: Business to add
         in: body
-        name: party
+        name: business
         required: false
-        schema: {$ref: '#/definitions/party'}
+        schema:
+          allOf:
+          - {$ref: '#/definitions/businessCreate'}
       responses:
-        200:
-          description: item updated
-          headers:
-            ETag: {description: 'On successful update, the new ETag for the Business
-                will be included as a header, e.g. "5635635636356356"', type: string}
+        200: {description: item updated}
         201:
           description: item created
           headers:
-            ETag: {description: 'On successful creation, the new ETag for the Business
-                will be included as a header, e.g. "5635635636356356"', type: string}
             Location: {description: Location of the newly created resource, type: string}
         400:
           description: invalid input, object invalid
@@ -232,7 +111,6 @@ paths:
       security:
       - accessCode: [write]
       summary: adds a reporting unit of type Business
-      tags: [backstage]
       x-swagger-router-controller: swagger_server.controllers_local.controller
   /businesses/id/{id}:
     get:
@@ -244,9 +122,6 @@ paths:
       responses:
         200:
           description: Party representation
-          headers:
-            ETag: {description: 'The current ETag for the Party, e.g. "5635635636356356"',
-              type: string}
           schema: {$ref: '#/definitions/business'}
         400:
           description: Invalid ID supplied
@@ -255,72 +130,6 @@ paths:
           description: Party not found
           schema: {$ref: '#/definitions/error'}
       summary: Get a Business by its Party ID
-      tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-    options:
-      operationId: businesses_id_id_options
-      parameters:
-      - {description: ID of Business to return, in: path, name: id, required: true,
-        type: string}
-      produces: [application/vnd.collection+json]
-      responses:
-        200:
-          description: Collection of available representations for a Business
-          schema: {$ref: '#/definitions/vnd.collection+json'}
-        401: {description: Unauthorized}
-        403: {description: 'Forbidden - in the context of frontstage use, this response
-            would indicate the Respondent does not have an ACTIVE association with
-            this business'}
-        404: {description: Business not found}
-      summary: View the available representations for a given Business
-      tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-    put:
-      consumes: [multipart/form-data]
-      description: Updates the representation for an existing Business
-      operationId: businesses_id_id_put
-      parameters:
-      - {description: ID of Party to update, in: path, name: id, required: true, type: string}
-      - {description: Binary Party to add, in: formData, name: binaryparty, required: true,
-        type: file}
-      - {description: The current ETag value for the Party, in: header, name: ETag,
-        required: false, type: string}
-      responses:
-        201:
-          description: item updated
-          headers:
-            ETag: {description: 'On successful update, the new ETag for the Party
-                will be included as a header, e.g. "5635635636356356"', type: string}
-        400:
-          description: Invalid ID supplied
-          schema: {$ref: '#/definitions/error'}
-        409:
-          description: Invalid ETag supplied
-          schema: {$ref: '#/definitions/error'}
-      security:
-      - accessCode: [write]
-      summary: Update the representation for an existing Business
-      tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-  /businesses/id/{id}/business-associations:
-    get:
-      description: Returns the known business associations for a business
-      operationId: businesses_id_id_business_associations_get
-      parameters:
-      - {description: ID of Business to return, in: path, name: id, required: true,
-        type: string}
-      - {description: number of records to skip for pagination, format: int32, in: query,
-        minimum: 0, name: skip, required: false, type: integer}
-      - {description: maximum number of records to return, format: int32, in: query,
-        maximum: 50, minimum: 0, name: limit, required: false, type: integer}
-      produces: [application/vnd.collection+json]
-      responses:
-        200: {description: Paginated list of known business associations for a business}
-        404:
-          description: Business not found
-          schema: {$ref: '#/definitions/error'}
-      summary: Returns the known business associations for a business
-      tags: [backstage]
       x-swagger-router-controller: swagger_server.controllers_local.controller
   /businesses/ref/{ref}:
     get:
@@ -333,9 +142,6 @@ paths:
       responses:
         200:
           description: Business representation
-          headers:
-            ETag: {description: 'The current ETag for the Party, e.g. "5635635636356356"',
-              type: string}
           schema: {$ref: '#/definitions/business'}
         401:
           description: Unauthorized
@@ -349,98 +155,6 @@ paths:
           description: Business not found
           schema: {$ref: '#/definitions/error'}
       summary: Get a Business by its unique business reference
-      tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-  /enrolment-codes:
-    get:
-      description: 'By passing in the appropriate options, you can search for available
-        Enrolment Codes
-
-        '
-      operationId: enrolment_codes_get
-      parameters:
-      - {description: pass an optional search string for looking up Enrolment Codes,
-        in: query, name: searchString, required: false, type: string}
-      - {description: number of records to skip for pagination, format: int32, in: query,
-        minimum: 0, name: skip, required: false, type: integer}
-      - {description: maximum number of records to return, format: int32, in: query,
-        maximum: 50, minimum: 0, name: limit, required: false, type: integer}
-      produces: [application/vnd.collection+json]
-      responses:
-        200: {description: search results matching criteria}
-        400: {description: bad input parameter}
-      summary: searches enrolment codes
-      tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-    post:
-      consumes: [application/vnd.ons.enrolment-code+json]
-      description: Redeems an Enrolment Code
-      operationId: enrolment_codes_post
-      parameters:
-      - description: Enrolment Code to redeem
-        in: body
-        name: party
-        required: false
-        schema: {$ref: '#/definitions/enrolmentCode'}
-      responses:
-        201:
-          description: item created
-          headers:
-            ETag: {description: 'On successful creation, the new ETag for the Enrolment
-                Code will be included as a header, e.g. "5635635636356356"', type: string}
-            Location: {description: Location of the newly created resource, type: string}
-        400: {description: 'invalid input, object invalid'}
-        422: {description: enrolment code already exists}
-      security:
-      - accessCode: [write]
-      summary: redeems an Enrolment Code
-      tags: [frontstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-  /enrolment-invitations:
-    get:
-      description: 'By passing in the appropriate options, you can search for available
-        Enrolment Invitations
-
-        '
-      operationId: enrolment_invitations_get
-      parameters:
-      - {description: pass an optional search string for looking up Enrolment Invitations,
-        in: query, name: searchString, required: false, type: string}
-      - {description: number of records to skip for pagination, format: int32, in: query,
-        minimum: 0, name: skip, required: false, type: integer}
-      - {description: maximum number of records to return, format: int32, in: query,
-        maximum: 50, minimum: 0, name: limit, required: false, type: integer}
-      produces: [application/vnd.collection+json]
-      responses:
-        200: {description: search results matching criteria}
-        400: {description: bad input parameter}
-      summary: searches enrolment invitations
-      tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-    post:
-      consumes: [application/vnd.ons.enrolment-invitation+json]
-      description: Stores an invitation to Enrol another Respondent to a Survey
-      operationId: enrolment_invitations_post
-      parameters:
-      - description: Enrolment Invitation to store
-        in: body
-        name: party
-        required: false
-        schema: {$ref: '#/definitions/enrolmentInvitation'}
-      responses:
-        201:
-          description: item created
-          headers:
-            ETag: {description: 'On successful creation, the new ETag for the Enrolment
-                Invitation will be included as a header, e.g. "5635635636356356"',
-              type: string}
-            Location: {description: Location of the newly created resource, type: string}
-        400: {description: 'invalid input, object invalid'}
-        409: {description: an existing item already exists}
-      security:
-      - accessCode: [write]
-      summary: stores an invitation to Enrol another Respondent to a Survey
-      tags: [frontstage]
       x-swagger-router-controller: swagger_server.controllers_local.controller
   /parties:
     post:
@@ -453,7 +167,7 @@ paths:
         in: body
         name: party
         required: false
-        schema: {$ref: '#/definitions/createparty'}
+        schema: {$ref: '#/definitions/party'}
       responses:
         200:
           description: item updated
@@ -476,7 +190,6 @@ paths:
       - accessCode: [write]
       summary: given a sampleUnitType B | H this adds a reporting unit of type Business
         or Household
-      tags: [backstage]
       x-swagger-router-controller: swagger_server.controllers_local.controller
   /parties/type/{sampleUnitType}/id/{id}:
     get:
@@ -507,7 +220,6 @@ paths:
           description: Business not found
           schema: {$ref: '#/definitions/error'}
       summary: Get a Party by its UUID
-      tags: [backstage]
       x-swagger-router-controller: swagger_server.controllers_local.controller
   /parties/type/{sampleUnitType}/ref/{sampleUnitRef}:
     get:
@@ -539,152 +251,8 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: Get a Party and any associated parties by its unique reference (ruref
         for business, uprn for household)
-      tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-  /residences:
-    get:
-      description: 'By passing in the appropriate options, you can search for available
-        Residences
-
-        '
-      operationId: residences_get
-      parameters:
-      - {description: pass an optional search string for looking up Residences, in: query,
-        name: searchString, required: false, type: string}
-      - {description: number of records to skip for pagination, format: int32, in: query,
-        minimum: 0, name: skip, required: false, type: integer}
-      - {description: maximum number of records to return, format: int32, in: query,
-        maximum: 50, minimum: 0, name: limit, required: false, type: integer}
-      produces: [application/vnd.collection+json]
-      responses:
-        200: {description: search results matching criteria}
-        400: {description: bad input parameter}
-      summary: searches Residences
-      tags: [future]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-    post:
-      consumes: [application/vnd.ons.party+json]
-      description: Adds a Residence to the system
-      operationId: residences_post
-      parameters:
-      - description: Residence to add
-        in: body
-        name: party
-        required: false
-        schema: {$ref: '#/definitions/residence'}
-      responses:
-        201:
-          description: item created
-          headers:
-            ETag: {description: 'On successful creation, the new ETag for the Residence
-                will be included as a header, e.g. "5635635636356356"', type: string}
-            Location: {description: Location of the newly created resource, type: string}
-        400: {description: 'invalid input, object invalid'}
-        409: {description: an existing item already exists}
-      security:
-      - accessCode: [write]
-      summary: adds a reporting unit of type Residence
-      tags: [future]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-  /residences/id/{id}:
-    get:
-      description: Returns a single Party
-      operationId: get_residence_by_id
-      parameters:
-      - {description: ID of Party to return, in: path, name: id, required: true, type: string}
-      produces: [application/vnd.ons.party+json]
-      responses:
-        200:
-          description: Party representation
-          headers:
-            ETag: {description: 'The current ETag for the Party, e.g. "5635635636356356"',
-              type: string}
-          schema: {$ref: '#/definitions/residence'}
-        400: {description: Invalid ID supplied}
-        404: {description: Party not found}
-      summary: Get a Residence by its Party ID
-      tags: [future]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-    options:
-      operationId: residences_id_id_options
-      parameters:
-      - {description: ID of Residence to return, in: path, name: id, required: true,
-        type: string}
-      produces: [application/vnd.collection+json]
-      responses:
-        200:
-          description: Collection of available representations for a Residence
-          schema: {$ref: '#/definitions/vnd.collection+json'}
-        404: {description: Residence not found}
-      summary: View the available representations for a given Residence
-      tags: [future]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-    put:
-      consumes: [multipart/form-data]
-      description: Updates the representation for an existing Residence
-      operationId: residences_id_id_put
-      parameters:
-      - {description: ID of Party to update, in: path, name: id, required: true, type: string}
-      - {description: Binary Party to add, in: formData, name: binaryparty, required: true,
-        type: file}
-      - {description: The current ETag value for the Party, in: header, name: ETag,
-        required: false, type: string}
-      responses:
-        201:
-          description: item updated
-          headers:
-            ETag: {description: 'On successful update, the new ETag for the Party
-                will be included as a header, e.g. "5635635636356356"', type: string}
-        400: {description: Invalid ID supplied}
-        409: {description: Invalid ETag supplied}
-      security:
-      - accessCode: [write]
-      summary: Update the representation for an existing Residence
-      tags: [future]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-  /residences/uprn/{uprn}:
-    get:
-      description: Returns a single Residence
-      operationId: get_residence_by_uprn
-      parameters:
-      - {description: Unique property reference of the Residence to return, in: path,
-        name: uprn, required: true, type: string}
-      produces: [application/vnd.ons.party+json]
-      responses:
-        200:
-          description: Residence representation
-          headers:
-            ETag: {description: 'The current ETag for the Party, e.g. "5635635636356356"',
-              type: string}
-          schema: {$ref: '#/definitions/residence'}
-        400: {description: Invalid Ref supplied}
-        404: {description: Residence not found}
-      summary: Get a Residence by its unique property reference
-      tags: [future]
       x-swagger-router-controller: swagger_server.controllers_local.controller
   /respondents:
-    get:
-      description: 'By passing in the appropriate options, you can search for available
-        Respondentes
-
-        '
-      operationId: respondents_get
-      parameters:
-      - {description: pass an optional search string for looking up Respondents, in: query,
-        name: searchString, required: false, type: string}
-      - {description: number of records to skip for pagination, format: int32, in: query,
-        minimum: 0, name: skip, required: false, type: integer}
-      - {description: maximum number of records to return, format: int32, in: query,
-        maximum: 50, minimum: 0, name: limit, required: false, type: integer}
-      produces: [application/vnd.collection+json]
-      responses:
-        200: {description: search results matching criteria}
-        400:
-          description: bad input parameter
-          schema: {$ref: '#/definitions/error'}
-      summary: searches Respondents
-      tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
     post:
       consumes: [application/vnd.ons.respondent+json]
       description: Adds a Respondent to the system
@@ -699,8 +267,6 @@ paths:
         201:
           description: item created
           headers:
-            ETag: {description: 'On successful creation, the new ETag for the Respondent
-                will be included as a header, e.g. "5635635636356356"', type: string}
             Location: {description: Location of the newly created resource, type: string}
         400:
           description: invalid input, object invalid
@@ -708,7 +274,6 @@ paths:
       security:
       - accessCode: [write]
       summary: adds a Respondent
-      tags: [frontstage, backstage]
       x-swagger-router-controller: swagger_server.controllers_local.controller
   /respondents/id/{id}:
     get:
@@ -721,9 +286,6 @@ paths:
       responses:
         200:
           description: Respondent representation
-          headers:
-            ETag: {description: 'The current ETag for the Respondent, e.g. "5635635636356356"',
-              type: string}
           schema: {$ref: '#/definitions/respondent'}
         400:
           description: Invalid ID supplied
@@ -732,72 +294,6 @@ paths:
           description: Party not found
           schema: {$ref: '#/definitions/error'}
       summary: Get a Respondent by its Party ID
-      tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-    options:
-      operationId: respondents_id_id_options
-      parameters:
-      - {description: ID of Respondent to return, in: path, name: id, required: true,
-        type: string}
-      produces: [application/vnd.collection+json]
-      responses:
-        200:
-          description: Collection of available representations for a Respondent
-          schema: {$ref: '#/definitions/vnd.collection+json'}
-        404:
-          description: Respondent not found
-          schema: {$ref: '#/definitions/error'}
-      summary: View the available representations for a given Respondent
-      tags: [backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-    put:
-      consumes: [application/vnd.ons.respondent+json]
-      description: Updates the representation for an existing Respondent. To be used
-        to activate a Respondent when their email address has been confirmed.
-      operationId: respondents_id_id_put
-      parameters:
-      - {description: ID of Respondent to update, in: path, name: id, required: true,
-        type: string}
-      - {description: The current ETag value for the Respondent, in: header, name: ETag,
-        required: false, type: string}
-      responses:
-        200:
-          description: item updated
-          headers:
-            ETag: {description: 'On successful update, the new ETag for the Party
-                will be included as a header, e.g. "5635635636356356"', type: string}
-        400: {description: Invalid ID supplied}
-        403:
-          description: Forbidden - in the context of frontstage use, this response
-            would indicate the Respondent does not match the currently authenticated
-            user
-          schema: {$ref: '#/definitions/error'}
-        409:
-          description: Invalid ETag supplied
-          schema: {$ref: '#/definitions/error'}
-      security:
-      - accessCode: [write]
-      summary: Update the representation for an existing Respondent.
-      tags: [frontstage, backstage]
-      x-swagger-router-controller: swagger_server.controllers_local.controller
-  /respondents/id/{id}/business-associations:
-    get:
-      description: Returns the known business associations for a respondent
-      operationId: respondents_id_id_business_associations_get
-      parameters:
-      - {description: ID of Respondent, in: path, name: id, required: true, type: string}
-      - {description: number of records to skip for pagination, format: int32, in: query,
-        minimum: 0, name: skip, required: false, type: integer}
-      - {description: maximum number of records to return, format: int32, in: query,
-        maximum: 50, minimum: 0, name: limit, required: false, type: integer}
-      produces: [application/vnd.collection+json]
-      responses:
-        200: {description: Paginated list of known business associations for a respondent}
-        404:
-          description: Respondent not found
-          schema: {$ref: '#/definitions/error'}
-      summary: Returns the known business associations for a respondent
-      tags: [backstage]
       x-swagger-router-controller: swagger_server.controllers_local.controller
 schemes: [https]
 security:
@@ -815,4 +311,3 @@ tags:
     Liason, Survey Manager)', name: backstage}
 - {description: Operations available to external business roles (i.e. Respondent),
   name: frontstage}
-- {description: Operations to support future requirements (i.e. Census), name: future}

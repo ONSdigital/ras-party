@@ -26,3 +26,30 @@ def model_to_dict(model, exclude=None):
     exclude = exclude or []
     exclude.append('_sa_instance_state')
     return {k: v for k, v in model.__dict__.items() if k not in exclude}
+
+
+def partition_dict(d, in_left):
+
+    left = {}
+    right = {}
+
+    for k, v in d.items():
+        if k in in_left:
+            left[k] = v
+        else:
+            right[k] = v
+
+    return left, right
+
+
+def flatten_keys(d, prefix=None):
+
+    prefix = prefix or ''
+    result = []
+
+    for k, v in d.items():
+        result.append('.'.join([prefix, k] if prefix else [k]))
+        if isinstance(v, dict):
+            result.extend(flatten_keys(v, prefix='.'.join([prefix, k] if prefix else [k])))
+
+    return result

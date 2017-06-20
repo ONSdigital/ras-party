@@ -4,159 +4,84 @@
 import uuid
 
 from flask import make_response, jsonify
+from ons_ras_common import ons_env
 
-from swagger_server.configuration import ons_env
-from swagger_server.controllers_local.util import filter_falsey_values, model_to_dict
+from swagger_server.controllers_local.session_context import transaction
+from swagger_server.controllers_local.error_decorator import convert_exceptions
 from swagger_server.controllers_local.validate import Validator, Exists, IsUuid, IsIn
-from swagger_server.models_local.model import Business, Party, Respondent, BusinessRespondent, Address
-
-db = ons_env
+from swagger_server.models.models import Business, Party, Respondent, BusinessRespondent
 
 
-def business_to_dict(business):
-    associations = business.respondents
-    d = {
-        'id': business.party.party_uuid,
-        'reference': business.party.business.ru_ref,
-        'sampleUnitType': 'B',
-        'attributes': business.party.business.attributes,
-        'associations': [{'id': a.respondent.party.party_uuid} for a in associations],
-        'address': model_to_dict(business.address, exclude=['id'])
-    }
-    return filter_falsey_values(d)
+db = ons_env.db
 
 
-def respondent_to_dict(respondent):
-    d = {
-        'id': respondent.party.party_uuid,
-        'sampleUnitType': Respondent.UNIT_TYPE,
-        'status': respondent.status,
-        'emailAddress': respondent.email_address,
-        'firstName': respondent.first_name,
-        'lastName': respondent.last_name,
-        'telephone': respondent.telephone
-    }
-
-    return filter_falsey_values(d)
-
-
-#
-# /businesses
-#
-def businesses_get(searchString=None, skip=None, limit=None):
-    """
-    searches Businesses
-    By passing in the appropriate options, you can search for available Businesses
-    :param searchString: pass an optional search string for looking up Businesses
-    :type searchString: str
-    :param skip: number of records to skip for pagination
-    :type skip: int
-    :param limit: maximum number of records to return
-    :type limit: int
-
-    :rtype: None
-    """
-    return "to be implemented"  # pragma: no cover  # pragma: no cover
-
-
-def businesses_post(party):
+@convert_exceptions
+def businesses_post(business):
     """
     adds a reporting unit of type Business
     Adds a new Business, or updates an existing Business based on the business reference provided
-    :param party: Business to add
-    :type party: dict | bytes
+    :param business: Business to add
+    :type business: dict | bytes
 
     :rtype: None
     """
 
-    v = Validator(Exists('reference'))
-    if 'id' in party:
-        v.add_rule(IsUuid('id'))
-    if not v.validate(party):
-        return make_response(jsonify(v.errors), 400)
+    with transaction() as tran:
+        v = Validator(Exists('businessRef',
+                             'attributes',
+                             'attributes.contactName',
+                             'attributes.employeeCount',
+                             'attributes.enterpriseName',
+                             'attributes.enterpriseName',
+                             'attributes.facsimile',
+                             'attributes.fulltimeCount',
+                             'attributes.legalStatus',
+                             'attributes.name',
+                             'attributes.sic2003',
+                             'attributes.sic2007',
+                             'attributes.telephone',
+                             'attributes.tradingName',
+                             'attributes.turnover'
+                             ))
+        if 'id' in business:
+            v.add_rule(IsUuid('id'))
+        if not v.validate(business):
+            return make_response(jsonify(v.errors), 400)
 
-    party_uuid = party.get('id', uuid.uuid4())
-    ru_ref = party['reference']
-    associations = party.get('associations')
-    address = party.get('address')
+        party_uuid = business.get('id', uuid.uuid4())
+        business_ref = business['businessRef']
+        associations = business.get('associations')
 
-    db_party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
+        db_party = tran.query(Party).filter(Party.party_uuid == party_uuid).first()
 
-    if db_party and not db_party.business:
-        return make_response(jsonify({'errors': "Existing party with '{}' does not identify a business."
-                                     .format(party_uuid)}), 400)
+        if db_party and not db_party.business:
+            return make_response(jsonify({'errors': "Existing party with '{}' does not identify a business."
+                                         .format(party_uuid)}), 400)
 
-    if not db_party:
-        db_party = Party(party_uuid)
+        if db_party:
+            db_business = db_party.business
+        else:
+            db_party = Party(party_uuid)
+            db_business = Business(business_ref, db_party)
+            tran.add(db_business)
 
-    # TODO: there's no attempt made to detect if an address already exists, just assumes new business means new address
-    business = db.session.query(Business).filter(Business.ru_ref == ru_ref).first()
-    if not business:
-        db_address = Address(**address)
-        business = Business(ru_ref, db_party, db_address)
-        db.session.add(business)
+        db_business.from_dict(business['attributes'])
 
-    business.attributes = party.get('attributes', {})
+        if associations:
+            for assoc in associations:
+                assoc_id = assoc['id']
 
-    if associations:
-        for assoc in associations:
-            assoc_id = assoc['id']
+                assoc_party = tran.query(Party).filter(Party.party_uuid == assoc_id).first()
+                business_respondent = BusinessRespondent()
+                business_respondent.respondent = assoc_party.respondent
+                business_respondent.business = db_business
+                # TODO: check the association doesn't already exist?
+                tran.add(business_respondent)
 
-            assoc_party = db.session.query(Party).filter(Party.party_uuid == assoc_id).first()
-            # TODO: deal with missing party
-            # TODO: assumes a BI association, implied by the table BusinessRespondent, but can there be others?
-            business_respondent = BusinessRespondent()
-            business_respondent.respondent = assoc_party.respondent
-            business_respondent.business = business
-            # TODO: check the association doesn't already exist?
-            db.session.add(business_respondent)
-
-    db.session.commit()
-
-    return make_response(jsonify(business_to_dict(business)), 200)
-
-
-#
-# /businesses/id/{id}
-#
-def businesses_id_id_put(id, binaryparty, ETag=None):
-    """
-    Update the representation for an existing Business
-    Updates the representation for an existing Business
-    :param id: ID of Party to update
-    :type id: str
-    :param binaryparty: Binary Party to add
-    :type binaryparty: werkzeug.datastructures.FileStorage
-    :param ETag: The current ETag value for the Party
-    :type ETag: str
-
-    :rtype: None
-    """
-    return "to be implemented"  # pragma: no cover  # pragma: no cover
+        return make_response(jsonify(db_business.to_dict()), 200)
 
 
-#
-# /businesses/id/{id}/business-associations
-#
-def businesses_id_id_business_associations_get(id, skip=None, limit=None):
-    """
-    Returns the known business associations for a business
-    Returns the known business associations for a business
-    :param id: ID of Business to return
-    :type id: str
-    :param skip: number of records to skip for pagination
-    :type skip: int
-    :param limit: maximum number of records to return
-    :type limit: int
-
-    :rtype: None
-    """
-    return "to be implemented"  # pragma: no cover  # pragma: no cover
-
-
-#
-# /businesses/ref/{ref}
-#
+@convert_exceptions
 def get_business_by_ref(ref):
     """
     Get a Business by its unique business reference
@@ -167,16 +92,14 @@ def get_business_by_ref(ref):
     :rtype: Business
     """
 
-    business = db.session.query(Business).filter(Business.ru_ref == ref).first()
+    business = db.session.query(Business).filter(Business.business_ref == ref).first()
     if not business:
-        return make_response(jsonify({'errors': "Business with ru_ref '{}' does not exist.".format(ref)}), 404)
+        return make_response(jsonify({'errors': "Business with reference '{}' does not exist.".format(ref)}), 404)
 
-    return make_response(jsonify(business_to_dict(business)), 200)
+    return make_response(jsonify(business.to_dict()), 200)
 
 
-#
-# /businesses/id/{id}
-#
+@convert_exceptions
 def get_business_by_id(id):
     """
     Get a Business by its Party ID
@@ -197,27 +120,10 @@ def get_business_by_id(id):
     if not party.business:
         return make_response(jsonify({'errors': "Party id '{}' is not associated with a business.".format(id)}), 404)
 
-    return make_response(jsonify(business_to_dict(party.business)), 200)
+    return make_response(jsonify(party.business.to_dict()), 200)
 
 
-#
-# /businesses/id/{id}
-#
-def businesses_id_id_options(id):
-    """
-    View the available representations for a given Business
-
-    :param id: ID of Business to return
-    :type id: str
-
-    :rtype: VndCollectionjson
-    """
-    return "to be implemented"  # pragma: no cover  # pragma: no cover
-
-
-#
-# /parties
-#
+@convert_exceptions
 def parties_post(party):
     """
     given a sampleUnitType B | H this adds a reporting unit of type Business or Household
@@ -238,9 +144,7 @@ def parties_post(party):
         return respondents_post(party)
 
 
-#
-# /parties/ref/{ref}
-#
+@convert_exceptions
 def get_party_by_ref(sampleUnitType, sampleUnitRef):
     """
     Get a Party by its unique reference (ruref / uprn)
@@ -258,9 +162,7 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
         return get_business_by_ref(sampleUnitRef)
 
 
-#
-# /parties/{id}
-#
+@convert_exceptions
 def get_party_by_id(sampleUnitType, id):
     v = Validator(IsIn('sampleUnitType', 'B', 'BI'))
     if not v.validate({'sampleUnitType': sampleUnitType}):
@@ -272,103 +174,7 @@ def get_party_by_id(sampleUnitType, id):
         return get_respondent_by_id(id)
 
 
-#
-# /parties/uprn/{uprn}:
-#
-def get_party_by_uprn(uprn):
-    return "to be implemented"  # pragma: no cover
-
-
-#
-# /enrolment-codes
-#
-def enrolment_codes_get(searchString=None, skip=None, limit=None):
-    """
-    searches enrolment codes
-    By passing in the appropriate options, you can search for available Enrolment Codes
-    :param searchString: pass an optional search string for looking up Enrolment Codes
-    :type searchString: str
-    :param skip: number of records to skip for pagination
-    :type skip: int
-    :param limit: maximum number of records to return
-    :type limit: int
-
-    :rtype: None
-    """
-    return "to be implemented"  # pragma: no cover  # pragma: no cover
-
-
-#
-# /enrolment-codes
-#
-def enrolment_codes_post(party=None):
-    """
-    redeems an Enrolment Code
-    Redeems an Enrolment Code
-    :param party: Enrolment Code to redeem
-    :type party: dict | bytes
-
-    :rtype: None
-    """
-    return "to be implemented"  # pragma: no cover  # pragma: no cover
-
-
-#
-# /enrolment-invitations
-#
-def enrolment_invitations_get(searchString=None, skip=None, limit=None):
-    """
-    searches enrolment invitations
-    By passing in the appropriate options, you can search for available Enrolment Invitations
-    :param searchString: pass an optional search string for looking up Enrolment Invitations
-    :type searchString: str
-    :param skip: number of records to skip for pagination
-    :type skip: int
-    :param limit: maximum number of records to return
-    :type limit: int
-
-    :rtype: None
-    """
-    return "to be implemented"  # pragma: no cover  # pragma: no cover
-
-
-#
-# /enrolment-invitations
-#
-def enrolment_invitations_post(party=None):
-    """
-    stores an invitation to Enrol another Respondent to a Survey
-    Stores an invitation to Enrol another Respondent to a Survey
-    :param party: Enrolment Invitation to store
-    :type party: dict | bytes
-
-    :rtype: None
-    """
-    return "to be implemented"  # pragma: no cover  # pragma: no cover
-
-
-#
-# /respondents
-#
-def respondents_get(searchString=None, skip=None, limit=None):
-    """
-    searches Respondents
-    By passing in the appropriate options, you can search for available Respondentes
-    :param searchString: pass an optional search string for looking up Respondents
-    :type searchString: str
-    :param skip: number of records to skip for pagination
-    :type skip: int
-    :param limit: maximum number of records to return
-    :type limit: int
-
-    :rtype: None
-    """
-    return "to be implemented"  # pragma: no cover  # pragma: no cover
-
-
-#
-# /respondents/id/{id}
-#
+@convert_exceptions
 def get_respondent_by_id(id):
     """
     Get a Respondent by its Party ID
@@ -389,63 +195,10 @@ def get_respondent_by_id(id):
     if not party.respondent:
         return make_response(jsonify({'errors': "Party id '{}' is not associated with a respondent.".format(id)}), 404)
 
-    return make_response(jsonify(respondent_to_dict(party.respondent)), 200)
+    return make_response(jsonify(party.respondent.to_dict()), 200)
 
 
-#
-# /respondents/id/{id}
-#
-def respondents_id_id_options(id):
-    """
-    View the available representations for a given Respondent
-
-    :param id: ID of Respondent to return
-    :type id: str
-
-    :rtype: VndCollectionjson
-    """
-    return "to be implemented"  # pragma: no cover  # pragma: no cover
-
-
-#
-# /respondents/id/{id}/business-associations
-#
-def respondents_id_id_business_associations_get(id, skip=None, limit=None):
-    """
-    Returns the known business associations for a respondent
-    Returns the known business associations for a respondent
-    :param id: ID of Respondent
-    :type id: str
-    :param skip: number of records to skip for pagination
-    :type skip: int
-    :param limit: maximum number of records to return
-    :type limit: int
-
-    :rtype: None
-    """
-    return "to be implemented"  # pragma: no cover  # pragma: no cover
-
-
-#
-# /respondents/id/{id}
-#
-def respondents_id_id_put(id, ETag=None):
-    """
-    Update the representation for an existing Respondent.
-    Updates the representation for an existing Respondent. To be used to activate a Respondent when their email address has been confirmed.
-    :param id: ID of Respondent to update
-    :type id: str
-    :param ETag: The current ETag value for the Respondent
-    :type ETag: str
-
-    :rtype: None
-    """
-    return "to be implemented"  # pragma: no cover  # pragma: no cover
-
-
-#
-# /respondents
-#
+@convert_exceptions
 def respondents_post(party):
     """
     adds a Respondent
@@ -455,64 +208,31 @@ def respondents_post(party):
 
     :rtype: None
     """
-    v = Validator(Exists('emailAddress', 'firstName', 'lastName', 'telephone'))
-    if 'id' in party:
-        v.add_rule(IsUuid('id'))
-    if not v.validate(party):
-        return make_response(jsonify(v.errors), 400)
 
-    party_uuid = party.get('id', uuid.uuid4())
-    db_party = db.session.query(Party).filter(Party.party_uuid == party_uuid).first()
+    with transaction() as tran:
+        v = Validator(Exists('emailAddress', 'firstName', 'lastName', 'telephone'))
+        if 'id' in party:
+            v.add_rule(IsUuid('id'))
+        if not v.validate(party):
+            return make_response(jsonify(v.errors), 400)
 
-    if db_party and not db_party.respondent:
-        return make_response(jsonify({'errors': "Existing party with '{}' does not identify a respondent."
-                                     .format(party_uuid)}), 400)
+        party_uuid = party.get('id', uuid.uuid4())
+        db_party = tran.query(Party).filter(Party.party_uuid == party_uuid).first()
 
-    if not db_party:
-        db_party = Party(party_uuid)
-        respondent = Respondent(db_party)
-        db.session.add(respondent)
-    else:
-        respondent = db_party.respondent
+        if db_party and not db_party.respondent:
+            return make_response(jsonify({'errors': "Existing party with '{}' does not identify a respondent."
+                                         .format(party_uuid)}), 400)
 
-    respondent.email_address = party['emailAddress']
-    respondent.first_name = party['firstName']
-    respondent.last_name = party['lastName']
-    respondent.telephone = party['telephone']
+        if not db_party:
+            db_party = Party(party_uuid)
+            respondent = Respondent(db_party)
+            tran.add(respondent)
+        else:
+            respondent = db_party.respondent
 
-    db.session.commit()
+        respondent.email_address = party['emailAddress']
+        respondent.first_name = party['firstName']
+        respondent.last_name = party['lastName']
+        respondent.telephone = party['telephone']
 
-    return make_response(jsonify(respondent_to_dict(respondent)), 200)
-
-
-#
-# /residences/id/{id}
-#
-def get_residence_by_id(id):
-    return "to be implemented"  # pragma: no cover
-
-
-#
-# /residences/id/{uprn}
-#
-def get_residence_by_uprn(uprn):
-    return "to be implemented"  # pragma: no cover
-
-
-#
-# /residences
-#
-def residences_id_id_put(residences_data):
-    return "to be implemented"  # pragma: no cover
-
-
-def residences_id_id_options():
-    return "to be implemented"  # pragma: no cover
-
-
-def residences_get(searchString, skip, limit):
-    return "to be implemented"  # pragma: no cover
-
-
-def residences_post(residences_data):
-    return "to be implemented"  # pragma: no cover
+        return make_response(jsonify(respondent.to_dict()), 200)

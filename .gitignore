@@ -63,3 +63,15 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+# Swagger codegen
+**/.DS_Store
+
+
+**/test.db
+
+
+.build/
+.idea/
+onsdb
+
