@@ -59,18 +59,18 @@ class Business(ons_env.db.base):
 
     def from_dict(self, d):
         items, attrs = partition_dict(d, self.REQUIRED_ATTRIBUTES)
-        self.contact_name = items['contactName']
-        self.employee_count = int(items['employeeCount'])
-        self.enterprise_name = items['enterpriseName']
-        self.facsimile = items['facsimile']
-        self.fulltime_count = items['fulltimeCount']
-        self.legal_status = items['legalStatus']
-        self.name = items['name']
-        self.sic_2003 = items['sic2003']
-        self.sic_2007 = items['sic2007']
-        self.telephone = items['telephone']
-        self.trading_name = items['tradingName']
-        self.turnover = int(items['turnover'])
+        self.contact_name = items.get('contactName')
+        self.employee_count = int(items.get('employeeCount', '0'))
+        self.enterprise_name = items.get('enterpriseName')
+        self.facsimile = items.get('facsimile')
+        self.fulltime_count = items.get('fulltimeCount')
+        self.legal_status = items.get('legalStatus')
+        self.name = items.get('name')
+        self.sic_2003 = items.get('sic2003')
+        self.sic_2007 = items.get('sic2007')
+        self.telephone = items.get('telephone')
+        self.trading_name = items.get('tradingName')
+        self.turnover = int(items.get('turnover', '0'))
         self.attributes = attrs
         return self
 

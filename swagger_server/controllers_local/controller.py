@@ -29,19 +29,19 @@ def businesses_post(business):
     with transaction() as tran:
         v = Validator(Exists('businessRef',
                              'attributes',
-                             'attributes.contactName',
-                             'attributes.employeeCount',
-                             'attributes.enterpriseName',
-                             'attributes.enterpriseName',
-                             'attributes.facsimile',
-                             'attributes.fulltimeCount',
-                             'attributes.legalStatus',
-                             'attributes.name',
-                             'attributes.sic2003',
-                             'attributes.sic2007',
-                             'attributes.telephone',
-                             'attributes.tradingName',
-                             'attributes.turnover'
+                             # 'attributes.contactName',
+                             # 'attributes.employeeCount',
+                             # 'attributes.enterpriseName',
+                             # 'attributes.enterpriseName',
+                             # 'attributes.facsimile',
+                             # 'attributes.fulltimeCount',
+                             # 'attributes.legalStatus',
+                             # 'attributes.name',
+                             # 'attributes.sic2003',
+                             # 'attributes.sic2007',
+                             # 'attributes.telephone',
+                             # 'attributes.tradingName',
+                             # 'attributes.turnover'
                              ))
         if 'id' in business:
             v.add_rule(IsUuid('id'))
