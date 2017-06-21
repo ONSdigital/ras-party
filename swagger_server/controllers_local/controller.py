@@ -81,6 +81,8 @@ def parties_post(party):
     v = Validator(Exists('sampleUnitType'), IsIn('sampleUnitType', 'B', 'BI'))
     if 'id' in party:
         v.add_rule(IsUuid('id'))
+    if party['sampleUnitType'] == Business.UNIT_TYPE:
+        v.add_rule(Exists('sampleUnitRef'))
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
