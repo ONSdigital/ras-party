@@ -23,7 +23,7 @@ def businesses_post(business):
     with transaction() as tran:
         b = Business.from_business_dict(business)
         if b.valid:
-            tran.add(b)
+            tran.merge(b)
             return make_response(jsonify(b.to_business_dict()), 200)
         else:
             return make_response(jsonify(b.errors), 400)
@@ -89,12 +89,12 @@ def parties_post(party):
     if party['sampleUnitType'] == Business.UNIT_TYPE:
         with transaction() as tran:
             b = Business.from_party_dict(party)
-            tran.add(b)
+            tran.merge(b)
             return make_response(jsonify(b.to_party_dict()), 200)
     elif party['sampleUnitType'] == Respondent.UNIT_TYPE:
         with transaction() as tran:
             r = Respondent.from_party_dict(party)
-            tran.add(r)
+            tran.merge(r)
             return make_response(jsonify(r.to_party_dict()), 200)
 
 
@@ -171,7 +171,7 @@ def respondents_post(party):
     with transaction() as tran:
         r = Respondent.from_respondent_dict(party)
         if r.valid:
-            tran.add(r)
+            tran.merge(r)
             return make_response(jsonify(r.to_respondent_dict()), 200)
         else:
             return make_response(jsonify(r.errors), 400)
