@@ -70,15 +70,14 @@ class IsIn(ValidatorBase):
 class Validator:
     def __init__(self, *rules):
         self._rules = list(rules)
+        self.valid = True
 
     def add_rule(self, r):
         self._rules.append(r)
 
     def validate(self, d):
-        for r in self._rules:
-            if not r(d):
-                return False
-        return True
+        self.valid = all([r(d) for r in self._rules])
+        return self.valid
 
     @property
     def errors(self):
