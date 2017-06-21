@@ -1,7 +1,7 @@
 from flask import make_response, jsonify
 
 
-def convert_exceptions(func):
+def translate_exceptions(func):
     # TODO: ultimately we don't want to expose error details to the caller, so should possible map expected
     # TODO: errors to something more friendly, and fall back to a generic 500 on unexpected errors
     def function_wrapper(*args, **kwargs):
