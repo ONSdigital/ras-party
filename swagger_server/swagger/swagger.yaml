@@ -76,6 +76,7 @@ definitions:
       href: {example: /party/id/12345678, type: string}
       rel: {example: self, type: string}
       type: {example: application/vnd.ons.party+json, type: string}
+host: localhost:8080
 info:
   contact: {email: ras@ons.gov.uk}
   description: Initial API for the Party microservice.
@@ -108,8 +109,6 @@ paths:
         422:
           description: an existing item already exists
           schema: {$ref: '#/definitions/error'}
-      security:
-      - accessCode: [write]
       summary: adds a reporting unit of type Business
       x-swagger-router-controller: swagger_server.controllers_local.controller
   /businesses/id/{id}:
@@ -186,8 +185,6 @@ paths:
         422:
           description: an existing item already exists
           schema: {$ref: '#/definitions/error'}
-      security:
-      - accessCode: [write]
       summary: given a sampleUnitType B | H this adds a reporting unit of type Business
         or Household
       x-swagger-router-controller: swagger_server.controllers_local.controller
@@ -271,8 +268,6 @@ paths:
         400:
           description: invalid input, object invalid
           schema: {$ref: '#/definitions/error'}
-      security:
-      - accessCode: [write]
       summary: adds a Respondent
       x-swagger-router-controller: swagger_server.controllers_local.controller
   /respondents/id/{id}:
@@ -296,15 +291,6 @@ paths:
       summary: Get a Respondent by its Party ID
       x-swagger-router-controller: swagger_server.controllers_local.controller
 schemes: [https]
-security:
-- accessCode: [read]
-securityDefinitions:
-  accessCode:
-    authorizationUrl: http://uaa.ons.gov.uk/oauth/auth
-    flow: accessCode
-    scopes: {read: allows reading resources, write: allows modifying resources}
-    tokenUrl: http://uaa.ons.gov.uk/oauth/token
-    type: oauth2
 swagger: '2.0'
 tags:
 - {description: 'Operations available to internal business roles (i.e. Respondent
