@@ -56,7 +56,9 @@ class TestParties(PartyTestClient):
         self.assertEqual(len(businesses()), 1)
 
     def test_get_party_by_id_returns_correct_representation(self):
-        mock_party_b = MockBusiness().attributes(source='test_post_valid_party_adds_to_db').as_party()
+        mock_party_b = MockBusiness()\
+            .attributes(source='test_get_party_by_id_returns_correct_representation')\
+            .as_party()
         self.post_to_parties(mock_party_b, 200)
 
         mock_party_bi = MockRespondent().attributes().as_party()
@@ -67,6 +69,15 @@ class TestParties(PartyTestClient):
 
         response = self.get_party_by_id('BI', mock_party_bi['id'])
         self.assertEqual(response, mock_party_bi)
+
+    def test_get_party_by_ref_returns_correct_representation(self):
+        mock_party_b = MockBusiness()\
+            .attributes(source='test_get_party_by_ref_returns_correct_representation')\
+            .as_party()
+        self.post_to_parties(mock_party_b, 200)
+
+        response = self.get_party_by_ref('B', mock_party_b['sampleUnitRef'])
+        self.assertEqual(response, mock_party_b)
 
 
 if __name__ == '__main__':

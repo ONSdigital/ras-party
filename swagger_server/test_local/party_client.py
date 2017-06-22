@@ -14,10 +14,6 @@ db = ons_env.db
 def businesses():
     return db.session.query(Business).all()
 
-#
-# def parties():
-#     return db.session.query(Party).all()
-
 
 def respondents():
     return db.session.query(Respondent).all()
