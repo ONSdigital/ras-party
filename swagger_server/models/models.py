@@ -100,7 +100,7 @@ class BusinessRespondentStatus(enum.IntEnum):
 class BusinessRespondent(ons_env.db.base):
     __tablename__ = 'business_respondent'
 
-    business_id = Column(Integer, ForeignKey('business.business_ref'), primary_key=True)
+    business_ref = Column(Text, ForeignKey('business.business_ref'), primary_key=True)
     respondent_id = Column(Integer, ForeignKey('respondent.id'), primary_key=True)
     status = Column('status', Enum(BusinessRespondentStatus))
     effective_from = Column(DateTime, default=datetime.datetime.utcnow)
@@ -226,16 +226,16 @@ class EnrolmentCode(ons_env.db.base):
     __tablename__ = 'enrolment_code'
 
     id = Column(Integer, primary_key=True)
-    business_id = Column(Integer, ForeignKey('business.business_ref'))
+    business_ref = Column(Text, ForeignKey('business.business_ref'))
     respondent_id = Column(Integer, ForeignKey('respondent.id'))
     survey_id = Column(Text)
     iac = Column(Text)
     status = Column('status', Enum(EnrolmentCodeStatus))
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, respondent_id, business_id, survey_id, iac, status):
+    def __init__(self, respondent_id, business_ref, survey_id, iac, status):
         self.respondent_id = respondent_id
-        self.business_id = business_id
+        self.business_ref = business_ref
         self.survey_id = survey_id
         self.status = status
         self.iac = iac
@@ -251,7 +251,7 @@ class EnrolmentInvitation(ons_env.db.base):
     __tablename__ = 'enrolment_invitation'
 
     id = Column(Integer, primary_key=True)
-    business_id = Column(Integer, ForeignKey('business.business_ref'))
+    business_ref = Column(Text, ForeignKey('business.business_ref'))
     respondent_id = Column(Integer, ForeignKey('respondent.id'))
     survey_id = Column(Text)
     target_email = Column(Text)
@@ -262,10 +262,10 @@ class EnrolmentInvitation(ons_env.db.base):
     status = Column('status', Enum(EnrolmentInvitationStatus))
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, respondent_id, business_id, survey_id, target_email,
+    def __init__(self, respondent_id, business_ref, survey_id, target_email,
                  verification_token, sms_verification_token, status):
         self.respondent_id = respondent_id
-        self.business_id = business_id
+        self.business_ref = business_ref
         self.survey_id = survey_id
         self.target_email = target_email
         self.verification_token = verification_token

@@ -1,5 +1,4 @@
 import random
-import uuid
 
 from swagger_server.controllers_local.util import partition_dict
 from swagger_server.models.models import Business
