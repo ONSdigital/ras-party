@@ -112,8 +112,12 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
     if not v.validate({'sampleUnitType': sampleUnitType}):
         return make_response(jsonify(v.errors), 400)
 
-    if sampleUnitType == Business.UNIT_TYPE:
-        return get_business_by_ref(sampleUnitRef)
+    business = db.session.query(Business).filter(Business.business_ref == sampleUnitRef).first()
+    if not business:
+        return make_response(jsonify(
+            {'errors': "Business with reference '{}' does not exist.".format(sampleUnitRef)}), 404)
+
+    return make_response(jsonify(business.to_party_dict()), 200)
 
 
 @translate_exceptions
