@@ -158,7 +158,7 @@ def get_respondent_by_id(id):
 
     respondent = db.session.query(Respondent).filter(Respondent.party_uuid == id).first()
     if not respondent:
-        return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
+        return make_response(jsonify({'errors': "Respondent with party id '{}' does not exist.".format(id)}), 404)
 
     return make_response(jsonify(respondent.to_respondent_dict()), 200)
 
