@@ -45,7 +45,7 @@ def get_business_by_id(id):
     if not v.validate({'id': id}):
         return make_response(jsonify(v.errors), 400)
 
-    business = db.session.query(Business).filter(Business.party_uuid == id).one()
+    business = db.session.query(Business).filter(Business.party_uuid == id).first()
     if not business:
         return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
 
@@ -62,7 +62,7 @@ def get_business_by_ref(ref):
 
     :rtype: Business
     """
-    business = db.session.query(Business).filter(Business.business_ref == ref).one()
+    business = db.session.query(Business).filter(Business.business_ref == ref).first()
     if not business:
         return make_response(jsonify({'errors': "Business with reference '{}' does not exist.".format(ref)}), 404)
 
@@ -113,7 +113,7 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
     if not v.validate({'sampleUnitType': sampleUnitType}):
         return make_response(jsonify(v.errors), 400)
 
-    business = db.session.query(Business).filter(Business.business_ref == sampleUnitRef).one()
+    business = db.session.query(Business).filter(Business.business_ref == sampleUnitRef).first()
     if not business:
         return make_response(jsonify(
             {'errors': "Business with reference '{}' does not exist.".format(sampleUnitRef)}), 404)
@@ -128,14 +128,14 @@ def get_party_by_id(sampleUnitType, id):
         return make_response(jsonify(v.errors), 400)
 
     if sampleUnitType == Business.UNIT_TYPE:
-        business = db.session.query(Business).filter(Business.party_uuid == id).one()
+        business = db.session.query(Business).filter(Business.party_uuid == id).first()
         if not business:
             return make_response(jsonify({'errors': "Business with id '{}' does not exist.".format(id)}), 404)
 
         return make_response(jsonify(business.to_party_dict()), 200)
 
     elif sampleUnitType == Respondent.UNIT_TYPE:
-        respondent = db.session.query(Respondent).filter(Respondent.party_uuid == id).one()
+        respondent = db.session.query(Respondent).filter(Respondent.party_uuid == id).first()
         if not respondent:
             return make_response(jsonify({'errors': "Respondent with id '{}' does not exist.".format(id)}), 404)
 
@@ -156,9 +156,9 @@ def get_respondent_by_id(id):
     if not v.validate({'id': id}):
         return make_response(jsonify(v.errors), 400)
 
-    respondent = db.session.query(Respondent).filter(Respondent.party_uuid == id).one()
+    respondent = db.session.query(Respondent).filter(Respondent.party_uuid == id).first()
     if not respondent:
-        return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
+        return make_response(jsonify({'errors': "Respondent with party id '{}' does not exist.".format(id)}), 404)
 
     return make_response(jsonify(respondent.to_respondent_dict()), 200)
 
