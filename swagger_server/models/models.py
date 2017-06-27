@@ -100,7 +100,7 @@ class BusinessRespondentStatus(enum.IntEnum):
 class BusinessRespondent(ons_env.db.base):
     __tablename__ = 'business_respondent'
 
-    business_ref = Column(Text, ForeignKey('business.business_ref'), primary_key=True)
+    business_id = Column(Text, ForeignKey('business.party_uuid'), primary_key=True)
     respondent_id = Column(Integer, ForeignKey('respondent.id'), primary_key=True)
     status = Column('status', Enum(BusinessRespondentStatus))
     effective_from = Column(DateTime, default=datetime.datetime.utcnow)
@@ -226,7 +226,7 @@ class EnrolmentCode(ons_env.db.base):
     __tablename__ = 'enrolment_code'
 
     id = Column(Integer, primary_key=True)
-    business_ref = Column(Text, ForeignKey('business.business_ref'))
+    business_id = Column(Text, ForeignKey('business.party_uuid'))
     respondent_id = Column(Integer, ForeignKey('respondent.id'))
     survey_id = Column(Text)
     iac = Column(Text)
@@ -251,7 +251,7 @@ class EnrolmentInvitation(ons_env.db.base):
     __tablename__ = 'enrolment_invitation'
 
     id = Column(Integer, primary_key=True)
-    business_ref = Column(Text, ForeignKey('business.business_ref'))
+    business_id = Column(Text, ForeignKey('business.party_uuid'))
     respondent_id = Column(Integer, ForeignKey('respondent.id'))
     survey_id = Column(Text)
     target_email = Column(Text)
