@@ -23,8 +23,8 @@ class Business(ons_env.db.base):
         'sic2003', 'sic2007', 'telephone', 'tradingName', 'turnover'
     ]
 
-    business_ref = Column(Text, primary_key=True)
-    party_uuid = Column(GUID, unique=True)
+    party_uuid = Column(GUID, unique=True, primary_key=True)
+    business_ref = Column(Text, unique=True)
     respondents = relationship('BusinessRespondent', back_populates='business')
     attributes = Column(JsonColumn())
     created_on = Column(DateTime, default=datetime.datetime.utcnow)

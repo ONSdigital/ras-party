@@ -76,7 +76,7 @@ definitions:
       href: {example: /party/id/12345678, type: string}
       rel: {example: self, type: string}
       type: {example: application/vnd.ons.party+json, type: string}
-host: None:8080
+host: localhost:8000
 info:
   contact: {email: ras@ons.gov.uk}
   description: Initial API for the Party microservice.
