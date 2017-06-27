@@ -24,7 +24,7 @@ def businesses_post(business):
         if 'businessRef' in business:
             existing_business = tran.query(Business).filter(Business.business_ref == business['businessRef']).first()
             if existing_business:
-                business['id'] = existing_business.party_uuid
+                business['id'] = str(existing_business.party_uuid)
 
         b = Business.from_business_dict(business)
         if b.valid:
@@ -95,7 +95,7 @@ def parties_post(party):
         with transaction() as tran:
             existing_business = tran.query(Business).filter(Business.business_ref == party['sampleUnitRef']).first()
             if existing_business:
-                party['id'] = existing_business.party_uuid
+                party['id'] = str(existing_business.party_uuid)
             b = Business.from_party_dict(party)
             tran.merge(b)
             return make_response(jsonify(b.to_party_dict()), 200)
