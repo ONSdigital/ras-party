@@ -8,21 +8,35 @@
   
 This page documents the Party service API endpoints. All endpoints return an `HTTP 200 OK` status code except where noted otherwise.
 
-* `GET /businesses/id/d826818e-179e-467b-9936-6a8603dc8b46/business-associations`
-* `GET /businesses/ref/499000011335/business-associations`
+* `GET /parties/type/B/ref/499000011335`
+* `GET /parties/type/B/id/d826818e-179e-467b-9936-6a8603dc8b46`
 
-&mdash; This returns a business object with an array of respondent associations,  each association with an array of survey enrolments the respondent has with that business.
-
-
+&mdash; When generic party type 'B' (business) is requested this returns a generic party representation of the business resource. TODO: This representation will include the business associations and any survey enrolments.
 
 ### Example JSON Response
 ```json
 {
+  attributes: 
+  {
+    contactName: "John Doe",
+    employeeCount: 50,
+    enterpriseName: "ABC Limited",
+    facsimile: "+44 1234 567890",
+    fulltimeCount: 35,
+    legalStatus: "Private Limited Company",
+    name: "Bolts and Ratchets Ltd",
+    sic2003: "2520",
+    sic2007: "2520",
+    telephone: "+44 1234 567890",
+    tradingName: "ABC Trading Ltd",
+    turnover: 350
+  },
   id: "d826818e-179e-467b-9936-6a8603dc8b46",
   sampleUnitRef: "499000011335",
+  sampleUnitType: "B",
   businessAssociations: [
     {
-      partyId: "2fe21b48-2408-42f7-bc43-02a349383f2e",
+      partyId: "3b136c4b-7a14-4904-9e01-13364dd7b972",
       enrolments: [
         {
           surveyId: "7b71db36-443b-4720-a1e1-52f1679cd9d9",
@@ -50,14 +64,57 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 }
 ```
 
-* `GET /respondents/id/2fe21b48-2408-42f7-bc43-02a349383f2e/business-associations`
+* `GET /parties/type/BI/id/3b136c4b-7a14-4904-9e01-13364dd7b972`
 
-&mdash; This returns a respondent object with an array of business associations, each association with an array of survey enrolments the respondent has with that business.
+&mdash; When generic party type 'BI' (respondent) is requested this returns a generic party representation of the respondent resource. TODO: This representation will include the business associations and any survey enrolments.
 
 ### Example JSON Response
 ```json
 {
-  id: "d826818e-179e-467b-9936-6a8603dc8b46",
+  attributes: {
+    emailAddress: "Jacky.Turner@abc-ltd.com",
+    firstName: "Jacky",
+    lastName: "Turner",
+    telephone: "+44 1234 567890"
+  },
+  id: "3b136c4b-7a14-4904-9e01-13364dd7b972",
+  sampleUnitType: "BI",
+  businessAssociations: [
+    {
+      partyId: "d826818e-179e-467b-9936-6a8603dc8b46",
+      sampleUnitRef: "499000011335",
+        enrolments: [
+          {
+            surveyId: "7b71db36-443b-4720-a1e1-52f1679cd9d9",
+            name: "BRES"
+          },
+          {
+            surveyId: "b41219fd-3bcb-48fa-8c53-71bbf37baf73",
+            name: "CPI"
+          }
+         ]
+      },
+    {
+      partyId: "d7d4fc21-1eaf-4e43-a89f-21ae7aa9e3f6",
+      sampleUnitRef: "499000011335"
+    }
+  ]
+}
+```
+
+* `GET /respondents/id/3b136c4b-7a14-4904-9e01-13364dd7b972`
+
+&mdash; When a respondent is requested this returns a concrete representation of the respondent party. TODO: This representation will include the business associations and any survey enrolments.
+
+### Example JSON Response
+```json
+{
+  emailAddress: "Jacky.Turner@abc-ltd.com",
+  firstName: "Jacky",
+  id: "3b136c4b-7a14-4904-9e01-13364dd7b972",
+  lastName: "Turner",
+  sampleUnitType: "BI",
+  telephone: "+44 1234 567890",
   businessAssociations: [
     {
       partyId: "d826818e-179e-467b-9936-6a8603dc8b46",
