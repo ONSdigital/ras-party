@@ -1,6 +1,6 @@
 # Party Service API
 
-### The implemented API for this serivce can be found at /swagger_server/swagger/swagger.yaml
+### The implemented API for this serivce can be found at /swagger/party/party-api.yaml
 
 ### CAVEAT: This page is subject to change while the Party service is being developed.
 
