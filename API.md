@@ -16,49 +16,49 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 ### Example JSON Response
 ```json
 {
-  attributes: 
+  "attributes": 
   {
-    contactName: "John Doe",
-    employeeCount: 50,
-    enterpriseName: "ABC Limited",
-    facsimile: "+44 1234 567890",
-    fulltimeCount: 35,
-    legalStatus: "Private Limited Company",
-    name: "Bolts and Ratchets Ltd",
-    sic2003: "2520",
-    sic2007: "2520",
-    telephone: "+44 1234 567890",
-    tradingName: "ABC Trading Ltd",
-    turnover: 350
+    "contactName": "John Doe",
+    "employeeCount": 50,
+    "enterpriseName": "ABC Limited",
+    "facsimile": "+44 1234 567890",
+    "fulltimeCount": 35,
+    "legalStatus": "Private Limited Company",
+    "name": "Bolts and Ratchets Ltd",
+    "sic2003": "2520",
+    "sic2007": "2520",
+    "telephone": "+44 1234 567890",
+    "tradingName": "ABC Trading Ltd",
+    "turnover": 350
   },
-  id: "d826818e-179e-467b-9936-6a8603dc8b46",
-  sampleUnitRef: "499000011335",
-  sampleUnitType: "B",
-  businessAssociations: [
+  "id": "d826818e-179e-467b-9936-6a8603dc8b46",
+  "sampleUnitRef": "499000011335",
+  "sampleUnitType": "B",
+  "associations": [
     {
-      partyId: "3b136c4b-7a14-4904-9e01-13364dd7b972",
-      enrolments: [
+      "partyId": "3b136c4b-7a14-4904-9e01-13364dd7b972",
+      "enrolments": [
         {
-          surveyId: "7b71db36-443b-4720-a1e1-52f1679cd9d9",
-          name: "BRES"
+          "surveyId": "7b71db36-443b-4720-a1e1-52f1679cd9d9",
+          "name": "BRES"
         },
         {
-          surveyId: "b41219fd-3bcb-48fa-8c53-71bbf37baf73",
-          name: "CPI"
+          "surveyId": "b41219fd-3bcb-48fa-8c53-71bbf37baf73",
+          "name": "CPI"
         }
       ]
     },
     {
-      partyId: "4ed02a0b-8341-41a5-9d6c-d8395cfde1b5",
-      enrolments: [
+      "partyId": "4ed02a0b-8341-41a5-9d6c-d8395cfde1b5",
+      "enrolments": [
         {
-          surveyId: "7b71db36-443b-4720-a1e1-52f1679cd9d9",
-          name: "BRES"
+          "surveyId": "7b71db36-443b-4720-a1e1-52f1679cd9d9",
+          "name": "BRES"
         }
       ]
     },
     {
-      partyId: "71d8f310-cec8-44c9-8d89-4610bf8578f7"
+      "partyId": "71d8f310-cec8-44c9-8d89-4610bf8578f7"
     }
   ]
 }
@@ -71,32 +71,32 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 ### Example JSON Response
 ```json
 {
-  attributes: {
-    emailAddress: "Jacky.Turner@abc-ltd.com",
-    firstName: "Jacky",
-    lastName: "Turner",
-    telephone: "+44 1234 567890"
+  "attributes": {
+    "emailAddress": "Jacky.Turner@abc-ltd.com",
+    "firstName": "Jacky",
+    "lastName": "Turner",
+    "telephone": "+44 1234 567890"
   },
-  id: "3b136c4b-7a14-4904-9e01-13364dd7b972",
-  sampleUnitType: "BI",
-  businessAssociations: [
+  "id": "3b136c4b-7a14-4904-9e01-13364dd7b972",
+  "sampleUnitType": "BI",
+  "associations": [
     {
-      partyId: "d826818e-179e-467b-9936-6a8603dc8b46",
-      sampleUnitRef: "499000011335",
-        enrolments: [
+      "partyId": "d826818e-179e-467b-9936-6a8603dc8b46",
+      "sampleUnitRef": "499000011335",
+        "enrolments": [
           {
-            surveyId: "7b71db36-443b-4720-a1e1-52f1679cd9d9",
-            name: "BRES"
+            "surveyId": "7b71db36-443b-4720-a1e1-52f1679cd9d9",
+            "name": "BRES"
           },
           {
-            surveyId: "b41219fd-3bcb-48fa-8c53-71bbf37baf73",
-            name: "CPI"
+            "surveyId": "b41219fd-3bcb-48fa-8c53-71bbf37baf73",
+            "name": "CPI"
           }
          ]
       },
     {
-      partyId: "d7d4fc21-1eaf-4e43-a89f-21ae7aa9e3f6",
-      sampleUnitRef: "499000011335"
+      "partyId": "d7d4fc21-1eaf-4e43-a89f-21ae7aa9e3f6",
+      "sampleUnitRef": "499000011335"
     }
   ]
 }
@@ -109,30 +109,30 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 ### Example JSON Response
 ```json
 {
-  emailAddress: "Jacky.Turner@abc-ltd.com",
-  firstName: "Jacky",
-  id: "3b136c4b-7a14-4904-9e01-13364dd7b972",
-  lastName: "Turner",
-  sampleUnitType: "BI",
-  telephone: "+44 1234 567890",
-  businessAssociations: [
+  "emailAddress": "Jacky.Turner@abc-ltd.com",
+  "firstName": "Jacky",
+  "id": "3b136c4b-7a14-4904-9e01-13364dd7b972",
+  "lastName": "Turner",
+  "sampleUnitType": "BI",
+  "telephone": "+44 1234 567890",
+  "associations": [
     {
-      partyId: "d826818e-179e-467b-9936-6a8603dc8b46",
-      sampleUnitRef: "499000011335",
-        enrolments: [
+      "partyId": "d826818e-179e-467b-9936-6a8603dc8b46",
+      "sampleUnitRef": "499000011335",
+        "enrolments": [
           {
-            surveyId: "7b71db36-443b-4720-a1e1-52f1679cd9d9",
-            name: "BRES"
+            "surveyId": "7b71db36-443b-4720-a1e1-52f1679cd9d9",
+            "name": "BRES"
           },
           {
-            surveyId: "b41219fd-3bcb-48fa-8c53-71bbf37baf73",
-            name: "CPI"
+            "surveyId": "b41219fd-3bcb-48fa-8c53-71bbf37baf73",
+            "name": "CPI"
           }
          ]
       },
     {
-      partyId: "d7d4fc21-1eaf-4e43-a89f-21ae7aa9e3f6",
-      sampleUnitRef: "499000011335"
+      "partyId": "d7d4fc21-1eaf-4e43-a89f-21ae7aa9e3f6",
+      "sampleUnitRef": "499000011335"
     }
   ]
 }
