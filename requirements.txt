@@ -1,4 +1,4 @@
-git+https://github.com/ONSdigital/ras-common.git@release/0.3#ons_ras_common==0.1.88
+git+https://github.com/ONSdigital/ras-common.git@integration_test
 connexion==1.0.129
 Flask==0.12.1
 Flask_Cors==3.0.2
