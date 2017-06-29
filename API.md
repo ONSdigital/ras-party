@@ -90,22 +90,29 @@ This page documents the Party service API endpoints. All endpoints return an `HT
   "turnover": 350,
   "associations": [
     {
-      "partyId": "d826818e-179e-467b-9936-6a8603dc8b46",
-      "sampleUnitRef": "499000011335",
-        "enrolments": [
-          {
-            "surveyId": "7b71db36-443b-4720-a1e1-52f1679cd9d9",
-            "name": "BRES"
-          },
-          {
-            "surveyId": "b41219fd-3bcb-48fa-8c53-71bbf37baf73",
-            "name": "CPI"
-          }
-         ]
-      },
+      "partyId": "3b136c4b-7a14-4904-9e01-13364dd7b972",
+      "enrolments": [
+        {
+          "surveyId": "7b71db36-443b-4720-a1e1-52f1679cd9d9",
+          "name": "BRES"
+        },
+        {
+          "surveyId": "b41219fd-3bcb-48fa-8c53-71bbf37baf73",
+          "name": "CPI"
+        }
+      ]
+    },
     {
-      "partyId": "d7d4fc21-1eaf-4e43-a89f-21ae7aa9e3f6",
-      "sampleUnitRef": "499000011335"
+      "partyId": "4ed02a0b-8341-41a5-9d6c-d8395cfde1b5",
+      "enrolments": [
+        {
+          "surveyId": "7b71db36-443b-4720-a1e1-52f1679cd9d9",
+          "name": "BRES"
+        }
+      ]
+    },
+    {
+      "partyId": "71d8f310-cec8-44c9-8d89-4610bf8578f7"
     }
   ]
 }
