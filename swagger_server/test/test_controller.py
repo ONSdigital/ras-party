@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
-from swagger_server.test_local.mocks import MockBusiness, MockRespondent
-from swagger_server.test_local.party_client import PartyTestClient, businesses, respondents
+from swagger_server.test.mocks import MockBusiness, MockRespondent
+from swagger_server.test.party_client import PartyTestClient, businesses, respondents
 
 
 class TestParties(PartyTestClient):
