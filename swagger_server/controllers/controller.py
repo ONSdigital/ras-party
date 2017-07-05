@@ -1,3 +1,5 @@
+import uuid
+
 from flask import make_response, jsonify
 from ons_ras_common import ons_env
 
@@ -99,11 +101,8 @@ def parties_post(party):
             b = Business.from_party_dict(party)
             tran.merge(b)
             return make_response(jsonify(b.to_party_dict()), 200)
-    elif party['sampleUnitType'] == Respondent.UNIT_TYPE:
-        with transaction() as tran:
-            r = Respondent.from_party_dict(party)
-            tran.merge(r)
-            return make_response(jsonify(r.to_party_dict()), 200)
+    else:
+        return make_response(jsonify({'errors': "Unknown sampleUnitType '{}'".format(party['sampleUnitType'])}), 400)
 
 
 @translate_exceptions
@@ -180,10 +179,23 @@ def respondents_post(party):
 
     :rtype: None
     """
+    expected = ('emailAddress', 'firstName', 'lastName', 'telephone')
+
+    v = Validator(Exists(*expected))
+    if 'id' in party:
+        v.add_rule(IsUuid('id'))
+
+    if not v.validate(party):
+        return make_response(jsonify(v.errors), 400)
+
+    translated_party = {
+        'party_uuid': party.get('id') or uuid.uuid4(),
+        'email_address': party['emailAddress'],
+        'first_name': party['firstName'],
+        'last_name': party['lastName'],
+        'telephone': party['telephone']
+    }
     with transaction() as tran:
-        r = Respondent.from_respondent_dict(party)
-        if r.valid:
-            tran.merge(r)
-            return make_response(jsonify(r.to_respondent_dict()), 200)
-        else:
-            return make_response(jsonify(r.errors), 400)
+        r = Respondent(**translated_party)
+        tran.merge(r)
+        return make_response(jsonify(r.to_respondent_dict()), 200)
