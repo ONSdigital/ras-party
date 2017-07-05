@@ -179,7 +179,7 @@ def respondents_post(party):
 
     :rtype: None
     """
-    expected = ('emailAddress', 'firstName', 'lastName', 'telephone')
+    expected = ('emailAddress', 'firstName', 'lastName', 'telephone', 'enrolmentCode')
 
     v = Validator(Exists(*expected))
     if 'id' in party:
