@@ -1,7 +1,7 @@
 import itertools
 import uuid
 
-from swagger_server.controllers_local.util import flatten_keys
+from swagger_server.controllers.util import flatten_keys
 
 
 class ValidatorBase:

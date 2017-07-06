@@ -7,8 +7,8 @@ from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
-from swagger_server.controllers_local.util import filter_falsey_values, partition_dict
-from swagger_server.controllers_local.validate import Validator, Exists, IsUuid
+from swagger_server.controllers.util import filter_falsey_values, partition_dict
+from swagger_server.controllers.validate import Validator, Exists, IsUuid
 from swagger_server.models.guid import GUID
 from swagger_server.models.json_column import JsonColumn
 

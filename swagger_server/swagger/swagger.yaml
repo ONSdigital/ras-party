@@ -110,7 +110,7 @@ paths:
           description: an existing item already exists
           schema: {$ref: '#/definitions/error'}
       summary: adds a reporting unit of type Business
-      x-swagger-router-controller: swagger_server.controllers_local.controller
+      x-swagger-router-controller: swagger_server.controllers.controller
   /businesses/id/{id}:
     get:
       description: Returns a single Party
@@ -129,7 +129,7 @@ paths:
           description: Party not found
           schema: {$ref: '#/definitions/error'}
       summary: Get a Business by its Party ID
-      x-swagger-router-controller: swagger_server.controllers_local.controller
+      x-swagger-router-controller: swagger_server.controllers.controller
   /businesses/ref/{ref}:
     get:
       description: Returns a single Business
@@ -154,7 +154,7 @@ paths:
           description: Business not found
           schema: {$ref: '#/definitions/error'}
       summary: Get a Business by its unique business reference
-      x-swagger-router-controller: swagger_server.controllers_local.controller
+      x-swagger-router-controller: swagger_server.controllers.controller
   /parties:
     post:
       consumes: [application/vnd.ons.party+json]
@@ -187,7 +187,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: given a sampleUnitType B | H this adds a reporting unit of type Business
         or Household
-      x-swagger-router-controller: swagger_server.controllers_local.controller
+      x-swagger-router-controller: swagger_server.controllers.controller
   /parties/type/{sampleUnitType}/id/{id}:
     get:
       description: Returns a single Party
@@ -217,7 +217,7 @@ paths:
           description: Business not found
           schema: {$ref: '#/definitions/error'}
       summary: Get a Party by its UUID
-      x-swagger-router-controller: swagger_server.controllers_local.controller
+      x-swagger-router-controller: swagger_server.controllers.controller
   /parties/type/{sampleUnitType}/ref/{sampleUnitRef}:
     get:
       description: Returns a Party and associated parties
@@ -248,7 +248,7 @@ paths:
           schema: {$ref: '#/definitions/error'}
       summary: Get a Party and any associated parties by its unique reference (ruref
         for business, uprn for household)
-      x-swagger-router-controller: swagger_server.controllers_local.controller
+      x-swagger-router-controller: swagger_server.controllers.controller
   /respondents:
     post:
       consumes: [application/vnd.ons.respondent+json]
@@ -269,7 +269,7 @@ paths:
           description: invalid input, object invalid
           schema: {$ref: '#/definitions/error'}
       summary: adds a Respondent
-      x-swagger-router-controller: swagger_server.controllers_local.controller
+      x-swagger-router-controller: swagger_server.controllers.controller
   /respondents/id/{id}:
     get:
       description: Returns a single Party
@@ -289,7 +289,7 @@ paths:
           description: Party not found
           schema: {$ref: '#/definitions/error'}
       summary: Get a Respondent by its Party ID
-      x-swagger-router-controller: swagger_server.controllers_local.controller
+      x-swagger-router-controller: swagger_server.controllers.controller
 schemes: [https]
 swagger: '2.0'
 tags:

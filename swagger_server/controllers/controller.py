@@ -1,9 +1,9 @@
 from flask import make_response, jsonify
 from ons_ras_common import ons_env
 
-from swagger_server.controllers_local.session_context import transaction
-from swagger_server.controllers_local.error_decorator import translate_exceptions
-from swagger_server.controllers_local.validate import Validator, Exists, IsUuid, IsIn
+from swagger_server.controllers.session_context import transaction
+from swagger_server.controllers.error_decorator import translate_exceptions
+from swagger_server.controllers.validate import Validator, Exists, IsUuid, IsIn
 from swagger_server.models.models import Business, Respondent
 
 
