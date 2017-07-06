@@ -42,6 +42,10 @@ class TestParties(PartyTestClient):
         party_id = self.post_to_respondents(mock_respondent, 200)['id']
 
         response = self.get_respondent_by_id(party_id)
+
+        # Not expecting the enrolmentCode to be returned as part of the respondent
+        del mock_respondent['enrolmentCode']
+
         self.assertTrue(response.items() >= mock_respondent.items())
 
     def test_post_valid_party_adds_to_db(self):

@@ -53,7 +53,8 @@ class MockRespondent:
             'firstName': 'A',
             'lastName': 'Z',
             'emailAddress': 'a@z.com',
-            'telephone': '123'
+            'telephone': '123',
+            'enrolmentCode': 'fb747cq725lj'
         }
 
     def attributes(self, **kwargs):

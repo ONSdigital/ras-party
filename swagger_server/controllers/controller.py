@@ -1,5 +1,6 @@
 import uuid
 
+import requests
 from flask import make_response, jsonify
 from ons_ras_common import ons_env
 
@@ -169,16 +170,18 @@ def get_respondent_by_id(id):
     return make_response(jsonify(respondent.to_respondent_dict()), 200)
 
 
+class MockConfig:
+
+    def __init__(self):
+        self._case_service = {'host': 'localhost', 'port': '8000'}
+
+    def dependency(self, _):
+        return self._case_service
+
+
 @translate_exceptions
 def respondents_post(party):
-    """
-    adds a Respondent
-    Adds a Respondent to the system
-    :param party: Respondent to add
-    :type party: dict | bytes
 
-    :rtype: None
-    """
     expected = ('emailAddress', 'firstName', 'lastName', 'telephone', 'enrolmentCode')
 
     v = Validator(Exists(*expected))
@@ -187,6 +190,15 @@ def respondents_post(party):
 
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
+
+    config = MockConfig()
+
+    enrolment_code = party['enrolmentCode']
+    case_svc = config.dependency('case_service')
+    case_url = '{}:{}/cases/iac/{}'.format(case_svc['host'], case_svc['port'], enrolment_code)
+    resp = requests.get(case_url)
+    # TODO: handle errors?
+    case_context = resp.json()
 
     translated_party = {
         'party_uuid': party.get('id') or uuid.uuid4(),
