@@ -136,38 +136,6 @@ class Respondent(ons_env.db.base):
     telephone = Column(Text)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, party_uuid=None):
-        self.party_uuid = party_uuid or uuid.uuid4()
-
-    @staticmethod
-    def from_respondent_dict(d):
-        expected = ('emailAddress', 'firstName', 'lastName', 'telephone')
-
-        v = Validator(Exists(*expected))
-        if 'id' in d:
-            v.add_rule(IsUuid('id'))
-
-        if v.validate(d):
-            r = Respondent(d.get('id'))
-            r.email_address = d['emailAddress']
-            r.first_name = d['firstName']
-            r.last_name = d['lastName']
-            r.telephone = d['telephone']
-            r.valid = True
-            return r
-
-        return v
-
-    @staticmethod
-    def from_party_dict(d):
-        r = Respondent(d.get('id'))
-        attrs = d.get('attributes', {})
-        r.email_address = attrs.get('emailAddress')
-        r.first_name = attrs.get('firstName')
-        r.last_name = attrs.get('lastName')
-        r.telephone = attrs.get('telephone')
-        return r
-
     def to_respondent_dict(self):
         d = {
             'id': self.party_uuid,
