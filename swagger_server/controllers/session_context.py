@@ -1,13 +1,12 @@
 from contextlib import contextmanager
 
-from microservice import PartyService
-
-service = PartyService().get()
+from flask import current_app
 
 
 @contextmanager
 def transaction():
-    session = service.db.session()
+    Session = current_app.db.session
+    session = Session()
     try:
         yield session
         session.commit()
@@ -15,4 +14,4 @@ def transaction():
         session.rollback()
         raise
     finally:
-        service.db.session.remove()
+        Session.remove()

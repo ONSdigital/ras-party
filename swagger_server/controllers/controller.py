@@ -1,16 +1,13 @@
-import uuid
-
 import requests
-from flask import make_response, jsonify
+from flask import make_response, jsonify, current_app
 
-from microservice import PartyService
-from swagger_server.controllers.session_context import transaction
 from swagger_server.controllers.error_decorator import translate_exceptions
-from swagger_server.controllers.validate import Validator, Exists, IsUuid, IsIn
+from swagger_server.controllers.session_context import transaction
+from swagger_server.controllers.validate import Validator, IsIn, Exists, IsUuid
 from swagger_server.models.models import Business, Respondent
 
 
-service = PartyService().get()
+# TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
 
 
 @translate_exceptions
@@ -52,7 +49,7 @@ def get_business_by_id(id):
     if not v.validate({'id': id}):
         return make_response(jsonify(v.errors), 400)
 
-    business = db.session.query(Business).filter(Business.party_uuid == id).first()
+    business = current_app.db.session.query(Business).filter(Business.party_uuid == id).first()
     if not business:
         return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
 
@@ -69,7 +66,7 @@ def get_business_by_ref(ref):
 
     :rtype: Business
     """
-    business = db.session.query(Business).filter(Business.business_ref == ref).first()
+    business = current_app.db.session.query(Business).filter(Business.business_ref == ref).first()
     if not business:
         return make_response(jsonify({'errors': "Business with reference '{}' does not exist.".format(ref)}), 404)
 
@@ -120,7 +117,7 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
     if not v.validate({'sampleUnitType': sampleUnitType}):
         return make_response(jsonify(v.errors), 400)
 
-    business = service.db.session.query(Business).filter(Business.business_ref == sampleUnitRef).first()
+    business = current_app.db.session.query(Business).filter(Business.business_ref == sampleUnitRef).first()
     if not business:
         return make_response(jsonify(
             {'errors': "Business with reference '{}' does not exist.".format(sampleUnitRef)}), 404)
@@ -135,14 +132,14 @@ def get_party_by_id(sampleUnitType, id):
         return make_response(jsonify(v.errors), 400)
 
     if sampleUnitType == Business.UNIT_TYPE:
-        business = service.db.session.query(Business).filter(Business.party_uuid == id).first()
+        business = current_app.db.session.query(Business).filter(Business.party_uuid == id).first()
         if not business:
             return make_response(jsonify({'errors': "Business with id '{}' does not exist.".format(id)}), 404)
 
         return make_response(jsonify(business.to_party_dict()), 200)
 
     elif sampleUnitType == Respondent.UNIT_TYPE:
-        respondent = db.session.query(Respondent).filter(Respondent.party_uuid == id).first()
+        respondent = current_app.db.session.query(Respondent).filter(Respondent.party_uuid == id).first()
         if not respondent:
             return make_response(jsonify({'errors': "Respondent with id '{}' does not exist.".format(id)}), 404)
 
@@ -163,7 +160,7 @@ def get_respondent_by_id(id):
     if not v.validate({'id': id}):
         return make_response(jsonify(v.errors), 400)
 
-    respondent = service.db.session.query(Respondent).filter(Respondent.party_uuid == id).first()
+    respondent = current_app.db.session.query(Respondent).filter(Respondent.party_uuid == id).first()
     if not respondent:
         return make_response(jsonify({'errors': "Respondent with party id '{}' does not exist.".format(id)}), 404)
 
@@ -192,7 +189,7 @@ def respondents_post(party):
         return make_response(jsonify(v.errors), 400)
 
     enrolment_code = party['enrolmentCode']
-    case_svc = service.config.dependency('case-service')
+    case_svc = current_app.environment.dependency('case-service')
     case_url = '{}://{}:{}/cases/iac/{}'.format(case_svc['scheme'], case_svc['host'], case_svc['port'], enrolment_code)
     resp = requests.get(case_url)
     case_context = resp.json()

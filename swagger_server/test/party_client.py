@@ -1,35 +1,29 @@
 import json
 
+from flask import current_app
 from flask_testing import TestCase
-import connexion
-import logging
 
-from microservice import PartyService
+from swagger_server.controllers import controller
 from swagger_server.models.models import Business, Respondent, BusinessRespondent
 
 
-PartyService.CONFIG_PATH = '../../config.yaml'
-PartyService.SWAGGER_PATH = '../swagger/swagger.yaml'
-
-service = PartyService.get()
-
-
 def businesses():
-    return service.db.session.query(Business).all()
+    return current_app.db.session.query(Business).all()
 
 
 def respondents():
-    return service.db.session.query(Respondent).all()
+    return current_app.db.session.query(Respondent).all()
 
 
 def business_respondent_associations():
-    return service.db.session.query(BusinessRespondent).all()
+    return current_app.db.session.query(BusinessRespondent).all()
 
 
 class PartyTestClient(TestCase):
 
     def create_app(self):
-        return service.app
+        # return service.app
+        pass    # TODO
 
     def post_to_parties(self, payload, expected_status):
         response = self.client.open('/party-api/v1/parties',
@@ -40,12 +34,13 @@ class PartyTestClient(TestCase):
         return json.loads(response.data)
 
     def post_to_businesses(self, payload, expected_status):
-        response = self.client.open('/party-api/v1/businesses',
-                                    method='POST',
-                                    data=json.dumps(payload),
-                                    content_type='application/vnd.ons.business+json')
-        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
-        return json.loads(response.get_data(as_text=True))
+        # response = self.client.open('/party-api/v1/businesses',
+        #                             method='POST',
+        #                             data=json.dumps(payload),
+        #                             content_type='application/vnd.ons.business+json')
+        # self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        # return json.loads(response.get_data(as_text=True))
+        resp = controller.businesses_post(payload)
 
     def post_to_respondents(self, payload, expected_status):
         response = self.client.open('/party-api/v1/respondents',
