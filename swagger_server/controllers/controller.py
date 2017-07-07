@@ -1,3 +1,5 @@
+import uuid
+
 import requests
 from flask import make_response, jsonify, current_app
 

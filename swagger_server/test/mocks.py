@@ -1,3 +1,4 @@
+import json
 import random
 
 from swagger_server.controllers.util import partition_dict
@@ -70,3 +71,18 @@ class MockRespondent:
         return props
 
 
+class MockResponse:
+
+    def __init__(self, payload):
+        self.payload = payload
+
+    def json(self):
+        return json.loads(self.payload)
+
+
+class MockRequests:
+
+    def get(self, uri):
+        with open('./fixtures/get_case_by_iac.json') as json_file:
+            data = json_file.read()
+            return MockResponse(data)

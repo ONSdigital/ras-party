@@ -3,6 +3,7 @@ import json
 from flask import current_app
 from flask_testing import TestCase
 
+from run import create_app
 from swagger_server.controllers import controller
 from swagger_server.models.models import Business, Respondent, BusinessRespondent
 
@@ -22,8 +23,9 @@ def business_respondent_associations():
 class PartyTestClient(TestCase):
 
     def create_app(self):
-        # return service.app
-        pass    # TODO
+        # TODO: inject config?
+        app = create_app('ras_party.settings.test_settings.Config')
+        return app
 
     def post_to_parties(self, payload, expected_status):
         response = self.client.open('/party-api/v1/parties',
@@ -34,13 +36,12 @@ class PartyTestClient(TestCase):
         return json.loads(response.data)
 
     def post_to_businesses(self, payload, expected_status):
-        # response = self.client.open('/party-api/v1/businesses',
-        #                             method='POST',
-        #                             data=json.dumps(payload),
-        #                             content_type='application/vnd.ons.business+json')
-        # self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
-        # return json.loads(response.get_data(as_text=True))
-        resp = controller.businesses_post(payload)
+        response = self.client.open('/party-api/v1/businesses',
+                                    method='POST',
+                                    data=json.dumps(payload),
+                                    content_type='application/vnd.ons.business+json')
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
 
     def post_to_respondents(self, payload, expected_status):
         response = self.client.open('/party-api/v1/respondents',

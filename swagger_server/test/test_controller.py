@@ -2,12 +2,8 @@ from __future__ import absolute_import
 
 from unittest.mock import patch
 
-from swagger_server.test.mocks import MockBusiness, MockRespondent
+from swagger_server.test.mocks import MockBusiness, MockRespondent, MockRequests
 from swagger_server.test.party_client import PartyTestClient, businesses, respondents
-
-
-class MockRequests:
-    pass
 
 
 class TestParties(PartyTestClient):
@@ -112,13 +108,14 @@ class TestParties(PartyTestClient):
         self.assertEqual(len(businesses()), 1)
         self.assertEqual(response_2['attributes']['version'], 2)
 
-    @patch('swagger_server.controllers.controller.requests', MockRequests)
-    def test_post_respondent_requests_the_iac_details(self, _):
+    # TODO: maybe remove the interaction test once things are working?
+    @patch('swagger_server.controllers.controller.requests')
+    def test_post_respondent_requests_the_iac_details(self, mock):
         mock_respondent = MockRespondent().attributes().as_respondent()
         party_id = self.post_to_respondents(mock_respondent, 200)['id']
 
-        response = self.get_respondent_by_id(party_id)
-
+        _ = self.get_respondent_by_id(party_id)
+        mock.get.assert_called_once_with('http://localhost:8171/cases/iac/fb747cq725lj')
 
 
 if __name__ == '__main__':
