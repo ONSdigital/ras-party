@@ -2,9 +2,9 @@
 service:
     name: ras-party-v2
     version: 0.0.1
+    scheme: http
     host: 0.0.0.0
     port: 8000
-    protocol: http
 
 dependencies:
     ras-party-db:

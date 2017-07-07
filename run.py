@@ -23,4 +23,13 @@ def create_app(settings_class):
 
 if __name__ == '__main__':
     app = create_app('ras_party.settings.default_settings.Config')
+    # TODO: reintroduce gw registration, which is just a case of iterating endpoints and posting to gw
+    # If 5-sec iterative reg is required, then use asyncio
+
+    service_config = app.environment.service
+    scheme, host, port = service_config['scheme'], service_config['host'], service_config['port']
+    for rule in app.url_map.iter_rules():
+        # TODO: how does the gw recognise parameterised endpoints? (perhaps just first part of endpoint?)
+        reg = {'protocol': scheme, 'host': host, 'port': port, 'uri': rule.rule}
+        print(reg)
     app.run(debug=app.config['DEBUG'], port=8080)
