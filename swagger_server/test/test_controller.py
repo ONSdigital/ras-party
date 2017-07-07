@@ -1,7 +1,13 @@
 from __future__ import absolute_import
 
+from unittest.mock import patch
+
 from swagger_server.test.mocks import MockBusiness, MockRespondent
 from swagger_server.test.party_client import PartyTestClient, businesses, respondents
+
+
+class MockRequests:
+    pass
 
 
 class TestParties(PartyTestClient):
@@ -105,6 +111,14 @@ class TestParties(PartyTestClient):
         response_2 = self.post_to_parties(mock_party.as_party(), 200)
         self.assertEqual(len(businesses()), 1)
         self.assertEqual(response_2['attributes']['version'], 2)
+
+    @patch('swagger_server.controllers.controller.requests', MockRequests)
+    def test_post_respondent_requests_the_iac_details(self, _):
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        party_id = self.post_to_respondents(mock_respondent, 200)['id']
+
+        response = self.get_respondent_by_id(party_id)
+
 
 
 if __name__ == '__main__':

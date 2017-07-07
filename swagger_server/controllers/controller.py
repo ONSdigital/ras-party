@@ -3,11 +3,14 @@ import uuid
 import requests
 from flask import make_response, jsonify
 
-from microservice import db, config
+from microservice import PartyService
 from swagger_server.controllers.session_context import transaction
 from swagger_server.controllers.error_decorator import translate_exceptions
 from swagger_server.controllers.validate import Validator, Exists, IsUuid, IsIn
 from swagger_server.models.models import Business, Respondent
+
+
+service = PartyService().get()
 
 
 @translate_exceptions
@@ -117,7 +120,7 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
     if not v.validate({'sampleUnitType': sampleUnitType}):
         return make_response(jsonify(v.errors), 400)
 
-    business = db.session.query(Business).filter(Business.business_ref == sampleUnitRef).first()
+    business = service.db.session.query(Business).filter(Business.business_ref == sampleUnitRef).first()
     if not business:
         return make_response(jsonify(
             {'errors': "Business with reference '{}' does not exist.".format(sampleUnitRef)}), 404)
@@ -132,7 +135,7 @@ def get_party_by_id(sampleUnitType, id):
         return make_response(jsonify(v.errors), 400)
 
     if sampleUnitType == Business.UNIT_TYPE:
-        business = db.session.query(Business).filter(Business.party_uuid == id).first()
+        business = service.db.session.query(Business).filter(Business.party_uuid == id).first()
         if not business:
             return make_response(jsonify({'errors': "Business with id '{}' does not exist.".format(id)}), 404)
 
@@ -160,7 +163,7 @@ def get_respondent_by_id(id):
     if not v.validate({'id': id}):
         return make_response(jsonify(v.errors), 400)
 
-    respondent = db.session.query(Respondent).filter(Respondent.party_uuid == id).first()
+    respondent = service.db.session.query(Respondent).filter(Respondent.party_uuid == id).first()
     if not respondent:
         return make_response(jsonify({'errors': "Respondent with party id '{}' does not exist.".format(id)}), 404)
 
@@ -189,7 +192,7 @@ def respondents_post(party):
         return make_response(jsonify(v.errors), 400)
 
     enrolment_code = party['enrolmentCode']
-    case_svc = config.dependency('case-service')
+    case_svc = service.config.dependency('case-service')
     case_url = '{}://{}:{}/cases/iac/{}'.format(case_svc['scheme'], case_svc['host'], case_svc['port'], enrolment_code)
     resp = requests.get(case_url)
     case_context = resp.json()

@@ -1,3 +1,3 @@
-from microservice import service
+from microservice import PartyService
 
-service.configure().run()
+PartyService.get().run()

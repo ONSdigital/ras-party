@@ -4,38 +4,32 @@ from flask_testing import TestCase
 import connexion
 import logging
 
-from ons_ras_common import ons_env
+from microservice import PartyService
 from swagger_server.models.models import Business, Respondent, BusinessRespondent
 
 
-db = ons_env.db
+PartyService.CONFIG_PATH = '../../config.yaml'
+PartyService.SWAGGER_PATH = '../swagger/swagger.yaml'
+
+service = PartyService.get()
 
 
 def businesses():
-    return db.session.query(Business).all()
+    return service.db.session.query(Business).all()
 
 
 def respondents():
-    return db.session.query(Respondent).all()
+    return service.db.session.query(Respondent).all()
 
 
 def business_respondent_associations():
-    return db.session.query(BusinessRespondent).all()
+    return service.db.session.query(BusinessRespondent).all()
 
 
 class PartyTestClient(TestCase):
 
     def create_app(self):
-        ons_env.setup_ini()
-        ons_env.logger.activate()
-        ons_env.db.activate()
-        ons_env._jwt.activate()
-        ons_env._cryptography.activate()
-
-        logging.getLogger('connexion.operation').setLevel('ERROR')
-        app = connexion.App(__name__, specification_dir='../swagger/')
-        app.add_api('swagger.yaml')
-        return app.app
+        return service.app
 
     def post_to_parties(self, payload, expected_status):
         response = self.client.open('/party-api/v1/parties',
