@@ -2,15 +2,12 @@ import uuid
 
 import requests
 from flask import make_response, jsonify
-from ons_ras_common import ons_env
 
+from microservice import db, config
 from swagger_server.controllers.session_context import transaction
 from swagger_server.controllers.error_decorator import translate_exceptions
 from swagger_server.controllers.validate import Validator, Exists, IsUuid, IsIn
 from swagger_server.models.models import Business, Respondent
-
-
-db = ons_env.db
 
 
 @translate_exceptions
@@ -173,7 +170,7 @@ def get_respondent_by_id(id):
 class MockConfig:
 
     def __init__(self):
-        self._case_service = {'host': 'localhost', 'port': '8000'}
+        self._case_service = {'scheme': 'http', 'host': 'localhost', 'port': '8171'}
 
     def dependency(self, _):
         return self._case_service
@@ -191,13 +188,10 @@ def respondents_post(party):
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
-    config = MockConfig()
-
     enrolment_code = party['enrolmentCode']
-    case_svc = config.dependency('case_service')
-    case_url = '{}:{}/cases/iac/{}'.format(case_svc['host'], case_svc['port'], enrolment_code)
+    case_svc = config.dependency('case-service')
+    case_url = '{}://{}:{}/cases/iac/{}'.format(case_svc['scheme'], case_svc['host'], case_svc['port'], enrolment_code)
     resp = requests.get(case_url)
-    # TODO: handle errors?
     case_context = resp.json()
 
     translated_party = {

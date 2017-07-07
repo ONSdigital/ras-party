@@ -1,8 +1,8 @@
 from contextlib import contextmanager
 
-from ons_ras_common import ons_env
+from microservice import db
 
-Session = ons_env.db.session
+Session = db.session
 
 
 @contextmanager
@@ -16,5 +16,3 @@ def transaction():
         raise
     finally:
         Session.remove()
-
-

@@ -1,4 +1,3 @@
-from ons_ras_common import ons_env
+from microservice import service
 
-if __name__ == '__main__':
-    ons_env.activate()
+service.configure().run()
