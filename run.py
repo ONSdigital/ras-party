@@ -1,16 +1,18 @@
+import os
+
 from flask_extended import Flask
 from flask_cors import CORS
 from ons_ras_common.ras_config import ras_config
 from ons_ras_common.ras_database.ras_database import RasDatabase
 
 
-def create_app(settings_class):
+def create_app(config_file):
     app = Flask(__name__)
     # app.config.from_object(settings_class)
 
     # config = ras_config.from_yaml_file(app.config['CONFIG_PATH'])
 
-    app.config.from_yaml('config.yaml')
+    app.config.from_yaml(os.path.join(app.root_path, config_file))
 
     PartyDatabase = RasDatabase.make(model_paths=['swagger_server.models.models'])
     db = PartyDatabase('ras-party-db', app.config)
@@ -25,7 +27,7 @@ def create_app(settings_class):
 
 
 if __name__ == '__main__':
-    app = create_app('ras_party.settings.default_settings.Config')
+    app = create_app('config/config.yaml')
     # TODO: reintroduce gw registration, which is just a case of iterating endpoints and posting to gw
     # If 5-sec iterative reg is required, then use asyncio
 

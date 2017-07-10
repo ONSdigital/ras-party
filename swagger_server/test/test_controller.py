@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from unittest.mock import patch
 
-from swagger_server.test.mocks import MockBusiness, MockRespondent, MockRequests
+from swagger_server.test.mocks import MockBusiness, MockRespondent
 from swagger_server.test.party_client import PartyTestClient, businesses, respondents
 
 
@@ -32,14 +32,16 @@ class TestParties(PartyTestClient):
         response = self.get_business_by_ref(mock_business['businessRef'])
         self.assertTrue(response.items() >= mock_business.items())
 
-    def test_post_valid_respondent_adds_to_db(self):
+    @patch('swagger_server.controllers.controller.requests')
+    def test_post_valid_respondent_adds_to_db(self, mock):
         mock_respondent = MockRespondent().attributes().as_respondent()
 
         self.post_to_respondents(mock_respondent, 200)
 
         self.assertEqual(len(respondents()), 1)
 
-    def test_get_respondent_by_id_returns_correct_representation(self):
+    @patch('swagger_server.controllers.controller.requests')
+    def test_get_respondent_by_id_returns_correct_representation(self, mock):
         mock_respondent = MockRespondent().attributes().as_respondent()
         party_id = self.post_to_respondents(mock_respondent, 200)['id']
 

@@ -24,7 +24,7 @@ class PartyTestClient(TestCase):
 
     def create_app(self):
         # TODO: inject config?
-        app = create_app('ras_party.settings.test_settings.Config')
+        app = create_app('config/test_config.yaml')
         return app
 
     def post_to_parties(self, payload, expected_status):
