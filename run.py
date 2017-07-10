@@ -1,20 +1,26 @@
 import os
 
-from flask_extended import Flask
+import structlog
 from flask_cors import CORS
-from ons_ras_common.ras_config import ras_config
 from ons_ras_common.ras_database.ras_database import RasDatabase
+from ons_ras_common.ras_logger.ras_logger import configure_logger
+
+from flask_extended import Flask
+
+
+logger = structlog.get_logger()
 
 
 def create_app(config_file):
     # create and configure the Flask app
     app = Flask(__name__)
     app.config.from_yaml(os.path.join(app.root_path, config_file))
+    configure_logger(app.config)
 
     # Initialise the database with the specified SQLAlchemy model
     PartyDatabase = RasDatabase.make(model_paths=['swagger_server.models.models'])
     db = PartyDatabase('ras-party-db', app.config)
-    # TODO: this isn't entirely safe, use a get_db() lazy initialized instead...s
+    # TODO: this isn't entirely safe, use a get_db() lazy initializer instead...
     app.db = db
 
     # register view blueprints
@@ -35,4 +41,5 @@ if __name__ == '__main__':
     #     # TODO: how does the gw recognise parameterised endpoints? (perhaps just first part of endpoint?)
     #     reg = {'protocol': scheme, 'host': host, 'port': port, 'uri': rule.rule}
     #     print(reg)
+
     app.run(debug=app.config.get('debug'), port=port)
