@@ -69,6 +69,7 @@ target/
 
 
 **/test.db
+config/local.yaml
 
 
 .build/

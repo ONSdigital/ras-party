@@ -178,6 +178,11 @@ class MockConfig:
         return self._case_service
 
 
+def build_url(template, config, *args):
+    url = template.format(config['scheme'], config['host'], config['port'], *args)
+    return url
+
+
 @translate_exceptions
 def respondents_post(party):
 
@@ -190,11 +195,32 @@ def respondents_post(party):
     if not v.validate(party):
         return make_response(jsonify(v.errors), 400)
 
+    # TODO: refactor code to separate service calls
     enrolment_code = party['enrolmentCode']
     case_svc = current_app.config.dependency['case-service']
-    case_url = '{}://{}:{}/cases/iac/{}'.format(case_svc['scheme'], case_svc['host'], case_svc['port'], enrolment_code)
+    case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
     resp = requests.get(case_url)
     case_context = resp.json()
+
+    # TODO: consider error scenarios
+    # collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
+    # ce_svc = current_app.config.dependency['collectionexercise-service']
+    # ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
+    # resp = requests.get(ce_url)
+    # collection_exercise = resp
+
+
+    """ TODO:
+    GET /collectionexercises/{uuid}
+    GET /surveys/{uuid}
+    create business_respondent association
+    create enrolment (between business_respondent + survey id)
+    POST account created case event
+    create uuid / email verification link
+    persist the email verification link
+    call gov.uk notify (see Mark's branch)
+    map route to accept verified email, and enable account
+    """
 
     translated_party = {
         'party_uuid': party.get('id') or uuid.uuid4(),

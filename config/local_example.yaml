@@ -1,0 +1,35 @@
+
+service:
+    name: ras-party
+    version: 0.0.1
+    scheme: http
+    host: 0.0.0.0
+    port: 8000
+
+dependencies:
+    ras-party-db:
+        service: rds
+        plan: shared-psql
+        schema: ras-party
+        uri: "sqlite:///ras-party"
+    case-service:
+        scheme: http
+        host: localhost
+        port: 8171
+    api-gateway:
+        scheme: http
+        host: localhost
+        port: 8000
+    oauth2:
+        scheme: http
+        host: localhost
+        port: 8001
+        authorization_endpoint: "/web/authorize/"
+        token_endpoint: "/api/v1/tokens/"
+        admin_endpoint: "/api/account/create"
+        client_id: "ons@ons.gov"
+        client_secret: "password"
+
+
+features:
+    gateway-registration: False
