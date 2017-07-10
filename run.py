@@ -8,7 +8,7 @@ def create_app(settings_class):
     app = Flask(__name__)
     app.config.from_object(settings_class)
 
-    config = ras_config.from_yaml_file(app.config['ENVIRONMENT_NAME'], app.config['CONFIG_PATH'])
+    config = ras_config.from_yaml_file(app.config['CONFIG_PATH'])
     PartyDatabase = RasDatabase.make(model_paths=['swagger_server.models.models'])
     db = PartyDatabase('ras-party-db', config)
     app.db = db
