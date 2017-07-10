@@ -1,10 +1,12 @@
-
+# This Config file defines default environment variables for the different services and micro services thie party
+# service has to talk to. The common developer settings are maintained here:
+# https://digitaleq.atlassian.net/wiki/display/RASB/Developer+Environment+Port+Mappings
 service:
     name: ras-party
     version: 0.0.1
     scheme: http
     host: 0.0.0.0
-    port: 8080
+    port: 5201
 
 dependencies:
     ras-party-db:
@@ -20,6 +22,16 @@ dependencies:
         scheme: http
         host: localhost
         port: 8000
+    oauth2:
+        scheme: http
+        host: localhost
+        port: 8001
+        authorization_endpoint: "/web/authorize/"
+        token_endpoint: "/api/v1/tokens/"
+        admin_endpoint: "/api/account/create"
+        client_id: "ons@ons.gov"
+        client_secret: "password"
+
 
 features:
     gateway-registration: False
