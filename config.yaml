@@ -4,7 +4,7 @@ service:
     version: 0.0.1
     scheme: http
     host: 0.0.0.0
-    port: 8000
+    port: 5101
 
 dependencies:
     ras-party-db:
@@ -20,6 +20,16 @@ dependencies:
         scheme: http
         host: localhost
         port: 8000
+    oauth2:
+        scheme: http
+        host: localhost
+        port: 8001
+        authorization_endpoint: "/web/authorize/"
+        token_endpoint: "/api/v1/tokens/"
+        admin_endpoint: "/api/account/create"
+        client_id: "ons@ons.gov"
+        client_secret: "password"
+
 
 features:
     gateway-registration: False
