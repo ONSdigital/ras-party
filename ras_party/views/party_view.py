@@ -24,7 +24,7 @@ def get_business_by_ref(ref):
 
 
 @party_view.route('/parties', methods=['POST'])
-def parties_post():
+def post_party():
     payload = request.json
     return controller.parties_post(payload)
 
@@ -45,6 +45,6 @@ def get_respondent_by_id(id):
 
 
 @party_view.route('/respondents', methods=['POST'])
-def respondents_post():
+def post_respondent():
     payload = request.json
     return controller.respondents_post(payload)

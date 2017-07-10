@@ -7,21 +7,20 @@ from ons_ras_common.ras_database.ras_database import RasDatabase
 
 
 def create_app(config_file):
+    # create and configure the Flask app
     app = Flask(__name__)
-    # app.config.from_object(settings_class)
-
-    # config = ras_config.from_yaml_file(app.config['CONFIG_PATH'])
-
     app.config.from_yaml(os.path.join(app.root_path, config_file))
 
+    # Initialise the database with the specified SQLAlchemy model
     PartyDatabase = RasDatabase.make(model_paths=['swagger_server.models.models'])
     db = PartyDatabase('ras-party-db', app.config)
+    # TODO: this isn't entirely safe, use a get_db() lazy initialized instead...s
     app.db = db
-    # TODO: investigate a way to unify the environment/config with Flask config, or at least a neater approach!
-    # app.environment = config
 
+    # register view blueprints
     from ras_party.views.party_view import party_view
     app.register_blueprint(party_view, url_prefix='/party-api/v1')
+
     CORS(app)
     return app
 
@@ -36,4 +35,4 @@ if __name__ == '__main__':
     #     # TODO: how does the gw recognise parameterised endpoints? (perhaps just first part of endpoint?)
     #     reg = {'protocol': scheme, 'host': host, 'port': port, 'uri': rule.rule}
     #     print(reg)
-    app.run(debug=app.config['DEBUG'], port=8080)
+    app.run(debug=app.config.get('debug'), port=port)

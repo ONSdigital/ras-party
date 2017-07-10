@@ -4,6 +4,7 @@ from flask import Flask as BaseFlask, Config as BaseConfig
 from ons_ras_common.ras_config import ras_config
 
 
+# TODO: move to ras-common
 class Config(BaseConfig):
     """Flask config enhanced with a `from_yaml` method."""
 
