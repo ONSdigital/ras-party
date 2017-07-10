@@ -1,8 +1,9 @@
-from flask import Flask
+from flask_extended import Flask
 from flask_cors import CORS
 from ons_ras_common.ras_config import ras_config
+#from flask_extended import from_yaml
 from ons_ras_common.ras_database.ras_database import RasDatabase
-
+import os
 
 def create_app(config_file):
     # create and configure the Flask app
