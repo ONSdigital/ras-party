@@ -191,7 +191,7 @@ def respondents_post(party):
         return make_response(jsonify(v.errors), 400)
 
     enrolment_code = party['enrolmentCode']
-    case_svc = current_app.environment.dependency('case-service')
+    case_svc = current_app.config.dependency['case-service']
     case_url = '{}://{}:{}/cases/iac/{}'.format(case_svc['scheme'], case_svc['host'], case_svc['port'], enrolment_code)
     resp = requests.get(case_url)
     case_context = resp.json()

@@ -4,33 +4,33 @@ from ons_ras_common.ras_config import ras_config
 from ons_ras_common.ras_database.ras_database import RasDatabase
 
 
-def create_app(settings_class):
+def create_app(config_file):
+    # create and configure the Flask app
     app = Flask(__name__)
-    app.config.from_object(settings_class)
+    app.config.from_yaml(os.path.join(app.root_path, config_file))
 
-    config = ras_config.from_yaml_file(app.config['CONFIG_PATH'])
+    # Initialise the database with the specified SQLAlchemy model
     PartyDatabase = RasDatabase.make(model_paths=['swagger_server.models.models'])
-    db = PartyDatabase('ras-party-db', config)
+    db = PartyDatabase('ras-party-db', app.config)
+    # TODO: this isn't entirely safe, use a get_db() lazy initialized instead...s
     app.db = db
-    # TODO: investigate a way to unify the environment/config with Flask config, or at least a neater approach!
-    app.environment = config
 
+    # register view blueprints
     from ras_party.views.party_view import party_view
     app.register_blueprint(party_view, url_prefix='/party-api/v1')
+
     CORS(app)
     return app
 
 
 if __name__ == '__main__':
-    app = create_app('ras_party.settings.default_settings.Config')
+    app = create_app('config/config.yaml')
     # TODO: reintroduce gw registration, which is just a case of iterating endpoints and posting to gw
     # If 5-sec iterative reg is required, then use asyncio
 
-    service_config = app.environment.service
-    scheme, host, port = service_config['scheme'], service_config['host'], service_config['port']
-    for rule in app.url_map.iter_rules():
-        # TODO: how does the gw recognise parameterised endpoints? (perhaps just first part of endpoint?)
-        reg = {'protocol': scheme, 'host': host, 'port': port, 'uri': rule.rule}
-        print(reg)
-    #app.run(debug=app.config['DEBUG'], port=8080)
-    app.run(debug=app.config['DEBUG'], port=port)
+    scheme, host, port = app.config['scheme'], app.config['host'], app.config['port']
+    # for rule in app.url_map.iter_rules():
+    #     # TODO: how does the gw recognise parameterised endpoints? (perhaps just first part of endpoint?)
+    #     reg = {'protocol': scheme, 'host': host, 'port': port, 'uri': rule.rule}
+    #     print(reg)
+    app.run(debug=app.config.get('debug'), port=port)

@@ -1,4 +1,4 @@
-git+https://github.com/ONSdigital/ras-common.git
+git+https://github.com/ONSdigital/ras-common.git@feature/config-12-factor#ons_ras_common==0.2.0
 Flask==0.12.2
 Flask_Cors==3.0.3
 SQLAlchemy_Utils==0.32.14
