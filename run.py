@@ -32,4 +32,5 @@ if __name__ == '__main__':
         # TODO: how does the gw recognise parameterised endpoints? (perhaps just first part of endpoint?)
         reg = {'protocol': scheme, 'host': host, 'port': port, 'uri': rule.rule}
         print(reg)
-    app.run(debug=app.config['DEBUG'], port=8080)
+    #app.run(debug=app.config['DEBUG'], port=8080)
+    app.run(debug=app.config['DEBUG'], port=port)
