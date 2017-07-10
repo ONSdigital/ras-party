@@ -1,8 +1,12 @@
 from flask import Blueprint, request
+from structlog import get_logger
 
 from swagger_server.controllers import controller
 
 party_view = Blueprint('party_views', __name__)
+
+
+logger = get_logger()
 
 
 # TODO: unify this code with the controller
@@ -10,6 +14,7 @@ party_view = Blueprint('party_views', __name__)
 @party_view.route('/businesses', methods=['POST'])
 def post_business():
     payload = request.json
+    logger.error('POST /businesses')
     return controller.businesses_post(payload)
 
 

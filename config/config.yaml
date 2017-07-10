@@ -2,7 +2,7 @@
 # service has to talk to. The common developer settings are maintained here:
 # https://digitaleq.atlassian.net/wiki/display/RASB/Developer+Environment+Port+Mappings
 service:
-    name: ras-party-v2
+    name: ras-party
     version: 0.0.1
     scheme: http
     host: 0.0.0.0
