@@ -70,6 +70,7 @@ target/
 
 **/test.db
 config/local.yaml
+ras-party
 
 
 .build/

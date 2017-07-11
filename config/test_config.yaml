@@ -1,6 +1,6 @@
 
 service:
-    name: ras-party-v2
+    name: ras-party
     version: 0.0.1
     scheme: http
     host: 0.0.0.0
@@ -16,10 +16,25 @@ dependencies:
         scheme: http
         host: localhost
         port: 8171
-    api-gateway:
+    collectionexercise-service:
         scheme: http
         host: localhost
-        port: 8000
+        port: 8145
+    survey-service:
+        scheme: http
+        host: localhost
+        port: 8173
+    govuk-notify-service:
+        # TODO: find out the correct values
+        scheme: http
+        host: unknown
+        port: unknown
+    frontstage-service:
+        # TODO: find out the correct values
+        scheme: http
+        host: unknown
+        port: unknown
+
 
 features:
     gateway-registration: False

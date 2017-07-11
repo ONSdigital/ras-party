@@ -5,7 +5,7 @@ import uuid
 from ons_ras_common.ras_database.base import Base
 from ons_ras_common.ras_database.guid import GUID
 from ons_ras_common.ras_database.json_column import JsonColumn
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
@@ -23,15 +23,12 @@ class Business(Base):
         'sic2003', 'sic2007', 'telephone', 'tradingName', 'turnover'
     ]
 
+    # TODO: consider using postgres uuid for uuid pkey
     party_uuid = Column(GUID, unique=True, primary_key=True)
     business_ref = Column(Text, unique=True)
     respondents = relationship('BusinessRespondent', back_populates='business')
     attributes = Column(JsonColumn())
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
-
-    def __init__(self, business_ref, party_uuid=None):
-        self.business_ref = business_ref
-        self.party_uuid = party_uuid or uuid.uuid4()
 
     @staticmethod
     def from_business_dict(d):
@@ -54,7 +51,7 @@ class Business(Base):
             v.add_rule(IsUuid('id'))
 
         if v.validate(d):
-            b = Business(d['businessRef'], d.get('id'))
+            b = Business(party_uuid=d.get('id', uuid.uuid4()), business_ref=d['businessRef'])
             _, attr = partition_dict(d, ['id', 'businessRef', 'sampleUnitType', 'attributes'])
             b.attributes = attr
             b.attributes.update(d.get('attributes', {}))
@@ -65,7 +62,7 @@ class Business(Base):
 
     @staticmethod
     def from_party_dict(d):
-        b = Business(d['sampleUnitRef'], d.get('id'))
+        b = Business(party_uuid=d.get('id', uuid.uuid4()), business_ref=d['sampleUnitRef'])
         b.attributes = d.get('attributes')
         return b
 
@@ -109,10 +106,7 @@ class BusinessRespondent(Base):
 
     business = relationship('Business', back_populates='respondents')
     respondent = relationship('Respondent', back_populates='businesses')
-
-    def __init__(self):
-        # TODO: what to use for effective_to?
-        self.effective_to = datetime.datetime.now() + datetime.timedelta(days=7)
+    enrolment = relationship('Enrolment', back_populates='business_respondent')
 
 
 class RespondentStatus(enum.IntEnum):
@@ -172,16 +166,18 @@ class EnrolmentStatus(enum.IntEnum):
 class Enrolment(Base):
     __tablename__ = 'enrolment'
 
-    id = Column(Integer, primary_key=True)
-    business_association_id = Column(Integer)
-    survey_id = Column(Text)
+    business_id = Column(GUID, primary_key=True)
+    respondent_id = Column(Integer, primary_key=True)
+    survey_id = Column(Text, primary_key=True)
     status = Column('status', Enum(EnrolmentStatus))
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, business_association_id, survey_id, status):
-        self.business_association_id = business_association_id
-        self.survey_id = survey_id
-        self.status = status
+    business_respondent = relationship('BusinessRespondent', back_populates='enrolment')
+
+    __table_args__ = (
+        ForeignKeyConstraint(['business_id', 'respondent_id'],
+                             ['business_respondent.business_id', 'business_respondent.respondent_id']),
+    )
 
 
 class EnrolmentCodeStatus(enum.IntEnum):
@@ -200,13 +196,6 @@ class EnrolmentCode(Base):
     iac = Column(Text)
     status = Column('status', Enum(EnrolmentCodeStatus))
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
-
-    def __init__(self, respondent_id, business_ref, survey_id, iac, status):
-        self.respondent_id = respondent_id
-        self.business_ref = business_ref
-        self.survey_id = survey_id
-        self.status = status
-        self.iac = iac
 
 
 class EnrolmentInvitationStatus(enum.IntEnum):
@@ -229,13 +218,3 @@ class EnrolmentInvitation(Base):
     effective_to = Column(DateTime, default=datetime.datetime.utcnow() + datetime.timedelta(days=2))
     status = Column('status', Enum(EnrolmentInvitationStatus))
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
-
-    def __init__(self, respondent_id, business_ref, survey_id, target_email,
-                 verification_token, sms_verification_token, status):
-        self.respondent_id = respondent_id
-        self.business_ref = business_ref
-        self.survey_id = survey_id
-        self.target_email = target_email
-        self.verification_token = verification_token
-        self.sms_verification_token = sms_verification_token
-        self.status = status

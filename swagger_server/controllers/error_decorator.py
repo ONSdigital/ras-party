@@ -1,4 +1,8 @@
-from flask import make_response, jsonify
+import structlog
+from flask import make_response, jsonify, current_app
+
+
+logger = structlog.get_logger()
 
 
 def translate_exceptions(func):
@@ -8,5 +12,10 @@ def translate_exceptions(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            return make_response(jsonify({'errors': str(e)}), 500)
+            # TODO: log the stack-trace
+            logger.error(e)
+            if current_app.config.feature.get('translate_exceptions'):
+                return make_response(jsonify({'errors': str(e)}), 500)
+            else:
+                raise
     return function_wrapper

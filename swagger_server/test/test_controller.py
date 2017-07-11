@@ -111,7 +111,7 @@ class TestParties(PartyTestClient):
         self.assertEqual(response_2['attributes']['version'], 2)
 
     # TODO: maybe remove the interaction test once things are working?
-    @patch('swagger_server.controllers.controller.requests')
+    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
     def test_post_respondent_requests_the_iac_details(self, mock):
         mock_respondent = MockRespondent().attributes().as_respondent()
         party_id = self.post_to_respondents(mock_respondent, 200)['id']
@@ -122,6 +122,18 @@ class TestParties(PartyTestClient):
     @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
     def test_post_respondent_calls_the_ce_service_with_id_from_iac_service(self, mock):
         # TODO: test the CE service is called with the correct id
+        pass
+
+    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
+    def test_post_respondent_calls_the_survey_service_with_id_from_ce_service(self, mock):
+        pass
+
+    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
+    def test_post_respondent_creates_the_business_respondent_association(self, mock):
+        pass
+
+    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
+    def test_post_respondent_creates_the_enrolment(self, mock):
         pass
 
 
