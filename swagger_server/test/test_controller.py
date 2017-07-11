@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from unittest.mock import patch
 
-from swagger_server.test.mocks import MockBusiness, MockRespondent
+from swagger_server.test.mocks import MockBusiness, MockRespondent, MockRequests
 from swagger_server.test.party_client import PartyTestClient, businesses, respondents
 
 
@@ -33,7 +33,7 @@ class TestParties(PartyTestClient):
         self.assertTrue(response.items() >= mock_business.items())
 
     @patch('swagger_server.controllers.controller.requests')
-    def test_post_valid_respondent_adds_to_db(self, mock):
+    def test_post_valid_respondent_adds_to_db(self, _):
         mock_respondent = MockRespondent().attributes().as_respondent()
 
         self.post_to_respondents(mock_respondent, 200)
@@ -41,7 +41,7 @@ class TestParties(PartyTestClient):
         self.assertEqual(len(respondents()), 1)
 
     @patch('swagger_server.controllers.controller.requests')
-    def test_get_respondent_by_id_returns_correct_representation(self, mock):
+    def test_get_respondent_by_id_returns_correct_representation(self, _):
         mock_respondent = MockRespondent().attributes().as_respondent()
         party_id = self.post_to_respondents(mock_respondent, 200)['id']
 
@@ -118,6 +118,11 @@ class TestParties(PartyTestClient):
 
         _ = self.get_respondent_by_id(party_id)
         mock.get.assert_called_once_with('http://localhost:8171/cases/iac/fb747cq725lj')
+
+    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
+    def test_post_respondent_calls_the_ce_service_with_id_from_iac_service(self, mock):
+        # TODO: test the CE service is called with the correct id
+        pass
 
 
 if __name__ == '__main__':

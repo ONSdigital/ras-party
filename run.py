@@ -5,7 +5,7 @@ from flask_cors import CORS
 from ons_ras_common.ras_database.ras_database import RasDatabase
 from ons_ras_common.ras_logger.ras_logger import configure_logger
 
-from flask_extended import Flask
+from ons_ras_common.ras_config.flask_extended import Flask
 
 
 logger = structlog.get_logger()
@@ -32,7 +32,7 @@ def create_app(config_file):
 
 
 if __name__ == '__main__':
-    app = create_app('config/config.yaml')
+    app = create_app('config/local.yaml')
     # TODO: reintroduce gw registration, which is just a case of iterating endpoints and posting to gw
     # If 5-sec iterative reg is required, then use asyncio
 
