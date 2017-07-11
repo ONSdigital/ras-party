@@ -2,7 +2,6 @@ import os
 
 import structlog
 from flask_cors import CORS
-from ons_ras_common.ras_config import ras_config
 from ons_ras_common.ras_database.ras_database import RasDatabase
 from ons_ras_common.ras_logger.ras_logger import configure_logger
 
@@ -12,10 +11,10 @@ from ons_ras_common.ras_config.flask_extended import Flask
 logger = structlog.get_logger()
 
 
-def create_app(config):
+def create_app(config_file):
     # create and configure the Flask app
     app = Flask(__name__)
-    app.config.from_ras_config(config)
+    app.config.from_yaml(os.path.join(app.root_path, config_file))
     configure_logger(app.config)
 
     # Initialise the database with the specified SQLAlchemy model
@@ -32,19 +31,4 @@ def create_app(config):
     return app
 
 
-if __name__ == '__main__':
-    config_path = 'config/config.yaml'
-    with open(config_path) as f:
-        config = ras_config.from_yaml_file(config_path)
-
-    app = create_app(config)
-    # TODO: reintroduce gw registration, which is just a case of iterating endpoints and posting to gw
-    # If 5-sec iterative reg is required, then use asyncio
-
-    scheme, host, port = app.config['scheme'], app.config['host'], app.config['port']
-    # for rule in app.url_map.iter_rules():
-    #     # TODO: how does the gw recognise parameterised endpoints? (perhaps just first part of endpoint?)
-    #     reg = {'protocol': scheme, 'host': host, 'port': port, 'uri': rule.rule}
-    #     print(reg)
-
-    app.run(debug=app.config.get('debug'), port=port)
+app = create_app('config/local.yaml')

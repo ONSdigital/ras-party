@@ -1,11 +1,14 @@
 import json
 
+import yaml
 from flask import current_app
 from flask_testing import TestCase
+from ons_ras_common.ras_config import ras_config
 
 from run import create_app
 from swagger_server.controllers import controller
 from swagger_server.models.models import Business, Respondent, BusinessRespondent
+from swagger_server.test.fixtures.config import test_config
 
 
 def businesses():
@@ -21,10 +24,11 @@ def business_respondent_associations():
 
 
 class PartyTestClient(TestCase):
+    config_data = yaml.load(test_config)
+    config = ras_config.make(config_data)
 
     def create_app(self):
-        # TODO: inject config?
-        app = create_app('config/test_config.yaml')
+        app = create_app(self.config)
         return app
 
     def post_to_parties(self, payload, expected_status):
@@ -40,6 +44,11 @@ class PartyTestClient(TestCase):
                                     method='POST',
                                     data=json.dumps(payload),
                                     content_type='application/vnd.ons.business+json')
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def post_to_businesses_x(self, payload, expected_status):
+        response = controller.businesses_post(payload)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 

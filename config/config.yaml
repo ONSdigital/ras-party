@@ -24,7 +24,7 @@ service:
     version: 0.0.1
     scheme: http
     host: 0.0.0.0
-    port: 5201
+    port: 8000
 
 dependencies:
     ras-party-db:
@@ -39,11 +39,11 @@ dependencies:
     collectionexercise-service:
         scheme: http
         host: localhost
-        port: 8172
+        port: 8145
     survey-service:
         scheme: http
         host: localhost
-        port: 8173
+        port: 8080
     govuk-notify-service:
         # TODO: find out the correct values
         scheme: http
@@ -71,3 +71,4 @@ dependencies:
 
 features:
     gateway-registration: False
+    translate-exceptions: False

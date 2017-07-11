@@ -6,7 +6,7 @@ from flask import make_response, jsonify, current_app
 from swagger_server.controllers.error_decorator import translate_exceptions
 from swagger_server.controllers.session_context import transaction
 from swagger_server.controllers.validate import Validator, IsIn, Exists, IsUuid
-from swagger_server.models.models import Business, Respondent
+from swagger_server.models.models import Business, Respondent, BusinessRespondent, Enrolment
 
 
 # TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
@@ -199,16 +199,19 @@ def respondents_post(party):
     enrolment_code = party['enrolmentCode']
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
-    resp = requests.get(case_url)
-    case_context = resp.json()
+    case_context = requests.get(case_url).json()
+    business_party_uuid = case_context['partyId']
 
     # TODO: consider error scenarios
-    # collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
-    # ce_svc = current_app.config.dependency['collectionexercise-service']
-    # ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
-    # resp = requests.get(ce_url)
-    # collection_exercise = resp
+    collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
+    ce_svc = current_app.config.dependency['collectionexercise-service']
+    ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
+    collection_exercise = requests.get(ce_url).json()
 
+    survey_id = collection_exercise['surveyId']
+    survey_svc = current_app.config.dependency['survey-service']
+    survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
+    survey = requests.get(survey_url).json()
 
     """ TODO:
     GET /collectionexercises/{uuid}
@@ -223,13 +226,21 @@ def respondents_post(party):
     """
 
     translated_party = {
-        'party_uuid': party.get('id') or uuid.uuid4(),
+        'party_uuid': party.get('id') or str(uuid.uuid4()),
         'email_address': party['emailAddress'],
         'first_name': party['firstName'],
         'last_name': party['lastName'],
         'telephone': party['telephone']
     }
     with transaction() as tran:
+
+        b = tran.query(Business).filter(Business.party_uuid == business_party_uuid).one()
         r = Respondent(**translated_party)
-        tran.merge(r)
+
+        br = BusinessRespondent(business=b, respondent=r)
+        e = Enrolment(business_respondent=br, survey_id=survey['id'])
+
+        tran.merge(r)   # TODO: is it still ok to do a merge here?
+        tran.add(br)
+        tran.add(e)
         return make_response(jsonify(r.to_respondent_dict()), 200)

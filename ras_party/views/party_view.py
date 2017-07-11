@@ -9,7 +9,7 @@ party_view = Blueprint('party_views', __name__)
 
 @party_view.route('/businesses', methods=['POST'])
 def post_business():
-    payload = request.json
+    payload = request.get_json()
     return controller.businesses_post(payload)
 
 
@@ -25,7 +25,7 @@ def get_business_by_ref(ref):
 
 @party_view.route('/parties', methods=['POST'])
 def post_party():
-    payload = request.json
+    payload = request.get_json()
     return controller.parties_post(payload)
 
 
@@ -46,5 +46,5 @@ def get_respondent_by_id(id):
 
 @party_view.route('/respondents', methods=['POST'])
 def post_respondent():
-    payload = request.json
+    payload = request.get_json()
     return controller.respondents_post(payload)
