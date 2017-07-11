@@ -15,6 +15,7 @@ def post_business():
 
 @party_view.route('/businesses/id/<id>', methods=['GET'])
 def get_business_by_id(id):
+    print ("business id hit....")
     return controller.get_business_by_id(id)
 
 
@@ -41,10 +42,12 @@ def get_party_by_id(sampleUnitType, id):
 
 @party_view.route('/respondents/id/<id>', methods=['GET'])
 def get_respondent_by_id(id):
+    print ("respondents/id hit")
     return controller.get_respondent_by_id(id)
 
 
 @party_view.route('/respondents', methods=['POST'])
 def post_respondent():
+    print ("respondent post hit")
     payload = request.get_json()
     return controller.respondents_post(payload)
