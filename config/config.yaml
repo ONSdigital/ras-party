@@ -22,10 +22,11 @@
 service:
     name: ras-party
     version: 0.0.1
-    scheme: http
+    scheme: httpx
     host: 0.0.0.0
     port: 5201
-
+    debug: True
+    log_level: debug
 dependencies:
     ras-party-db:
         service: rds

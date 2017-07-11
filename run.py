@@ -16,6 +16,7 @@ def create_app(config_file):
     app = Flask(__name__)
     app.config.from_yaml(os.path.join(app.root_path, config_file))
     configure_logger(app.config)
+    print("********** {}".format(app.config))
 
     # Initialise the database with the specified SQLAlchemy model
     PartyDatabase = RasDatabase.make(model_paths=['swagger_server.models.models'])
@@ -41,5 +42,6 @@ if __name__ == '__main__':
     #     # TODO: how does the gw recognise parameterised endpoints? (perhaps just first part of endpoint?)
     #     reg = {'protocol': scheme, 'host': host, 'port': port, 'uri': rule.rule}
     #     print(reg)
-
-    app.run(debug=app.config.get('debug'), port=port)
+    print ("***** app.config.debug is: {} ******\n".format(app.config['debug']))
+    #app.run(debug=app.config['debug'], port=port)
+    app.run(debug=True, port=port)

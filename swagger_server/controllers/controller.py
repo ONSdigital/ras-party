@@ -1,5 +1,5 @@
 import uuid
-
+import json
 import requests
 from flask import make_response, jsonify, current_app
 
@@ -8,11 +8,11 @@ from swagger_server.controllers.session_context import transaction
 from swagger_server.controllers.validate import Validator, IsIn, Exists, IsUuid
 from swagger_server.models.models import Business, Respondent
 from structlog import get_logger
+from flask import current_app
 
 logger = get_logger()
 
 # TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
-
 
 @translate_exceptions
 def businesses_post(business):
@@ -185,7 +185,7 @@ def build_url(template, config, *args):
     return url
 
 
-@translate_exceptions
+#@translate_exceptions
 def respondents_post(party):
 
     expected = ('emailAddress', 'firstName', 'lastName', 'password', 'telephone', 'enrolmentCode')
@@ -196,7 +196,8 @@ def respondents_post(party):
         v.add_rule(IsUuid('id'))
 
     if not v.validate(party):
-        logger.info("Validation failed for respondent [POST] Message")
+        logger.info("Validation failed for respondent [POST] Message.")
+        logger.info("Validation errors from [POST] are: {}".format(v.errors))
         return make_response(jsonify(v.errors), 400)
 
     # TODO: refactor code to separate service calls
@@ -209,20 +210,46 @@ def respondents_post(party):
     #                       |   create-account  |
     #                       | ----------------->|    api/account/create   |
     #                       |                   | ----------------------->|
+    logger.debug("Validation is complete for respondents_post")
+    print("*** Validation is complete for respondents_post")
+    for key in party:
+        print ("key is: {}".format(key))
+        print ("value is: {}".format(party[key]))
+
+    # print variables out
+    #print ("oauth2 scheme is: {}".format(current_app.config['scheme']))
+    #print ("client id is: {}".format(current_app.config['dependencies']['oauth2']['client_id']))
+    #print ("client secret is: {}".format(current_app.config['client_secret']))
+    #print ("Oauth2 host is: {}".format(current_app.config['host']))
+    #print ("Oauth2 port is: {}".format(current_app.config['port']))
+    #print ("admin endpoint is: {}".format(current_app.config['admin_endpoint']))
+    #print ("token endpoint is: {}".format(current_app.config['token_endpoint']))
+
 
     OAuth_payload = {
-        "username":party['emailAddress'],
+        "username": party['emailAddress'],
         "password": party['password'],
-        "client_id": app.config.dependencies.oauth2['client_id'],
-        "client_secret": app.config.dependencies.oauth2['client_secret']}
+        #"client_id": current_app.config['client_id'],
+        #"client_secret": current_app.config['client_secret']
+        "client_id": "ons@ons.gov",
+        "client_secret": "password"
+    }
 
     headers = {'content-type': 'application/x-www-form-urlencoded'}
 
-    authorisation = (app.config.dependencies.oauth2['client_id'], app.config.dependencies.oauth2['client_secret'])
+    #authorisation = {current_app.config.dependencies.oauth2['client_id']: current_app.config.dependencies.oauth2['client_secret']}
+    authorisation = {'ons@ons.gov': 'password'}
+
+    print ("Ready to talk to OAuth2 server...")
 
     try:
-        OAuthurl = app.config.dependencies.oauth2['scheme'] + app.config.dependencies.oauth2['host'] + app.config.dependencies.oauth2['port'] + app.config.dependencies.oauth2['admin_endpoint']
-        OAuth_response = requests.post(OAuthurl, auth=authorisation, headers=headers, data=OAuth_payload)
+        #OAuthurl = current_app.config['scheme'] + current_app.config['host'] + current_app.config['port'] + current_app.config['admin_endpoint']
+        OAuthurl = "http://localhost:8001/api/account/create"
+        print ("OAuthurl is: {}".format(OAuthurl))
+        #OAuth_response = requests.post(OAuthurl, auth=authorisation, headers=headers, data=OAuth_payload)
+
+        OAuth_response = requests.post(OAuthurl, data=OAuth_payload)
+
         logger.debug("OAuth response is: {}".format(OAuth_response.content))
 
         # json.loads(myResponse.content.decode('utf-8'))
@@ -239,7 +266,7 @@ def respondents_post(party):
                 if response_body["detail"] == 'Duplicate user credentials':
                     logger.warning("We have duplicate user credentials")
                     errors = {'email_address_confirm': ['Please try a different email, this one is in use', ]}
-                    return render_template('register.enter-your-details.html', _theme='default', form=form, errors=errors)
+                    return make_response(jsonify(errors), 400)
 
         # Deal with all other errors from OAuth2 registration
         if OAuth_response.status_code > 401:
@@ -251,19 +278,25 @@ def respondents_post(party):
 
     except requests.exceptions.ConnectionError:
         logger.critical("There seems to be no server listening on this connection?")
-        # TODO A redirect to a page that helps the user
+        errors = {'connection error': 'There is no network connectivity to the OAuth2 server on this connection:{} '.format(OAuthurl)}
+        return make_response(jsonify(errors), 400)
 
     except requests.exceptions.Timeout:
         logger.critical("Timeout error. Is the OAuth Server overloaded?")
+        errors = {'connection error': 'The OAuth2 server is not responding on this connection:{} '.format(OAuthurl)}
+        return make_response(jsonify(errors), 400)
+
         # TODO A redirect to a page that helps the user
     except requests.exceptions.RequestException as e:
         # TODO catastrophic error. bail. A page that tells the user something horrid has happened and who to inform
+        print ("something bad just happened! ")
         logger.debug(e)
 
 
 
 
     enrolment_code = party['enrolmentCode']
+    print ("Enrolement code is: {}".format(enrolment_code))
     logger.info("EnrolementCode for respondent [POST] is: {} ".format(enrolment_code))
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
