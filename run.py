@@ -32,7 +32,7 @@ def create_app(config_file):
 
 
 if __name__ == '__main__':
-    app = create_app('config/local.yaml')
+    app = create_app('config/config.yaml')
     # TODO: reintroduce gw registration, which is just a case of iterating endpoints and posting to gw
     # If 5-sec iterative reg is required, then use asyncio
 
