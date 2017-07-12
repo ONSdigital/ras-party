@@ -1,15 +1,15 @@
 import uuid
-import json
+
 import requests
-from flask import make_response, jsonify, current_app
+from flask import current_app
+from flask import make_response, jsonify
 from sqlalchemy import orm
+from structlog import get_logger
 
 from swagger_server.controllers.error_decorator import translate_exceptions
 from swagger_server.controllers.session_context import transaction
 from swagger_server.controllers.validate import Validator, IsIn, Exists, IsUuid
 from swagger_server.models.models import Business, Respondent, BusinessRespondent, Enrolment
-from structlog import get_logger
-from flask import current_app
 
 log = get_logger()
 
@@ -339,8 +339,8 @@ def respondents_post(party):
         'last_name': party['lastName'],
         'telephone': party['telephone']
     }
-    with transaction() as tran:
 
+    with transaction() as tran:
         try:
             b = tran.query(Business).filter(Business.party_uuid == business_id).one()
         except orm.exc.NoResultFound:
@@ -349,10 +349,10 @@ def respondents_post(party):
             return make_response(jsonify({'errors': [msg]}))
 
         r = Respondent(**translated_party)
-        # br = BusinessRespondent(business=b, respondent=r)
-        # e = Enrolment(business_respondent=br, survey_id=survey['id'])
+        br = BusinessRespondent(business=b, respondent=r)
+        e = Enrolment(business_respondent=br, survey_id=survey['id'])
 
-        tran.merge(r)   # TODO: is it still ok to do a merge here?
+        tran.add(r)   # TODO: is it still ok to do a merge here?
         # tran.add(br)
         # tran.add(e)
         return make_response(jsonify(r.to_respondent_dict()), 200)
