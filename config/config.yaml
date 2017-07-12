@@ -64,7 +64,7 @@ dependencies:
     oauth2-service:
         scheme: http
         host: localhost
-        port: 8001
+        port: 8000
         authorization_endpoint: "/web/authorize/"
         token_endpoint: "/api/v1/tokens/"
         admin_endpoint: "/api/account/create"
@@ -75,3 +75,6 @@ dependencies:
 features:
     gateway-registration: False
     translate-exceptions: False
+    oauth_registration: True
+    case_service_get_party: False
+

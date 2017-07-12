@@ -197,34 +197,19 @@ def oauth_registration(party):
     #                       | ----------------->|    api/account/create   |
     #                       |                   | ----------------------->|
 
-    # print variables out
-    #print ("oauth2 scheme is: {}".format(current_app.config['scheme']))
-    #print ("client id is: {}".format(current_app.config['dependencies']['oauth2']['client_id']))
-    #print ("client secret is: {}".format(current_app.config['client_secret']))
-    #print ("Oauth2 host is: {}".format(current_app.config['host']))
-    #print ("Oauth2 port is: {}".format(current_app.config['port']))
-    #print ("admin endpoint is: {}".format(current_app.config['admin_endpoint']))
-    #print ("token endpoint is: {}".format(current_app.config['token_endpoint']))
-
     oauth_payload = {
         "username": party['emailAddress'],
         "password": party['password'],
-        # "client_id": current_app.config['client_id'],
-        # "client_secret": current_app.config['client_secret']
-        "client_id": "ons@ons.gov",
-        "client_secret": "password"
+        "client_id": current_app.config.dependency['oauth2-service']['client_id'],
+        "client_secret": current_app.config.dependency['oauth2-service']['client_secret']
     }
 
-    headers = {'content-type': 'application/x-www-form-urlencoded'}
-
+    # headers = {'content-type': 'application/x-www-form-urlencoded'}
     # authorisation = {current_app.config.dependencies.oauth2['client_id']: current_app.config.dependencies.oauth2['client_secret']}
-    authorisation = {'ons@ons.gov': 'password'}
 
-    print("Ready to talk to OAuth2 server...")
-    # OAuthurl = current_app.config['scheme'] + current_app.config['host'] + current_app.config['port'] + current_app.config['admin_endpoint']
     oauth_svc = current_app.config.dependency['oauth2-service']
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    # OAuthurl = "http://localhost:8001/api/account/create"
+
     print("OAuthurl is: {}".format(oauth_url))
     # OAuth_response = requests.post(OAuthurl, auth=authorisation, headers=headers, data=OAuth_payload)
 
@@ -235,31 +220,31 @@ def oauth_registration(party):
         logger.debug("OAuth response is: {}".format(oauth_body))
 
         # json.loads(myResponse.content.decode('utf-8'))
-        logger.debug("OAuth2 response is: {}".format(oauth_response.status_code))
+        logger.debug("OAuth2 status code is: {}".format(oauth_response.status_code))
 
         if oauth_response.status_code == 401:
             # This looks like the user is not authorized to use the system. it could be a duplicate email. check our
             # exact error. if it is, then tell the user else fail as our server is not allowed to access the OAuth2
             # system.
-            # TODO add logging
+            logger.info("A 401 has been received creating a new user on the OAuth2 server")
             # {"detail":"Duplicate user credentials"}
             if 'detail' in oauth_body and oauth_body["detail"] == 'Duplicate user credentials':
                 logger.warning("We have duplicate user credentials")
                 return make_response(jsonify({'errors': 'Please try a different email, this one is in use'}), 400)
+            elif 'detail' in oauth_body and oauth_body["detail"] == 'Invalid client credentials':
+                # If we get here we are in real trouble! somebody has not configured the client_id or client_secret properly
+                logger.critical("The party service does not have the correct credentials to access the OAuth2 server. Perhaps the client_id or client_secret is incorrect?")
+                return make_response(jsonify({'error':'The microservice cannot create a user on the Authentication Server due to client_id or client_secret being wrong'}))
 
         # Deal with all other errors from OAuth2 registration
         if oauth_response.status_code > 401:
             oauth_response.raise_for_status()  # A stop gap until we know all the correct error pages
             logger.warning("OAuth error")
 
-            # TODO A utility function to allow us to route to a page for 'user is registered already'.
-            # We need a html page for this.
-
     except requests.exceptions.ConnectionError:
         logger.critical("There seems to be no server listening on this connection?")
         errors = {
-            'connection error': 'There is no network connectivity to the OAuth2 server on this connection:{} '.format(
-                oauth_url)}
+            'connection error': 'There is no network connectivity to the OAuth2 server on this connection:{} '.format(oauth_url)}
         return make_response(jsonify(errors), 400)
 
     except requests.exceptions.Timeout:
@@ -272,6 +257,9 @@ def oauth_registration(party):
         # TODO catastrophic error. bail. A page that tells the user something horrid has happened and who to inform
         print("something bad just happened! ")
         logger.debug(e)
+
+    # At this point we have checked for most errors let the calling function know
+    return make_response({"success":"User {} has been created on the OAuth2 server".format(party['emailAddress'])}, oauth_response.status_code)
 
 
 @translate_exceptions
@@ -296,10 +284,14 @@ def respondents_post(party):
         print("value is: {}".format(party[key]))
 
     # TODO: this is currently a bit of a bodge to separate the oauth code from the main enrolment activity
-    if not current_app.config.feature.skip_oauth_registration:
-        oauth_result = oauth_registration(party)
-        if oauth_result is not None:
-            return oauth_result
+    if current_app.config.feature['oauth_registration']:
+        oauth2_response = oauth_registration(party)
+        print("oauth2 response object looks like: {}".format(oauth2_response))
+        #if oauth2_response.==200:
+        #    logger.debug("The OAuth2 server has registered the user")
+        #else:
+        #    logger.error("The OAuth2 server failed to register the user")
+            #TODO An error happened in registering a new user on the OAuth2 server we should not continue
 
     enrolment_code = party['enrolmentCode']
     print("Enrolment code is: {}".format(enrolment_code))
