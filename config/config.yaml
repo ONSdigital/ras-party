@@ -61,7 +61,7 @@ dependencies:
         scheme: http
         host: localhost
         port: 8000
-    oauth2:
+    oauth2-service:
         scheme: http
         host: localhost
         port: 8001
