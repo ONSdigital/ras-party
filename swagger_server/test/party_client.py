@@ -1,5 +1,6 @@
 import json
 
+import logging
 import yaml
 from flask import current_app
 from flask_testing import TestCase

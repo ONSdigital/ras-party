@@ -26,7 +26,7 @@ service:
     host: 0.0.0.0
     port: 5201
     debug: True
-    log_level: debug
+    log_level: info
     port: 8000
 
 dependencies:
@@ -73,5 +73,5 @@ dependencies:
 
 
 features:
-    gateway-registration: False
-    translate-exceptions: False
+    gateway_registration: False
+    translate_exceptions: False

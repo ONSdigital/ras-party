@@ -2,6 +2,7 @@ import uuid
 import json
 import requests
 from flask import make_response, jsonify, current_app
+from sqlalchemy import orm
 
 from swagger_server.controllers.error_decorator import translate_exceptions
 from swagger_server.controllers.session_context import transaction
@@ -10,7 +11,7 @@ from swagger_server.models.models import Business, Respondent, BusinessResponden
 from structlog import get_logger
 from flask import current_app
 
-logger = get_logger()
+log = get_logger()
 
 # TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
 
@@ -220,22 +221,22 @@ def oauth_registration(party):
     # authorisation = {current_app.config.dependencies.oauth2['client_id']: current_app.config.dependencies.oauth2['client_secret']}
     authorisation = {'ons@ons.gov': 'password'}
 
-    print("Ready to talk to OAuth2 server...")
+    log.info("Ready to talk to OAuth2 server...")
     # OAuthurl = current_app.config['scheme'] + current_app.config['host'] + current_app.config['port'] + current_app.config['admin_endpoint']
     oauth_svc = current_app.config.dependency['oauth2-service']
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
     # OAuthurl = "http://localhost:8001/api/account/create"
-    print("OAuthurl is: {}".format(oauth_url))
+    log.info("OAuthurl is: {}".format(oauth_url))
     # OAuth_response = requests.post(OAuthurl, auth=authorisation, headers=headers, data=OAuth_payload)
 
     try:
         oauth_response = requests.post(oauth_url, data=oauth_payload)
         oauth_body = oauth_response.json()
 
-        logger.debug("OAuth response is: {}".format(oauth_body))
+        log.debug("OAuth response is: {}".format(oauth_body))
 
         # json.loads(myResponse.content.decode('utf-8'))
-        logger.debug("OAuth2 response is: {}".format(oauth_response.status_code))
+        log.debug("OAuth2 response is: {}".format(oauth_response.status_code))
 
         if oauth_response.status_code == 401:
             # This looks like the user is not authorized to use the system. it could be a duplicate email. check our
@@ -244,34 +245,34 @@ def oauth_registration(party):
             # TODO add logging
             # {"detail":"Duplicate user credentials"}
             if 'detail' in oauth_body and oauth_body["detail"] == 'Duplicate user credentials':
-                logger.warning("We have duplicate user credentials")
-                return make_response(jsonify({'errors': 'Please try a different email, this one is in use'}), 400)
+                log.warning("We have duplicate user credentials")
+                return make_response(jsonify({'errors': ['Please try a different email, this one is in use']}), 400)
 
         # Deal with all other errors from OAuth2 registration
         if oauth_response.status_code > 401:
             oauth_response.raise_for_status()  # A stop gap until we know all the correct error pages
-            logger.warning("OAuth error")
+            log.warning("OAuth error")
 
             # TODO A utility function to allow us to route to a page for 'user is registered already'.
             # We need a html page for this.
 
     except requests.exceptions.ConnectionError:
-        logger.critical("There seems to be no server listening on this connection?")
+        log.critical("There seems to be no server listening on this connection?")
         errors = {
             'connection error': 'There is no network connectivity to the OAuth2 server on this connection:{} '.format(
                 oauth_url)}
         return make_response(jsonify(errors), 400)
 
     except requests.exceptions.Timeout:
-        logger.critical("Timeout error. Is the OAuth Server overloaded?")
+        log.critical("Timeout error. Is the OAuth Server overloaded?")
         errors = {'connection error': 'The OAuth2 server is not responding on this connection:{} '.format(oauth_url)}
         return make_response(jsonify(errors), 400)
 
         # TODO A redirect to a page that helps the user
     except requests.exceptions.RequestException as e:
         # TODO catastrophic error. bail. A page that tells the user something horrid has happened and who to inform
-        print("something bad just happened! ")
-        logger.debug(e)
+        log.error("something bad just happened! ")
+        log.error(e)
 
 
 @translate_exceptions
@@ -281,19 +282,18 @@ def respondents_post(party):
 
     v = Validator(Exists(*expected))
     if 'id' in party:
-        logger.debug(" ID in respondent post message. Adding validation rule IsUuid")
+        log.debug(" ID in respondent post message. Adding validation rule IsUuid")
         v.add_rule(IsUuid('id'))
 
     if not v.validate(party):
-        logger.info("Validation failed for respondent [POST] Message.")
-        logger.info("Validation errors from [POST] are: {}".format(v.errors))
+        log.error("Validation failed for respondent [POST] Message.")
+        log.error("Validation errors from [POST] are: {}".format(v.errors))
         return make_response(jsonify(v.errors), 400)
 
-    logger.debug("Validation is complete for respondents_post")
-    print("*** Validation is complete for respondents_post")
+    log.debug("Validation is complete for respondents_post")
     for key in party:
-        print("key is: {}".format(key))
-        print("value is: {}".format(party[key]))
+        log.debug("key is: {}".format(key))
+        log.debug("value is: {}".format(party[key]))
 
     # TODO: this is currently a bit of a bodge to separate the oauth code from the main enrolment activity
     if not current_app.config.feature.skip_oauth_registration:
@@ -302,12 +302,12 @@ def respondents_post(party):
             return oauth_result
 
     enrolment_code = party['enrolmentCode']
-    print("Enrolment code is: {}".format(enrolment_code))
-    logger.info("EnrolmentCode for respondent [POST] is: {} ".format(enrolment_code))
+    log.debug("Enrolment code is: {}".format(enrolment_code))
+    log.debug("EnrolmentCode for respondent [POST] is: {} ".format(enrolment_code))
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
     case_context = requests.get(case_url).json()
-    business_party_uuid = case_context['partyId']
+    business_id = case_context['partyId']
 
     # TODO: consider error scenarios
     collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
@@ -341,13 +341,18 @@ def respondents_post(party):
     }
     with transaction() as tran:
 
-        b = tran.query(Business).filter(Business.party_uuid == business_party_uuid).one()
-        r = Respondent(**translated_party)
+        try:
+            b = tran.query(Business).filter(Business.party_uuid == business_id).one()
+        except orm.exc.NoResultFound:
+            msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
+            log.error(msg)
+            return make_response(jsonify({'errors': [msg]}))
 
+        r = Respondent(**translated_party)
         br = BusinessRespondent(business=b, respondent=r)
         e = Enrolment(business_respondent=br, survey_id=survey['id'])
 
-        tran.merge(r)   # TODO: is it still ok to do a merge here?
-        tran.add(br)
+        # tran.merge(r)   # TODO: is it still ok to do a merge here?
+        # tran.add(br)
         tran.add(e)
         return make_response(jsonify(r.to_respondent_dict()), 200)
