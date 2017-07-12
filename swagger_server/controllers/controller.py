@@ -260,7 +260,8 @@ def oauth_registration(party):
         log.error(e)
 
     # At this point we have checked for most errors let the calling function know
-    return make_response({"success":"User {} has been created on the OAuth2 server".format(party['emailAddress'])}, oauth_response.status_code)
+    success_msg = {"success":"User {} has been created on the OAuth2 server".format(party['emailAddress'])}
+    return make_response(jsonify(success_msg), oauth_response.status_code)
 
 
 @translate_exceptions
@@ -287,15 +288,12 @@ def respondents_post(party):
     if current_app.config.feature['oauth_registration']:
         oauth2_response = oauth_registration(party)
         print("oauth2 response object looks like: {}".format(oauth2_response))
-        #if oauth2_response.==200:
-        #    logger.debug("The OAuth2 server has registered the user")
-        #else:
-        #    logger.error("The OAuth2 server failed to register the user")
+        if oauth2_response.status_code == 200:
+            log.debug("The OAuth2 server has registered the user")
+        else:
+            log.error("The OAuth2 server failed to register the user")
             #TODO An error happened in registering a new user on the OAuth2 server we should not continue
 
-    enrolment_code = party['enrolmentCode']
-    log.debug("Enrolment code is: {}".format(enrolment_code))
-    log.debug("EnrolmentCode for respondent [POST] is: {} ".format(enrolment_code))
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
     case_context = requests.get(case_url).json()
