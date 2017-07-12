@@ -14,6 +14,7 @@ logger = get_logger()
 
 # TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
 
+
 @translate_exceptions
 def businesses_post(business):
     """
@@ -87,7 +88,7 @@ def parties_post(party):
 
     :rtype: None
     """
-    v = Validator(Exists('sampleUnitType'), IsIn('sampleUnitType', 'B', 'BI'))
+    v = Validator(Exists('sampleUnitType'), IsIn('sampleUnitType', 'B'))
     if 'id' in party:
         v.add_rule(IsUuid('id'))
     if party['sampleUnitType'] == Business.UNIT_TYPE:
@@ -103,8 +104,6 @@ def parties_post(party):
             b = Business.from_party_dict(party)
             tran.merge(b)
             return make_response(jsonify(b.to_party_dict()), 200)
-    else:
-        return make_response(jsonify({'errors': "Unknown sampleUnitType '{}'".format(party['sampleUnitType'])}), 400)
 
 
 @translate_exceptions
@@ -185,7 +184,97 @@ def build_url(template, config, *args):
     return url
 
 
-#@translate_exceptions
+def oauth_registration(party):
+
+    # TODO: refactor code to separate service calls
+    # Validation passed. Let's create this user on the OAuth2 server.
+    # 1) Send a POST message to create a user on OAuth2 server
+    #   User                FS                  PS                      OAuth2
+    #   ----                --                  --                      ------
+    #     create-account    |
+    #   ------------------->|
+    #                       |   create-account  |
+    #                       | ----------------->|    api/account/create   |
+    #                       |                   | ----------------------->|
+
+    # print variables out
+    #print ("oauth2 scheme is: {}".format(current_app.config['scheme']))
+    #print ("client id is: {}".format(current_app.config['dependencies']['oauth2']['client_id']))
+    #print ("client secret is: {}".format(current_app.config['client_secret']))
+    #print ("Oauth2 host is: {}".format(current_app.config['host']))
+    #print ("Oauth2 port is: {}".format(current_app.config['port']))
+    #print ("admin endpoint is: {}".format(current_app.config['admin_endpoint']))
+    #print ("token endpoint is: {}".format(current_app.config['token_endpoint']))
+
+    oauth_payload = {
+        "username": party['emailAddress'],
+        "password": party['password'],
+        # "client_id": current_app.config['client_id'],
+        # "client_secret": current_app.config['client_secret']
+        "client_id": "ons@ons.gov",
+        "client_secret": "password"
+    }
+
+    headers = {'content-type': 'application/x-www-form-urlencoded'}
+
+    # authorisation = {current_app.config.dependencies.oauth2['client_id']: current_app.config.dependencies.oauth2['client_secret']}
+    authorisation = {'ons@ons.gov': 'password'}
+
+    print("Ready to talk to OAuth2 server...")
+    # OAuthurl = current_app.config['scheme'] + current_app.config['host'] + current_app.config['port'] + current_app.config['admin_endpoint']
+    oauth_svc = current_app.config.dependency['oauth2-service']
+    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
+    # OAuthurl = "http://localhost:8001/api/account/create"
+    print("OAuthurl is: {}".format(oauth_url))
+    # OAuth_response = requests.post(OAuthurl, auth=authorisation, headers=headers, data=OAuth_payload)
+
+    try:
+        oauth_response = requests.post(oauth_url, data=oauth_payload)
+        oauth_body = oauth_response.json()
+
+        logger.debug("OAuth response is: {}".format(oauth_body))
+
+        # json.loads(myResponse.content.decode('utf-8'))
+        logger.debug("OAuth2 response is: {}".format(oauth_response.status_code))
+
+        if oauth_response.status_code == 401:
+            # This looks like the user is not authorized to use the system. it could be a duplicate email. check our
+            # exact error. if it is, then tell the user else fail as our server is not allowed to access the OAuth2
+            # system.
+            # TODO add logging
+            # {"detail":"Duplicate user credentials"}
+            if 'detail' in oauth_body and oauth_body["detail"] == 'Duplicate user credentials':
+                logger.warning("We have duplicate user credentials")
+                return make_response(jsonify({'errors': 'Please try a different email, this one is in use'}), 400)
+
+        # Deal with all other errors from OAuth2 registration
+        if oauth_response.status_code > 401:
+            oauth_response.raise_for_status()  # A stop gap until we know all the correct error pages
+            logger.warning("OAuth error")
+
+            # TODO A utility function to allow us to route to a page for 'user is registered already'.
+            # We need a html page for this.
+
+    except requests.exceptions.ConnectionError:
+        logger.critical("There seems to be no server listening on this connection?")
+        errors = {
+            'connection error': 'There is no network connectivity to the OAuth2 server on this connection:{} '.format(
+                oauth_url)}
+        return make_response(jsonify(errors), 400)
+
+    except requests.exceptions.Timeout:
+        logger.critical("Timeout error. Is the OAuth Server overloaded?")
+        errors = {'connection error': 'The OAuth2 server is not responding on this connection:{} '.format(oauth_url)}
+        return make_response(jsonify(errors), 400)
+
+        # TODO A redirect to a page that helps the user
+    except requests.exceptions.RequestException as e:
+        # TODO catastrophic error. bail. A page that tells the user something horrid has happened and who to inform
+        print("something bad just happened! ")
+        logger.debug(e)
+
+
+@translate_exceptions
 def respondents_post(party):
 
     expected = ('emailAddress', 'firstName', 'lastName', 'password', 'telephone', 'enrolmentCode')
@@ -200,104 +289,21 @@ def respondents_post(party):
         logger.info("Validation errors from [POST] are: {}".format(v.errors))
         return make_response(jsonify(v.errors), 400)
 
-    # TODO: refactor code to separate service calls
-    # Validation passed. Let's create this user on the OAuth2 server.
-    # 1) Send a POST message to create a user on OAuth2 server
-    #   User                FS                  PS                      OAuth2
-    #   ----                --                  --                      ------
-    #     create-account    |
-    #   ------------------->|
-    #                       |   create-account  |
-    #                       | ----------------->|    api/account/create   |
-    #                       |                   | ----------------------->|
     logger.debug("Validation is complete for respondents_post")
     print("*** Validation is complete for respondents_post")
     for key in party:
-        print ("key is: {}".format(key))
-        print ("value is: {}".format(party[key]))
+        print("key is: {}".format(key))
+        print("value is: {}".format(party[key]))
 
-    # print variables out
-    #print ("oauth2 scheme is: {}".format(current_app.config['scheme']))
-    #print ("client id is: {}".format(current_app.config['dependencies']['oauth2']['client_id']))
-    #print ("client secret is: {}".format(current_app.config['client_secret']))
-    #print ("Oauth2 host is: {}".format(current_app.config['host']))
-    #print ("Oauth2 port is: {}".format(current_app.config['port']))
-    #print ("admin endpoint is: {}".format(current_app.config['admin_endpoint']))
-    #print ("token endpoint is: {}".format(current_app.config['token_endpoint']))
-
-
-    OAuth_payload = {
-        "username": party['emailAddress'],
-        "password": party['password'],
-        #"client_id": current_app.config['client_id'],
-        #"client_secret": current_app.config['client_secret']
-        "client_id": "ons@ons.gov",
-        "client_secret": "password"
-    }
-
-    headers = {'content-type': 'application/x-www-form-urlencoded'}
-
-    #authorisation = {current_app.config.dependencies.oauth2['client_id']: current_app.config.dependencies.oauth2['client_secret']}
-    authorisation = {'ons@ons.gov': 'password'}
-
-    print ("Ready to talk to OAuth2 server...")
-
-    try:
-        #OAuthurl = current_app.config['scheme'] + current_app.config['host'] + current_app.config['port'] + current_app.config['admin_endpoint']
-        OAuthurl = "http://localhost:8001/api/account/create"
-        print ("OAuthurl is: {}".format(OAuthurl))
-        #OAuth_response = requests.post(OAuthurl, auth=authorisation, headers=headers, data=OAuth_payload)
-
-        OAuth_response = requests.post(OAuthurl, data=OAuth_payload)
-
-        logger.debug("OAuth response is: {}".format(OAuth_response.content))
-
-        # json.loads(myResponse.content.decode('utf-8'))
-        response_body = json.loads(OAuth_response.content.decode('utf-8'))
-        logger.debug("OAuth2 response is: {}".format(OAuth_response.status_code))
-
-        if OAuth_response.status_code == 401:
-            # This looks like the user is not authorized to use the system. it could be a duplicate email. check our
-            # exact error. if it is, then tell the user else fail as our server is not allowed to access the OAuth2
-            # system.
-            # TODO add logging
-            # {"detail":"Duplicate user credentials"}
-            if response_body["detail"]:
-                if response_body["detail"] == 'Duplicate user credentials':
-                    logger.warning("We have duplicate user credentials")
-                    errors = {'email_address_confirm': ['Please try a different email, this one is in use', ]}
-                    return make_response(jsonify(errors), 400)
-
-        # Deal with all other errors from OAuth2 registration
-        if OAuth_response.status_code > 401:
-            OAuth_response.raise_for_status()  # A stop gap until we know all the correct error pages
-            logger.warning("OAuth error")
-
-        # TODO A utility function to allow us to route to a page for 'user is registered already'.
-        # We need a html page for this.
-
-    except requests.exceptions.ConnectionError:
-        logger.critical("There seems to be no server listening on this connection?")
-        errors = {'connection error': 'There is no network connectivity to the OAuth2 server on this connection:{} '.format(OAuthurl)}
-        return make_response(jsonify(errors), 400)
-
-    except requests.exceptions.Timeout:
-        logger.critical("Timeout error. Is the OAuth Server overloaded?")
-        errors = {'connection error': 'The OAuth2 server is not responding on this connection:{} '.format(OAuthurl)}
-        return make_response(jsonify(errors), 400)
-
-        # TODO A redirect to a page that helps the user
-    except requests.exceptions.RequestException as e:
-        # TODO catastrophic error. bail. A page that tells the user something horrid has happened and who to inform
-        print ("something bad just happened! ")
-        logger.debug(e)
-
-
-
+    # TODO: this is currently a bit of a bodge to separate the oauth code from the main enrolment activity
+    if not current_app.config.feature.skip_oauth_registration:
+        oauth_result = oauth_registration(party)
+        if oauth_result is not None:
+            return oauth_result
 
     enrolment_code = party['enrolmentCode']
-    print ("Enrolement code is: {}".format(enrolment_code))
-    logger.info("EnrolementCode for respondent [POST] is: {} ".format(enrolment_code))
+    print("Enrolment code is: {}".format(enrolment_code))
+    logger.info("EnrolmentCode for respondent [POST] is: {} ".format(enrolment_code))
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
     case_context = requests.get(case_url).json()
