@@ -349,10 +349,10 @@ def respondents_post(party):
             return make_response(jsonify({'errors': [msg]}))
 
         r = Respondent(**translated_party)
-        br = BusinessRespondent(business=b, respondent=r)
-        e = Enrolment(business_respondent=br, survey_id=survey['id'])
+        # br = BusinessRespondent(business=b, respondent=r)
+        # e = Enrolment(business_respondent=br, survey_id=survey['id'])
 
-        # tran.merge(r)   # TODO: is it still ok to do a merge here?
+        tran.merge(r)   # TODO: is it still ok to do a merge here?
         # tran.add(br)
-        tran.add(e)
+        # tran.add(e)
         return make_response(jsonify(r.to_respondent_dict()), 200)

@@ -56,4 +56,4 @@ if __name__ == '__main__':
     #     print(reg)
     print ("***** app.config.debug is: {} ******\n".format(app.config['debug']))
     #app.run(debug=app.config['debug'], port=port)
-    app.run(debug=True, port=port)
+    app.run(debug=True, port=int(port))
