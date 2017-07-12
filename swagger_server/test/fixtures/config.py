@@ -25,4 +25,6 @@ dependencies:
         host: mockhost
         port: 3333
 
+features:
+    skip_oauth_registration: true
 """

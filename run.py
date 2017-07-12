@@ -2,12 +2,10 @@ import os
 
 import structlog
 from flask_cors import CORS
-from ons_ras_common.ras_config import ras_config
-from ons_ras_common.ras_database.ras_database import RasDatabase
-from ons_ras_common.ras_logger.ras_logger import configure_logger
-
-from ons_ras_common.ras_config.flask_extended import Flask
-
+from ras_common_utils.ras_config import ras_config
+from ras_common_utils.ras_config.flask_extended import Flask
+from ras_common_utils.ras_database.ras_database import RasDatabase
+from ras_common_utils.ras_logger.ras_logger import configure_logger
 
 logger = structlog.get_logger()
 
@@ -16,14 +14,6 @@ def create_app(config):
     # create and configure the Flask app
     app = Flask(__name__)
     app.config.from_ras_config(config)
-    configure_logger(app.config)
-    print("********** {}".format(app.config))
-
-    # Initialise the database with the specified SQLAlchemy model
-    PartyDatabase = RasDatabase.make(model_paths=['swagger_server.models.models'])
-    db = PartyDatabase('ras-party-db', app.config)
-    # TODO: this isn't entirely safe, use a get_db() lazy initializer instead...
-    app.db = db
 
     # register view blueprints
     from ras_party.views.party_view import party_view
@@ -33,12 +23,27 @@ def create_app(config):
     return app
 
 
+def initialise_db(app):
+
+    # Initialise the database with the specified SQLAlchemy model
+    PartyDatabase = RasDatabase.make(model_paths=['swagger_server.models.models'])
+    db = PartyDatabase('ras-party-db', app.config)
+    # TODO: this isn't entirely safe, use a get_db() lazy initializer instead...
+    app.db = db
+
+
 if __name__ == '__main__':
     config_path = 'config/config.yaml'
     with open(config_path) as f:
         config = ras_config.from_yaml_file(config_path)
 
     app = create_app(config)
+    configure_logger(app.config)
+    logger.debug("Created Flask app.")
+    logger.debug("Config is {}".format(app.config))
+
+    initialise_db(app)
+
     # TODO: reintroduce gw registration, which is just a case of iterating endpoints and posting to gw
     # If 5-sec iterative reg is required, then use asyncio
 
@@ -48,5 +53,4 @@ if __name__ == '__main__':
     #     reg = {'protocol': scheme, 'host': host, 'port': port, 'uri': rule.rule}
     #     print(reg)
     print ("***** app.config.debug is: {} ******\n".format(app.config['debug']))
-    #app.run(debug=app.config['debug'], port=port)
-    app.run(debug=True, port=port)
+    app.run(debug=app.config['debug'], port=int(port))
