@@ -27,7 +27,7 @@ service:
     port: 5201
     debug: True
     log_level: info
-    port: 8000
+    port: 5201
 
 dependencies:
     ras-party-db:
