@@ -2,9 +2,9 @@ import datetime
 import enum
 import uuid
 
-from ons_ras_common.ras_database.base import Base
-from ons_ras_common.ras_database.guid import GUID
-from ons_ras_common.ras_database.json_column import JsonColumn
+from ras_common_utils.ras_database.base import Base
+from ras_common_utils.ras_database.guid import GUID
+from ras_common_utils.ras_database.json_column import JsonColumn
 from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum

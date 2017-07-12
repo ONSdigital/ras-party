@@ -1,12 +1,11 @@
 import json
 
-import logging
 import yaml
 from flask import current_app
 from flask_testing import TestCase
-from ons_ras_common.ras_config import ras_config
+from ras_common_utils.ras_config import ras_config
 
-from run import create_app
+from run import create_app, initialise_db
 from swagger_server.controllers import controller
 from swagger_server.models.models import Business, Respondent, BusinessRespondent
 from swagger_server.test.fixtures.config import test_config
@@ -30,6 +29,7 @@ class PartyTestClient(TestCase):
 
     def create_app(self):
         app = create_app(self.config)
+        initialise_db(app)
         return app
 
     def post_to_parties(self, payload, expected_status):

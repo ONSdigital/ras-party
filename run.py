@@ -2,12 +2,10 @@ import os
 
 import structlog
 from flask_cors import CORS
-from ons_ras_common.ras_config import ras_config
-from ons_ras_common.ras_database.ras_database import RasDatabase
-from ons_ras_common.ras_logger.ras_logger import configure_logger
-
-from ons_ras_common.ras_config.flask_extended import Flask
-
+from ras_common_utils.ras_config import ras_config
+from ras_common_utils.ras_config.flask_extended import Flask
+from ras_common_utils.ras_database.ras_database import RasDatabase
+from ras_common_utils.ras_logger.ras_logger import configure_logger
 
 logger = structlog.get_logger()
 
@@ -55,5 +53,4 @@ if __name__ == '__main__':
     #     reg = {'protocol': scheme, 'host': host, 'port': port, 'uri': rule.rule}
     #     print(reg)
     print ("***** app.config.debug is: {} ******\n".format(app.config['debug']))
-    #app.run(debug=app.config['debug'], port=port)
-    app.run(debug=True, port=int(port))
+    app.run(debug=app.config['debug'], port=int(port))

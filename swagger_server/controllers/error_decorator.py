@@ -4,7 +4,7 @@ import structlog
 from flask import make_response, jsonify, current_app
 
 
-logger = structlog.get_logger()
+log = structlog.get_logger()
 
 
 def translate_exceptions(f):
@@ -16,7 +16,7 @@ def translate_exceptions(f):
             return f(*args, **kwargs)
         except Exception as e:
             # TODO: log the stack-trace
-            logger.error(e)
+            log.error(str(e))
             if current_app.config.feature.translate_exceptions:
                 return make_response(jsonify({'errors': str(e)}), 500)
             else:
