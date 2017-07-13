@@ -4,10 +4,10 @@ import yaml
 from flask import current_app
 from flask_testing import TestCase
 from ras_common_utils.ras_config import ras_config
+from ras_common_utils.ras_logger.ras_logger import configure_logger
 
 from run import create_app, initialise_db
-from swagger_server.controllers import controller
-from swagger_server.models.models import Business, Respondent, BusinessRespondent
+from swagger_server.models.models import Business, Respondent, BusinessRespondent, Enrolment
 from swagger_server.test.fixtures.config import test_config
 
 
@@ -23,12 +23,17 @@ def business_respondent_associations():
     return current_app.db.session.query(BusinessRespondent).all()
 
 
+def enrolments():
+    return current_app.db.session.query(Enrolment).all()
+
+
 class PartyTestClient(TestCase):
     config_data = yaml.load(test_config)
     config = ras_config.make(config_data)
 
     def create_app(self):
         app = create_app(self.config)
+        configure_logger(app.config)
         initialise_db(app)
         return app
 
@@ -45,11 +50,6 @@ class PartyTestClient(TestCase):
                                     method='POST',
                                     data=json.dumps(payload),
                                     content_type='application/vnd.ons.business+json')
-        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
-        return json.loads(response.get_data(as_text=True))
-
-    def post_to_businesses_x(self, payload, expected_status):
-        response = controller.businesses_post(payload)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
@@ -90,3 +90,4 @@ class PartyTestClient(TestCase):
                                     method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
+

@@ -5,6 +5,7 @@ service:
     scheme: http
     host: 0.0.0.0
     port: 8000
+    log_level: error
 
 dependencies:
     ras-party-db:

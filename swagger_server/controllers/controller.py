@@ -1,5 +1,5 @@
 import uuid
-import json
+
 import requests
 from flask import current_app
 from flask import make_response, jsonify
@@ -8,6 +8,7 @@ from structlog import get_logger
 
 from swagger_server.controllers.error_decorator import translate_exceptions
 from swagger_server.controllers.session_context import transaction
+from swagger_server.controllers.url_builder import build_url
 from swagger_server.controllers.validate import Validator, IsIn, Exists, IsUuid
 from swagger_server.models.models import Business, Respondent, BusinessRespondent, Enrolment
 
@@ -171,20 +172,6 @@ def get_respondent_by_id(id):
     return make_response(jsonify(respondent.to_respondent_dict()), 200)
 
 
-class MockConfig:
-
-    def __init__(self):
-        self._case_service = {'scheme': 'http', 'host': 'localhost', 'port': '8171'}
-
-    def dependency(self, _):
-        return self._case_service
-
-
-def build_url(template, config, *args):
-    url = template.format(config['scheme'], config['host'], config['port'], *args)
-    return url
-
-
 def oauth_registration(party):
 
     # TODO: refactor code to separate service calls
@@ -260,7 +247,7 @@ def oauth_registration(party):
         log.error(e)
 
     # At this point we have checked for most errors let the calling function know
-    success_msg = {"success":"User {} has been created on the OAuth2 server".format(party['emailAddress'])}
+    success_msg = {"success": "User {} has been created on the OAuth2 server".format(party['emailAddress'])}
     return make_response(jsonify(success_msg), oauth_response.status_code)
 
 
@@ -294,6 +281,7 @@ def respondents_post(party):
             log.error("The OAuth2 server failed to register the user")
             #TODO An error happened in registering a new user on the OAuth2 server we should not continue
 
+    enrolment_code = party['enrolmentCode']
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
     case_context = requests.get(case_url).json()
@@ -306,15 +294,12 @@ def respondents_post(party):
     collection_exercise = requests.get(ce_url).json()
 
     survey_id = collection_exercise['surveyId']
-    survey_svc = current_app.config.dependency['survey-service']
-    survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
-    survey = requests.get(survey_url).json()
+    # TODO: we may want to persist the survey name, otherwise no need to call survey service
+    # survey_svc = current_app.config.dependency['survey-service']
+    # survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
+    # survey = requests.get(survey_url).json()
 
     """ TODO:
-    GET /collectionexercises/{uuid}
-    GET /surveys/{uuid}
-    create business_respondent association
-    create enrolment (between business_respondent + survey id)
     POST account created case event
     create uuid / email verification link
     persist the email verification link
@@ -340,9 +325,7 @@ def respondents_post(party):
 
         r = Respondent(**translated_party)
         br = BusinessRespondent(business=b, respondent=r)
-        e = Enrolment(business_respondent=br, survey_id=survey['id'])
+        e = Enrolment(business_respondent=br, survey_id=survey_id)
 
-        tran.add(r)   # TODO: is it still ok to do a merge here?
-        # tran.add(br)
-        # tran.add(e)
+        tran.add(r)
         return make_response(jsonify(r.to_respondent_dict()), 200)

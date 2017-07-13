@@ -18,7 +18,6 @@ def post_business():
 @party_view.route('/businesses/id/<id>', methods=['GET'])
 @log_route
 def get_business_by_id(id):
-    print ("business id hit....")
     return controller.get_business_by_id(id)
 
 
