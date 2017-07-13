@@ -288,7 +288,7 @@ def respondents_post(party):
     if current_app.config.feature['oauth_registration']:
         oauth2_response = oauth_registration(party)
         print("oauth2 response object looks like: {}".format(oauth2_response))
-        if oauth2_response.status_code == 200:
+        if oauth2_response.status_code == 201:
             log.debug("The OAuth2 server has registered the user")
         else:
             log.error("The OAuth2 server failed to register the user")
