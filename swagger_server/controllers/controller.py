@@ -191,16 +191,48 @@ def get_respondent_by_id(id):
 
 def oauth_registration(party):
 
+    """
+    Deals with sending the registration request to the OAuth2 server. The OAuth2 server implements the OAuth2 spec found
+
+    here: https://tools.ietf.org/html/rfc6749
+
+    It has also been updated to allow microservices to create users on the server if they have the correct client_id
+    and client_secret. In other words an admin interface. This is not part of OAuth2 specs. The interface is defined
+
+    here: https://github.com/ONSdigital/django-oauth2-test
+
+    under tha 'Admin API'. This function will handle all known errors from the OAuth2 server and return the status_code
+    received to the calling function.
+
+    Arguments: party
+        Type: dictionary
+        Parameters: 'emailAddress', 'firstName', 'lastName', 'password', 'telephone', 'enrolmentCode'
+        Parameters used: 'emailAddress', 'password'.
+
+    Returns: http response object
+        Added Parameters: 'status_code', 'message text string'
+
+    Sequence Diagram (flow between PS and OAuth2):
+        User                    FS                  PS                      OAuth2
+        ----                    --                  --                      ------
+            create-account      |
+            ------------------->|
+                                |   create-account  |
+                                | ----------------->|    api/account/create   |
+                                |                   | ----------------------->|
+
+    Errors:
+        duplicate email
+        client id incorrect
+        client secret incorrect
+
+    TODO:
+        Scope has to be defined on what the default scope should be for a user. This could be done in the PS, or default
+        applied on the OAuth2 server
+
+    """
     # TODO: refactor code to separate service calls
-    # Validation passed. Let's create this user on the OAuth2 server.
     # 1) Send a POST message to create a user on OAuth2 server
-    #   User                FS                  PS                      OAuth2
-    #   ----                --                  --                      ------
-    #     create-account    |
-    #   ------------------->|
-    #                       |   create-account  |
-    #                       | ----------------->|    api/account/create   |
-    #                       |                   | ----------------------->|
 
     oauth_payload = {
         "username": party['emailAddress'],
@@ -209,16 +241,15 @@ def oauth_registration(party):
         "client_secret": current_app.config.dependency['oauth2-service']['client_secret']
     }
 
+    # leave this commented out for now - we don't know what we will do with authorisation headers yet and content types
     # headers = {'content-type': 'application/x-www-form-urlencoded'}
     # authorisation = {current_app.config.dependencies.oauth2['client_id']: current_app.config.dependencies.oauth2['client_secret']}
 
     oauth_svc = current_app.config.dependency['oauth2-service']
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
 
-    print("OAuthurl is: {}".format(oauth_url))
-    # OAuth_response = requests.post(OAuthurl, auth=authorisation, headers=headers, data=OAuth_payload)
-
     try:
+        # OAuth_response = requests.post(OAuthurl, auth=authorisation, headers=headers, data=OAuth_payload)
         oauth_response = requests.post(oauth_url, data=oauth_payload)
         oauth_body = oauth_response.json()
 
@@ -257,11 +288,11 @@ def oauth_registration(party):
         errors = {'connection error': 'The OAuth2 server is not responding on this connection:{}. Has the OAuth server URL been setup correctly for this microservice?'.format(oauth_url)}
         return make_response(jsonify(errors), 500)
 
-        # TODO A redirect to a page that helps the user
     except requests.exceptions.RequestException as e:
-        # TODO catastrophic error. bail. A page that tells the user something horrid has happened and who to inform
-        log.error("something bad just happened! ")
+        log.error("The http request failed communicating with the OAuth2 server ")
         log.error(e)
+        errors = {'connection error': 'The network connection failed between the part service and the url:{}'.format(oauth_url)}
+        return make_response(jsonify(errors), 500)
 
     # At this point we have checked for most errors let the calling function know
     success_msg = {"success": "User {} has been created on the OAuth2 server".format(party['emailAddress'])}
@@ -291,6 +322,8 @@ def respondents_post(party):
         print("oauth2 response object looks like: {}".format(oauth2_response))
         if oauth2_response.status_code == 201:
             log.debug("The OAuth2 server has registered the user")
+            # TODO Remove this once we can talk to collection exercise, enrolement service and gov.notify for email verification
+            return oauth2_response
         else:
             # We should not get to this path since the oauth_registeration deals with all errors and returns a failure
             log.error("The OAuth2 server failed to register the user")
