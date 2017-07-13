@@ -260,7 +260,7 @@ def oauth_registration(party):
         log.error(e)
 
     # At this point we have checked for most errors let the calling function know
-    success_msg = {"success":"User {} has been created on the OAuth2 server".format(party['emailAddress'])}
+    success_msg = {"success": "User {} has been created on the OAuth2 server".format(party['emailAddress'])}
     return make_response(jsonify(success_msg), oauth_response.status_code)
 
 
@@ -294,6 +294,7 @@ def respondents_post(party):
             log.error("The OAuth2 server failed to register the user")
             #TODO An error happened in registering a new user on the OAuth2 server we should not continue
 
+    enrolment_code = party['enrolmentCode']
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
     case_context = requests.get(case_url).json()
@@ -306,15 +307,12 @@ def respondents_post(party):
     collection_exercise = requests.get(ce_url).json()
 
     survey_id = collection_exercise['surveyId']
-    survey_svc = current_app.config.dependency['survey-service']
-    survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
-    survey = requests.get(survey_url).json()
+    # TODO: we may want to persist the survey name, otherwise no need to call survey service
+    # survey_svc = current_app.config.dependency['survey-service']
+    # survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
+    # survey = requests.get(survey_url).json()
 
     """ TODO:
-    GET /collectionexercises/{uuid}
-    GET /surveys/{uuid}
-    create business_respondent association
-    create enrolment (between business_respondent + survey id)
     POST account created case event
     create uuid / email verification link
     persist the email verification link
@@ -340,7 +338,7 @@ def respondents_post(party):
 
         r = Respondent(**translated_party)
         br = BusinessRespondent(business=b, respondent=r)
-        e = Enrolment(business_respondent=br, survey_id=survey['id'])
+        e = Enrolment(business_respondent=br, survey_id=survey_id)
 
         tran.add(r)   # TODO: is it still ok to do a merge here?
         # tran.add(br)

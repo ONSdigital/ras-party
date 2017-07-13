@@ -32,25 +32,42 @@ class TestParties(PartyTestClient):
         response = self.get_business_by_ref(mock_business['businessRef'])
         self.assertTrue(response.items() >= mock_business.items())
 
-    @patch('swagger_server.controllers.controller.requests')
+    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
     def test_post_valid_respondent_adds_to_db(self, _):
+        # Given the database contains no respondents
+        self.assertEqual(len(respondents()), 0)
+        # And there is a business (related to the IAC code case context)
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # When a new respondent is posted
         mock_respondent = MockRespondent().attributes().as_respondent()
-
         self.post_to_respondents(mock_respondent, 200)
-
+        # Then the database contains a respondent
         self.assertEqual(len(respondents()), 1)
 
-    @patch('swagger_server.controllers.controller.requests')
+    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
     def test_get_respondent_by_id_returns_correct_representation(self, _):
+        # Given there is a business (related to the IAC code case context)
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # When a new respondent is posted
         mock_respondent = MockRespondent().attributes().as_respondent()
-        party_id = self.post_to_respondents(mock_respondent, 200)['id']
-
+        resp = self.post_to_respondents(mock_respondent, 200)
+        party_id = resp['id']
+        # And we get the new respondent
         response = self.get_respondent_by_id(party_id)
 
         # Not expecting the enrolmentCode to be returned as part of the respondent
         del mock_respondent['enrolmentCode']
-
-        self.assertTrue(response.items() >= mock_respondent.items())
+        # Then the response matches the posted respondent
+        self.assertTrue('id' in response)
+        self.assertEqual(response['emailAddress'], mock_respondent['emailAddress'])
+        self.assertEqual(response['firstName'], mock_respondent['firstName'])
+        self.assertEqual(response['lastName'], mock_respondent['lastName'])
+        self.assertEqual(response['sampleUnitType'], mock_respondent['sampleUnitType'])
+        self.assertEqual(response['telephone'], mock_respondent['telephone'])
 
     def test_post_valid_party_adds_to_db(self):
         mock_party = MockBusiness().attributes(source='test_post_valid_party_adds_to_db').as_party()
@@ -113,11 +130,15 @@ class TestParties(PartyTestClient):
     # TODO: maybe remove the interaction test once things are working?
     @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
     def test_post_respondent_requests_the_iac_details(self, mock):
+        # Given there is a business (related to the IAC code case context)
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # When a new respondent is posted
         mock_respondent = MockRespondent().attributes().as_respondent()
-        party_id = self.post_to_respondents(mock_respondent, 200)['id']
-
-        _ = self.get_respondent_by_id(party_id)
-        mock.get.assert_called_once_with('http://localhost:8171/cases/iac/fb747cq725lj')
+        self.post_to_respondents(mock_respondent, 200)
+        # Then the case service is called with the supplied IAC code
+        mock.get.assert_called_once_with('http://mockhost:1111/cases/iac/fb747cq725lj')
 
     @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
     def test_post_respondent_calls_the_ce_service_with_id_from_iac_service(self, mock):
