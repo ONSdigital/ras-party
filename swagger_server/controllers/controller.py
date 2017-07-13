@@ -121,8 +121,11 @@ def parties_post(party):
             if existing_business:
                 party['id'] = str(existing_business.party_uuid)
             b = Business.from_party_dict(party)
-            tran.merge(b)
-            return make_response(jsonify(b.to_party_dict()), 200)
+            if b.valid:
+                tran.merge(b)
+                return make_response(jsonify(b.to_party_dict()), 200)
+            else:
+                return make_response(jsonify(b.errors), 400)
 
 
 @translate_exceptions

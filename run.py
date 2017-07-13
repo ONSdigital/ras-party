@@ -1,4 +1,5 @@
 import structlog
+from flask import jsonify
 from flask_cors import CORS
 from ras_common_utils.ras_config import ras_config
 from ras_common_utils.ras_config.flask_extended import Flask
@@ -14,6 +15,12 @@ def create_app(config):
     # create and configure the Flask app
     app = Flask(__name__)
     app.config.from_ras_config(config)
+
+    @app.errorhandler(Exception)
+    def handle_invalid_usage(error):
+        response = jsonify(error.to_dict())
+        response.status_code = error.status_code
+        return response
 
     # register view blueprints
     from ras_party.views.party_view import party_view

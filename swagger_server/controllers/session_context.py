@@ -2,6 +2,8 @@ from contextlib import contextmanager
 
 from flask import current_app
 
+from swagger_server.controllers.ras_error import RasDatabaseError
+
 
 @contextmanager
 def transaction():
@@ -10,8 +12,8 @@ def transaction():
     try:
         yield session
         session.commit()
-    except:
+    except Exception as e:
         session.rollback()
-        raise
+        raise RasDatabaseError("There was an error committing the changes to the database. Details: {}".format(e))
     finally:
         Session.remove()

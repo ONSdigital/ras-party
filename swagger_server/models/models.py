@@ -36,7 +36,6 @@ class Business(Base):
                              'contactName',
                              'employeeCount',
                              'enterpriseName',
-                             'enterpriseName',
                              'facsimile',
                              'fulltimeCount',
                              'legalStatus',
@@ -62,9 +61,31 @@ class Business(Base):
 
     @staticmethod
     def from_party_dict(d):
-        b = Business(party_uuid=d.get('id', uuid.uuid4()), business_ref=d['sampleUnitRef'])
-        b.attributes = d.get('attributes')
-        return b
+        v = Validator(Exists('sampleUnitRef',
+                             'sampleUnitType',
+                             'attributes.contactName',
+                             'attributes.employeeCount',
+                             'attributes.enterpriseName',
+                             'attributes.facsimile',
+                             'attributes.fulltimeCount',
+                             'attributes.legalStatus',
+                             'attributes.name',
+                             'attributes.sic2003',
+                             'attributes.sic2007',
+                             'attributes.telephone',
+                             'attributes.tradingName',
+                             'attributes.turnover'
+                             ))
+        if 'id' in d:
+            v.add_rule(IsUuid('id'))
+
+        if v.validate(d):
+            b = Business(party_uuid=d.get('id', uuid.uuid4()), business_ref=d['sampleUnitRef'])
+            b.attributes = d.get('attributes')
+            b.valid = True
+            return b
+
+        return v
 
     def to_business_dict(self):
         d = {

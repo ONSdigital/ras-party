@@ -3,6 +3,7 @@ from functools import wraps
 import structlog
 from flask import make_response, jsonify, current_app
 
+from swagger_server.controllers.ras_error import RasError
 
 log = structlog.get_logger()
 
@@ -18,7 +19,7 @@ def translate_exceptions(f):
             # TODO: log the stack-trace
             log.error(str(e))
             if current_app.config.feature.translate_exceptions:
-                return make_response(jsonify({'errors': str(e)}), 500)
+                raise RasError(str(e))
             else:
                 raise
     return wrapper

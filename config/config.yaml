@@ -73,7 +73,7 @@ dependencies:
 
 features:
     gateway_registration: False
-    translate_exceptions: False
+    translate_exceptions: True
     oauth_registration: True
     case_service_get_party: False
     report_dependencies: False
