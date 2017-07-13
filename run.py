@@ -1,11 +1,11 @@
-import os
-
 import structlog
 from flask_cors import CORS
 from ras_common_utils.ras_config import ras_config
 from ras_common_utils.ras_config.flask_extended import Flask
 from ras_common_utils.ras_database.ras_database import RasDatabase
 from ras_common_utils.ras_logger.ras_logger import configure_logger
+
+from swagger_server.controllers.gw_registration import make_registration_func, call_in_background
 
 logger = structlog.get_logger()
 
@@ -24,7 +24,6 @@ def create_app(config):
 
 
 def initialise_db(app):
-
     # Initialise the database with the specified SQLAlchemy model
     PartyDatabase = RasDatabase.make(model_paths=['swagger_server.models.models'])
     db = PartyDatabase('ras-party-db', app.config)
@@ -44,13 +43,10 @@ if __name__ == '__main__':
 
     initialise_db(app)
 
-    # TODO: reintroduce gw registration, which is just a case of iterating endpoints and posting to gw
-    # If 5-sec iterative reg is required, then use asyncio
-
     scheme, host, port = app.config['scheme'], app.config['host'], app.config['port']
-    # for rule in app.url_map.iter_rules():
-    #     # TODO: how does the gw recognise parameterised endpoints? (perhaps just first part of endpoint?)
-    #     reg = {'protocol': scheme, 'host': host, 'port': port, 'uri': rule.rule}
-    #     print(reg)
-    print ("***** app.config.debug is: {} ******\n".format(app.config['debug']))
+    print("***** app.config.debug is: {} ******\n".format(app.config['debug']))
+
+    if app.config.feature.gateway_registration:
+        call_in_background(make_registration_func(app))
+
     app.run(debug=app.config['debug'], port=int(port))
