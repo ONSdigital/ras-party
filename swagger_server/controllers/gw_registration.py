@@ -1,11 +1,15 @@
 import asyncio
 import time
 
+import requests
+
+from swagger_server.controllers.url_builder import build_url
+
 
 def make_registration_func(app):
 
-    gw_config = app.config.dependency['api-gateway']
-    scheme, host, port = gw_config['scheme'], gw_config['host'], gw_config['port']
+    config = app.config
+    scheme, host, port = config['scheme'], config['host'], config['port']
 
     endpoints = set()
     for rule in app.url_map.iter_rules():
@@ -17,7 +21,12 @@ def make_registration_func(app):
     def register():
         while True:
             for reg in registrations:
-                print(reg)
+                gw_svc = app.config.dependency['api-gateway']
+                ping_url = build_url('{}://{}:{}/api/1.0.0/ping/{}/None', gw_svc, app.config['name'])
+                response = requests.get(ping_url)
+                if response.status_code == '204':
+                    reg_url = build_url('{}"//{}:{}/api/1.0.0/register', gw_svc)
+                    requests.post(reg_url, json=reg)
             time.sleep(5)
     return register
 
