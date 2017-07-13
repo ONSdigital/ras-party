@@ -1,5 +1,5 @@
 import uuid
-import json
+
 import requests
 from flask import current_app
 from flask import make_response, jsonify
@@ -8,6 +8,7 @@ from structlog import get_logger
 
 from swagger_server.controllers.error_decorator import translate_exceptions
 from swagger_server.controllers.session_context import transaction
+from swagger_server.controllers.url_builder import build_url
 from swagger_server.controllers.validate import Validator, IsIn, Exists, IsUuid
 from swagger_server.models.models import Business, Respondent, BusinessRespondent, Enrolment
 
@@ -169,20 +170,6 @@ def get_respondent_by_id(id):
         return make_response(jsonify({'errors': "Respondent with party id '{}' does not exist.".format(id)}), 404)
 
     return make_response(jsonify(respondent.to_respondent_dict()), 200)
-
-
-class MockConfig:
-
-    def __init__(self):
-        self._case_service = {'scheme': 'http', 'host': 'localhost', 'port': '8171'}
-
-    def dependency(self, _):
-        return self._case_service
-
-
-def build_url(template, config, *args):
-    url = template.format(config['scheme'], config['host'], config['port'], *args)
-    return url
 
 
 def oauth_registration(party):

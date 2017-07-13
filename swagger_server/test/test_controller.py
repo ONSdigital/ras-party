@@ -3,7 +3,8 @@ from __future__ import absolute_import
 from unittest.mock import patch
 
 from swagger_server.test.mocks import MockBusiness, MockRespondent, MockRequests
-from swagger_server.test.party_client import PartyTestClient, businesses, respondents
+from swagger_server.test.party_client import PartyTestClient, businesses, respondents, business_respondent_associations, \
+    enrolments
 
 
 class TestParties(PartyTestClient):
@@ -112,6 +113,7 @@ class TestParties(PartyTestClient):
 
     def test_existing_respondent_can_be_updated(self):
         # TODO: clarify the PK on which an update would be done
+        # FIXME: this functionality is likely to be broken following enrolment updates
         pass
 
     def test_existing_party_can_be_updated(self):
@@ -141,21 +143,54 @@ class TestParties(PartyTestClient):
         mock.get.assert_called_once_with('http://mockhost:1111/cases/iac/fb747cq725lj')
 
     @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
-    def test_post_respondent_calls_the_ce_service_with_id_from_iac_service(self, mock):
-        # TODO: test the CE service is called with the correct id
-        pass
-
-    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
-    def test_post_respondent_calls_the_survey_service_with_id_from_ce_service(self, mock):
-        pass
-
-    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
     def test_post_respondent_creates_the_business_respondent_association(self, mock):
-        pass
+        # Given the database contains no associations
+        self.assertEqual(len(business_respondent_associations()), 0)
+        # And there is a business (related to the IAC code case context)
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # When a new respondent is posted
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        created_respondent = self.post_to_respondents(mock_respondent, 200)
+        # Then the database contains an association
+        self.assertEqual(len(business_respondent_associations()), 1)
+        # And the association is between the given business and respondent
+        assoc = business_respondent_associations()[0]
+        business_id = assoc.business_id
+        respondent_id = assoc.respondent.party_uuid
+        self.assertEqual(str(business_id), '3b136c4b-7a14-4904-9e01-13364dd7b972')
+        self.assertEqual(str(respondent_id), created_respondent['id'])
 
     @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
     def test_post_respondent_creates_the_enrolment(self, mock):
-        pass
+        # Given the database contains no enrolments
+        self.assertEqual(len(enrolments()), 0)
+        # And there is a business (related to the IAC code case context)
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # When a new respondent is posted
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        created_respondent = self.post_to_respondents(mock_respondent, 200)
+        # Then the database contains an association
+        self.assertEqual(len(enrolments()), 1)
+        enrolment = enrolments()[0]
+        # And the enrolment contains the survey id given in the survey fixture
+        self.assertEqual(str(enrolment.survey_id), 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87')
+        # And is linked to the created respondent
+        self.assertEqual(str(enrolment.business_respondent.respondent.party_uuid),
+                         created_respondent['id'])
+        # And is linked to the given business
+        self.assertEqual(str(enrolment.business_respondent.business.party_uuid),
+                         '3b136c4b-7a14-4904-9e01-13364dd7b972')
+
+    """ TODO
+    cover error scenarios on all routes
+    cover getting a respondent via /parties/id endpoint
+    cover creating a respondent where a) iac not found, b) CE not found, c) associated business not found
+    cover oauth registration functionality
+    """
 
 
 if __name__ == '__main__':

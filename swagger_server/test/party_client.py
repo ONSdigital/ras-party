@@ -7,7 +7,7 @@ from ras_common_utils.ras_config import ras_config
 from ras_common_utils.ras_logger.ras_logger import configure_logger
 
 from run import create_app, initialise_db
-from swagger_server.models.models import Business, Respondent, BusinessRespondent
+from swagger_server.models.models import Business, Respondent, BusinessRespondent, Enrolment
 from swagger_server.test.fixtures.config import test_config
 
 
@@ -21,6 +21,10 @@ def respondents():
 
 def business_respondent_associations():
     return current_app.db.session.query(BusinessRespondent).all()
+
+
+def enrolments():
+    return current_app.db.session.query(Enrolment).all()
 
 
 class PartyTestClient(TestCase):
