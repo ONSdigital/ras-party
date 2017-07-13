@@ -327,7 +327,5 @@ def respondents_post(party):
         br = BusinessRespondent(business=b, respondent=r)
         e = Enrolment(business_respondent=br, survey_id=survey_id)
 
-        tran.add(r)   # TODO: is it still ok to do a merge here?
-        # tran.add(br)
-        # tran.add(e)
+        tran.add(r)
         return make_response(jsonify(r.to_respondent_dict()), 200)
