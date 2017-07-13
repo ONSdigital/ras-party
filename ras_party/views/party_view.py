@@ -8,6 +8,13 @@ party_view = Blueprint('party_views', __name__)
 
 # TODO: unify this code with the controller
 
+
+@party_view.route('/info', methods=['GET'])
+@log_route
+def get_info():
+    return controller.get_info()
+
+
 @party_view.route('/businesses', methods=['POST'])
 @log_route
 def post_business():

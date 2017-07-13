@@ -18,6 +18,23 @@ log = get_logger()
 
 
 @translate_exceptions
+def get_info():
+    info = {
+        "name": current_app.config['name'],
+        "version": current_app.config['version'],
+        "origin": "git@github.com:ONSdigital/ras-party.git",
+        "commit": "TBD",
+        "branch": "TBD",
+        "built": "TBD"
+    }
+
+    if current_app.config.feature.report_dependencies:
+        info["dependencies"] = [{'name': name} for name in current_app.config.dependency.keys()]
+
+    return make_response(jsonify(info), 200)
+
+
+@translate_exceptions
 def businesses_post(business):
     """
     adds a reporting unit of type Business

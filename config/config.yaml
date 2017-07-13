@@ -59,7 +59,7 @@ dependencies:
     api-gateway:
         scheme: http
         host: localhost
-        port: 8000
+        port: 8080
     oauth2-service:
         scheme: http
         host: localhost
@@ -72,8 +72,8 @@ dependencies:
 
 
 features:
-    gateway-registration: False
-    translate-exceptions: False
+    gateway_registration: False
+    translate_exceptions: False
     oauth_registration: True
     case_service_get_party: False
-
+    report_dependencies: False
