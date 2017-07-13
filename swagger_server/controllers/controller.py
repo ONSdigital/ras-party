@@ -218,11 +218,11 @@ def oauth_registration(party):
             # {"detail":"Duplicate user credentials"}
             if 'detail' in oauth_body and oauth_body["detail"] == 'Duplicate user credentials':
                 log.warning("We have duplicate user credentials")
-                return make_response(jsonify({'errors': 'Please try a different email, this one is in use'}), 400)
+                return make_response(jsonify({'errors': 'Please try a different email, this one is in use'}), 401)
             elif 'detail' in oauth_body and oauth_body["detail"] == 'Invalid client credentials':
                 # If we get here we are in real trouble! somebody has not configured the client_id or client_secret properly
                 log.critical("The party service does not have the correct credentials to access the OAuth2 server. Perhaps the client_id or client_secret is incorrect?")
-                return make_response(jsonify({'error':'The microservice cannot create a user on the Authentication Server due to client_id or client_secret being wrong'}))
+                return make_response(jsonify({'error':'The microservice cannot create a user on the Authentication Server due to client_id or client_secret being wrong'}), 500)
 
         # Deal with all other errors from OAuth2 registration
         if oauth_response.status_code > 401:
@@ -233,12 +233,12 @@ def oauth_registration(party):
         log.critical("There seems to be no server listening on this connection?")
         errors = {
             'connection error': 'There is no network connectivity to the OAuth2 server on this connection:{} '.format(oauth_url)}
-        return make_response(jsonify(errors), 400)
+        return make_response(jsonify(errors), 500)
 
     except requests.exceptions.Timeout:
         log.critical("Timeout error. Is the OAuth Server overloaded?")
-        errors = {'connection error': 'The OAuth2 server is not responding on this connection:{} '.format(oauth_url)}
-        return make_response(jsonify(errors), 400)
+        errors = {'connection error': 'The OAuth2 server is not responding on this connection:{}. Has the OAuth server URL been setup correctly for this microservice?'.format(oauth_url)}
+        return make_response(jsonify(errors), 500)
 
         # TODO A redirect to a page that helps the user
     except requests.exceptions.RequestException as e:
@@ -267,9 +267,6 @@ def respondents_post(party):
         return make_response(jsonify(v.errors), 400)
 
     log.debug("Validation is complete for respondents_post")
-    for key in party:
-        log.debug("key is: {}".format(key))
-        log.debug("value is: {}".format(party[key]))
 
     # TODO: this is currently a bit of a bodge to separate the oauth code from the main enrolment activity
     if current_app.config.feature['oauth_registration']:
@@ -278,7 +275,9 @@ def respondents_post(party):
         if oauth2_response.status_code == 201:
             log.debug("The OAuth2 server has registered the user")
         else:
+            # We should not get to this path since the oauth_registeration deals with all errors and returns a failure
             log.error("The OAuth2 server failed to register the user")
+            return oauth2_response
             #TODO An error happened in registering a new user on the OAuth2 server we should not continue
 
     enrolment_code = party['enrolmentCode']
