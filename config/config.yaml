@@ -26,7 +26,7 @@ service:
     host: 0.0.0.0
     port: 5201
     debug: True
-    log_level: info
+    log_level: debug
     port: 5201
 
 dependencies:
@@ -64,7 +64,7 @@ dependencies:
     oauth2-service:
         scheme: http
         host: localhost
-        port: 8001
+        port: 8000
         authorization_endpoint: "/web/authorize/"
         token_endpoint: "/api/v1/tokens/"
         admin_endpoint: "/api/account/create"
@@ -73,5 +73,8 @@ dependencies:
 
 
 features:
-    gateway_registration: False
-    translate_exceptions: False
+    gateway-registration: False
+    translate-exceptions: False
+    oauth_registration: True
+    case_service_get_party: False
+
