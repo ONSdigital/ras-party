@@ -1,11 +1,11 @@
 test_config = """
 service:
-    name: ras-party
-    version: 0.0.1
-    scheme: http
-    host: 0.0.0.0
-    port: 8000
-    log_level: error
+    NAME: ras-party
+    VERSION: 0.0.1
+    SCHEME: http
+    HOST: 0.0.0.0
+    PORT: 8000
+    LOG_LEVEL: error
 
 dependencies:
     ras-party-db:
