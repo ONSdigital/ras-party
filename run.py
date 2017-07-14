@@ -17,7 +17,7 @@ def create_app(config):
     app.config.from_ras_config(config)
 
     @app.errorhandler(Exception)
-    def handle_invalid_usage(error):
+    def handle_error(error):
         response = jsonify(error.to_dict())
         response.status_code = error.status_code
         return response
