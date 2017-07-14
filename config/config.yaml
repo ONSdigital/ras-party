@@ -1,0 +1,79 @@
+# This Config file defines default environment variables for the different services and micro services the party
+# service depends on. The common developer settings are maintained here:
+# https://digitaleq.atlassian.net/wiki/display/RASB/Developer+Environment+Port+Mappings
+
+# Individual settings defined here may be overridden via environment variables.
+# To provide env var overrides, the naming either follows the names given in the 'service' section of the config,
+# or for items which are related to dependencies, the name is <dependency-name.key>, for example:
+# `export case-service.port=5000`
+
+# When running on CloudFoundry, relevant values are automatically overridden via VCAP_SERVICES. Note that the name
+# of the dependency must match the name of the CF service instance. E.g. for ras-party-db, there must be a
+# service binding with the name 'ras-party-db'.
+
+# The features section of the config file is intended for feature-flagging.
+
+# When loading this config file via Flask app.config.from_yaml, the config is injected into the Flask config
+# and exposed in the usual way. Dependencies are exposed via current_app.config.dependency, and features are
+# similarly exposed via current_app.config.feature. E.g. to get the ras-party-db uri:
+
+# db_uri = current_app.config.dependency['ras-party-db'].uri
+
+service:
+    name: ras-party
+    version: 0.0.1
+    scheme: httpx
+    host: 0.0.0.0
+    port: 5201
+    debug: True
+    log_level: debug
+
+dependencies:
+    ras-party-db:
+        service: rds
+        plan: shared-psql
+        schema: ras-party
+        uri: "sqlite:///ras-party"
+    case-service:
+        scheme: http
+        host: localhost
+        port: 8171
+    collectionexercise-service:
+        scheme: http
+        host: localhost
+        port: 8145
+    survey-service:
+        scheme: http
+        host: localhost
+        port: 8080
+    govuk-notify-service:
+        # TODO: find out the correct values
+        scheme: http
+        host: unknown
+        port: unknown
+    frontstage-service:
+        # TODO: find out the correct values
+        scheme: http
+        host: unknown
+        port: unknown
+    api-gateway:
+        scheme: http
+        host: localhost
+        port: 8080
+    oauth2-service:
+        scheme: http
+        host: localhost
+        port: 8000
+        authorization_endpoint: "/web/authorize/"
+        token_endpoint: "/api/v1/tokens/"
+        admin_endpoint: "/api/account/create"
+        client_id: "ons@ons.gov"
+        client_secret: "password"
+
+
+features:
+    gateway_registration: False
+    translate_exceptions: True
+    oauth_registration: True
+    case_service_get_party: False
+    report_dependencies: False
