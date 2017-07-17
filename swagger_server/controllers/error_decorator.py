@@ -1,7 +1,7 @@
 from functools import wraps
 
 import structlog
-from flask import make_response, jsonify, current_app
+from flask import current_app
 
 from swagger_server.controllers.ras_error import RasError
 

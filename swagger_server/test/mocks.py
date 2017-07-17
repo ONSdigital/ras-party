@@ -78,6 +78,7 @@ class MockResponse:
 
     def __init__(self, payload):
         self.payload = payload
+        self.status_code = 200
 
     def json(self):
         return json.loads(self.payload)

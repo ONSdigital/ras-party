@@ -18,9 +18,14 @@ def create_app(config):
 
     @app.errorhandler(Exception)
     def handle_error(error):
-        response = jsonify(error.to_dict())
-        response.status_code = error.status_code
-        return response
+        try:
+            response = jsonify(error.to_dict())
+            response.status_code = error.status_code
+        except:
+            response = jsonify({'errors': [str(error)]})
+            response.status_code = 500
+        finally:
+            return response
 
     # register view blueprints
     from ras_party.views.party_view import party_view

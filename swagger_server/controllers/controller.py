@@ -336,7 +336,7 @@ def respondents_post(party):
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
 
     response = requests.get(case_url)
-    if not response.status_code == '200':
+    if not response.status_code == 200:
         return make_response(jsonify(response.json()), response.status_code)
     case_context = response.json()
     business_id = case_context['partyId']
@@ -345,7 +345,7 @@ def respondents_post(party):
     ce_svc = current_app.config.dependency['collectionexercise-service']
     ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
     response = requests.get(ce_url)
-    if not response.status_code == '200':
+    if not response.status_code == 200:
         return make_response(jsonify(response.json()), response.status_code)
     collection_exercise = response.json()
 
