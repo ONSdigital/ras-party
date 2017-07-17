@@ -334,13 +334,20 @@ def respondents_post(party):
     enrolment_code = party['enrolmentCode']
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
-    case_context = requests.get(case_url).json()
+
+    response = requests.get(case_url)
+    if not response.status_code == '200':
+        return make_response(jsonify(response.json()), response.status_code)
+    case_context = response.json()
     business_id = case_context['partyId']
 
     collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
     ce_svc = current_app.config.dependency['collectionexercise-service']
     ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
-    collection_exercise = requests.get(ce_url).json()
+    response = requests.get(ce_url)
+    if not response.status_code == '200':
+        return make_response(jsonify(response.json()), response.status_code)
+    collection_exercise = response.json()
 
     survey_id = collection_exercise['surveyId']
     # TODO: we may want to persist the survey name, otherwise no need to call survey service
