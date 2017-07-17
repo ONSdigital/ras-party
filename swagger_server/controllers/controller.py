@@ -20,8 +20,8 @@ log = get_logger()
 @translate_exceptions
 def get_info():
     info = {
-        "name": current_app.config['name'],
-        "version": current_app.config['version'],
+        "name": current_app.config['NAME'],
+        "version": current_app.config['VERSION'],
         "origin": "git@github.com:ONSdigital/ras-party.git",
         "commit": "TBD",
         "branch": "TBD",
