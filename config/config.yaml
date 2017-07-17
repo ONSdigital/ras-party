@@ -20,13 +20,13 @@
 # db_uri = current_app.config.dependency['ras-party-db'].uri
 
 service:
-    name: ras-party
-    version: 0.0.1
-    scheme: httpx
-    host: 0.0.0.0
-    port: 5201
-    debug: True
-    log_level: debug
+    NAME: ras-party
+    VERSION: 0.0.1
+    SCHEME: http
+    HOST: 0.0.0.0
+    PORT: 8080
+    DEBUG: False
+    LOG_LEVEL: debug
 
 dependencies:
     ras-party-db:

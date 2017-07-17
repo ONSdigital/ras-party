@@ -50,9 +50,9 @@ if __name__ == '__main__':
 
     initialise_db(app)
 
-    scheme, host, port = app.config['scheme'], app.config['host'], app.config['port']
+    scheme, host, port = app.config['SCHEME'], app.config['HOST'], int(app.config['PORT'])
 
     if app.config.feature.gateway_registration:
         call_in_background(make_registration_func(app))
 
-    app.run(debug=app.config['debug'], port=int(port))
+    app.run(debug=app.config['DEBUG'], host=host, port=port)
