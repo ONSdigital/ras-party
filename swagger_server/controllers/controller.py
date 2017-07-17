@@ -20,8 +20,8 @@ log = get_logger()
 @translate_exceptions
 def get_info():
     info = {
-        "name": current_app.config['name'],
-        "version": current_app.config['version'],
+        "name": current_app.config['NAME'],
+        "version": current_app.config['VERSION'],
         "origin": "git@github.com:ONSdigital/ras-party.git",
         "commit": "TBD",
         "branch": "TBD",
@@ -325,25 +325,29 @@ def respondents_post(party):
         print("oauth2 response object looks like: {}".format(oauth2_response))
         if oauth2_response.status_code == 201:
             log.debug("The OAuth2 server has registered the user")
-            # TODO Remove this once we can talk to collection exercise, enrolement service and gov.notify for email verification
-            return oauth2_response
         else:
             # We should not get to this path since the oauth_registeration deals with all errors and returns a failure
             log.error("The OAuth2 server failed to register the user")
+            # TODO Raise an exception here
             return oauth2_response
-            #TODO An error happened in registering a new user on the OAuth2 server we should not continue
 
     enrolment_code = party['enrolmentCode']
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
-    case_context = requests.get(case_url).json()
+
+    response = requests.get(case_url)
+    if not response.status_code == '200':
+        return make_response(jsonify(response.json()), response.status_code)
+    case_context = response.json()
     business_id = case_context['partyId']
 
-    # TODO: consider error scenarios
     collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
     ce_svc = current_app.config.dependency['collectionexercise-service']
     ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
-    collection_exercise = requests.get(ce_url).json()
+    response = requests.get(ce_url)
+    if not response.status_code == '200':
+        return make_response(jsonify(response.json()), response.status_code)
+    collection_exercise = response.json()
 
     survey_id = collection_exercise['surveyId']
     # TODO: we may want to persist the survey name, otherwise no need to call survey service
