@@ -8,6 +8,10 @@ from ras_common_utils.ras_logger.ras_logger import configure_logger
 
 from swagger_server.controllers.gw_registration import make_registration_func, call_in_background
 
+"""
+This is a duplicate of run.py, with minor modifications to support gunicorn execution.
+"""
+
 logger = structlog.get_logger()
 
 
@@ -18,12 +22,8 @@ def create_app(config):
 
     @app.errorhandler(Exception)
     def handle_error(error):
-        try:
-            response = jsonify(error.to_dict())
-            response.status_code = error.status_code
-        except Exception:
-            response = jsonify({'errors': [str(error)]})
-            response.status_code = 500
+        response = jsonify(error.to_dict())
+        response.status_code = error.status_code
         return response
 
     # register view blueprints
@@ -42,21 +42,18 @@ def initialise_db(app):
     app.db = db
 
 
-if __name__ == '__main__':
-    config_path = 'config/config.yaml'
-    with open(config_path) as f:
-        config = ras_config.from_yaml_file(config_path)
+config_path = 'config/config.yaml'
+with open(config_path) as f:
+    config = ras_config.from_yaml_file(config_path)
 
-    app = create_app(config)
-    configure_logger(app.config)
-    logger.debug("Created Flask app.")
-    logger.debug("Config is {}".format(app.config))
+app = create_app(config)
+configure_logger(app.config)
+logger.debug("Created Flask app.")
+logger.debug("Config is {}".format(app.config))
 
-    initialise_db(app)
+initialise_db(app)
 
-    scheme, host, port = app.config['SCHEME'], app.config['HOST'], int(app.config['PORT'])
+scheme, host, port = app.config['SCHEME'], app.config['HOST'], int(app.config['PORT'])
 
-    if app.config.feature.gateway_registration:
-        call_in_background(make_registration_func(app))
-
-    app.run(debug=app.config['DEBUG'], host=host, port=port)
+if app.config.feature.gateway_registration:
+    call_in_background(make_registration_func(app))

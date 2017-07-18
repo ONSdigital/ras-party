@@ -11,7 +11,7 @@ tox will create a unique virtualenv, run the unit tests with py.test, then run f
 To install and run. Firstly create a virtualenv, then:
 ``` bash
 pip3 install -r requirements.txt
-python3 -m swagger_server
+python3 run.py
 ```
 
 and open your browser to here:

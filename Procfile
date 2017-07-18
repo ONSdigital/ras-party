@@ -1,1 +1,1 @@
-web: python3 -m swagger_server
+web: gunicorn app:app

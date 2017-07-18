@@ -43,7 +43,7 @@ class PartyTestClient(TestCase):
                                     data=json.dumps(payload),
                                     content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
-        return json.loads(response.data)
+        return json.loads(response.get_data(as_text=True))
 
     def post_to_businesses(self, payload, expected_status):
         response = self.client.open('/party-api/v1/businesses',
