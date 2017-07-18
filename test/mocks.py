@@ -77,12 +77,17 @@ class MockRespondent:
 
 class MockResponse:
 
-    def __init__(self, payload):
+    status_code = 200
+
+    def __init__(self, payload, status_code=None):
         self.payload = payload
-        self.status_code = 200
+        self.status_code = status_code or MockResponse.status_code
 
     def json(self):
         return json.loads(self.payload)
+
+    def raise_for_status(self):
+        pass
 
 
 class MockRequests:
@@ -118,7 +123,16 @@ class MockRequests:
         def assert_called_once_with(self, arg):
             assert(self._calls.get(arg, 0) == 1)
 
+    class Post:
+
+        def __init__(self):
+            pass
+
+        def __call__(self, uri, data):
+            return MockResponse({}, status_code=201)
+
     def __init__(self):
         self.get = self.Get()
+        self.post = self.Post()
 
 

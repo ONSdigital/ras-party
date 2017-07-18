@@ -27,6 +27,7 @@ service:
     PORT: 8080
     DEBUG: False
     LOG_LEVEL: debug
+    SECRET_KEY: aardvark
 
 dependencies:
     ras-party-db:

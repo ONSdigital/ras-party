@@ -64,3 +64,9 @@ def get_respondent_by_id(id):
 def post_respondent():
     payload = request.get_json()
     return controller.respondents_post(payload)
+
+
+@party_view.route('/respondents/verify/<token>', methods=['PUT'])
+@log_route
+def put_email_verification(token):
+    return controller.put_email_verification(token)

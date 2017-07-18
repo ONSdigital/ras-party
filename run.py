@@ -7,6 +7,7 @@ from ras_common_utils.ras_database.ras_database import RasDatabase
 from ras_common_utils.ras_logger.ras_logger import configure_logger
 
 from ras_party.controllers.gw_registration import make_registration_func, call_in_background
+from ras_party.controllers.ras_error import RasError
 
 logger = structlog.get_logger()
 
@@ -21,8 +22,11 @@ def create_app(config):
         try:
             response = jsonify(error.to_dict())
             response.status_code = error.status_code
-        except Exception:
-            response = jsonify({'errors': [str(error)]})
+        except Exception as e:
+            if isinstance(e, RasError):
+                response = jsonify(e.to_dict())
+            else:
+                response = jsonify({'errors': [str(error)]})
             response.status_code = 500
         return response
 

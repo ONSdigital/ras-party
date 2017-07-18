@@ -6,6 +6,7 @@ service:
     HOST: 0.0.0.0
     PORT: 8000
     LOG_LEVEL: error
+    SECRET_KEY: aardvark
 
 dependencies:
     ras-party-db:
@@ -20,11 +21,25 @@ dependencies:
     collectionexercise-service:
         scheme: http
         host: mockhost
-        port: 2222
+        port: 2222        
+    frontstage-service:
+        # TODO: find out the correct values
+        scheme: http
+        host: unknown
+        port: unknown
     survey-service:
         scheme: http
         host: mockhost
         port: 3333
+    oauth2-service:
+        scheme: http
+        host: mockhost
+        port: 4444
+        authorization_endpoint: "/web/authorize/"
+        token_endpoint: "/api/v1/tokens/"
+        admin_endpoint: "/api/account/create"
+        client_id: "ons@ons.gov"
+        client_secret: "password"
 
 features:
     skip_oauth_registration: true
