@@ -2,7 +2,7 @@ from contextlib import contextmanager
 
 from flask import current_app
 
-from swagger_server.controllers.ras_error import RasDatabaseError
+from ras_party.controllers.ras_error import RasDatabaseError
 
 
 @contextmanager

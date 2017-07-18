@@ -9,8 +9,8 @@ from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyCo
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
-from swagger_server.controllers.util import filter_falsey_values, partition_dict
-from swagger_server.controllers.validate import Validator, Exists, IsUuid
+from ras_party.controllers.util import filter_falsey_values, partition_dict
+from ras_party.controllers.validate import Validator, Exists, IsUuid
 
 
 class Business(Base):

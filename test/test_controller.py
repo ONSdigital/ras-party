@@ -2,9 +2,8 @@ from __future__ import absolute_import
 
 from unittest.mock import patch
 
-from swagger_server.test.mocks import MockBusiness, MockRespondent, MockRequests
-from swagger_server.test.party_client import PartyTestClient, businesses, respondents, \
-    business_respondent_associations, enrolments
+from test.mocks import MockBusiness, MockRespondent, MockRequests
+from test.party_client import PartyTestClient, businesses, respondents, business_respondent_associations, enrolments
 
 
 class TestParties(PartyTestClient):
@@ -32,7 +31,7 @@ class TestParties(PartyTestClient):
         response = self.get_business_by_ref(mock_business['businessRef'])
         self.assertTrue(response.items() >= mock_business.items())
 
-    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
     def test_post_valid_respondent_adds_to_db(self, _):
         # Given the database contains no respondents
         self.assertEqual(len(respondents()), 0)
@@ -46,7 +45,7 @@ class TestParties(PartyTestClient):
         # Then the database contains a respondent
         self.assertEqual(len(respondents()), 1)
 
-    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
     def test_get_respondent_by_id_returns_correct_representation(self, _):
         # Given there is a business (related to the IAC code case context)
         mock_business = MockBusiness().as_business()
@@ -129,7 +128,7 @@ class TestParties(PartyTestClient):
         self.assertEqual(response_2['attributes']['version'], 2)
 
     # TODO: maybe remove the interaction test once things are working?
-    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
     def test_post_respondent_requests_the_iac_details(self, mock):
         # Given there is a business (related to the IAC code case context)
         mock_business = MockBusiness().as_business()
@@ -141,7 +140,7 @@ class TestParties(PartyTestClient):
         # Then the case service is called with the supplied IAC code
         mock.get.assert_called_once_with('http://mockhost:1111/cases/iac/fb747cq725lj')
 
-    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
     def test_post_respondent_creates_the_business_respondent_association(self, mock):
         # Given the database contains no associations
         self.assertEqual(len(business_respondent_associations()), 0)
@@ -161,7 +160,7 @@ class TestParties(PartyTestClient):
         self.assertEqual(str(business_id), '3b136c4b-7a14-4904-9e01-13364dd7b972')
         self.assertEqual(str(respondent_id), created_respondent['id'])
 
-    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
     def test_post_respondent_creates_the_enrolment(self, mock):
         # Given the database contains no enrolments
         self.assertEqual(len(enrolments()), 0)

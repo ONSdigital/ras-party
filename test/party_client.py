@@ -6,9 +6,9 @@ from flask_testing import TestCase
 from ras_common_utils.ras_config import ras_config
 from ras_common_utils.ras_logger.ras_logger import configure_logger
 
+from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
 from run import create_app, initialise_db
-from swagger_server.models.models import Business, Respondent, BusinessRespondent, Enrolment
-from swagger_server.test.fixtures.config import test_config
+from test.fixtures.config import test_config
 
 
 def businesses():

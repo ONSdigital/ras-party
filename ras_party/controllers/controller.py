@@ -6,11 +6,11 @@ from flask import make_response, jsonify
 from sqlalchemy import orm
 from structlog import get_logger
 
-from swagger_server.controllers.error_decorator import translate_exceptions
-from swagger_server.controllers.session_context import transaction
-from swagger_server.controllers.url_builder import build_url
-from swagger_server.controllers.validate import Validator, IsIn, Exists, IsUuid
-from swagger_server.models.models import Business, Respondent, BusinessRespondent, Enrolment
+from ras_party.controllers.error_decorator import translate_exceptions
+from ras_party.controllers.session_context import transaction
+from ras_party.controllers.util import build_url
+from ras_party.controllers.validate import Validator, IsUuid, Exists, IsIn
+from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
 
 log = get_logger()
 

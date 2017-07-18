@@ -2,9 +2,10 @@ import json
 import random
 from collections import defaultdict
 
-from swagger_server.controllers.util import partition_dict
-from swagger_server.models.models import Business
-from swagger_server.test.fixtures import get_case_by_iac, get_survey_by_id, get_ce_by_id
+
+from ras_party.controllers.util import partition_dict
+from ras_party.models.models import Business
+from test.fixtures import get_case_by_iac, get_ce_by_id, get_survey_by_id
 
 
 class MockBusiness:

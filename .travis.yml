@@ -4,7 +4,7 @@ python:
 install:
   - pip install -r test-requirements.txt
 script:
-  - pytest --cov=swagger_server/controllers
+  - pytest --cov=ras_party
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 notifications:
