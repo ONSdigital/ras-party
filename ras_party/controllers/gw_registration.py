@@ -3,7 +3,7 @@ import time
 
 import requests
 
-from swagger_server.controllers.url_builder import build_url
+from ras_party.controllers.util import build_url
 
 
 def make_registration_func(app):

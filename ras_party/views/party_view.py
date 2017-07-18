@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 
-from swagger_server.controllers import controller
-from swagger_server.controllers.log_decorator import log_route
+from ras_party.controllers import controller
+from ras_party.controllers.log_decorator import log_route
 
 party_view = Blueprint('party_views', __name__)
 

@@ -3,7 +3,7 @@ from functools import wraps
 import structlog
 from flask import current_app
 
-from swagger_server.controllers.ras_error import RasError
+from ras_party.controllers.ras_error import RasError
 
 log = structlog.get_logger()
 
