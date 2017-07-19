@@ -214,10 +214,15 @@ def respondents_post(party, tran):
     if not v.validate(party):
         raise RasError(v.errors, 400)
 
-    """"TODO
-    Check if IAC code is valid via IAC service.
-    Check if user exists with given email address.
-    """
+    iac = request_iac(party['enrolmentCode'])
+    if not iac.get('active'):
+        raise RasError("Enrolment code is not active.", status_code=400)
+
+    existing = current_app.db.session.query(Respondent)\
+        .filter(Respondent.email_address == party['emailAddress'])\
+        .first()
+    if existing:
+        raise RasError("User with email address {} already exists.".format(party['emailAddress']), status_code=400)
 
     register_user(party, tran)
 
@@ -341,6 +346,17 @@ def register_user(party, tran):
     # Add a compensating action to try and avoid an exception leaving the user in an invalid state.
     tran.compensate(dummy_compensating_action)
     log.info("New user has been registered via the oauth2-service")
+
+
+def request_iac(enrolment_code):
+    # TODO: factor out commonality from these request_* functions
+    case_svc = current_app.config.dependency['iac-service']
+    case_url = build_url('{}://{}:{}/iac/{}', case_svc, enrolment_code)
+    log.info("GET URL {}".format(case_url))
+    response = requests.get(case_url, timeout=0.1)
+    log.info("IAC service responded with {}".format(response.status_code))
+    response.raise_for_status()
+    return response.json()
 
 
 def request_case(enrolment_code):

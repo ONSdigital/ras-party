@@ -40,11 +40,16 @@ dependencies:
         admin_endpoint: "/api/account/create"
         client_id: "ons@ons.gov"
         client_secret: "password"
-frontstage-service:
+    frontstage-service:
         # TODO: find out the correct values
         scheme: http
         host: mockhost
         port: 5555
+    iac-service:
+        scheme: http
+        host: mockhost
+        port: 6666
+
 features:
     skip_oauth_registration: true
 """

@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from ras_party.controllers.util import partition_dict
 from ras_party.models.models import Business
-from test.fixtures import get_case_by_iac, get_ce_by_id, get_survey_by_id
+from test.fixtures import get_case_by_iac, get_ce_by_id, get_survey_by_id, get_iac
 
 
 class MockBusiness:
@@ -105,6 +105,8 @@ class MockRequests:
                 return self._get_ce_by_id()
             elif uri == 'http://mockhost:3333/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87':
                 return self._get_survey_by_id()
+            elif uri == 'http://mockhost:6666/iac/fb747cq725lj':
+                return self._get_iac()
 
             raise Exception("MockRequests doesn't know about route {}".format(uri))
 
@@ -119,6 +121,10 @@ class MockRequests:
         @staticmethod
         def _get_survey_by_id():
             return MockResponse(get_survey_by_id.response)
+
+        @staticmethod
+        def _get_iac():
+            return MockResponse(get_iac.response)
 
         def assert_called_once_with(self, arg):
             assert(self._calls.get(arg, 0) == 1)
