@@ -66,7 +66,7 @@ def post_respondent():
     return controller.respondents_post(payload)
 
 
-@party_view.route('/respondents/verify/<token>', methods=['PUT'])
+@party_view.route('/emailverification/<token>', methods=['PUT'])
 @log_route
 def put_email_verification(token):
     return controller.put_email_verification(token)

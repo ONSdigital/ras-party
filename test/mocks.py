@@ -128,8 +128,8 @@ class MockRequests:
         def __init__(self):
             pass
 
-        def __call__(self, uri, data):
-            return MockResponse({}, status_code=201)
+        def __call__(self, uri, data=None, json=None):
+            return MockResponse('{}', status_code=201)
 
     def __init__(self):
         self.get = self.Get()

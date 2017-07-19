@@ -16,8 +16,8 @@ from ras_party.controllers.util import build_url
 from ras_party.controllers.validate import Validator, IsUuid, Exists, IsIn
 from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus
 
-
 log = get_logger()
+
 
 # TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
 
@@ -200,7 +200,11 @@ def get_respondent_by_id(id):
 @translate_exceptions
 @transactional
 def respondents_post(party, tran):
-
+    """
+    This function is quite complicated, as it performs a number of steps to complete a new respondent enrolment:
+    1. Register the respondent as a new user with the remote OAuth2 service.
+    2.
+    """
     expected = ('emailAddress', 'firstName', 'lastName', 'password', 'telephone', 'enrolmentCode')
 
     v = Validator(Exists(*expected))
@@ -211,9 +215,15 @@ def respondents_post(party, tran):
     if not v.validate(party):
         raise RasError(v.errors, 400)
 
+    """"TODO
+    Check if IAC code is valid via IAC service.
+    Check if user exists with given email address.
+    """
+
     register_user(party, tran)
 
     case_context = request_case(party['enrolmentCode'])
+    case_id = case_context['id']
 
     business_id = case_context['partyId']
     collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
@@ -221,6 +231,7 @@ def respondents_post(party, tran):
 
     survey_id = collection_exercise['surveyId']
     survey = request_survey(survey_id)
+    survey_name = survey['longName']
 
     translated_party = {
         'party_uuid': party.get('id') or str(uuid.uuid4()),
@@ -234,7 +245,7 @@ def respondents_post(party, tran):
     timed_serializer = URLSafeTimedSerializer(secret_key)
     token = timed_serializer.dumps(party['emailAddress'], salt='email-confirm-key')
     frontstage_svc = current_app.config.dependency['frontstage-service']
-    frontstage_url = build_url('{}://{}:{}/emailverification/{}', frontstage_svc, token)
+    frontstage_url = build_url('{}://{}:{}/activate-account?t={}', frontstage_svc, token)
 
     with db_session() as sess:
         try:
@@ -245,10 +256,11 @@ def respondents_post(party, tran):
 
         r = Respondent(**translated_party)
         br = BusinessRespondent(business=b, respondent=r)
-        Enrolment(business_respondent=br, survey_id=survey_id)
+        Enrolment(business_respondent=br, survey_id=survey_id, survey_name=survey_name)
 
         sess.add(r)
 
+        post_case_event(case_id, r.party_uuid)
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
 
@@ -266,7 +278,6 @@ def put_email_verification(token):
     except (BadSignature, BadData) as e:
         log.warning("An email verification token looks like it's corrupt. The token value is: {} and the error is: {}".format(token, e))
         raise RasError("Email verification is corrupt or does not exist", 404)
-
 
     with db_session() as sess:
         try:
@@ -345,8 +356,24 @@ def request_collection_exercise(collection_exercise_id):
 
 
 def request_survey(survey_id):
-    # TODO: we may want to persist the survey name, otherwise no need to call survey service
-    # survey_svc = current_app.config.dependency['survey-service']
-    # survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
-    # survey = requests.get(survey_url).json()
-    return {}
+    survey_svc = current_app.config.dependency['survey-service']
+    survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
+    response = requests.get(survey_url)
+    response.raise_for_status()
+    return response.json()
+
+
+def post_case_event(case_id, party_id):
+    case_svc = current_app.config.dependency['case-service']
+    case_url = build_url('{}://{}:{}/cases/{}/events', case_svc, case_id)
+
+    payload = {
+        'description': "New respondent account created",
+        'category': "RESPONDENT_ACCOUNT_CREATED",
+        'partyId': party_id,
+        'createdBy': "Party Service"
+    }
+
+    response = requests.post(case_url, json=payload)
+    response.raise_for_status()
+    return response.json()

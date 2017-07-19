@@ -60,6 +60,10 @@ dependencies:
         scheme: http
         host: localhost
         port: 8080
+    iac-service:
+        scheme: http
+        host: localhost
+        port: 8121
     oauth2-service:
         scheme: http
         host: localhost

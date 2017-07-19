@@ -190,6 +190,7 @@ class Enrolment(Base):
     business_id = Column(GUID, primary_key=True)
     respondent_id = Column(Integer, primary_key=True)
     survey_id = Column(Text, primary_key=True)
+    survey_name = Column(Text)
     status = Column('status', Enum(EnrolmentStatus))
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
