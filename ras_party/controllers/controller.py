@@ -2,8 +2,7 @@ import uuid
 
 import itsdangerous
 import requests
-from flask import current_app
-from flask import make_response, jsonify
+from flask import make_response, jsonify, current_app
 from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
 from sqlalchemy import orm
 from structlog import get_logger
@@ -242,10 +241,14 @@ def respondents_post(party, tran):
     }
 
     secret_key = current_app.config["SECRET_KEY"]
+    email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
     timed_serializer = URLSafeTimedSerializer(secret_key)
-    token = timed_serializer.dumps(party['emailAddress'], salt='email-confirm-key')
+    token = timed_serializer.dumps(party['emailAddress'], salt=email_token_salt)
     frontstage_svc = current_app.config.dependency['frontstage-service']
     frontstage_url = build_url('{}://{}:{}/activate-account?t={}', frontstage_svc, token)
+
+    # TODO: invoke real notification service passing the frontstage_url
+    notify(frontstage_url)
 
     with db_session() as sess:
         try:
@@ -269,9 +272,10 @@ def put_email_verification(token):
     log.info("Verifying email - checking email token: {}".format(token))
     timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
     duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+    email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
 
     try:
-        email_address = timed_serializer.loads(token, salt="email-confirm-key", max_age=duration)
+        email_address = timed_serializer.loads(token, salt=email_token_salt, max_age=duration)
     except SignatureExpired:
         log.info("An email verification token expired for a user. The token is: {}".format(token))
         raise RasError("Verification token has expired", 409)
@@ -342,7 +346,9 @@ def register_user(party, tran):
 def request_case(enrolment_code):
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
+    log.info("GET URL {}".format(case_url))
     response = requests.get(case_url)
+    log.info("Case service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
 
@@ -350,7 +356,9 @@ def request_case(enrolment_code):
 def request_collection_exercise(collection_exercise_id):
     ce_svc = current_app.config.dependency['collectionexercise-service']
     ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
+    log.info("GET {}".format(ce_url))
     response = requests.get(ce_url)
+    log.info("Collection exercise service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
 
@@ -358,7 +366,9 @@ def request_collection_exercise(collection_exercise_id):
 def request_survey(survey_id):
     survey_svc = current_app.config.dependency['survey-service']
     survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
+    log.info("GET {}".format(survey_url))
     response = requests.get(survey_url)
+    log.info("Survey service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
 
@@ -374,6 +384,13 @@ def post_case_event(case_id, party_id):
         'createdBy': "Party Service"
     }
 
+    log.info("POST {} payload={}".format(case_url, payload))
     response = requests.post(case_url, json=payload)
+    log.info("Case service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
+
+
+def notify(_):
+    # TODO: this currently exists solely for unit test purposes and needs to be replaced with the real thing
+    pass

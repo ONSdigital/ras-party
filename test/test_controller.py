@@ -2,6 +2,9 @@ from __future__ import absolute_import
 
 from unittest.mock import patch
 
+from itsdangerous import URLSafeTimedSerializer
+
+from ras_party.models.models import RespondentStatus
 from test.mocks import MockBusiness, MockRespondent, MockRequests
 from test.party_client import PartyTestClient, businesses, respondents, business_respondent_associations, enrolments
 
@@ -141,7 +144,7 @@ class TestParties(PartyTestClient):
         mock.get.assert_called_once_with('http://mockhost:1111/cases/iac/fb747cq725lj')
 
     @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_post_respondent_creates_the_business_respondent_association(self, mock):
+    def test_post_respondent_creates_the_business_respondent_association(self, _):
         # Given the database contains no associations
         self.assertEqual(len(business_respondent_associations()), 0)
         # And there is a business (related to the IAC code case context)
@@ -161,7 +164,7 @@ class TestParties(PartyTestClient):
         self.assertEqual(str(respondent_id), created_respondent['id'])
 
     @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_post_respondent_creates_the_enrolment(self, mock):
+    def test_post_respondent_creates_the_enrolment(self, _):
         # Given the database contains no enrolments
         self.assertEqual(len(enrolments()), 0)
         # And there is a business (related to the IAC code case context)
@@ -183,12 +186,73 @@ class TestParties(PartyTestClient):
         self.assertEqual(str(enrolment.business_respondent.business.party_uuid),
                          '3b136c4b-7a14-4904-9e01-13364dd7b972')
 
-    """ TODO
-    cover error scenarios on all routes
-    cover getting a respondent via /parties/id endpoint
-    cover creating a respondent where a) iac not found, b) CE not found, c) associated business not found
-    cover oauth registration functionality
-    """
+    @patch('ras_party.controllers.controller.notify')
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
+    def test_post_respondent_calls_the_notify_service(self, _, mock_notify):
+        # Given there is a business
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # And an associated respondent
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        # When a new respondent is posted
+        self.post_to_respondents(mock_respondent, 200)
+
+        # Then the (mock) notify service is called
+        mock_notify.assert_called_once()
+
+    @patch('ras_party.controllers.controller.notify')
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
+    def test_email_verification_activates_a_respondent(self, _, mock_notify):
+        # Given there is a business
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # And an associated respondent
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        # And a new respondent (which generates an email verification)
+        self.post_to_respondents(mock_respondent, 200)
+        # And the respondent state is CREATED
+        db_respondent = respondents()[0]
+        self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
+
+        # When the email is verified
+        frontstage_url = mock_notify.call_args[0][0]
+        _, token = frontstage_url.split('=')
+        self.put_email_verification(token, 200)
+
+        # Then the respondent state is ACTIVE
+        db_respondent = respondents()[0]
+        self.assertEqual(db_respondent.status, RespondentStatus.ACTIVE)
+
+    @patch('ras_party.controllers.controller.notify')
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
+    def test_email_verification_twice_produces_a_409(self, _, mock_notify):
+        # Given there is a business
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # And an associated respondent
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        # And a new respondent (which generates an email verification)
+        self.post_to_respondents(mock_respondent, 200)
+
+        # When the email is verified twice
+        frontstage_url = mock_notify.call_args[0][0]
+        _, token = frontstage_url.split('=')
+        self.put_email_verification(token, 200)
+        # Then the response is a 409
+        self.put_email_verification(token, 409)
+
+    @patch('ras_party.controllers.controller.notify')
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
+    def test_email_verification_unknown_token_produces_a_404(self, *_):
+        # When an unknown email token exists
+        secret_key = "aardvark"
+        timed_serializer = URLSafeTimedSerializer(secret_key)
+        token = timed_serializer.dumps("brucie@tv.com", salt='bulbous')
+        # Then the response is a 404
+        self.put_email_verification(token, 404)
 
 
 if __name__ == '__main__':

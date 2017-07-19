@@ -7,6 +7,7 @@ service:
     PORT: 8000
     LOG_LEVEL: error
     SECRET_KEY: aardvark
+    EMAIL_TOKEN_SALT: bulbous
 
 dependencies:
     ras-party-db:
@@ -22,11 +23,6 @@ dependencies:
         scheme: http
         host: mockhost
         port: 2222        
-    frontstage-service:
-        # TODO: find out the correct values
-        scheme: http
-        host: unknown
-        port: unknown
     survey-service:
         scheme: http
         host: mockhost
@@ -44,7 +40,11 @@ dependencies:
         admin_endpoint: "/api/account/create"
         client_id: "ons@ons.gov"
         client_secret: "password"
-        
+frontstage-service:
+        # TODO: find out the correct values
+        scheme: http
+        host: mockhost
+        port: 5555
 features:
     skip_oauth_registration: true
 """
