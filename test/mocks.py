@@ -97,7 +97,7 @@ class MockRequests:
         def __init__(self):
             self._calls = defaultdict(int)
 
-        def __call__(self, uri):
+        def __call__(self, uri, timeout=None):
             self._calls[uri] += 1
             if uri == 'http://mockhost:1111/cases/iac/fb747cq725lj':
                 return self._get_case_for_iac()
@@ -128,7 +128,7 @@ class MockRequests:
         def __init__(self):
             pass
 
-        def __call__(self, uri, data=None, json=None):
+        def __call__(self, uri, data=None, json=None, timeout=None):
             return MockResponse('{}', status_code=201)
 
     def __init__(self):

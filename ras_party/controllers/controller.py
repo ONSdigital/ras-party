@@ -328,7 +328,7 @@ def register_user(party, tran):
     }
     oauth_svc = current_app.config.dependency['oauth2-service']
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    oauth_response = requests.post(oauth_url, data=oauth_payload)
+    oauth_response = requests.post(oauth_url, data=oauth_payload, timeout=0.1)
     if not oauth_response.status_code == 201:
         oauth_response.raise_for_status()
 
@@ -347,7 +347,7 @@ def request_case(enrolment_code):
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
     log.info("GET URL {}".format(case_url))
-    response = requests.get(case_url)
+    response = requests.get(case_url, timeout=0.1)
     log.info("Case service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
@@ -357,7 +357,7 @@ def request_collection_exercise(collection_exercise_id):
     ce_svc = current_app.config.dependency['collectionexercise-service']
     ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
     log.info("GET {}".format(ce_url))
-    response = requests.get(ce_url)
+    response = requests.get(ce_url, timeout=0.1)
     log.info("Collection exercise service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
@@ -367,7 +367,7 @@ def request_survey(survey_id):
     survey_svc = current_app.config.dependency['survey-service']
     survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
     log.info("GET {}".format(survey_url))
-    response = requests.get(survey_url)
+    response = requests.get(survey_url, timeout=0.1)
     log.info("Survey service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
@@ -385,7 +385,7 @@ def post_case_event(case_id, party_id):
     }
 
     log.info("POST {} payload={}".format(case_url, payload))
-    response = requests.post(case_url, json=payload)
+    response = requests.post(case_url, json=payload, timeout=0.1)
     log.info("Case service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
