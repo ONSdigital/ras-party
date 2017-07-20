@@ -105,7 +105,7 @@ class MockRequests:
                 return self._get_ce_by_id()
             elif uri == 'http://mockhost:3333/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87':
                 return self._get_survey_by_id()
-            elif uri == 'http://mockhost:6666/iac/fb747cq725lj':
+            elif uri == 'http://mockhost:6666/iacs/fb747cq725lj':
                 return self._get_iac()
 
             raise Exception("MockRequests doesn't know about route {}".format(uri))

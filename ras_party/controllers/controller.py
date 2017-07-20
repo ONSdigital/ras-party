@@ -363,7 +363,7 @@ def register_user(party, tran):
 def request_iac(enrolment_code):
     # TODO: factor out commonality from these request_* functions
     case_svc = current_app.config.dependency['iac-service']
-    case_url = build_url('{}://{}:{}/iac/{}', case_svc, enrolment_code)
+    case_url = build_url('{}://{}:{}/iacs/{}', case_svc, enrolment_code)
     log.info("GET URL {}".format(case_url))
     response = requests.get(case_url, timeout=0.1)
     log.info("IAC service responded with {}".format(response.status_code))
