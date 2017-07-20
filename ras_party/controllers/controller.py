@@ -4,7 +4,7 @@ import itsdangerous
 import requests
 from flask import current_app
 from flask import make_response, jsonify
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
 from sqlalchemy import orm
 from structlog import get_logger
 
@@ -254,13 +254,19 @@ def respondents_post(party, tran):
 
 @translate_exceptions
 def put_email_verification(token):
+    log.info("Verifying email - checking email token: {}".format(token))
     timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
     duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
 
     try:
         email_address = timed_serializer.loads(token, salt="email-confirm-key", max_age=duration)
-    except itsdangerous.SignatureExpired:
-        raise RasError("Verification oken has expired", 409)
+    except SignatureExpired:
+        log.info("An email verification token expired for a user. The token is: {}".format(token))
+        raise RasError("Verification token has expired", 409)
+    except (BadSignature, BadData) as e:
+        log.warning("An email verification token looks like it's corrupt. The token value is: {} and the error is: {}".format(token, e))
+        raise RasError("Email verification is corrupt or does not exist", 404)
+
 
     with db_session() as sess:
         try:
@@ -271,9 +277,30 @@ def put_email_verification(token):
         if not r.status == RespondentStatus.CREATED:
             raise RasError("Verification token is invalid or already used.", 409)
 
+        # We need to set the user as active on the OAuth2 server.
+        set_user_active(email_address)
+
         r.status = RespondentStatus.ACTIVE
 
         return make_response(jsonify(r.to_respondent_dict()), 200)
+
+
+def set_user_active(respondent_email):
+
+    log.info("Setting user active on OAuth2 server")
+
+    oauth_payload = {
+        "username": respondent_email,
+        "client_id": current_app.config.dependency['oauth2-service']['client_id'],
+        "client_secret": current_app.config.dependency['oauth2-service']['client_secret']
+    }
+    oauth_svc = current_app.config.dependency['oauth2-service']
+    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['activate_endpoint'])
+    oauth_response = requests.post(oauth_url, data=oauth_payload)
+    if not oauth_response.status_code == 201:
+        log.error("Unable to set the user active on the OAuth2 server")
+        oauth_response.raise_for_status()
+    log.info("User has been activated on the oauth2 server")
 
 
 def register_user(party, tran):
@@ -293,7 +320,7 @@ def register_user(party, tran):
         """
         TODO: Undo the user registration.
         """
-        log.info("Placeholder for deleting the user from oauth-server")
+        log.info("Placeholder for deleting the user from oauth server")
 
     # Add a compensating action to try and avoid an exception leaving the user in an invalid state.
     tran.compensate(dummy_compensating_action)
