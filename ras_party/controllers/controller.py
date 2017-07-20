@@ -201,14 +201,26 @@ def get_respondent_by_id(id):
 def respondents_post(party, tran):
     """
     This function is quite complicated, as it performs a number of steps to complete a new respondent enrolment:
-    1. Register the respondent as a new user with the remote OAuth2 service.
-    2.
+    1. Validate the enrolment code and email address
+    2. Register the respondent as a new user with the remote OAuth2 service.
+    3. Lookup the case context from the case service
+    4. Lookup the collection exercise from the collection exercise service
+    5. Lookup the survey from the survey service
+    6. Generate an email verification token, and an email verification url
+    7. Invoke the email verification (this is currently mocked out)
+    8. Update the database with the new respondent, establishing an association to the business, and an entry
+       in the enrolment table (along with the survey id / survey name)
+    9. Post a case event to the case service to notify that a new respondent has been created
+    10. If something goes wrong after step 1, attempt to perform a compensating action to remove the OAuth2 user
+       (this is currently mocked out as the OAuth2 server doesn't implement an endpoint to achieve this)
     """
     expected = ('emailAddress', 'firstName', 'lastName', 'password', 'telephone', 'enrolmentCode')
 
     v = Validator(Exists(*expected))
     if 'id' in party:
-        log.debug(" ID in respondent post message. Adding validation rule IsUuid")
+        # Note: there's not strictly a requirement to be able to pass in a UUID, this is currently supported to
+        # aid with testing.
+        log.debug("ID in respondent post message. Adding validation rule IsUuid")
         v.add_rule(IsUuid('id'))
 
     if not v.validate(party):
