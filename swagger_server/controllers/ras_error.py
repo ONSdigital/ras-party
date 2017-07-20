@@ -11,3 +11,7 @@ class RasError(Exception):
 
 class RasDatabaseError(RasError):
     pass
+
+
+class RasNotifyError(RasError):
+    pass
