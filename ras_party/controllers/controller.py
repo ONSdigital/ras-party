@@ -1,6 +1,5 @@
 import uuid
 
-import itsdangerous
 import requests
 from flask import make_response, jsonify, current_app
 from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
