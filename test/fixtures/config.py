@@ -38,6 +38,7 @@ dependencies:
         authorization_endpoint: "/web/authorize/"
         token_endpoint: "/api/v1/tokens/"
         admin_endpoint: "/api/account/create"
+        activate_endpoint: "/api/account/activate"
         client_id: "ons@ons.gov"
         client_secret: "password"
     frontstage-service:
