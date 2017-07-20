@@ -19,13 +19,10 @@ def create_app(config):
 
     @app.errorhandler(Exception)
     def handle_error(error):
-        try:
+        if isinstance(error, RasError):
             response = jsonify(error.to_dict())
             response.status_code = error.status_code
-        except RasError as e:
-            response = jsonify(e.to_dict())
-            response.status_code = 500
-        except Exception as e:
+        else:
             response = jsonify({'errors': [str(error)]})
             response.status_code = 500
         return response
