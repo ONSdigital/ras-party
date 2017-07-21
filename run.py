@@ -6,7 +6,8 @@ from ras_common_utils.ras_config.flask_extended import Flask
 from ras_common_utils.ras_database.ras_database import RasDatabase
 from ras_common_utils.ras_logger.ras_logger import configure_logger
 
-from swagger_server.controllers.gw_registration import make_registration_func, call_in_background
+from ras_party.controllers.gw_registration import make_registration_func, call_in_background
+from ras_party.controllers.ras_error import RasError
 
 logger = structlog.get_logger()
 
@@ -18,10 +19,10 @@ def create_app(config):
 
     @app.errorhandler(Exception)
     def handle_error(error):
-        try:
+        if isinstance(error, RasError):
             response = jsonify(error.to_dict())
             response.status_code = error.status_code
-        except Exception:
+        else:
             response = jsonify({'errors': [str(error)]})
             response.status_code = 500
         return response
@@ -36,7 +37,7 @@ def create_app(config):
 
 def initialise_db(app):
     # Initialise the database with the specified SQLAlchemy model
-    PartyDatabase = RasDatabase.make(model_paths=['swagger_server.models.models'])
+    PartyDatabase = RasDatabase.make(model_paths=['ras_party.models.models'])
     db = PartyDatabase('ras-party-db', app.config)
     # TODO: this isn't entirely safe, use a get_db() lazy initializer instead...
     app.db = db

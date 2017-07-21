@@ -5,4 +5,4 @@ if ! [ -a .build ] ; then
 fi
 source .build/bin/activate
 pip3 -q install -r requirements.txt
-PYTHONPATH=swagger_server python3 -m swagger_server
+PYTHONPATH=ras_party python run.py

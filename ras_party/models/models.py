@@ -9,8 +9,8 @@ from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyCo
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
-from swagger_server.controllers.util import filter_falsey_values, partition_dict
-from swagger_server.controllers.validate import Validator, Exists, IsUuid
+from ras_party.controllers.util import filter_falsey_values, partition_dict
+from ras_party.controllers.validate import Validator, Exists, IsUuid
 
 
 class Business(Base):
@@ -190,6 +190,7 @@ class Enrolment(Base):
     business_id = Column(GUID, primary_key=True)
     respondent_id = Column(Integer, primary_key=True)
     survey_id = Column(Text, primary_key=True)
+    survey_name = Column(Text)
     status = Column('status', Enum(EnrolmentStatus))
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
@@ -199,43 +200,3 @@ class Enrolment(Base):
         ForeignKeyConstraint(['business_id', 'respondent_id'],
                              ['business_respondent.business_id', 'business_respondent.respondent_id']),
     )
-
-
-class EnrolmentCodeStatus(enum.IntEnum):
-    ACTIVE = 0
-    REDEEMED = 1
-    REVOKED = 2
-
-
-class EnrolmentCode(Base):
-    __tablename__ = 'enrolment_code'
-
-    id = Column(Integer, primary_key=True)
-    business_id = Column(GUID, ForeignKey('business.party_uuid'))
-    respondent_id = Column(Integer, ForeignKey('respondent.id'))
-    survey_id = Column(Text)
-    iac = Column(Text)
-    status = Column('status', Enum(EnrolmentCodeStatus))
-    created_on = Column(DateTime, default=datetime.datetime.utcnow)
-
-
-class EnrolmentInvitationStatus(enum.IntEnum):
-    ACTIVE = 0
-    REDEEMED = 1
-    REVOKED = 2
-
-
-class EnrolmentInvitation(Base):
-    __tablename__ = 'enrolment_invitation'
-
-    id = Column(Integer, primary_key=True)
-    business_id = Column(GUID, ForeignKey('business.party_uuid'))
-    respondent_id = Column(Integer, ForeignKey('respondent.id'))
-    survey_id = Column(Text)
-    target_email = Column(Text)
-    verification_token = Column(GUID)
-    sms_verification_token = Column(Integer)
-    effective_from = Column(DateTime, default=datetime.datetime.utcnow)
-    effective_to = Column(DateTime, default=datetime.datetime.utcnow() + datetime.timedelta(days=2))
-    status = Column('status', Enum(EnrolmentInvitationStatus))
-    created_on = Column(DateTime, default=datetime.datetime.utcnow)

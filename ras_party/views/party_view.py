@@ -1,7 +1,7 @@
 from flask import Blueprint, request
 
-from swagger_server.controllers import controller
-from swagger_server.controllers.log_decorator import log_route
+from ras_party.controllers import controller
+from ras_party.controllers.log_decorator import log_route
 
 party_view = Blueprint('party_views', __name__)
 
@@ -18,7 +18,7 @@ def get_info():
 @party_view.route('/businesses', methods=['POST'])
 @log_route
 def post_business():
-    payload = request.get_json()
+    payload = request.get_json() or {}
     return controller.businesses_post(payload)
 
 
@@ -37,7 +37,7 @@ def get_business_by_ref(ref):
 @party_view.route('/parties', methods=['POST'])
 @log_route
 def post_party():
-    payload = request.get_json()
+    payload = request.get_json() or {}
     return controller.parties_post(payload)
 
 
@@ -62,5 +62,12 @@ def get_respondent_by_id(id):
 @party_view.route('/respondents', methods=['POST'])
 @log_route
 def post_respondent():
-    payload = request.get_json()
+    payload = request.get_json() or {}
     return controller.respondents_post(payload)
+
+
+@party_view.route('/emailverification/<token>', methods=['PUT'])
+@log_route
+def put_email_verification(token):
+    return controller.put_email_verification(token)
+

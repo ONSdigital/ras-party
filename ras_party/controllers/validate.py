@@ -1,7 +1,7 @@
 import itertools
 import uuid
 
-from swagger_server.controllers.util import flatten_keys
+from ras_party.controllers.util import flatten_keys
 
 
 class ValidatorBase:
@@ -60,7 +60,7 @@ class IsIn(ValidatorBase):
         self._valid_set = valid_set
 
     def __call__(self, data):
-        self._value = data[self._key]
+        self._value = data.get(self._key)
         result = self._value in self._valid_set
         if not result:
             self._errors = [self.ERROR_MESSAGE.format(self._value, self._key, self._valid_set)]
@@ -81,5 +81,4 @@ class Validator:
 
     @property
     def errors(self):
-        result = list(itertools.chain(*[r.errors for r in self._rules]))
-        return {'errors': result}
+        return list(itertools.chain(*[r.errors for r in self._rules]))

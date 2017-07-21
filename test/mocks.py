@@ -2,9 +2,10 @@ import json
 import random
 from collections import defaultdict
 
-from swagger_server.controllers.util import partition_dict
-from swagger_server.models.models import Business
-from swagger_server.test.fixtures import get_case_by_iac, get_survey_by_id, get_ce_by_id
+
+from ras_party.controllers.util import partition_dict
+from ras_party.models.models import Business
+from test.fixtures import get_case_by_iac, get_ce_by_id, get_survey_by_id, get_iac
 
 
 class MockBusiness:
@@ -76,12 +77,17 @@ class MockRespondent:
 
 class MockResponse:
 
-    def __init__(self, payload):
+    status_code = 200
+
+    def __init__(self, payload, status_code=None):
         self.payload = payload
-        self.status_code = 200
+        self.status_code = status_code or MockResponse.status_code
 
     def json(self):
         return json.loads(self.payload)
+
+    def raise_for_status(self):
+        pass
 
 
 class MockRequests:
@@ -91,7 +97,7 @@ class MockRequests:
         def __init__(self):
             self._calls = defaultdict(int)
 
-        def __call__(self, uri):
+        def __call__(self, uri, timeout=None):
             self._calls[uri] += 1
             if uri == 'http://mockhost:1111/cases/iac/fb747cq725lj':
                 return self._get_case_for_iac()
@@ -99,6 +105,8 @@ class MockRequests:
                 return self._get_ce_by_id()
             elif uri == 'http://mockhost:3333/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87':
                 return self._get_survey_by_id()
+            elif uri == 'http://mockhost:6666/iacs/fb747cq725lj':
+                return self._get_iac()
 
             raise Exception("MockRequests doesn't know about route {}".format(uri))
 
@@ -114,10 +122,23 @@ class MockRequests:
         def _get_survey_by_id():
             return MockResponse(get_survey_by_id.response)
 
+        @staticmethod
+        def _get_iac():
+            return MockResponse(get_iac.response)
+
         def assert_called_once_with(self, arg):
             assert(self._calls.get(arg, 0) == 1)
 
+    class Post:
+
+        def __init__(self):
+            pass
+
+        def __call__(self, uri, data=None, json=None, timeout=None):
+            return MockResponse('{}', status_code=201)
+
     def __init__(self):
         self.get = self.Get()
+        self.post = self.Post()
 
 

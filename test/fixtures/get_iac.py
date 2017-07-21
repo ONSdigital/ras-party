@@ -1,0 +1,8 @@
+response = '''{
+  "iac": "fb747cq725lj",
+  "active": true,
+  "lastUsedDateTime": "2017-05-15T10:00:00Z",
+  "caseId": "7bc5d41b-0549-40b3-ba76-42f6d4cf3fdb",
+  "questionSet": "H1"
+}
+'''

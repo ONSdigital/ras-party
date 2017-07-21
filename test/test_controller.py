@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 
+import uuid
 from unittest.mock import patch
 
-from swagger_server.test.mocks import MockBusiness, MockRespondent, MockRequests
-from swagger_server.test.party_client import PartyTestClient, businesses, respondents, \
-    business_respondent_associations, enrolments
+from itsdangerous import URLSafeTimedSerializer
+
+from ras_party.models.models import RespondentStatus
+from test.mocks import MockBusiness, MockRespondent, MockRequests, MockResponse
+from test.party_client import PartyTestClient, businesses, respondents, business_respondent_associations, enrolments
 
 
 class TestParties(PartyTestClient):
@@ -32,7 +35,7 @@ class TestParties(PartyTestClient):
         response = self.get_business_by_ref(mock_business['businessRef'])
         self.assertTrue(response.items() >= mock_business.items())
 
-    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
     def test_post_valid_respondent_adds_to_db(self, _):
         # Given the database contains no respondents
         self.assertEqual(len(respondents()), 0)
@@ -46,7 +49,7 @@ class TestParties(PartyTestClient):
         # Then the database contains a respondent
         self.assertEqual(len(respondents()), 1)
 
-    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
     def test_get_respondent_by_id_returns_correct_representation(self, _):
         # Given there is a business (related to the IAC code case context)
         mock_business = MockBusiness().as_business()
@@ -128,8 +131,18 @@ class TestParties(PartyTestClient):
         self.assertEqual(len(businesses()), 1)
         self.assertEqual(response_2['attributes']['version'], 2)
 
-    # TODO: maybe remove the interaction test once things are working?
-    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
+    @patch('ras_party.controllers.controller.requests')
+    def test_post_respondent_with_inactive_iac(self, mock):
+        # Given the IAC code is inactive
+        def mock_get_iac(*args, **kwargs):
+            return MockResponse('{"active": false}')
+        mock.get = mock_get_iac
+        # When a new respondent is posted
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        # Then status code 400 is returned
+        self.post_to_respondents(mock_respondent, 400)
+
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
     def test_post_respondent_requests_the_iac_details(self, mock):
         # Given there is a business (related to the IAC code case context)
         mock_business = MockBusiness().as_business()
@@ -141,8 +154,8 @@ class TestParties(PartyTestClient):
         # Then the case service is called with the supplied IAC code
         mock.get.assert_called_once_with('http://mockhost:1111/cases/iac/fb747cq725lj')
 
-    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
-    def test_post_respondent_creates_the_business_respondent_association(self, mock):
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
+    def test_post_respondent_creates_the_business_respondent_association(self, _):
         # Given the database contains no associations
         self.assertEqual(len(business_respondent_associations()), 0)
         # And there is a business (related to the IAC code case context)
@@ -161,8 +174,8 @@ class TestParties(PartyTestClient):
         self.assertEqual(str(business_id), '3b136c4b-7a14-4904-9e01-13364dd7b972')
         self.assertEqual(str(respondent_id), created_respondent['id'])
 
-    @patch('swagger_server.controllers.controller.requests', new_callable=MockRequests)
-    def test_post_respondent_creates_the_enrolment(self, mock):
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
+    def test_post_respondent_creates_the_enrolment(self, _):
         # Given the database contains no enrolments
         self.assertEqual(len(enrolments()), 0)
         # And there is a business (related to the IAC code case context)
@@ -184,12 +197,113 @@ class TestParties(PartyTestClient):
         self.assertEqual(str(enrolment.business_respondent.business.party_uuid),
                          '3b136c4b-7a14-4904-9e01-13364dd7b972')
 
-    """ TODO
-    cover error scenarios on all routes
-    cover getting a respondent via /parties/id endpoint
-    cover creating a respondent where a) iac not found, b) CE not found, c) associated business not found
-    cover oauth registration functionality
-    """
+    @patch('ras_party.controllers.controller.notify')
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
+    def test_post_respondent_calls_the_notify_service(self, _, mock_notify):
+        # Given there is a business
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # And an associated respondent
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        # When a new respondent is posted
+        self.post_to_respondents(mock_respondent, 200)
+
+        # Then the (mock) notify service is called
+        mock_notify.assert_called_once()
+
+    @patch('ras_party.controllers.controller.notify')
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
+    def test_email_verification_activates_a_respondent(self, _, mock_notify):
+        # Given there is a business
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # And an associated respondent
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        # And a new respondent (which generates an email verification)
+        self.post_to_respondents(mock_respondent, 200)
+        # And the respondent state is CREATED
+        db_respondent = respondents()[0]
+        self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
+
+        # When the email is verified
+        frontstage_url = mock_notify.call_args[0][0]
+        _, token = frontstage_url.split('=')
+        self.put_email_verification(token, 200)
+
+        # Then the respondent state is ACTIVE
+        db_respondent = respondents()[0]
+        self.assertEqual(db_respondent.status, RespondentStatus.ACTIVE)
+
+    @patch('ras_party.controllers.controller.notify')
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
+    def test_email_verification_twice_produces_a_409(self, _, mock_notify):
+        # Given there is a business
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # And an associated respondent
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        # And a new respondent (which generates an email verification)
+        self.post_to_respondents(mock_respondent, 200)
+
+        # When the email is verified twice
+        frontstage_url = mock_notify.call_args[0][0]
+        _, token = frontstage_url.split('=')
+        self.put_email_verification(token, 200)
+        # Then the response is a 409
+        self.put_email_verification(token, 409)
+
+    @patch('ras_party.controllers.controller.notify')
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
+    def test_email_verification_unknown_token_produces_a_404(self, *_):
+        # When an unknown email token exists
+        secret_key = "aardvark"
+        timed_serializer = URLSafeTimedSerializer(secret_key)
+        token = timed_serializer.dumps("brucie@tv.com", salt='bulbous')
+        # Then the response is a 404
+        self.put_email_verification(token, 404)
+
+    def test_post_respondent_with_no_body_returns_400(self):
+        self.post_to_respondents(None, 400)
+
+    def test_post_business_with_no_body_returns_400(self):
+        self.post_to_businesses(None, 400)
+
+    def test_post_party_with_no_body_returns_400(self):
+        self.post_to_parties(None, 400)
+
+    def test_info_endpoint(self):
+        response = self.get_info()
+        self.assertIn('name', response)
+        self.assertIn('version', response)
+        self.assertIn('origin', response)
+
+    def test_get_business_with_invalid_id(self):
+        self.get_business_by_id('123', 400)
+
+    def test_get_nonexistent_business_by_id(self):
+        party_id = uuid.uuid4()
+        self.get_business_by_id(party_id, 404)
+
+    def test_get_nonexistent_business_by_ref(self):
+        self.get_business_by_ref('123', 404)
+
+    def test_post_invalid_party(self):
+        mock_party = MockBusiness().attributes(source='test_post_valid_party_adds_to_db').as_party()
+        del mock_party['sampleUnitRef']
+        self.post_to_parties(mock_party, 400)
+
+    def test_get_party_with_invalid_unit_type(self):
+        self.get_party_by_id('XX', '123', 400)
+        self.get_party_by_ref('XX', '123', 400)
+
+    def test_get_party_with_nonexistent_ref(self):
+        self.get_party_by_ref('B', '123', 404)
+
+    def test_get_respondent_with_invalid_id(self):
+        self.get_respondent_by_id('123', 400)
 
 
 if __name__ == '__main__':

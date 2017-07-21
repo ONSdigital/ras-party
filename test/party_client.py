@@ -6,9 +6,9 @@ from flask_testing import TestCase
 from ras_common_utils.ras_config import ras_config
 from ras_common_utils.ras_logger.ras_logger import configure_logger
 
+from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
 from run import create_app, initialise_db
-from swagger_server.models.models import Business, Respondent, BusinessRespondent, Enrolment
-from swagger_server.test.fixtures.config import test_config
+from test.fixtures.config import test_config
 
 
 def businesses():
@@ -36,6 +36,11 @@ class PartyTestClient(TestCase):
         configure_logger(app.config)
         initialise_db(app)
         return app
+
+    def get_info(self, expected_status=200):
+        response = self.client.open('/party-api/v1/info', method='GET')
+        self.assertStatus(response, expected_status)
+        return json.loads(response.get_data(as_text=True))
 
     def post_to_parties(self, payload, expected_status):
         response = self.client.open('/party-api/v1/parties',
@@ -91,3 +96,9 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
+    def put_email_verification(self, token, expected_status):
+        response = self.client.open('/party-api/v1/emailverification/{}'.format(token),
+                                    method='PUT')
+
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))

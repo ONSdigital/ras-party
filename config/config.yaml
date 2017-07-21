@@ -27,6 +27,7 @@ service:
     PORT: 8080
     DEBUG: False
     LOG_LEVEL: debug
+    SECRET_KEY: aardvark
 
 dependencies:
     ras-party-db:
@@ -59,6 +60,10 @@ dependencies:
         scheme: http
         host: localhost
         port: 8080
+    iac-service:
+        scheme: http
+        host: localhost
+        port: 8121
     oauth2-service:
         scheme: http
         host: localhost
@@ -66,6 +71,7 @@ dependencies:
         authorization_endpoint: "/web/authorize/"
         token_endpoint: "/api/v1/tokens/"
         admin_endpoint: "/api/account/create"
+        activate_endpoint: "/api/account/activate"
         client_id: "ons@ons.gov"
         client_secret: "password"
 
