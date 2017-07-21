@@ -22,7 +22,7 @@ dependencies:
     collectionexercise-service:
         scheme: http
         host: mockhost
-        port: 2222        
+        port: 2222
     survey-service:
         scheme: http
         host: mockhost

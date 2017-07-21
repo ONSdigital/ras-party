@@ -42,7 +42,7 @@ class IsUuid(ValidatorBase):
     def __call__(self, data):
         self._value = data[self._key]
         try:
-            _ = uuid.UUID(self._value)
+            uuid.UUID(self._value)
         except ValueError:
             self._errors = [self.ERROR_MESSAGE.format(self._value, self._key)]
             return False
