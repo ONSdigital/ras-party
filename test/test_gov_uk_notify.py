@@ -1,8 +1,9 @@
 from requests.models import Response
-from swagger_server.controllers.gov_uk_notify import GovUKNotify
-from swagger_server.test.party_client import PartyTestClient
-from swagger_server.controllers.ras_error import RasNotifyError
 from unittest.mock import patch, Mock
+
+from ras_party.controllers.gov_uk_notify import GovUKNotify
+from ras_party.controllers.ras_error import RasNotifyError
+from test.party_client import PartyTestClient
 
 
 class TestParties(PartyTestClient):
@@ -17,7 +18,7 @@ class TestParties(PartyTestClient):
         notify_patch = Mock()
         notify_patch.send_email_notification = Mock(return_value=mock_response)
 
-        with patch('swagger_server.controllers.gov_uk_notify.NotificationsAPIClient', return_value=notify_patch):
+        with patch('ras_party.controllers.gov_uk_notify.NotificationsAPIClient', return_value=notify_patch):
             notify = GovUKNotify()
             # When a email is sent
             response = notify.send_message('email', 'template_id')
@@ -30,7 +31,7 @@ class TestParties(PartyTestClient):
         notify_patch = Mock()
         notify_patch.send_email_notification = Mock(side_effect=Exception)
 
-        with patch('swagger_server.controllers.gov_uk_notify.NotificationsAPIClient', return_value=notify_patch):
+        with patch('ras_party.controllers.gov_uk_notify.NotificationsAPIClient', return_value=notify_patch):
             # When an email is sent
             notify = GovUKNotify()
             # Then a RasNotifyError is raised

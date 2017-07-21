@@ -1,7 +1,8 @@
 from flask import current_app
-from notifications_python_client.notifications import NotificationsAPIClient
+from notifications_python_client import NotificationsAPIClient
 from structlog import get_logger
-from swagger_server.controllers.ras_error import RasNotifyError
+
+from ras_party.controllers.ras_error import RasNotifyError
 
 log = get_logger()
 
@@ -32,6 +33,7 @@ class GovUKNotify:
                 reference=reference)
             log.info('Message sent to gov.uk notify with notification id {}'.format(response.id))
         except Exception as e:
-            log.error('Gov uk notify can not send the message' + str(e))
-            raise RasNotifyError(status_code=400)
+            msg = 'Gov uk notify can not send the message' + str(e)
+            log.error(msg)
+            raise RasNotifyError(msg, status_code=400)
         return 201

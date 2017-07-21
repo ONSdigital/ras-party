@@ -1,16 +1,21 @@
 import uuid
 
+import itsdangerous
 import requests
 from flask import current_app
 from flask import make_response, jsonify
+from itsdangerous import URLSafeTimedSerializer
 from sqlalchemy import orm
 from structlog import get_logger
 
 from ras_party.controllers.error_decorator import translate_exceptions
-from ras_party.controllers.session_context import transaction
+from ras_party.controllers.ras_error import RasError
+from ras_party.controllers.session_context import db_session
+from ras_party.controllers.transactional import transactional
 from ras_party.controllers.util import build_url
 from ras_party.controllers.validate import Validator, IsUuid, Exists, IsIn
-from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
+from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus
+
 
 log = get_logger()
 
@@ -44,7 +49,7 @@ def businesses_post(business):
 
     :rtype: None
     """
-    with transaction() as tran:
+    with db_session() as tran:
         if 'businessRef' in business:
             existing_business = tran.query(Business).filter(Business.business_ref == business['businessRef']).first()
             if existing_business:
@@ -116,7 +121,7 @@ def parties_post(party):
         return make_response(jsonify(v.errors), 400)
 
     if party['sampleUnitType'] == Business.UNIT_TYPE:
-        with transaction() as tran:
+        with db_session() as tran:
             existing_business = tran.query(Business).filter(Business.business_ref == party['sampleUnitRef']).first()
             if existing_business:
                 party['id'] = str(existing_business.party_uuid)
@@ -192,118 +197,9 @@ def get_respondent_by_id(id):
     return make_response(jsonify(respondent.to_respondent_dict()), 200)
 
 
-def oauth_registration(party):
-
-    """
-    Deals with sending the registration request to the OAuth2 server. The OAuth2 server implements the OAuth2 spec found
-
-    here: https://tools.ietf.org/html/rfc6749
-
-    It has also been updated to allow microservices to create users on the server if they have the correct client_id
-    and client_secret. In other words an admin interface. This is not part of OAuth2 specs. The interface is defined
-
-    here: https://github.com/ONSdigital/django-oauth2-test
-
-    under tha 'Admin API'. This function will handle all known errors from the OAuth2 server and return the status_code
-    received to the calling function.
-
-    Arguments: party
-        Type: dictionary
-        Parameters: 'emailAddress', 'firstName', 'lastName', 'password', 'telephone', 'enrolmentCode'
-        Parameters used: 'emailAddress', 'password'.
-
-    Returns: http response object
-        Added Parameters: 'status_code', 'message text string'
-
-    Sequence Diagram (flow between PS and OAuth2):
-        User                    FS                  PS                      OAuth2
-        ----                    --                  --                      ------
-            create-account      |
-            ------------------->|
-                                |   create-account  |
-                                | ----------------->|    api/account/create   |
-                                |                   | ----------------------->|
-
-    Errors:
-        duplicate email
-        client id incorrect
-        client secret incorrect
-
-    TODO:
-        Scope has to be defined on what the default scope should be for a user. This could be done in the PS, or default
-        applied on the OAuth2 server
-
-    """
-    # TODO: refactor code to separate service calls
-    # 1) Send a POST message to create a user on OAuth2 server
-
-    oauth_payload = {
-        "username": party['emailAddress'],
-        "password": party['password'],
-        "client_id": current_app.config.dependency['oauth2-service']['client_id'],
-        "client_secret": current_app.config.dependency['oauth2-service']['client_secret']
-    }
-
-    # leave this commented out for now - we don't know what we will do with authorisation headers yet and content types
-    # headers = {'content-type': 'application/x-www-form-urlencoded'}
-    # authorisation = {current_app.config.dependencies.oauth2['client_id']: current_app.config.dependencies.oauth2['client_secret']}
-
-    oauth_svc = current_app.config.dependency['oauth2-service']
-    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-
-    try:
-        # OAuth_response = requests.post(OAuthurl, auth=authorisation, headers=headers, data=OAuth_payload)
-        oauth_response = requests.post(oauth_url, data=oauth_payload)
-        oauth_body = oauth_response.json()
-
-        log.debug("OAuth response is: {}".format(oauth_body))
-
-        # json.loads(myResponse.content.decode('utf-8'))
-        log.debug("OAuth2 response is: {}".format(oauth_response.status_code))
-
-        if oauth_response.status_code == 401:
-            # This looks like the user is not authorized to use the system. it could be a duplicate email. check our
-            # exact error. if it is, then tell the user else fail as our server is not allowed to access the OAuth2
-            # system.
-            log.info("A 401 has been received creating a new user on the OAuth2 server")
-            # {"detail":"Duplicate user credentials"}
-            if 'detail' in oauth_body and oauth_body["detail"] == 'Duplicate user credentials':
-                log.warning("We have duplicate user credentials")
-                return make_response(jsonify({'errors': 'Please try a different email, this one is in use'}), 401)
-            elif 'detail' in oauth_body and oauth_body["detail"] == 'Invalid client credentials':
-                # If we get here we are in real trouble! somebody has not configured the client_id or client_secret properly
-                log.critical("The party service does not have the correct credentials to access the OAuth2 server. Perhaps the client_id or client_secret is incorrect?")
-                return make_response(jsonify({'error':'The microservice cannot create a user on the Authentication Server due to client_id or client_secret being wrong'}), 500)
-
-        # Deal with all other errors from OAuth2 registration
-        if oauth_response.status_code > 401:
-            oauth_response.raise_for_status()  # A stop gap until we know all the correct error pages
-            log.warning("OAuth error")
-
-    except requests.exceptions.ConnectionError:
-        log.critical("There seems to be no server listening on this connection?")
-        errors = {
-            'connection error': 'There is no network connectivity to the OAuth2 server on this connection:{} '.format(oauth_url)}
-        return make_response(jsonify(errors), 500)
-
-    except requests.exceptions.Timeout:
-        log.critical("Timeout error. Is the OAuth Server overloaded?")
-        errors = {'connection error': 'The OAuth2 server is not responding on this connection:{}. Has the OAuth server URL been setup correctly for this microservice?'.format(oauth_url)}
-        return make_response(jsonify(errors), 500)
-
-    except requests.exceptions.RequestException as e:
-        log.error("The http request failed communicating with the OAuth2 server ")
-        log.error(e)
-        errors = {'connection error': 'The network connection failed between the part service and the url:{}'.format(oauth_url)}
-        return make_response(jsonify(errors), 500)
-
-    # At this point we have checked for most errors let the calling function know
-    success_msg = {"success": "User {} has been created on the OAuth2 server".format(party['emailAddress'])}
-    return make_response(jsonify(success_msg), oauth_response.status_code)
-
-
 @translate_exceptions
-def respondents_post(party):
+@transactional
+def respondents_post(party, tran):
 
     expected = ('emailAddress', 'firstName', 'lastName', 'password', 'telephone', 'enrolmentCode')
 
@@ -313,55 +209,18 @@ def respondents_post(party):
         v.add_rule(IsUuid('id'))
 
     if not v.validate(party):
-        log.error("Validation failed for respondent [POST] Message.")
-        log.error("Validation errors from [POST] are: {}".format(v.errors))
-        return make_response(jsonify(v.errors), 400)
+        raise RasError(v.errors, 400)
 
-    log.debug("Validation is complete for respondents_post")
+    register_user(party, tran)
 
-    # TODO: this is currently a bit of a bodge to separate the oauth code from the main enrolment activity
-    if current_app.config.feature['oauth_registration']:
-        oauth2_response = oauth_registration(party)
-        print("oauth2 response object looks like: {}".format(oauth2_response))
-        if oauth2_response.status_code == 201:
-            log.debug("The OAuth2 server has registered the user")
-        else:
-            # We should not get to this path since the oauth_registeration deals with all errors and returns a failure
-            log.error("The OAuth2 server failed to register the user")
-            # TODO Raise an exception here
-            return oauth2_response
+    case_context = request_case(party['enrolmentCode'])
 
-    enrolment_code = party['enrolmentCode']
-    case_svc = current_app.config.dependency['case-service']
-    case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
-
-    response = requests.get(case_url)
-    if not response.status_code == 200:
-        return make_response(jsonify(response.json()), response.status_code)
-    case_context = response.json()
     business_id = case_context['partyId']
-
     collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
-    ce_svc = current_app.config.dependency['collectionexercise-service']
-    ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
-    response = requests.get(ce_url)
-    if not response.status_code == 200:
-        return make_response(jsonify(response.json()), response.status_code)
-    collection_exercise = response.json()
+    collection_exercise = request_collection_exercise(collection_exercise_id)
 
     survey_id = collection_exercise['surveyId']
-    # TODO: we may want to persist the survey name, otherwise no need to call survey service
-    # survey_svc = current_app.config.dependency['survey-service']
-    # survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
-    # survey = requests.get(survey_url).json()
-
-    """ TODO:
-    POST account created case event
-    create uuid / email verification link
-    persist the email verification link
-    call gov.uk notify (see Mark's branch)
-    map route to accept verified email, and enable account
-    """
+    survey = request_survey(survey_id)
 
     translated_party = {
         'party_uuid': party.get('id') or str(uuid.uuid4()),
@@ -371,17 +230,95 @@ def respondents_post(party):
         'telephone': party['telephone']
     }
 
-    with transaction() as tran:
+    secret_key = current_app.config["SECRET_KEY"]
+    timed_serializer = URLSafeTimedSerializer(secret_key)
+    token = timed_serializer.dumps(party['emailAddress'], salt='email-confirm-key')
+    frontstage_svc = current_app.config.dependency['frontstage-service']
+    frontstage_url = build_url('{}://{}:{}/emailverification/{}', frontstage_svc, token)
+
+    with db_session() as sess:
         try:
-            b = tran.query(Business).filter(Business.party_uuid == business_id).one()
+            b = sess.query(Business).filter(Business.party_uuid == business_id).one()
         except orm.exc.NoResultFound:
             msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
-            log.error(msg)
-            return make_response(jsonify({'errors': [msg]}))
+            raise RasError(msg, status_code=404)
 
         r = Respondent(**translated_party)
         br = BusinessRespondent(business=b, respondent=r)
-        e = Enrolment(business_respondent=br, survey_id=survey_id)
+        Enrolment(business_respondent=br, survey_id=survey_id)
 
-        tran.add(r)
+        sess.add(r)
+
         return make_response(jsonify(r.to_respondent_dict()), 200)
+
+
+@translate_exceptions
+def put_email_verification(token):
+    timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+    duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+
+    try:
+        email_address = timed_serializer.loads(token, salt="email-confirm-key", max_age=duration)
+    except itsdangerous.SignatureExpired:
+        raise RasError("Verification oken has expired", 409)
+
+    with db_session() as sess:
+        try:
+            r = sess.query(Respondent).filter(Respondent.email_address == email_address).one()
+        except orm.exc.NoResultFound:
+            raise RasError("Couldn't locate user.", status_code=404)
+
+        if not r.status == RespondentStatus.CREATED:
+            raise RasError("Verification token is invalid or already used.", 409)
+
+        r.status = RespondentStatus.ACTIVE
+
+        return make_response(jsonify(r.to_respondent_dict()), 200)
+
+
+def register_user(party, tran):
+    oauth_payload = {
+        "username": party['emailAddress'],
+        "password": party['password'],
+        "client_id": current_app.config.dependency['oauth2-service']['client_id'],
+        "client_secret": current_app.config.dependency['oauth2-service']['client_secret']
+    }
+    oauth_svc = current_app.config.dependency['oauth2-service']
+    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
+    oauth_response = requests.post(oauth_url, data=oauth_payload)
+    if not oauth_response.status_code == 201:
+        oauth_response.raise_for_status()
+
+    def dummy_compensating_action():
+        """
+        TODO: Undo the user registration.
+        """
+        log.info("Placeholder for deleting the user from oauth-server")
+
+    # Add a compensating action to try and avoid an exception leaving the user in an invalid state.
+    tran.compensate(dummy_compensating_action)
+    log.info("New user has been registered via the oauth2-service")
+
+
+def request_case(enrolment_code):
+    case_svc = current_app.config.dependency['case-service']
+    case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
+    response = requests.get(case_url)
+    response.raise_for_status()
+    return response.json()
+
+
+def request_collection_exercise(collection_exercise_id):
+    ce_svc = current_app.config.dependency['collectionexercise-service']
+    ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
+    response = requests.get(ce_url)
+    response.raise_for_status()
+    return response.json()
+
+
+def request_survey(survey_id):
+    # TODO: we may want to persist the survey name, otherwise no need to call survey service
+    # survey_svc = current_app.config.dependency['survey-service']
+    # survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
+    # survey = requests.get(survey_url).json()
+    return {}

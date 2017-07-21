@@ -81,5 +81,4 @@ class Validator:
 
     @property
     def errors(self):
-        result = list(itertools.chain(*[r.errors for r in self._rules]))
-        return {'errors': result}
+        return list(itertools.chain(*[r.errors for r in self._rules]))
