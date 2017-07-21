@@ -25,6 +25,10 @@ dependencies:
         scheme: http
         host: mockhost
         port: 3333
+    gov-uk-notify-service:
+        gov_notify_api_key: notify_api_key_placeholder
+        gov_notify_template_id: notify_template_id_placeholder
+        gov_notify_service_id: notify_service_id__placeholder
 
 features:
     skip_oauth_registration: true

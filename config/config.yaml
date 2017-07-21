@@ -46,11 +46,10 @@ dependencies:
         scheme: http
         host: localhost
         port: 8080
-    govuk-notify-service:
-        # TODO: find out the correct values
-        scheme: http
-        host: unknown
-        port: unknown
+    gov-uk-notify-service:
+        gov_notify_api_key: notify_key_placeholder
+        gov_notify_template_id: notify_template_id_placeholder
+        gov_notify_service_id: notify_service_id_placeholder
     frontstage-service:
         # TODO: find out the correct values
         scheme: http
