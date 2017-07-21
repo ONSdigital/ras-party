@@ -254,6 +254,15 @@ class TestParties(PartyTestClient):
         # Then the response is a 404
         self.put_email_verification(token, 404)
 
+    def test_post_respondent_with_no_body_returns_400(self):
+        self.post_to_respondents(None, 400)
+
+    def test_post_business_with_no_body_returns_400(self):
+        self.post_to_businesses(None, 400)
+
+    def test_post_party_with_no_body_returns_400(self):
+        self.post_to_parties(None, 400)
+
 
 if __name__ == '__main__':
     import unittest

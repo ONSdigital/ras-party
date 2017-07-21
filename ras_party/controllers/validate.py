@@ -60,7 +60,7 @@ class IsIn(ValidatorBase):
         self._valid_set = valid_set
 
     def __call__(self, data):
-        self._value = data[self._key]
+        self._value = data.get(self._key)
         result = self._value in self._valid_set
         if not result:
             self._errors = [self.ERROR_MESSAGE.format(self._value, self._key, self._valid_set)]
