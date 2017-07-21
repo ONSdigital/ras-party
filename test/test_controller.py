@@ -6,7 +6,7 @@ from unittest.mock import patch
 from itsdangerous import URLSafeTimedSerializer
 
 from ras_party.models.models import RespondentStatus
-from test.mocks import MockBusiness, MockRespondent, MockRequests
+from test.mocks import MockBusiness, MockRespondent, MockRequests, MockResponse
 from test.party_client import PartyTestClient, businesses, respondents, business_respondent_associations, enrolments
 
 
@@ -131,7 +131,17 @@ class TestParties(PartyTestClient):
         self.assertEqual(len(businesses()), 1)
         self.assertEqual(response_2['attributes']['version'], 2)
 
-    # TODO: maybe remove the interaction test once things are working?
+    @patch('ras_party.controllers.controller.requests')
+    def test_post_respondent_with_inactive_iac(self, mock):
+        # Given the IAC code is inactive
+        def mock_get_iac(*args, **kwargs):
+            return MockResponse('{"active": false}')
+        mock.get = mock_get_iac
+        # When a new respondent is posted
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        # Then status code 400 is returned
+        self.post_to_respondents(mock_respondent, 400)
+
     @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
     def test_post_respondent_requests_the_iac_details(self, mock):
         # Given there is a business (related to the IAC code case context)
@@ -285,9 +295,15 @@ class TestParties(PartyTestClient):
         del mock_party['sampleUnitRef']
         self.post_to_parties(mock_party, 400)
 
-    def get_get_party_with_invalid_unit_type(self):
+    def test_get_party_with_invalid_unit_type(self):
         self.get_party_by_id('XX', '123', 400)
         self.get_party_by_ref('XX', '123', 400)
+
+    def test_get_party_with_nonexistent_ref(self):
+        self.get_party_by_ref('B', '123', 404)
+
+    def test_get_respondent_with_invalid_id(self):
+        self.get_respondent_by_id('123', 400)
 
 
 if __name__ == '__main__':
