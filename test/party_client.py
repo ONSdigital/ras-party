@@ -37,6 +37,11 @@ class PartyTestClient(TestCase):
         initialise_db(app)
         return app
 
+    def get_info(self, expected_status=200):
+        response = self.client.open('/party-api/v1/info', method='GET')
+        self.assertStatus(response, expected_status)
+        return json.loads(response.get_data(as_text=True))
+
     def post_to_parties(self, payload, expected_status):
         response = self.client.open('/party-api/v1/parties',
                                     method='POST',

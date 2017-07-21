@@ -141,7 +141,7 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
 
     :rtype: Party
     """
-    v = Validator(IsIn('sampleUnitType', 'B', 'BI'))
+    v = Validator(IsIn('sampleUnitType', 'B'))
     if not v.validate({'sampleUnitType': sampleUnitType}):
         return make_response(jsonify(v.errors), 400)
 

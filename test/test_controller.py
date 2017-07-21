@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import uuid
 from unittest.mock import patch
 
 from itsdangerous import URLSafeTimedSerializer
@@ -262,6 +263,31 @@ class TestParties(PartyTestClient):
 
     def test_post_party_with_no_body_returns_400(self):
         self.post_to_parties(None, 400)
+
+    def test_info_endpoint(self):
+        response = self.get_info()
+        self.assertIn('name', response)
+        self.assertIn('version', response)
+        self.assertIn('origin', response)
+
+    def test_get_business_with_invalid_id(self):
+        self.get_business_by_id('123', 400)
+
+    def test_get_nonexistent_business_by_id(self):
+        party_id = uuid.uuid4()
+        self.get_business_by_id(party_id, 404)
+
+    def test_get_nonexistent_business_by_ref(self):
+        self.get_business_by_ref('123', 404)
+
+    def test_post_invalid_party(self):
+        mock_party = MockBusiness().attributes(source='test_post_valid_party_adds_to_db').as_party()
+        del mock_party['sampleUnitRef']
+        self.post_to_parties(mock_party, 400)
+
+    def get_get_party_with_invalid_unit_type(self):
+        self.get_party_by_id('XX', '123', 400)
+        self.get_party_by_ref('XX', '123', 400)
 
 
 if __name__ == '__main__':
