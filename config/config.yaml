@@ -33,8 +33,9 @@ dependencies:
     ras-party-db:
         service: rds
         plan: shared-psql
-        schema: ras-party
-        uri: "sqlite:///ras-party"
+        schema: ras_party
+#        uri: "sqlite:///ras-party"
+        uri: "postgresql://postgres:postgres@localhost:5431"
     case-service:
         scheme: http
         host: localhost
