@@ -37,16 +37,16 @@ def create_app(config):
 
 def initialise_db(app):
     # Initialise the database with the specified SQLAlchemy model
-    PartyDatabase = RasDatabase.make(model_paths=['ras_party.models.models'])
-    db = PartyDatabase('ras-party-db', app.config)
+    partydatabase = RasDatabase.make(model_paths=['ras_party.models.models'])
+    db = partydatabase('ras-party-db', app.config)
     # TODO: this isn't entirely safe, use a get_db() lazy initializer instead...
     app.db = db
 
 
 if __name__ == '__main__':
     config_path = 'config/config.yaml'
-    with open(config_path) as f:
-        config = ras_config.from_yaml_file(config_path)
+
+    config = ras_config.from_yaml_file(config_path)
 
     app = create_app(config)
     configure_logger(app.config)
