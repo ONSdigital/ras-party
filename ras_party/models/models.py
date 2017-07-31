@@ -87,6 +87,23 @@ class Business(Base):
 
         return v
 
+    def __resolveAssociations(self, d):
+        respondents = self.respondents
+        d['associations'] = []
+        for businessRespondent in respondents:
+            respondent_dict = {
+                "partyId": businessRespondent.respondent.party_uuid
+            }
+            enrolments = businessRespondent.enrolment
+            respondent_dict['enrolments'] = []
+            for enrolment in enrolments:
+                enrolments_dict = {
+                    "name": enrolment.survey_name,
+                    "surveyId": enrolment.survey_id
+                }
+                respondent_dict['enrolments'].append(enrolments_dict)
+            d['associations'].append(respondent_dict)
+
     def to_business_dict(self):
         d = {
             'id': self.party_uuid,
@@ -96,6 +113,9 @@ class Business(Base):
         props, attrs = partition_dict(self.attributes, self.REQUIRED_ATTRIBUTES)
         d.update(props)
         d['attributes'] = filter_falsey_values(attrs)
+
+        self.__resolveAssociations(d)
+
         return d
 
     def to_party_dict(self):
@@ -105,6 +125,9 @@ class Business(Base):
             'sampleUnitType': self.UNIT_TYPE,
             'attributes': self.attributes
         }
+
+        self.__resolveAssociations(d)
+
         return filter_falsey_values(d)
 
 
@@ -135,7 +158,6 @@ class RespondentStatus(enum.IntEnum):
     ACTIVE = 1
     SUSPENDED = 2
 
-
 class Respondent(Base):
     __tablename__ = 'respondent'
 
@@ -151,6 +173,24 @@ class Respondent(Base):
     telephone = Column(Text)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
+    def __resolveAssociations(self, d):
+        businesses = self.businesses
+        d['associations'] = []
+        for businessRespondent in businesses:
+            business_dict = {
+                "partyId": businessRespondent.business.party_uuid,
+                "sampleUnitRef": businessRespondent.business.business_ref
+            }
+            enrolments = businessRespondent.enrolment
+            business_dict['enrolments'] = []
+            for enrolment in enrolments:
+                enrolments_dict = {
+                    "name": enrolment.survey_name,
+                    "surveyId": enrolment.survey_id
+                }
+                business_dict['enrolments'].append(enrolments_dict)
+            d['associations'].append(business_dict)
+
     def to_respondent_dict(self):
         d = {
             'id': self.party_uuid,
@@ -160,6 +200,8 @@ class Respondent(Base):
             'lastName': self.last_name,
             'telephone': self.telephone
         }
+
+        self.__resolveAssociations(d)
 
         return filter_falsey_values(d)
 
@@ -173,6 +215,8 @@ class Respondent(Base):
                 'lastName': self.last_name,
                 'telephone': self.telephone})
         }
+
+        self.__resolveAssociations(d)
 
         return d
 
