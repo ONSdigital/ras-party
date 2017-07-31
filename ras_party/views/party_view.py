@@ -58,6 +58,10 @@ def get_party_by_id(sampleUnitType, id):
 def get_respondent_by_id(id):
     return controller.get_respondent_by_id(id)
 
+@party_view.route('/respondents/email/<email>', methods=['GET'])
+@log_route
+def get_respondent_by_email(email):
+    return controller.get_respondent_by_email(email)
 
 @party_view.route('/respondents', methods=['POST'])
 @log_route

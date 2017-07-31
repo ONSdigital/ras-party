@@ -196,6 +196,23 @@ def get_respondent_by_id(id):
 
 
 @translate_exceptions
+def get_respondent_by_email(email):
+    """
+    Get a Respondent by its EMail Address
+    Returns a single Party
+    :param email: EMail of Respondent to return
+    :type id: str
+
+    :rtype: Respondent
+    """
+    respondent = current_app.db.session.query(Respondent).filter(Respondent.email_address == email).first()
+    if not respondent:
+        return make_response(jsonify({'errors': "Respondent with email address '{}' does not exist.".format(email)}), 404)
+
+    return make_response(jsonify(respondent.to_respondent_dict()), 200)
+
+
+@translate_exceptions
 @transactional
 def respondents_post(party, tran):
     """
