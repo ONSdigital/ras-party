@@ -297,14 +297,17 @@ def respondents_post(party, tran):
         except orm.exc.NoResultFound:
             msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
             raise RasError(msg, status_code=404)
+        try:
+            r = Respondent(**translated_party)
+            br = BusinessRespondent(business=b, respondent=r)
+            Enrolment(business_respondent=br, survey_id=survey_id, survey_name=survey_name)
 
-        r = Respondent(**translated_party)
-        br = BusinessRespondent(business=b, respondent=r)
-        Enrolment(business_respondent=br, survey_id=survey_id, survey_name=survey_name)
+            sess.add(r)
 
-        sess.add(r)
+            post_case_event(case_id, r.party_uuid)
+        except Exception as e:
+            log.error("Could not post the case event or we could not create the Enrolement objet. Error is: {}".format(e))
 
-        post_case_event(case_id, r.party_uuid)
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
 
