@@ -16,6 +16,14 @@ from ras_party.models.models import Business, Respondent, BusinessRespondent, En
 
 log = get_logger()
 
+#
+#   On the one hand these will be environment dependent and should probably be
+#   environment variables, but on the other hand, the requests should be wrapped
+#   in error detection and retry code and we shouldn't be relying on these anyway ...
+#
+REQUESTS_GET_TIMEOUT = 2.0
+REQUESTS_POST_TIMEOUT = 2.0
+
 
 # TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
 
@@ -362,7 +370,7 @@ def register_user(party, tran):
     }
     oauth_svc = current_app.config.dependency['oauth2-service']
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    oauth_response = requests.post(oauth_url, data=oauth_payload, timeout=0.1)
+    oauth_response = requests.post(oauth_url, data=oauth_payload, timeout=REQUESTS_POST_TIMEOUT)
     if not oauth_response.status_code == 201:
         oauth_response.raise_for_status()
 
@@ -382,7 +390,7 @@ def request_iac(enrolment_code):
     case_svc = current_app.config.dependency['iac-service']
     case_url = build_url('{}://{}:{}/iacs/{}', case_svc, enrolment_code)
     log.info("GET URL {}".format(case_url))
-    response = requests.get(case_url, timeout=0.1)
+    response = requests.get(case_url, timeout=REQUESTS_GET_TIMEOUT)
     log.info("IAC service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
@@ -392,7 +400,7 @@ def request_case(enrolment_code):
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
     log.info("GET URL {}".format(case_url))
-    response = requests.get(case_url, timeout=0.1)
+    response = requests.get(case_url, timeout=REQUESTS_GET_TIMEOUT)
     log.info("Case service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
@@ -402,7 +410,7 @@ def request_collection_exercise(collection_exercise_id):
     ce_svc = current_app.config.dependency['collectionexercise-service']
     ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
     log.info("GET {}".format(ce_url))
-    response = requests.get(ce_url, timeout=0.1)
+    response = requests.get(ce_url, timeout=REQUESTS_GET_TIMEOUT)
     log.info("Collection exercise service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
@@ -412,7 +420,7 @@ def request_survey(survey_id):
     survey_svc = current_app.config.dependency['survey-service']
     survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
     log.info("GET {}".format(survey_url))
-    response = requests.get(survey_url, timeout=0.1)
+    response = requests.get(survey_url, timeout=REQUESTS_GET_TIMEOUT)
     log.info("Survey service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
@@ -430,7 +438,7 @@ def post_case_event(case_id, party_id):
     }
 
     log.info("POST {} payload={}".format(case_url, payload))
-    response = requests.post(case_url, json=payload, timeout=0.1)
+    response = requests.post(case_url, json=payload, timeout=REQUESTS_POST_TIMEOUT)
     log.info("Case service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
