@@ -31,7 +31,7 @@ class GovUKNotify:
                 template_id=template_id,
                 personalisation=personalisation,
                 reference=reference)
-            log.info('Message sent to gov.uk notify with notification id {}'.format(response.id))
+            log.info('Message sent to gov.uk notify with notification id {}'.format(response['id']))
         except Exception as e:
             msg = 'Gov uk notify can not send the message' + str(e)
             log.error(msg)

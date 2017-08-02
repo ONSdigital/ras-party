@@ -13,6 +13,7 @@ from ras_party.controllers.transactional import transactional
 from ras_party.controllers.util import build_url
 from ras_party.controllers.validate import Validator, IsUuid, Exists, IsIn
 from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus
+from ras_party.controllers.gov_uk_notify import GovUKNotify
 
 log = get_logger()
 
@@ -281,16 +282,6 @@ def respondents_post(party, tran):
         'telephone': party['telephone']
     }
 
-    secret_key = current_app.config["SECRET_KEY"]
-    email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
-    timed_serializer = URLSafeTimedSerializer(secret_key)
-    token = timed_serializer.dumps(party['emailAddress'], salt=email_token_salt)
-    frontstage_svc = current_app.config.dependency['frontstage-service']
-    frontstage_url = build_url('{}://{}:{}/activate-account?t={}', frontstage_svc, token)
-
-    # TODO: invoke real notification service passing the frontstage_url
-    notify(frontstage_url)
-
     with db_session() as sess:
         try:
             b = sess.query(Business).filter(Business.party_uuid == business_id).one()
@@ -307,6 +298,17 @@ def respondents_post(party, tran):
             post_case_event(case_id, r.party_uuid)
         except Exception as e:
             log.error("Could not post the case event or we could not create the Enrolement objet. Error is: {}".format(e))
+
+        secret_key = current_app.config["SECRET_KEY"]
+        email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
+        timed_serializer = URLSafeTimedSerializer(secret_key)
+        token = timed_serializer.dumps(party['emailAddress'], salt=email_token_salt)
+        frontstage_svc = current_app.config.dependency['frontstage-service']
+        frontstage_url = build_url('{}://{}:{}/register/activate-account/{}', frontstage_svc, token)
+        notify_service = current_app.config.dependency['gov-uk-notify-service']
+        template_id = notify_service['gov_notify_template_id']
+        notify(party['emailAddress'], template_id, frontstage_url, r.party_uuid)
+        notify(frontstage_url)
 
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
@@ -447,6 +449,9 @@ def post_case_event(case_id, party_id):
     return response.json()
 
 
-def notify(_):
-    # TODO: this currently exists solely for unit test purposes and needs to be replaced with the real thing
-    pass
+def notify(email, template_id, url, party_id):
+    personalisation = {
+        'ACCOUNT_VERIFICATION_URL': url
+    }
+    notifier = GovUKNotify()
+    notifier.send_message(email, template_id, personalisation, party_id)
