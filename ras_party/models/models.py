@@ -87,14 +87,14 @@ class Business(Base):
 
         return v
 
-    def __resolveAssociations(self, d):
-        respondents = self.respondents
-        d['associations'] = []
-        for businessRespondent in respondents:
+    @staticmethod
+    def _get_respondents_associations(respondents):
+        associations = []
+        for business_respondent in respondents:
             respondent_dict = {
-                "partyId": businessRespondent.respondent.party_uuid
+                "partyId": business_respondent.respondent.party_uuid
             }
-            enrolments = businessRespondent.enrolment
+            enrolments = business_respondent.enrolment
             respondent_dict['enrolments'] = []
             for enrolment in enrolments:
                 enrolments_dict = {
@@ -102,19 +102,19 @@ class Business(Base):
                     "surveyId": enrolment.survey_id
                 }
                 respondent_dict['enrolments'].append(enrolments_dict)
-            d['associations'].append(respondent_dict)
+            associations.append(respondent_dict)
+        return associations
 
     def to_business_dict(self):
         d = {
             'id': self.party_uuid,
             'businessRef': self.business_ref,
-            'sampleUnitType': self.UNIT_TYPE
+            'sampleUnitType': self.UNIT_TYPE,
+            'associations': self._get_respondents_associations(self.respondents)
         }
         props, attrs = partition_dict(self.attributes, self.REQUIRED_ATTRIBUTES)
         d.update(props)
         d['attributes'] = filter_falsey_values(attrs)
-
-        self.__resolveAssociations(d)
 
         return d
 
@@ -123,10 +123,9 @@ class Business(Base):
             'id': self.party_uuid,
             'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
-            'attributes': self.attributes
+            'attributes': self.attributes,
+            'associations': self._get_respondents_associations(self.respondents)
         }
-
-        self.__resolveAssociations(d)
 
         return filter_falsey_values(d)
 
@@ -158,6 +157,7 @@ class RespondentStatus(enum.IntEnum):
     ACTIVE = 1
     SUSPENDED = 2
 
+
 class Respondent(Base):
     __tablename__ = 'respondent'
 
@@ -173,15 +173,15 @@ class Respondent(Base):
     telephone = Column(Text)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    def __resolveAssociations(self, d):
-        businesses = self.businesses
-        d['associations'] = []
-        for businessRespondent in businesses:
+    @staticmethod
+    def _get_business_associations(businesses):
+        associations = []
+        for business_respondent in businesses:
             business_dict = {
-                "partyId": businessRespondent.business.party_uuid,
-                "sampleUnitRef": businessRespondent.business.business_ref
+                "partyId": business_respondent.business.party_uuid,
+                "sampleUnitRef": business_respondent.business.business_ref
             }
-            enrolments = businessRespondent.enrolment
+            enrolments = business_respondent.enrolment
             business_dict['enrolments'] = []
             for enrolment in enrolments:
                 enrolments_dict = {
@@ -189,7 +189,8 @@ class Respondent(Base):
                     "surveyId": enrolment.survey_id
                 }
                 business_dict['enrolments'].append(enrolments_dict)
-            d['associations'].append(business_dict)
+            associations.append(business_dict)
+        return associations
 
     def to_respondent_dict(self):
         d = {
@@ -198,10 +199,9 @@ class Respondent(Base):
             'emailAddress': self.email_address,
             'firstName': self.first_name,
             'lastName': self.last_name,
-            'telephone': self.telephone
+            'telephone': self.telephone,
+            'associations': self._get_business_associations(self.businesses)
         }
-
-        self.__resolveAssociations(d)
 
         return filter_falsey_values(d)
 
@@ -213,10 +213,9 @@ class Respondent(Base):
                 'emailAddress': self.email_address,
                 'firstName': self.first_name,
                 'lastName': self.last_name,
-                'telephone': self.telephone})
+                'telephone': self.telephone,
+                'associations': self._get_business_associations(self.businesses)})
         }
-
-        self.__resolveAssociations(d)
 
         return d
 
