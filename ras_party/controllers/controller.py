@@ -355,11 +355,12 @@ def set_user_active(respondent_email):
     oauth_payload = {
         "username": respondent_email,
         "client_id": current_app.config.dependency['oauth2-service']['client_id'],
-        "client_secret": current_app.config.dependency['oauth2-service']['client_secret']
+        "client_secret": current_app.config.dependency['oauth2-service']['client_secret'],
+        "account_verified": "true"
     }
     oauth_svc = current_app.config.dependency['oauth2-service']
-    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['activate_endpoint'])
-    oauth_response = requests.post(oauth_url, data=oauth_payload)
+    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
+    oauth_response = requests.put(oauth_url, data=oauth_payload)
     if not oauth_response.status_code == 201:
         log.error("Unable to set the user active on the OAuth2 server")
         oauth_response.raise_for_status()
