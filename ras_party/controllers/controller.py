@@ -296,22 +296,21 @@ def respondents_post(party, tran):
             sess.add(r)
 
             post_case_event(case_id, r.party_uuid)
-        except Exception as e:
-            log.error("Could not post the case event or we could not create the Enrolement objet. Error is: {}".format(e))
 
-        secret_key = current_app.config["SECRET_KEY"]
-        email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
-        timed_serializer = URLSafeTimedSerializer(secret_key)
-        token = timed_serializer.dumps(party['emailAddress'], salt=email_token_salt)
-        frontstage_svc = current_app.config.dependency['frontstage-service']
-        frontstage_url = build_url('{}://{}:{}/register/activate-account/{}', frontstage_svc, token)
-        notify_service = current_app.config.dependency['gov-uk-notify-service']
-        template_id = notify_service['gov_notify_template_id']
-        notify(party['emailAddress'], template_id, frontstage_url, r.party_uuid)
-        notify(frontstage_url)
+            secret_key = current_app.config["SECRET_KEY"]
+            email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
+            timed_serializer = URLSafeTimedSerializer(secret_key)
+            token = timed_serializer.dumps(party['emailAddress'], salt=email_token_salt)
+            frontstage_svc = current_app.config.dependency['frontstage-service']
+            frontstage_url = build_url('{}://{}:{}/register/activate-account/{}', frontstage_svc, token)
+            notify_service = current_app.config.dependency['gov-uk-notify-service']
+            template_id = notify_service['gov_notify_template_id']
+            notify(party['emailAddress'], template_id, frontstage_url, r.party_uuid)
+
+        except Exception as e:
+            log.error("Could not post the case event, create Enrolement objets, or error in verification email generation. Error is: {}".format(e))
 
         return make_response(jsonify(r.to_respondent_dict()), 200)
-
 
 @translate_exceptions
 def put_email_verification(token):
@@ -392,10 +391,10 @@ def register_user(party, tran):
 
 def request_iac(enrolment_code):
     # TODO: factor out commonality from these request_* functions
-    case_svc = current_app.config.dependency['iac-service']
-    case_url = build_url('{}://{}:{}/iacs/{}', case_svc, enrolment_code)
-    log.info("GET URL {}".format(case_url))
-    response = requests.get(case_url, timeout=REQUESTS_GET_TIMEOUT)
+    iac_svc = current_app.config.dependency['iac-service']
+    iac_url = build_url('{}://{}:{}/iacs/{}', iac_svc, enrolment_code)
+    log.info("GET URL {}".format(iac_url))
+    response = requests.get(iac_url, timeout=REQUESTS_GET_TIMEOUT)
     log.info("IAC service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
