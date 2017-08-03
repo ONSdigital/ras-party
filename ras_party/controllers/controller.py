@@ -27,6 +27,9 @@ log = get_logger()
 REQUESTS_GET_TIMEOUT = 2.0
 REQUESTS_POST_TIMEOUT = 2.0
 
+#
+#   TODO: the spec seems to read as a need for /info, currently this endpoint responds on /party-api/v1/info
+#
 _health_check = {}
 if Path('git_info').exists():
     with open('git_info') as io:
