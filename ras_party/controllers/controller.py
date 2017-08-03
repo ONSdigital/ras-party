@@ -5,6 +5,8 @@ from flask import make_response, jsonify, current_app
 from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
 from sqlalchemy import orm
 from structlog import get_logger
+from pathlib import Path
+from json import loads
 
 from ras_party.controllers.error_decorator import translate_exceptions
 from ras_party.controllers.ras_error import RasError
@@ -25,6 +27,13 @@ log = get_logger()
 REQUESTS_GET_TIMEOUT = 2.0
 REQUESTS_POST_TIMEOUT = 2.0
 
+#
+#   TODO: the spec seems to read as a need for /info, currently this endpoint responds on /party-api/v1/info
+#
+_health_check = {}
+if Path('git_info').exists():
+    with open('git_info') as io:
+        _health_check = loads(io.read())
 
 # TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
 
@@ -34,11 +43,8 @@ def get_info():
     info = {
         "name": current_app.config['NAME'],
         "version": current_app.config['VERSION'],
-        "origin": "git@github.com:ONSdigital/ras-party.git",
-        "commit": "TBD",
-        "branch": "TBD",
-        "built": "TBD"
     }
+    info = dict(_health_check, **info)
 
     if current_app.config.feature.report_dependencies:
         info["dependencies"] = [{'name': name} for name in current_app.config.dependency.keys()]
