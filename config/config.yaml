@@ -20,7 +20,7 @@
 # db_uri = current_app.config.dependency['ras-party-db'].uri
 
 service:
-    NAME: ras-party
+    NAME: partysvc
     VERSION: 0.0.1
     SCHEME: http
     HOST: 0.0.0.0
