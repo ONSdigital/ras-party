@@ -135,6 +135,19 @@ class RespondentStatus(enum.IntEnum):
     ACTIVE = 1
     SUSPENDED = 2
 
+class PendingEnrolment(Base):
+    __tablename__ = 'pending_enrolment'
+
+    id = Column(Integer, primary_key=True)
+    case_id = Column(GUID)
+    respondent_id = Column(Integer, ForeignKey('respondent.id'))
+    created_on = Column(DateTime, default=datetime.datetime.utcnow)
+    respondent = relationship('Respondent')
+
+    __table_args__ = (
+        ForeignKeyConstraint(['respondent_id'],
+                             ['respondent.id']),
+    )
 
 class Respondent(Base):
     __tablename__ = 'respondent'
@@ -150,6 +163,7 @@ class Respondent(Base):
     last_name = Column(Text)
     telephone = Column(Text)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
+    pending_enrolment = relationship('PendingEnrolment', back_populates='respondent')
 
     def to_respondent_dict(self):
         d = {
@@ -158,7 +172,8 @@ class Respondent(Base):
             'emailAddress': self.email_address,
             'firstName': self.first_name,
             'lastName': self.last_name,
-            'telephone': self.telephone
+            'telephone': self.telephone,
+            'status': self.status
         }
 
         return filter_falsey_values(d)
@@ -167,6 +182,7 @@ class Respondent(Base):
         d = {
             'id': self.party_uuid,
             'sampleUnitType': self.UNIT_TYPE,
+            'status': self.status,
             'attributes': filter_falsey_values({
                 'emailAddress': self.email_address,
                 'firstName': self.first_name,

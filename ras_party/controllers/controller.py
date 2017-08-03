@@ -12,7 +12,7 @@ from ras_party.controllers.session_context import db_session
 from ras_party.controllers.transactional import transactional
 from ras_party.controllers.util import build_url
 from ras_party.controllers.validate import Validator, IsUuid, Exists, IsIn
-from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus
+from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus, PendingEnrolment
 from ras_party.controllers.gov_uk_notify import GovUKNotify
 
 log = get_logger()
@@ -291,11 +291,13 @@ def respondents_post(party, tran):
         try:
             r = Respondent(**translated_party)
             br = BusinessRespondent(business=b, respondent=r)
+            pending_enrolment = PendingEnrolment(case_id = case_id, respondent=r)
             Enrolment(business_respondent=br, survey_id=survey_id, survey_name=survey_name)
 
             sess.add(r)
+            sess.add(pending_enrolment)
 
-            post_case_event(case_id, r.party_uuid)
+            post_case_event(case_id, r.party_uuid, "RESPONDENT_ACCOUNT_CREATED", "New respondent account created")
 
             secret_key = current_app.config["SECRET_KEY"]
             email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
@@ -335,12 +337,25 @@ def put_email_verification(token):
             raise RasError("Couldn't locate user.", status_code=404)
 
         if not r.status == RespondentStatus.CREATED:
-            raise RasError("Verification token is invalid or already used.", 409)
+            # Do we really want to raise an error if their account is already verified?
+            # raise RasError("Verification token is invalid or already used.", 409)
+            return make_response(jsonify(r.to_respondent_dict()), 200)
 
         # We need to set the user as active on the OAuth2 server.
         set_user_active(email_address)
 
         r.status = RespondentStatus.ACTIVE
+
+        # Next we check if this respondent has a pending enrolment (there will be only one)
+        if r.pending_enrolment:
+           pending_enrolment_id = r.pending_enrolment[0].id
+           pending_enrolment = sess.query(PendingEnrolment).filter(PendingEnrolment.id == pending_enrolment_id).one()
+           case_id = pending_enrolment.case_id
+           log.info("Pending enrolment for case_id :: " + str(case_id))
+           post_case_event(str(r.party_uuid), case_id, "RESPONDENT_ENROLED", "Respondent enrolled")
+           sess.delete(pending_enrolment)
+        else:
+           log.info("No pending enrolments for this respondent")
 
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
@@ -430,13 +445,13 @@ def request_survey(survey_id):
     return response.json()
 
 
-def post_case_event(case_id, party_id):
+def post_case_event(case_id, party_id, category, desc):
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/{}/events', case_svc, case_id)
 
     payload = {
-        'description': "New respondent account created",
-        'category': "RESPONDENT_ACCOUNT_CREATED",
+        'description': desc ,
+        'category': category,
         'partyId': party_id,
         'createdBy': "Party Service"
     }
@@ -447,10 +462,10 @@ def post_case_event(case_id, party_id):
     response.raise_for_status()
     return response.json()
 
-
 def notify(email, template_id, url, party_id):
     personalisation = {
         'ACCOUNT_VERIFICATION_URL': url
     }
+    log.info("About to send verification email for party_id: {} URL: {}".format(party_id, url))
     notifier = GovUKNotify()
     notifier.send_message(email, template_id, personalisation, party_id)
