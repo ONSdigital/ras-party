@@ -7,6 +7,7 @@ export VCAP_SERVICES='{
      "db_name": "my_demo_database",
      "host": "my_long_host_name.rds.amazonaws.com",
      "password": "my_secret_password",
+#    "uri":"sqlite:///ras-party",
 	 "uri": "postgresql://postgres:postgres@localhost:5431",
      "username": "my_long_hostname"
     },
