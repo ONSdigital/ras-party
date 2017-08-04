@@ -20,14 +20,15 @@
 # db_uri = current_app.config.dependency['ras-party-db'].uri
 
 service:
-    NAME: partysvc
+    NAME: ras-party
     VERSION: 0.0.1
     SCHEME: http
     HOST: 0.0.0.0
-    PORT: 8001
+    PORT: 8081
     DEBUG: False
     LOG_LEVEL: debug
     SECRET_KEY: aardvark
+    EMAIL_TOKEN_SALT: aardvark
 
 dependencies:
     ras-party-db:
@@ -35,7 +36,7 @@ dependencies:
         plan: shared-psql
         schema: ras_party
         uri: "sqlite:///ras-party"
-#        uri: "postgresql://postgres:postgres@localhost:5432"
+        # uri: "postgresql://postgres:postgres@localhost:5432/postgres"
     case-service:
         scheme: http
         host: localhost
@@ -53,10 +54,9 @@ dependencies:
         gov_notify_template_id: notify_template_id_placeholder
         gov_notify_service_id: notify_service_id_placeholder
     frontstage-service:
-        # TODO: find out the correct values
         scheme: http
-        host: unknown
-        port: unknown
+        host: localhost
+        port: 5001
     api-gateway:
         scheme: http
         host: localhost
@@ -72,7 +72,6 @@ dependencies:
         authorization_endpoint: "/web/authorize/"
         token_endpoint: "/api/v1/tokens/"
         admin_endpoint: "/api/account/create"
-        activate_endpoint: "/api/account/activate"
         client_id: "ons@ons.gov"
         client_secret: "password"
 
@@ -83,3 +82,4 @@ features:
     oauth_registration: True
     case_service_get_party: False
     report_dependencies: False
+    send_email_to_gov_notify: False
