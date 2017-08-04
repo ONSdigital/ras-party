@@ -348,12 +348,13 @@ def put_email_verification(token):
             # raise RasError("Verification token is invalid or already used.", 409)
             return make_response(jsonify(r.to_respondent_dict()), 200)
 
-        # We need to set the user as active on the OAuth2 server.
+        # We set the user as verified on the OAuth2 server.
         set_user_active(email_address)
 
+        # We set the party as ACTIVE in this service
         r.status = RespondentStatus.ACTIVE
 
-        # Next we check if this respondent has a pending enrolment (there will be only one)
+        # Next we check if this respondent has a pending enrolment (there will be only one, set during registration)
         if r.pending_enrolment:
            pending_enrolment_id = r.pending_enrolment[0].id
            pending_enrolment = sess.query(PendingEnrolment).filter(PendingEnrolment.id == pending_enrolment_id).one()
@@ -416,7 +417,7 @@ def request_iac(enrolment_code):
     iac_svc = current_app.config.dependency['iac-service']
     iac_url = build_url('{}://{}:{}/iacs/{}', iac_svc, enrolment_code)
     log.info("GET URL {}".format(iac_url))
-    response = requests.get(iac_url, timeout=REQUESTS_GET_TIMEOUT)
+    response = requests.get(iac_url, auth=('admin', 'secret'), timeout=REQUESTS_GET_TIMEOUT)
     log.info("IAC service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
@@ -474,5 +475,9 @@ def notify(email, template_id, url, party_id):
         'ACCOUNT_VERIFICATION_URL': url
     }
     log.info("About to send verification email for party_id: {} URL: {}".format(party_id, url))
-    notifier = GovUKNotify()
-    notifier.send_message(email, template_id, personalisation, party_id)
+    if current_app.config.feature['send_email_to_gov_notify']:
+        notifier = GovUKNotify()
+        notifier.send_message(email, template_id, personalisation, party_id)
+    else:
+        log.info("Email not sent :: send_email_to_gov_notify=false")
+
