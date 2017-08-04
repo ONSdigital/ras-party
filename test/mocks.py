@@ -140,5 +140,3 @@ class MockRequests:
     def __init__(self):
         self.get = self.Get()
         self.post = self.Post()
-
-

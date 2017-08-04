@@ -333,7 +333,8 @@ def put_email_verification(token):
         log.info("An email verification token expired for a user. The token is: {}".format(token))
         raise RasError("Verification token has expired", 409)
     except (BadSignature, BadData) as e:
-        log.warning("An email verification token looks like it's corrupt. The token value is: {} and the error is: {}".format(token, e))
+        log.warning("An email verification token looks like it's corrupt. The token value is: {} and the error is: {}"
+                    .format(token, e))
         raise RasError("Email verification is corrupt or does not exist", 404)
 
     with db_session() as sess:

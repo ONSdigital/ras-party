@@ -74,4 +74,3 @@ def post_respondent():
 @log_route
 def put_email_verification(token):
     return controller.put_email_verification(token)
-
