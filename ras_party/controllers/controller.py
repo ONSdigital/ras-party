@@ -434,7 +434,7 @@ def request_iac(enrolment_code):
     iac_svc = current_app.config.dependency['iac-service']
     iac_url = build_url('{}://{}:{}/iacs/{}', iac_svc, enrolment_code)
     log.info("GET URL {}".format(iac_url))
-    response = requests.get(iac_url, auth=('admin', 'secret'), timeout=REQUESTS_GET_TIMEOUT)
+    response = requests.get(iac_url, timeout=REQUESTS_GET_TIMEOUT)
     log.info("IAC service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
