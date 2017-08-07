@@ -76,7 +76,7 @@ def get_business_by_ref(ref):
     if not business:
         return make_response(jsonify({'errors': "Business with reference '{}' does not exist.".format(ref)}), 404)
 
-    return make_response(jsonify(business.to_business_dict()), 200)
+    return make_response(jsonify(business.to_flattened_dict()), 200)
 
 
 @translate_exceptions
@@ -97,7 +97,7 @@ def get_business_by_id(id):
     if not business:
         return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
 
-    return make_response(jsonify(business.to_business_dict()), 200)
+    return make_response(jsonify(business.to_flattened_dict()), 200)
 
 
 @translate_exceptions
