@@ -16,19 +16,11 @@ from ras_party.controllers.util import filter_falsey_values, partition_dict
 with open('ras_party/schemas/party_schema.json') as io:
     PARTY_SCHEMA = loads(io.read())
 
-with open('ras_party/schemas/business_schema.json') as io:
-    BUSINESS_SCHEMA = loads(io.read())
-
 
 class Business(Base):
     __tablename__ = 'business'
 
     UNIT_TYPE = 'B'
-
-    REQUIRED_ATTRIBUTES = [
-        'contactName', 'employeeCount', 'enterpriseName', 'facsimile', 'fulltimeCount', 'legalStatus', 'name',
-        'sic2003', 'sic2007', 'telephone', 'tradingName', 'turnover'
-    ]
 
     # TODO: consider using postgres uuid for uuid pkey
     party_uuid = Column(GUID, unique=True, primary_key=True)
@@ -45,13 +37,6 @@ class Business(Base):
             return validator.iter_errors(json_packet)
         return False
 
-    @staticmethod
-    def validate_flat(json_packet):
-
-        validator = Draft4Validator(BUSINESS_SCHEMA)
-        if not validator.is_valid(json_packet):
-            return validator.iter_errors(json_packet)
-        return False
 
     @staticmethod
     def add_structure(json_packet):
@@ -60,11 +45,11 @@ class Business(Base):
         normal structured format and use the authoratative routine to return the data we want.
         """
         structured = {
-            'sampleUnitRef': json_packet['sampleUnitRef'],
-            'sampleUnitType': json_packet['sampleUnitType']
+            'sampleUnitRef': json_packet.get('sampleUnitRef'),
+            'sampleUnitType': json_packet.get('sampleUnitType')
         }
-        json_packet.pop('sampleUnitRef')
-        json_packet.pop('sampleUnitType')
+        json_packet.pop('sampleUnitRef', None)
+        json_packet.pop('sampleUnitType', None)
         structured['attributes'] = json_packet
         return structured
 
@@ -98,13 +83,13 @@ class Business(Base):
         return associations
 
     def to_flattened_dict(self):
-        return {
+        d = {
             'id': self.party_uuid,
             'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
             'associations': self._get_respondents_associations(self.respondents),
-            'attributes': self.attributes
         }
+        return dict(d, **self.attributes)
 
     def to_structured_dict(self):
         return {
