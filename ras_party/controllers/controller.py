@@ -126,8 +126,7 @@ def parties_post(json_packet, structured=True):
     :type bool: Structured or Flat
     """
     result = []
-    errors = Business.validate_structured(json_packet)
-
+    errors = Business.validate(json_packet)
     if errors:
         [result.append({'message': error.message, 'validator': error.validator}) for error in errors]
         return error_result(result)
@@ -140,12 +139,11 @@ def parties_post(json_packet, structured=True):
         existing_business = tran.query(Business).filter(Business.business_ref == json_packet['sampleUnitRef']).first()
         if existing_business:
             json_packet['id'] = str(existing_business.party_uuid)
+
         b = Business.from_party_dict(json_packet)
         tran.merge(b)
-        if structured:
-            return make_response(jsonify(b.to_structured_dict()), 200)
-        else:
-            return make_response(jsonify(b.to_flattened_dict()), 200)
+        resp = b.to_structured_dict() if structured else b.to_flattened_dict()
+        return make_response(jsonify(resp), 200)
 
 
 @translate_exceptions

@@ -30,7 +30,7 @@ class Business(Base):
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
     @staticmethod
-    def validate_structured(json_packet):
+    def validate(json_packet):
 
         validator = Draft4Validator(PARTY_SCHEMA)
         if not validator.is_valid(json_packet):
