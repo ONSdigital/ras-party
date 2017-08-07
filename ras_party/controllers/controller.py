@@ -267,18 +267,22 @@ def respondents_post(party, tran):
     if existing:
         raise RasError("User with email address {} already exists.".format(party['emailAddress']), status_code=400)
 
+    #TODO the register user function needs to handle the tran argument. If there is a failure it knows how to remove the user from the OAuth2 server
     register_user(party, tran)
 
+    #TODO any of the dictionary lookups could return a key error. We should detect and protect against this.
     case_context = request_case(party['enrolmentCode'])
     case_id = case_context['id']
-
     business_id = case_context['partyId']
     collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
     collection_exercise = request_collection_exercise(collection_exercise_id)
 
-    survey_id = collection_exercise['surveyId']
-    survey = request_survey(survey_id)
-    survey_name = survey['longName']
+    try:
+        survey_id = collection_exercise['surveyId']
+        survey = request_survey(survey_id)
+        survey_name = survey['longName']
+    except KeyError:
+        raise RasError("There is no survey bound for this user with email address: {}".format(party['emailAddress']))
 
     translated_party = {
         'party_uuid': party.get('id') or str(uuid.uuid4()),
@@ -291,9 +295,13 @@ def respondents_post(party, tran):
     with db_session() as sess:
         try:
             b = sess.query(Business).filter(Business.party_uuid == business_id).one()
+        except orm.exc.MultipleResultsFound:
+            msg = "There were multiple results found for a business ID while enrolling user with email: {}".format(party['emailAddress'])
+            raise RasError(msg, status_code=409)    # TODO This might be better as a 404
         except orm.exc.NoResultFound:
             msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
             raise RasError(msg, status_code=404)
+
         try:
             r = Respondent(**translated_party)
             br = BusinessRespondent(business=b, respondent=r)
