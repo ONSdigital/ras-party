@@ -14,7 +14,7 @@ from ras_party.controllers.session_context import db_session
 from ras_party.controllers.transactional import transactional
 from ras_party.controllers.util import build_url
 from ras_party.controllers.validate import Validator, IsUuid, Exists, IsIn
-from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus, PendingEnrolment
+from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus, PendingEnrolment, EnrolmentStatus
 from ras_party.controllers.gov_uk_notify import GovUKNotify
 
 log = get_logger()
@@ -238,7 +238,7 @@ def respondents_post(party, tran):
     4. Lookup the collection exercise from the collection exercise service
     5. Lookup the survey from the survey service
     6. Generate an email verification token, and an email verification url
-    7. Invoke the email verification (this is currently mocked out)
+    7. Invoke the email verification
     8. Update the database with the new respondent, establishing an association to the business, and an entry
        in the enrolment table (along with the survey id / survey name)
     9. Post a case event to the case service to notify that a new respondent has been created
@@ -289,7 +289,8 @@ def respondents_post(party, tran):
         'email_address': party['emailAddress'],
         'first_name': party['firstName'],
         'last_name': party['lastName'],
-        'telephone': party['telephone']
+        'telephone': party['telephone'],
+        'status': RespondentStatus.CREATED
     }
 
     with db_session() as sess:
@@ -303,16 +304,18 @@ def respondents_post(party, tran):
             raise RasError(msg, status_code=404)
 
         try:
+            #  Create the enrolment respondent-business-survey associations
             r = Respondent(**translated_party)
             br = BusinessRespondent(business=b, respondent=r)
-            pending_enrolment = PendingEnrolment(case_id = case_id, respondent=r)
-            Enrolment(business_respondent=br, survey_id=survey_id, survey_name=survey_name)
-
+            pending_enrolment = PendingEnrolment(case_id = case_id, respondent=r, business_id=business_id, survey_id = survey_id)
+            Enrolment(business_respondent=br, survey_id=survey_id, survey_name=survey_name, status=EnrolmentStatus.PENDING)
             sess.add(r)
             sess.add(pending_enrolment)
 
+            # Notify the case service of this account being created
             post_case_event(case_id, r.party_uuid, "RESPONDENT_ACCOUNT_CREATED", "New respondent account created")
 
+            # Create and send the email verification token
             secret_key = current_app.config["SECRET_KEY"]
             email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
             timed_serializer = URLSafeTimedSerializer(secret_key)
@@ -341,7 +344,8 @@ def put_email_verification(token):
         log.info("An email verification token expired for a user. The token is: {}".format(token))
         raise RasError("Verification token has expired", 409)
     except (BadSignature, BadData) as e:
-        log.warning("An email verification token looks like it's corrupt. The token value is: {} and the error is: {}".format(token, e))
+        log.warning("An email verification token looks like it's corrupt. The token value is: {} and the error is: {}"
+                    .format(token, e))
         raise RasError("Email verification is corrupt or does not exist", 404)
 
     with db_session() as sess:
@@ -355,25 +359,39 @@ def put_email_verification(token):
             # raise RasError("Verification token is invalid or already used.", 409)
             return make_response(jsonify(r.to_respondent_dict()), 200)
 
-        # We set the user as verified on the OAuth2 server.
-        set_user_active(email_address)
-
         # We set the party as ACTIVE in this service
         r.status = RespondentStatus.ACTIVE
 
-        # Next we check if this respondent has a pending enrolment (there will be only one, set during registration)
+        # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
         if r.pending_enrolment:
-           pending_enrolment_id = r.pending_enrolment[0].id
-           pending_enrolment = sess.query(PendingEnrolment).filter(PendingEnrolment.id == pending_enrolment_id).one()
-           case_id = pending_enrolment.case_id
-           log.info("Pending enrolment for case_id :: " + str(case_id))
-           post_case_event(str(r.party_uuid), case_id, "RESPONDENT_ENROLED", "Respondent enrolled")
-           sess.delete(pending_enrolment)
+           enrol_respondent_for_survey(r, sess)
         else:
-           log.info("No pending enrolments for this respondent")
+           log.info("No pending enrolment for respondent {}".format(str(r.party_uuid)))
+
+        # We set the user as verified on the OAuth2 server.
+        set_user_active(email_address)
 
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
+# Handle the pending enrolment that was created during registration
+def enrol_respondent_for_survey(r, sess):
+    # TODO: Need to handle all the DB/SQLAlchemy errors that could occur here!
+    pending_enrolment_id = r.pending_enrolment[0].id
+    pending_enrolment = sess.query(PendingEnrolment).filter(PendingEnrolment.id == pending_enrolment_id).one()
+    enrolment = sess.query(Enrolment).filter(Enrolment.business_id == str(pending_enrolment.business_id)) \
+        .filter(Enrolment.survey_id == str(pending_enrolment.survey_id)) \
+        .one()
+    enrolment.status = EnrolmentStatus.ENABLED
+    sess.add(enrolment)
+    log.info("Enabling pending enrolment for respondent {} to survey_id {} for business_id {}" \
+             .format(str(r.party_uuid), \
+                     str(pending_enrolment.survey_id), \
+                     str(pending_enrolment.business_id)))
+    # Send an enrolment event to the case service
+    case_id = pending_enrolment.case_id
+    log.info("Pending enrolment for case_id :: " + str(case_id))
+    post_case_event(str(case_id), str(r.party_uuid), "RESPONDENT_ENROLED", "Respondent enrolled")
+    sess.delete(pending_enrolment)
 
 # Helper function to set the 'active' flag on the OAuth2 server for a user. If it fails a raise_for_status is executed
 def set_user_active(respondent_email):
@@ -424,7 +442,7 @@ def request_iac(enrolment_code):
     iac_svc = current_app.config.dependency['iac-service']
     iac_url = build_url('{}://{}:{}/iacs/{}', iac_svc, enrolment_code)
     log.info("GET URL {}".format(iac_url))
-    response = requests.get(iac_url, auth=('admin', 'secret'), timeout=REQUESTS_GET_TIMEOUT)
+    response = requests.get(iac_url, timeout=REQUESTS_GET_TIMEOUT)
     log.info("IAC service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
