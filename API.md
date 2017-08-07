@@ -21,11 +21,11 @@ This page documents the Party service API endpoints. All endpoints return an `HT
         "enrolments": [
             {
                 "enrolmentStatus": "ENABLED",
-                "name: "Business Register and Employment Survey",
-                "surveyId: "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+                "name": "Business Register and Employment Survey",
+                "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
             }
         ],
-        "partyId: "cd592e0f-8d07-407b-b75d-e01fbdae8233"
+        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233"
         }
     ],
     "attributes": {
@@ -61,11 +61,11 @@ This page documents the Party service API endpoints. All endpoints return an `HT
         "enrolments": [
             {
                 "enrolmentStatus": "ENABLED",
-                "name: "Business Register and Employment Survey",
-                "surveyId: "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+                "name": "Business Register and Employment Survey",
+                "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
             }
         ],
-        "partyId: "cd592e0f-8d07-407b-b75d-e01fbdae8233"
+        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233"
         }
     ],
     "attributes": { },
