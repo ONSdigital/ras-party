@@ -390,6 +390,24 @@ def put_email_verification(token):
         set_user_verified(email_address)
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
+# Helper function to set the 'active' flag on the OAuth2 server for a user. If it fails a raise_for_status is executed
+def set_user_active(respondent_email):
+
+    log.info("Setting user active on OAuth2 server")
+
+    oauth_payload = {
+        "username": respondent_email,
+        "client_id": current_app.config.dependency['oauth2-service']['client_id'],
+        "client_secret": current_app.config.dependency['oauth2-service']['client_secret']
+    }
+    oauth_svc = current_app.config.dependency['oauth2-service']
+    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['activate_endpoint'])
+    oauth_response = requests.post(oauth_url, data=oauth_payload)
+    if not oauth_response.status_code == 201:
+        log.error("Unable to set the user active on the OAuth2 server")
+        oauth_response.raise_for_status()
+    log.info("User has been activated on the oauth2 server")
+
 
 # Handle the pending enrolment that was created during registration
 def enrol_respondent_for_survey(r, sess):
