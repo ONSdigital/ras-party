@@ -530,15 +530,7 @@ def notify(email, template_id, url, party_id):
             notifier = GovUKNotify()
             response = notifier.send_message(email, template_id, personalisation, party_id)
         except RasNotifyError:
-            # In this case we do not want to return a 500 to our client - we want to tell them what failed.
-            log.info("We failed to send an email for enrolling a user")
-            return False
-
-        if not response==201:
-            return False
-        else:
-            return True
-
+            log.info("Unable to send Verification email for party_id {}".format(party_id))
     else:
         log.info("Email not sent - feature flag is set to OFF:: send_email_to_gov_notify=false")
 
