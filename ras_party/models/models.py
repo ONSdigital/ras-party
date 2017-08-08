@@ -158,6 +158,7 @@ class RespondentStatus(enum.IntEnum):
     ACTIVE = 1
     SUSPENDED = 2
 
+
 class PendingEnrolment(Base):
     __tablename__ = 'pending_enrolment'
 
@@ -174,6 +175,7 @@ class PendingEnrolment(Base):
         ForeignKeyConstraint(['respondent_id'],
                              ['respondent.id']),
     )
+
 
 class Respondent(Base):
     __tablename__ = 'respondent'
