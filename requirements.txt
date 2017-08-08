@@ -1,8 +1,9 @@
-git+https://github.com/ONSdigital/ras-common-utils.git@isu_7_ras-common-util-does-not-detect-VCAP-services 
+git+https://github.com/ONSdigital/ras-common-utils.git@0.0.3
 Flask==0.12.2
 Flask_Cors==3.0.3
 gunicorn==19.7.1
 itsdangerous==0.24
+jsonschema==2.6.0
 notifications-python-client==4.3.1
 SQLAlchemy_Utils==0.32.14
 SQLAlchemy==1.1.10
@@ -11,5 +12,6 @@ psycopg2==2.7.1
 pycrypto==2.6.1
 python_dateutil==2.6.0
 PyYAML==3.12
+requests==2.17.3
 structlog==17.2.0
 jsonschema==2.6.0

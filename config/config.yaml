@@ -56,7 +56,7 @@ dependencies:
     frontstage-service:
         scheme: http
         host: localhost
-        port: 5001
+        port: 8080
     api-gateway:
         scheme: http
         host: localhost

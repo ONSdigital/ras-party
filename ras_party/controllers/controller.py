@@ -8,12 +8,13 @@ from pathlib import Path
 from json import loads
 
 from ras_party.controllers.error_decorator import translate_exceptions
-from ras_party.controllers.ras_error import RasError
+from ras_party.controllers.ras_error import RasError, RasNotifyError
 from ras_party.controllers.session_context import db_session
 from ras_party.controllers.transactional import transactional
 from ras_party.controllers.util import build_url
 from ras_party.controllers.validate import Validator, IsUuid, Exists, IsIn
-from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus, PendingEnrolment, EnrolmentStatus
+from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus, \
+    PendingEnrolment, EnrolmentStatus
 from ras_party.controllers.gov_uk_notify import GovUKNotify
 
 log = get_logger()
@@ -33,6 +34,7 @@ _health_check = {}
 if Path('git_info').exists():
     with open('git_info') as io:
         _health_check = loads(io.read())
+
 
 # TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
 
@@ -222,7 +224,8 @@ def get_respondent_by_email(email):
     """
     respondent = current_app.db.session.query(Respondent).filter(Respondent.email_address == email).first()
     if not respondent:
-        return make_response(jsonify({'errors': "Respondent with email address '{}' does not exist.".format(email)}), 404)
+        return make_response(jsonify({'errors': "Respondent with email address '{}' does not exist.".format(email)}),
+                             404)
 
     return make_response(jsonify(respondent.to_respondent_dict()), 200)
 
@@ -261,16 +264,12 @@ def respondents_post(party, tran):
     if not iac.get('active'):
         raise RasError("Enrolment code is not active.", status_code=400)
 
-    existing = current_app.db.session.query(Respondent)\
-        .filter(Respondent.email_address == party['emailAddress'])\
+    existing = current_app.db.session.query(Respondent) \
+        .filter(Respondent.email_address == party['emailAddress']) \
         .first()
     if existing:
         raise RasError("User with email address {} already exists.".format(party['emailAddress']), status_code=400)
 
-    #TODO the register user function needs to handle the tran argument. If there is a failure it knows how to remove the user from the OAuth2 server
-    register_user(party, tran)
-
-    #TODO any of the dictionary lookups could return a key error. We should detect and protect against this.
     case_context = request_case(party['enrolmentCode'])
     case_id = case_context['id']
     business_id = case_context['partyId']
@@ -297,8 +296,10 @@ def respondents_post(party, tran):
         try:
             b = sess.query(Business).filter(Business.party_uuid == business_id).one()
         except orm.exc.MultipleResultsFound:
-            msg = "There were multiple results found for a business ID while enrolling user with email: {}".format(party['emailAddress'])
-            raise RasError(msg, status_code=409)    # TODO This might be better as a 404
+            # FIXME: this is not possible - party_uuid is a unique key
+            msg = "There were multiple results found for a business ID while enrolling user with email: {}" \
+                .format(party['emailAddress'])
+            raise RasError(msg, status_code=409)  # TODO This might be better as a 404
         except orm.exc.NoResultFound:
             msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
             raise RasError(msg, status_code=404)
@@ -307,8 +308,14 @@ def respondents_post(party, tran):
             #  Create the enrolment respondent-business-survey associations
             r = Respondent(**translated_party)
             br = BusinessRespondent(business=b, respondent=r)
-            pending_enrolment = PendingEnrolment(case_id = case_id, respondent=r, business_id=business_id, survey_id = survey_id)
-            Enrolment(business_respondent=br, survey_id=survey_id, survey_name=survey_name, status=EnrolmentStatus.PENDING)
+            pending_enrolment = PendingEnrolment(case_id=case_id,
+                                                 respondent=r,
+                                                 business_id=business_id,
+                                                 survey_id=survey_id)
+            Enrolment(business_respondent=br,
+                      survey_id=survey_id,
+                      survey_name=survey_name,
+                      status=EnrolmentStatus.PENDING)
             sess.add(r)
             sess.add(pending_enrolment)
 
@@ -324,15 +331,33 @@ def respondents_post(party, tran):
             frontstage_url = build_url('{}://{}:{}/register/activate-account/{}', frontstage_svc, token)
             notify_service = current_app.config.dependency['gov-uk-notify-service']
             template_id = notify_service['gov_notify_template_id']
+            log.info("Verification URL for party_id: {} {}".format(str(r.party_uuid), frontstage_url))
             notify(party['emailAddress'], template_id, frontstage_url, r.party_uuid)
-
+        except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError)\
+                as db_error:
+            log.error("Looks like there was an update to the DB that's gone wrong. This was for user: {} "
+                      "during enrolement. This could be due to multiple micro services accessing the "
+                      "same DB key.".format(party['emailAddress']))
+            msg = "The DB error: {} happened for this email: {}".format(db_error, party['emailAddress'])
+            raise RasError(msg, status_code=500)
+        except KeyError:
+            # Somebody tried to pass or access an empty dict! bad boy!
+            log.error("A data dictionary is empty that needs to be populated during the enrolment process")
+            msg = "During enrolment some needed data was missing to perform the operation"
+            raise RasError(msg, status_code=500)
         except Exception as e:
-            log.error("Could not post the case event, create Enrolement objets, or error in verification email generation. Error is: {}".format(e))
+            log.error("Could not post the case event, create Enrolement objets, or error in verification "
+                      "email generation. Error is: {}".format(e))
+            raise RasError(e)
+
+        register_user(party, tran)
 
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
+
 @translate_exceptions
 def put_email_verification(token):
+    # TODO Add some doc string or comments.
     log.info("Verifying email - checking email token: {}".format(token))
     timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
     duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
@@ -363,28 +388,32 @@ def put_email_verification(token):
         r.status = RespondentStatus.ACTIVE
 
         # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
+        # TODO: Think about adding transaction to this function
         if r.pending_enrolment:
-           enrol_respondent_for_survey(r, sess)
+            enrol_respondent_for_survey(r, sess)
         else:
-           log.info("No pending enrolment for respondent {}".format(str(r.party_uuid)))
+            log.info("No pending enrolment for respondent {}".format(str(r.party_uuid)))
 
         # We set the user as verified on the OAuth2 server.
         set_user_active(email_address)
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
+
 # Handle the pending enrolment that was created during registration
 def enrol_respondent_for_survey(r, sess):
     # TODO: Need to handle all the DB/SQLAlchemy errors that could occur here!
+    # TODO: comments and explanation
     pending_enrolment_id = r.pending_enrolment[0].id
     pending_enrolment = sess.query(PendingEnrolment).filter(PendingEnrolment.id == pending_enrolment_id).one()
-    enrolment = sess.query(Enrolment).filter(Enrolment.business_id == str(pending_enrolment.business_id)) \
+    enrolment = sess.query(Enrolment)\
+        .filter(Enrolment.business_id == str(pending_enrolment.business_id))\
         .filter(Enrolment.survey_id == str(pending_enrolment.survey_id)) \
-        .one()
+        .filter(Enrolment.respondent_id == r.id).one()
     enrolment.status = EnrolmentStatus.ENABLED
     sess.add(enrolment)
-    log.info("Enabling pending enrolment for respondent {} to survey_id {} for business_id {}" \
-             .format(str(r.party_uuid), \
-                     str(pending_enrolment.survey_id), \
+    log.info("Enabling pending enrolment for respondent {} to survey_id {} for business_id {}"
+             .format(str(r.party_uuid),
+                     str(pending_enrolment.survey_id),
                      str(pending_enrolment.business_id)))
     # Send an enrolment event to the case service
     case_id = pending_enrolment.case_id
@@ -392,9 +421,12 @@ def enrol_respondent_for_survey(r, sess):
     post_case_event(str(case_id), str(r.party_uuid), "RESPONDENT_ENROLED", "Respondent enrolled")
     sess.delete(pending_enrolment)
 
-# Helper function to set the 'active' flag on the OAuth2 server for a user. If it fails a raise_for_status is executed
-def set_user_active(respondent_email):
 
+def set_user_verified(respondent_email):
+    """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
+        If it fails a raise_for_status is executed
+    """
+    # TODO: Comments and explanation
     log.info("Setting user active on OAuth2 server")
 
     oauth_payload = {
@@ -413,6 +445,7 @@ def set_user_active(respondent_email):
 
 
 def register_user(party, tran):
+    # TODO: Comments and explanation
     oauth_payload = {
         "username": party['emailAddress'],
         "password": party['password'],
@@ -438,6 +471,7 @@ def register_user(party, tran):
 
 def request_iac(enrolment_code):
     # TODO: factor out commonality from these request_* functions
+    # TODO: Comments and explanation
     iac_svc = current_app.config.dependency['iac-service']
     iac_url = build_url('{}://{}:{}/iacs/{}', iac_svc, enrolment_code)
     log.info("GET URL {}".format(iac_url))
@@ -448,6 +482,7 @@ def request_iac(enrolment_code):
 
 
 def request_case(enrolment_code):
+    # TODO: Comments and explanation
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
     log.info("GET URL {}".format(case_url))
@@ -458,6 +493,7 @@ def request_case(enrolment_code):
 
 
 def request_collection_exercise(collection_exercise_id):
+    # TODO: Comments and explanation
     ce_svc = current_app.config.dependency['collectionexercise-service']
     ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
     log.info("GET {}".format(ce_url))
@@ -468,6 +504,7 @@ def request_collection_exercise(collection_exercise_id):
 
 
 def request_survey(survey_id):
+    # TODO: Comments and explanation
     survey_svc = current_app.config.dependency['survey-service']
     survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
     log.info("GET {}".format(survey_url))
@@ -477,12 +514,14 @@ def request_survey(survey_id):
     return response.json()
 
 
-def post_case_event(case_id, party_id, category, desc):
+def post_case_event(case_id, party_id, category="Default category message", desc="Default description message"):
+    # TODO: Comments and explanation
+    # TODO: Consider making this it's own python module in the Flask App. Or having a class for this.
+
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/{}/events', case_svc, case_id)
-
     payload = {
-        'description': desc ,
+        'description': desc,
         'category': category,
         'partyId': party_id,
         'createdBy': "Party Service"
@@ -494,14 +533,21 @@ def post_case_event(case_id, party_id, category, desc):
     response.raise_for_status()
     return response.json()
 
+
 def notify(email, template_id, url, party_id):
+    # TODO: Comments and explanation
     personalisation = {
         'ACCOUNT_VERIFICATION_URL': url
     }
-    log.info("About to send verification email for party_id: {} URL: {}".format(party_id, url))
-    if current_app.config.feature['send_email_to_gov_notify']:
-        notifier = GovUKNotify()
-        notifier.send_message(email, template_id, personalisation, party_id)
-    else:
-        log.info("Email not sent :: send_email_to_gov_notify=false")
 
+    # TODO add this logic into the gov_uk_notify.py file and remove the notify function. Or remove the GovUKNotify class
+    if current_app.config.feature['send_email_to_gov_notify']:
+        log.info("Sending verification email for party_id: {}".format(party_id))
+        try:
+            notifier = GovUKNotify()
+            notifier.send_message(email, template_id, personalisation, party_id)
+        except RasNotifyError:
+            # Note: intentionally suppresses exception
+            log.info("Unable to send Verification email for party_id {}".format(party_id))
+    else:
+        log.info("Email not sent - feature flag is set to OFF:: send_email_to_gov_notify=false")

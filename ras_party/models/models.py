@@ -1,16 +1,15 @@
 import datetime
 import enum
 import uuid
+from json import loads
 
 from jsonschema import Draft4Validator
-from json import loads
 from ras_common_utils.ras_database.base import Base
 from ras_common_utils.ras_database.guid import GUID
 from ras_common_utils.ras_database.json_column import JsonColumn
 from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
-from ras_party.controllers.util import filter_falsey_values, partition_dict
 
 with open('ras_party/schemas/party_schema.json') as io:
     PARTY_SCHEMA = loads(io.read())
@@ -40,7 +39,6 @@ class Business(Base):
         if not validator.is_valid(json_packet):
             return validator.iter_errors(json_packet)
         return False
-
 
     @staticmethod
     def add_structure(json_packet):
@@ -137,6 +135,7 @@ class RespondentStatus(enum.IntEnum):
     ACTIVE = 1
     SUSPENDED = 2
 
+
 class PendingEnrolment(Base):
     __tablename__ = 'pending_enrolment'
 
@@ -153,6 +152,7 @@ class PendingEnrolment(Base):
         ForeignKeyConstraint(['respondent_id'],
                              ['respondent.id']),
     )
+
 
 class Respondent(Base):
     __tablename__ = 'respondent'
@@ -213,8 +213,8 @@ class Respondent(Base):
                 'emailAddress': self.email_address,
                 'firstName': self.first_name,
                 'lastName': self.last_name,
-                'telephone': self.telephone,
-                'associations': self._get_business_associations(self.businesses)})
+                'telephone': self.telephone}),
+            'associations': self._get_business_associations(self.businesses)
         }
 
         return d
