@@ -6,6 +6,7 @@ from ras_party.controllers.ras_error import RasNotifyError
 
 log = get_logger()
 
+
 class GovUKNotify:
     """ Gov uk notify class"""
 
