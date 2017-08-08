@@ -111,6 +111,8 @@ class MockResponse:
 
 class MockRequests:
 
+    static='Hello!'
+
     class Get:
 
         def __init__(self):
@@ -156,6 +158,21 @@ class MockRequests:
         def __call__(self, uri, data=None, json=None, timeout=None):
             return MockResponse('{}', status_code=201)
 
+    class Put:
+
+        status_code = 200
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __call__(self, *args, **kwargs): #uri, data=None, json=None, timeout=None):
+            return MockResponse('{}', status_code=201)
+
+        def raise_for_status(self):
+            pass
+
+
     def __init__(self):
         self.get = self.Get()
         self.post = self.Post()
+        self.put = self.Put()

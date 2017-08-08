@@ -374,7 +374,7 @@ def put_email_verification(token):
             raise RasError("Couldn't locate user.", status_code=404)
 
         if not r.status == RespondentStatus.CREATED:
-            return make_response(jsonify(r.to_respondent_dict()), 200)
+            return make_response(jsonify(r.to_respondent_dict()), 409)
 
         # We set the party as ACTIVE in this service
         r.status = RespondentStatus.ACTIVE
@@ -388,7 +388,6 @@ def put_email_verification(token):
 
         # We set the user as verified on the OAuth2 server.
         set_user_verified(email_address)
-
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
 

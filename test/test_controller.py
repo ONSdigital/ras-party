@@ -200,20 +200,20 @@ class TestParties(PartyTestClient):
         self.assertEqual(str(enrolment.business_respondent.business.party_uuid),
                          '3b136c4b-7a14-4904-9e01-13364dd7b972')
 
-    #@patch('ras_party.controllers.controller.notify')
-    #@patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    #def test_post_respondent_calls_the_notify_service(self, _, mock_notify):
-    #    # Given there is a business
-    #    mock_business = MockBusiness().as_business()
-    #    mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
-    #    self.post_to_businesses(mock_business, 200)
-    #    # And an associated respondent
-    #    mock_respondent = MockRespondent().attributes().as_respondent()
-    #    # When a new respondent is posted
-    #    self.post_to_respondents(mock_respondent, 200)
-
+    @patch('ras_party.controllers.controller.notify')
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
+    def test_post_respondent_calls_the_notify_service(self, _, mock_notify):
+        # Given there is a business
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # And an associated respondent
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        # When a new respondent is posted
+        self.post_to_respondents(mock_respondent, 200)
         # Then the (mock) notify service is called
-    #    mock_notify.assert_called_once()
+        self.assertTrue(mock_notify.called)
+        self.assertTrue(mock_notify.call_count == 1)
 
     @patch('ras_party.controllers.controller.notify')
     @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
@@ -231,13 +231,8 @@ class TestParties(PartyTestClient):
         self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
 
         # When the email is verified
-        print(">>", mock_notify)
-        print(">>", mock_notify.call_args)
-        print(">>", mock_notify.call_args[0])
-
-        frontstage_url = mock_notify.call_args[0][0]
-        #_, token = frontstage_url.split('=')
-        token = frontstage_url
+        frontstage_url = mock_notify.call_args[0][2]
+        token = frontstage_url.split('/')[-1]
         self.put_email_verification(token, 200)
 
         # Then the respondent state is ACTIVE
@@ -257,13 +252,12 @@ class TestParties(PartyTestClient):
         self.post_to_respondents(mock_respondent, 200)
 
         # When the email is verified twice
-        frontstage_url = mock_notify.call_args[0][0]
-
-        print("RSP>", mock_respondent)
-        print("FSU>", frontstage_url)
+        #frontstage_url = mock_notify.call_args[0][0]
+        frontstage_url = mock_notify.call_args[0][2]
+        token = frontstage_url.split('/')[-1]
 
         #_, token = frontstage_url.split('=')
-        token = frontstage_url
+        #token = frontstage_url
 
 
         self.put_email_verification(token, 200)
