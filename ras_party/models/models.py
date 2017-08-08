@@ -1,9 +1,9 @@
 import datetime
 import enum
 import uuid
+from json import loads
 
 from jsonschema import Draft4Validator
-from json import loads
 from ras_common_utils.ras_database.base import Base
 from ras_common_utils.ras_database.guid import GUID
 from ras_common_utils.ras_database.json_column import JsonColumn
@@ -35,7 +35,6 @@ class Business(Base):
         if not validator.is_valid(json_packet):
             return validator.iter_errors(json_packet)
         return False
-
 
     @staticmethod
     def add_structure(json_packet):

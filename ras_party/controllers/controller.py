@@ -1,5 +1,4 @@
 import uuid
-
 import requests
 from flask import make_response, jsonify, current_app
 from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
@@ -63,6 +62,7 @@ def error_result(result):
     """
     log.error(result)
     return make_response(jsonify(result), 400)
+
 
 @translate_exceptions
 def get_business_by_ref(ref):
@@ -333,24 +333,17 @@ def respondents_post(party, tran):
             template_id = notify_service['gov_notify_template_id']
             log.info("Verification URL for party_id: {} {}".format(str(r.party_uuid), frontstage_url))
             notify(party['emailAddress'], template_id, frontstage_url, r.party_uuid)
-        except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError) as db_error:
-            log.error("Looks like there was an update to the DB that's gone wrong. This was for user: {} during enrolement. This could be due to multiple micro services accessing the same DB key.".format(party['emailAddress']))
-            msg = "The DB error: {} happened for this email: {}".format(db_error, party['emailAddress'])
+        except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError)\
+                as db_error:
+            msg = "Error updating database for user id: {} ".format(party['id'])
             raise RasError(msg, status_code=500)
         except KeyError:
-            # Somebody tried to pass or access an empty dict! bad boy!
-            log.error("A data dictionary is empty that needs to be populated during the enrolment process")
-            msg = "During enrolment some needed data was missing to perform the operation"
+            msg = "Missing config keys during enrolment"
             raise RasError(msg, status_code=500)
-        # TODO: make more granular exception handling
         except Exception as e:
-            msg = "Error in enrolment process. Could not post the case event, create Enrolment objects, " \
-                  "or error in verification email generation. Error is: {}".format(e)
-            log.error(msg)
-            raise RasError(msg)
-            raise RasError(e, status_code=500)
+            msg = "Error during enrolment process.".format(e)
+            raise RasError(msg, status_code=500)
 
-        # TODO the register user function needs to handle the tran argument. If there is a failure it knows how to remove the user from the OAuth2 server
         register_user(party, tran)
 
         return make_response(jsonify(r.to_respondent_dict()), 200)
@@ -358,7 +351,7 @@ def respondents_post(party, tran):
 
 @translate_exceptions
 def put_email_verification(token):
-    #TODO Add some doc string or comments.
+    # TODO Add some doc string or comments.
     log.info("Verifying email - checking email token: {}".format(token))
     timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
     duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
@@ -381,8 +374,6 @@ def put_email_verification(token):
             raise RasError("Couldn't locate user.", status_code=404)
 
         if not r.status == RespondentStatus.CREATED:
-            # Do we really want to raise an error if their account is already verified?
-            # raise RasError("Verification token is invalid or already used.", 409)
             return make_response(jsonify(r.to_respondent_dict()), 200)
 
         # We set the party as ACTIVE in this service
@@ -407,7 +398,9 @@ def enrol_respondent_for_survey(r, sess):
     # TODO: comments and explanation
     pending_enrolment_id = r.pending_enrolment[0].id
     pending_enrolment = sess.query(PendingEnrolment).filter(PendingEnrolment.id == pending_enrolment_id).one()
-    enrolment = sess.query(Enrolment).filter(Enrolment.business_id == str(pending_enrolment.business_id)).filter(Enrolment.survey_id == str(pending_enrolment.survey_id)) \
+    enrolment = sess.query(Enrolment)\
+        .filter(Enrolment.business_id == str(pending_enrolment.business_id))\
+        .filter(Enrolment.survey_id == str(pending_enrolment.survey_id)) \
         .filter(Enrolment.respondent_id == r.id).one()
     enrolment.status = EnrolmentStatus.ENABLED
     sess.add(enrolment)
@@ -421,9 +414,12 @@ def enrol_respondent_for_survey(r, sess):
     post_case_event(str(case_id), str(r.party_uuid), "RESPONDENT_ENROLED", "Respondent enrolled")
     sess.delete(pending_enrolment)
 
-# Helper function to set the 'verified' flag on the OAuth2 server for a user. If it fails a raise_for_status is executed
+
 def set_user_verified(respondent_email):
-# TODO: Comments and explanation
+    """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
+        If it fails a raise_for_status is executed
+    """
+    # TODO: Comments and explanation
     log.info("Setting user active on OAuth2 server")
 
     oauth_payload = {
@@ -542,8 +538,9 @@ def notify(email, template_id, url, party_id):
         log.info("Sending verification email for party_id: {}".format(party_id))
         try:
             notifier = GovUKNotify()
-            response = notifier.send_message(email, template_id, personalisation, party_id)
+            notifier.send_message(email, template_id, personalisation, party_id)
         except RasNotifyError:
+            # Note: intentionally suppresses exception
             log.info("Unable to send Verification email for party_id {}".format(party_id))
     else:
         log.info("Email not sent - feature flag is set to OFF:: send_email_to_gov_notify=false")
