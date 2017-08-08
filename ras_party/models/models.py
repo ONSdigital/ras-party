@@ -12,7 +12,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 from ras_party.controllers.util import filter_falsey_values, partition_dict
 
-
 with open('ras_party/schemas/party_schema.json') as io:
     PARTY_SCHEMA = loads(io.read())
 
@@ -46,10 +45,13 @@ class Business(Base):
         """
         structured = {
             'sampleUnitRef': json_packet.get('sampleUnitRef'),
-            'sampleUnitType': json_packet.get('sampleUnitType')
+            'sampleUnitType': json_packet.get('sampleUnitType'),
         }
         json_packet.pop('sampleUnitRef', None)
         json_packet.pop('sampleUnitType', None)
+        if 'id' in json_packet:
+            structured['id'] = json_packet['id']
+            json_packet.pop('id', None)
         structured['attributes'] = json_packet
         return structured
 
@@ -82,7 +84,7 @@ class Business(Base):
             associations.append(respondent_dict)
         return associations
 
-    def to_flattened_dict(self):
+    def to_business_dict(self):
         d = {
             'id': self.party_uuid,
             'sampleUnitRef': self.business_ref,
@@ -91,7 +93,7 @@ class Business(Base):
         }
         return dict(d, **self.attributes)
 
-    def to_structured_dict(self):
+    def to_party_dict(self):
         return {
             'id': self.party_uuid,
             'sampleUnitRef': self.business_ref,
