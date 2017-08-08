@@ -51,6 +51,7 @@ class PartyTestClient(TestCase):
         return json.loads(response.get_data(as_text=True))
 
     def post_to_businesses(self, payload, expected_status):
+
         response = self.client.open('/party-api/v1/businesses',
                                     method='POST',
                                     data=json.dumps(payload),

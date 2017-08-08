@@ -76,7 +76,7 @@ def get_business_by_ref(ref):
     if not business:
         return make_response(jsonify({'errors': "Business with reference '{}' does not exist.".format(ref)}), 404)
 
-    return make_response(jsonify(business.to_flattened_dict()), 200)
+    return make_response(jsonify(business.to_business_dict()), 200)
 
 
 @translate_exceptions
@@ -97,7 +97,7 @@ def get_business_by_id(id):
     if not business:
         return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
 
-    return make_response(jsonify(business.to_flattened_dict()), 200)
+    return make_response(jsonify(business.to_business_dict()), 200)
 
 
 @translate_exceptions
@@ -142,7 +142,7 @@ def parties_post(json_packet, structured=True):
 
         b = Business.from_party_dict(json_packet)
         tran.merge(b)
-        resp = b.to_structured_dict() if structured else b.to_flattened_dict()
+        resp = b.to_party_dict() if structured else b.to_business_dict()
         return make_response(jsonify(resp), 200)
 
 
