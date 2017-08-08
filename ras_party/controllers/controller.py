@@ -267,9 +267,6 @@ def respondents_post(party, tran):
     if existing:
         raise RasError("User with email address {} already exists.".format(party['emailAddress']), status_code=400)
 
-    #TODO the register user function needs to handle the tran argument. If there is a failure it knows how to remove the user from the OAuth2 server
-    register_user(party, tran)
-
     #TODO any of the dictionary lookups could return a key error. We should detect and protect against this.
     case_context = request_case(party['enrolmentCode'])
     case_id = case_context['id']
@@ -324,8 +321,8 @@ def respondents_post(party, tran):
             frontstage_url = build_url('{}://{}:{}/register/activate-account/{}', frontstage_svc, token)
             notify_service = current_app.config.dependency['gov-uk-notify-service']
             template_id = notify_service['gov_notify_template_id']
+            log.info("Verification URL for party_id: {} {}".format(str(r.party_uuid), frontstage_url))
             notify(party['emailAddress'], template_id, frontstage_url, r.party_uuid)
-
         except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError) as db_error:
             log.error("Looks like there was an update to the DB that's gone wrong. This was for user: {} during enrolement. This could be due to multiple micro services accessing the same DB key.".format(party['emailAddress']))
             msg = "The DB error: {} happened for this email: {}".format(db_error, party['emailAddress'])
@@ -339,6 +336,9 @@ def respondents_post(party, tran):
         except Exception as e:
             log.error("Could not post the case event, create Enrolement objets, or error in verification email generation. Error is: {}".format(e))
             raise RasError(e, status_code=500)
+
+        # TODO the register user function needs to handle the tran argument. If there is a failure it knows how to remove the user from the OAuth2 server
+        register_user(party, tran)
 
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
@@ -525,7 +525,7 @@ def notify(email, template_id, url, party_id):
 
     # TODO add this logic into the gov_uk_notify.py file and remove the notify function. Or remove the GovUKNotify class
     if current_app.config.feature['send_email_to_gov_notify']:
-        log.info("Sending verification email for party_id: {} URL: {}".format(party_id, url))
+        log.info("Sending verification email for party_id: {}".format(party_id))
         try:
             notifier = GovUKNotify()
             response = notifier.send_message(email, template_id, personalisation, party_id)
