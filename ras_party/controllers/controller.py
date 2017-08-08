@@ -167,7 +167,7 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
         return make_response(jsonify(
             {'errors': "Business with reference '{}' does not exist.".format(sampleUnitRef)}), 404)
 
-    return make_response(jsonify(business.to_party_dict()), 200)
+    return make_response(jsonify(business.to_structured_dict()), 200)
 
 
 @translate_exceptions
@@ -181,7 +181,7 @@ def get_party_by_id(sampleUnitType, id):
         if not business:
             return make_response(jsonify({'errors': "Business with id '{}' does not exist.".format(id)}), 404)
 
-        return make_response(jsonify(business.to_party_dict()), 200)
+        return make_response(jsonify(business.to_structured_dict()), 200)
 
     elif sampleUnitType == Respondent.UNIT_TYPE:
         respondent = current_app.db.session.query(Respondent).filter(Respondent.party_uuid == id).first()
