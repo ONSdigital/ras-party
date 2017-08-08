@@ -12,3 +12,4 @@ pycrypto==2.6.1
 python_dateutil==2.6.0
 PyYAML==3.12
 structlog==17.2.0
+jsonschema==2.6.0

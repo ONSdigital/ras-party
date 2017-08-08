@@ -6,11 +6,11 @@ from ras_party.controllers.ras_error import RasNotifyError
 
 log = get_logger()
 
-
 class GovUKNotify:
     """ Gov uk notify class"""
 
     def __init__(self):
+
         notify_service = current_app.config.dependency['gov-uk-notify-service']
         notify_keys = 'key-name-{}-{}'.format(notify_service['gov_notify_service_id'],
                                               notify_service['gov_notify_api_key'])
@@ -32,8 +32,8 @@ class GovUKNotify:
                 personalisation=personalisation,
                 reference=reference)
             log.info('Message sent to gov.uk notify with notification id {}'.format(response['id']))
+
         except Exception as e:
             msg = 'Gov uk notify can not send the message' + str(e)
             log.error(msg)
-            raise RasNotifyError(msg, status_code=400)
-        return 201
+            raise RasNotifyError(msg, status_code=500)
