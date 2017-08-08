@@ -204,8 +204,8 @@ class Respondent(Base):
                 'emailAddress': self.email_address,
                 'firstName': self.first_name,
                 'lastName': self.last_name,
-                'telephone': self.telephone,
-                'associations': self._get_business_associations(self.businesses)})
+                'telephone': self.telephone}),
+            'associations': self._get_business_associations(self.businesses)
         }
 
         return d
