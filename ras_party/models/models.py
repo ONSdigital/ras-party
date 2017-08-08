@@ -30,7 +30,12 @@ class Business(Base):
 
     @staticmethod
     def validate(json_packet):
+        """
+        Validate the JSON packet against the PARTY SCHEMA (see schemas/party_schema.json)
 
+        :param json_packet: The incoming JSON packet (typically via a POST)
+        :return: an error iterator if the packet is invalid, otherwise False
+        """
         validator = Draft4Validator(PARTY_SCHEMA)
         if not validator.is_valid(json_packet):
             return validator.iter_errors(json_packet)
@@ -40,18 +45,20 @@ class Business(Base):
     @staticmethod
     def add_structure(json_packet):
         """
-        This is a legacy call (that isn't used?) so we're just going to convert the data into the
-        normal structured format and use the authoratative routine to return the data we want.
+        The Business posting is now the same as the Party posting, except that the Business version
+        has a flat structure and the party service has attributes in a dictionary item called 'attributes'.
+        So for business postings, we just convert the incoming version into the Party version, then we can
+        use the Party code to post the object.
+
+        :param json_packet: The incoming JSON packet (Business/flat format)
+        :return: The json_packet in structured (Party) format
         """
-        structured = {
-            'sampleUnitRef': json_packet.get('sampleUnitRef'),
-            'sampleUnitType': json_packet.get('sampleUnitType'),
-        }
-        json_packet.pop('sampleUnitRef', None)
-        json_packet.pop('sampleUnitType', None)
-        if 'id' in json_packet:
-            structured['id'] = json_packet['id']
-            json_packet.pop('id', None)
+        structured = {}
+        for key in ['sampleUnitRef', 'sampleUnitType', 'id']:
+            if key in json_packet:
+                structured[key] = json_packet[key]
+                json_packet.pop(key)
+
         structured['attributes'] = json_packet
         return structured
 

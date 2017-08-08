@@ -1,5 +1,4 @@
 import uuid
-
 import requests
 from flask import make_response, jsonify, current_app
 from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
@@ -61,6 +60,7 @@ def error_result(result):
     """
     log.error(result)
     return make_response(jsonify(result), 400)
+
 
 @translate_exceptions
 def get_business_by_ref(ref):
@@ -357,7 +357,7 @@ def put_email_verification(token):
         if not r.status == RespondentStatus.CREATED:
             # Do we really want to raise an error if their account is already verified?
             # raise RasError("Verification token is invalid or already used.", 409)
-            return make_response(jsonify(r.to_respondent_dict()), 200)
+            return make_response(jsonify(r.to_respondent_dict()), 409)
 
         # We set the party as ACTIVE in this service
         r.status = RespondentStatus.ACTIVE
@@ -370,7 +370,6 @@ def put_email_verification(token):
 
         # We set the user as verified on the OAuth2 server.
         set_user_active(email_address)
-
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
 # Handle the pending enrolment that was created during registration
