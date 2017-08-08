@@ -2,26 +2,25 @@ import datetime
 import enum
 import uuid
 
+from jsonschema import Draft4Validator
+from json import loads
 from ras_common_utils.ras_database.base import Base
 from ras_common_utils.ras_database.guid import GUID
 from ras_common_utils.ras_database.json_column import JsonColumn
 from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
-
 from ras_party.controllers.util import filter_falsey_values, partition_dict
-from ras_party.controllers.validate import Validator, Exists, IsUuid
+
+
+with open('ras_party/schemas/party_schema.json') as io:
+    PARTY_SCHEMA = loads(io.read())
 
 
 class Business(Base):
     __tablename__ = 'business'
 
     UNIT_TYPE = 'B'
-
-    REQUIRED_ATTRIBUTES = [
-        'contactName', 'employeeCount', 'enterpriseName', 'facsimile', 'fulltimeCount', 'legalStatus', 'name',
-        'sic2003', 'sic2007', 'telephone', 'tradingName', 'turnover'
-    ]
 
     # TODO: consider using postgres uuid for uuid pkey
     party_uuid = Column(GUID, unique=True, primary_key=True)
@@ -31,61 +30,38 @@ class Business(Base):
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
     @staticmethod
-    def from_business_dict(d):
-        v = Validator(Exists('businessRef',
-                             'contactName',
-                             'employeeCount',
-                             'enterpriseName',
-                             'facsimile',
-                             'fulltimeCount',
-                             'legalStatus',
-                             'name',
-                             'sic2003',
-                             'sic2007',
-                             'telephone',
-                             'tradingName',
-                             'turnover'
-                             ))
-        if 'id' in d:
-            v.add_rule(IsUuid('id'))
+    def validate(json_packet):
 
-        if v.validate(d):
-            b = Business(party_uuid=d.get('id', uuid.uuid4()), business_ref=d['businessRef'])
-            _, attr = partition_dict(d, ['id', 'businessRef', 'sampleUnitType', 'attributes'])
-            b.attributes = attr
-            b.attributes.update(d.get('attributes', {}))
-            b.valid = True
-            return b
+        validator = Draft4Validator(PARTY_SCHEMA)
+        if not validator.is_valid(json_packet):
+            return validator.iter_errors(json_packet)
+        return False
 
-        return v
 
     @staticmethod
-    def from_party_dict(d):
-        v = Validator(Exists('sampleUnitRef',
-                             'sampleUnitType',
-                             'attributes.contactName',
-                             'attributes.employeeCount',
-                             'attributes.enterpriseName',
-                             'attributes.facsimile',
-                             'attributes.fulltimeCount',
-                             'attributes.legalStatus',
-                             'attributes.name',
-                             'attributes.sic2003',
-                             'attributes.sic2007',
-                             'attributes.telephone',
-                             'attributes.tradingName',
-                             'attributes.turnover'
-                             ))
-        if 'id' in d:
-            v.add_rule(IsUuid('id'))
+    def add_structure(json_packet):
+        """
+        This is a legacy call (that isn't used?) so we're just going to convert the data into the
+        normal structured format and use the authoratative routine to return the data we want.
+        """
+        structured = {
+            'sampleUnitRef': json_packet.get('sampleUnitRef'),
+            'sampleUnitType': json_packet.get('sampleUnitType')
+        }
+        json_packet.pop('sampleUnitRef', None)
+        json_packet.pop('sampleUnitType', None)
+        structured['attributes'] = json_packet
+        return structured
 
-        if v.validate(d):
-            b = Business(party_uuid=d.get('id', uuid.uuid4()), business_ref=d['sampleUnitRef'])
-            b.attributes = d.get('attributes')
-            b.valid = True
-            return b
+    @staticmethod
+    def from_party_dict(party):
 
-        return v
+        b = Business(party_uuid=party.get('id', uuid.uuid4()), business_ref=party['sampleUnitRef'])
+        b.attributes = party.get('attributes')
+        name = '{runame1} {runame2} {runame3}'.format(**b.attributes)
+        b.attributes['name'] = ' '.join(name.split())
+        b.valid = True
+        return b
 
     @staticmethod
     def _get_respondents_associations(respondents):
@@ -106,29 +82,23 @@ class Business(Base):
             associations.append(respondent_dict)
         return associations
 
-    def to_business_dict(self):
+    def to_flattened_dict(self):
         d = {
             'id': self.party_uuid,
-            'businessRef': self.business_ref,
+            'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
-            'associations': self._get_respondents_associations(self.respondents)
+            'associations': self._get_respondents_associations(self.respondents),
         }
-        props, attrs = partition_dict(self.attributes, self.REQUIRED_ATTRIBUTES)
-        d.update(props)
-        d['attributes'] = filter_falsey_values(attrs)
+        return dict(d, **self.attributes)
 
-        return d
-
-    def to_party_dict(self):
-        d = {
+    def to_structured_dict(self):
+        return {
             'id': self.party_uuid,
             'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
             'attributes': self.attributes,
             'associations': self._get_respondents_associations(self.respondents)
         }
-
-        return filter_falsey_values(d)
 
 
 class BusinessRespondentStatus(enum.IntEnum):

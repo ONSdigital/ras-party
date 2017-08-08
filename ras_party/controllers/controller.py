@@ -52,51 +52,15 @@ def get_info():
     return make_response(jsonify(info), 200)
 
 
-@translate_exceptions
-def businesses_post(business):
+def error_result(result):
     """
-    adds a reporting unit of type Business
-    Adds a new Business, or updates an existing Business based on the business reference provided
-    :param business: Business to add
-    :type business: dict | bytes
+    Standard error response
 
-    :rtype: None
+    :param result: dictionary containing the error(s)
+    :return: valid Flask Response
     """
-    with db_session() as tran:
-        if 'businessRef' in business:
-            existing_business = tran.query(Business).filter(Business.business_ref == business['businessRef']).first()
-            if existing_business:
-                business['id'] = str(existing_business.party_uuid)
-
-        b = Business.from_business_dict(business)
-        if b.valid:
-            tran.merge(b)
-            return make_response(jsonify(b.to_business_dict()), 200)
-        else:
-            return make_response(jsonify(b.errors), 400)
-
-
-@translate_exceptions
-def get_business_by_id(id):
-    """
-    Get a Business by its Party ID
-    Returns a single Party
-    :param id: ID of Party to return
-    :type id: str
-
-    :rtype: Business
-    """
-
-    v = Validator(IsUuid('id'))
-    if not v.validate({'id': id}):
-        return make_response(jsonify(v.errors), 400)
-
-    business = current_app.db.session.query(Business).filter(Business.party_uuid == id).first()
-    if not business:
-        return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
-
-    return make_response(jsonify(business.to_business_dict()), 200)
-
+    log.error(result)
+    return make_response(jsonify(result), 400)
 
 @translate_exceptions
 def get_business_by_ref(ref):
@@ -112,38 +76,74 @@ def get_business_by_ref(ref):
     if not business:
         return make_response(jsonify({'errors': "Business with reference '{}' does not exist.".format(ref)}), 404)
 
-    return make_response(jsonify(business.to_business_dict()), 200)
+    return make_response(jsonify(business.to_flattened_dict()), 200)
 
 
 @translate_exceptions
-def parties_post(party):
+def get_business_by_id(id):
     """
-    given a sampleUnitType B | H this adds a reporting unit of type Business or Household
-    Adds a new Party of type sampleUnitType or updates an existing Party based on the reference provided
-    :param party: Party to add
-    :type party: dict | bytes
+    Get a Business by its Party ID
+    Returns a single Party
+    :param id: ID of Party to return
+    :type id: str
 
-    :rtype: None
+    :rtype: Business
     """
-    v = Validator(Exists('sampleUnitType'), IsIn('sampleUnitType', 'B'))
-    if 'id' in party:
-        v.add_rule(IsUuid('id'))
-    if party.get('sampleUnitType') == Business.UNIT_TYPE:
-        v.add_rule(Exists('sampleUnitRef'))
-    if not v.validate(party):
+    v = Validator(IsUuid('id'))
+    if not v.validate({'id': id}):
         return make_response(jsonify(v.errors), 400)
 
-    if party['sampleUnitType'] == Business.UNIT_TYPE:
-        with db_session() as tran:
-            existing_business = tran.query(Business).filter(Business.business_ref == party['sampleUnitRef']).first()
-            if existing_business:
-                party['id'] = str(existing_business.party_uuid)
-            b = Business.from_party_dict(party)
-            if b.valid:
-                tran.merge(b)
-                return make_response(jsonify(b.to_party_dict()), 200)
-            else:
-                return make_response(jsonify(b.errors), 400)
+    business = current_app.db.session.query(Business).filter(Business.party_uuid == id).first()
+    if not business:
+        return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
+
+    return make_response(jsonify(business.to_flattened_dict()), 200)
+
+
+@translate_exceptions
+def businesses_post(json_packet):
+    """
+    This performs the same function as 'parties_post' except that the data is presented in a 'flat' format.
+    As a result, we structure the data, then pass it through to parties_post, setting structured to False
+    which forces the resulting output to be presented in the same format we received it. Note; we're not
+    necessarily expecting this endpoint to be hit in production.
+
+    :param json_packet: packet containing the data to post
+    :type json_packet: JSON data maching the schema described in schemas/party_schema.json
+    """
+    json_packet = Business.add_structure(json_packet)
+    return parties_post(json_packet, structured=False)
+
+
+@translate_exceptions
+def parties_post(json_packet, structured=True):
+    """
+    Post a new party (with sampleUnitType B)
+
+    :param json_packet: packet containing the data to post
+    :type json_packet: JSON data maching the schema described in schemas/party_schema.json
+    :param structured: The format we output on completion
+    :type bool: Structured or Flat
+    """
+    result = []
+    errors = Business.validate(json_packet)
+    if errors:
+        [result.append({'message': error.message, 'validator': error.validator}) for error in errors]
+        return error_result(result)
+
+    if json_packet['sampleUnitType'] != Business.UNIT_TYPE:
+        result.append({'message': 'sampleUnitType must be of type ({})'.format(Business.UNIT_TYPE)})
+        return error_result(result)
+
+    with db_session() as tran:
+        existing_business = tran.query(Business).filter(Business.business_ref == json_packet['sampleUnitRef']).first()
+        if existing_business:
+            json_packet['id'] = str(existing_business.party_uuid)
+
+        b = Business.from_party_dict(json_packet)
+        tran.merge(b)
+        resp = b.to_structured_dict() if structured else b.to_flattened_dict()
+        return make_response(jsonify(resp), 200)
 
 
 @translate_exceptions
