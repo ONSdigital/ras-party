@@ -14,7 +14,8 @@ from ras_party.controllers.session_context import db_session
 from ras_party.controllers.transactional import transactional
 from ras_party.controllers.util import build_url
 from ras_party.controllers.validate import Validator, IsUuid, Exists, IsIn
-from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus, PendingEnrolment, EnrolmentStatus
+from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus, \
+    PendingEnrolment, EnrolmentStatus
 from ras_party.controllers.gov_uk_notify import GovUKNotify
 
 log = get_logger()
@@ -34,6 +35,7 @@ _health_check = {}
 if Path('git_info').exists():
     with open('git_info') as io:
         _health_check = loads(io.read())
+
 
 # TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
 
@@ -222,7 +224,8 @@ def get_respondent_by_email(email):
     """
     respondent = current_app.db.session.query(Respondent).filter(Respondent.email_address == email).first()
     if not respondent:
-        return make_response(jsonify({'errors': "Respondent with email address '{}' does not exist.".format(email)}), 404)
+        return make_response(jsonify({'errors': "Respondent with email address '{}' does not exist.".format(email)}),
+                             404)
 
     return make_response(jsonify(respondent.to_respondent_dict()), 200)
 
@@ -261,13 +264,12 @@ def respondents_post(party, tran):
     if not iac.get('active'):
         raise RasError("Enrolment code is not active.", status_code=400)
 
-    existing = current_app.db.session.query(Respondent)\
-        .filter(Respondent.email_address == party['emailAddress'])\
+    existing = current_app.db.session.query(Respondent) \
+        .filter(Respondent.email_address == party['emailAddress']) \
         .first()
     if existing:
         raise RasError("User with email address {} already exists.".format(party['emailAddress']), status_code=400)
 
-    #TODO any of the dictionary lookups could return a key error. We should detect and protect against this.
     case_context = request_case(party['enrolmentCode'])
     case_id = case_context['id']
     business_id = case_context['partyId']
@@ -294,8 +296,10 @@ def respondents_post(party, tran):
         try:
             b = sess.query(Business).filter(Business.party_uuid == business_id).one()
         except orm.exc.MultipleResultsFound:
-            msg = "There were multiple results found for a business ID while enrolling user with email: {}".format(party['emailAddress'])
-            raise RasError(msg, status_code=409)    # TODO This might be better as a 404
+            # FIXME: this is not possible - party_uuid is a unique key
+            msg = "There were multiple results found for a business ID while enrolling user with email: {}" \
+                .format(party['emailAddress'])
+            raise RasError(msg, status_code=409)  # TODO This might be better as a 404
         except orm.exc.NoResultFound:
             msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
             raise RasError(msg, status_code=404)
@@ -304,8 +308,14 @@ def respondents_post(party, tran):
             #  Create the enrolment respondent-business-survey associations
             r = Respondent(**translated_party)
             br = BusinessRespondent(business=b, respondent=r)
-            pending_enrolment = PendingEnrolment(case_id = case_id, respondent=r, business_id=business_id, survey_id = survey_id)
-            Enrolment(business_respondent=br, survey_id=survey_id, survey_name=survey_name, status=EnrolmentStatus.PENDING)
+            pending_enrolment = PendingEnrolment(case_id=case_id,
+                                                 respondent=r,
+                                                 business_id=business_id,
+                                                 survey_id=survey_id)
+            Enrolment(business_respondent=br,
+                      survey_id=survey_id,
+                      survey_name=survey_name,
+                      status=EnrolmentStatus.PENDING)
             sess.add(r)
             sess.add(pending_enrolment)
 
@@ -334,13 +344,17 @@ def respondents_post(party, tran):
             raise RasError(msg, status_code=500)
         # TODO: make more granular exception handling
         except Exception as e:
-            log.error("Could not post the case event, create Enrolement objets, or error in verification email generation. Error is: {}".format(e))
+            msg = "Error in enrolment process. Could not post the case event, create Enrolment objects, " \
+                  "or error in verification email generation. Error is: {}".format(e)
+            log.error(msg)
+            raise RasError(msg)
             raise RasError(e, status_code=500)
 
         # TODO the register user function needs to handle the tran argument. If there is a failure it knows how to remove the user from the OAuth2 server
         register_user(party, tran)
 
         return make_response(jsonify(r.to_respondent_dict()), 200)
+
 
 @translate_exceptions
 def put_email_verification(token):
@@ -377,14 +391,15 @@ def put_email_verification(token):
         # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
         # TODO: Think about adding transaction to this function
         if r.pending_enrolment:
-           enrol_respondent_for_survey(r, sess)
+            enrol_respondent_for_survey(r, sess)
         else:
-           log.info("No pending enrolment for respondent {}".format(str(r.party_uuid)))
+            log.info("No pending enrolment for respondent {}".format(str(r.party_uuid)))
 
         # We set the user as verified on the OAuth2 server.
         set_user_verified(email_address)
 
         return make_response(jsonify(r.to_respondent_dict()), 200)
+
 
 # Handle the pending enrolment that was created during registration
 def enrol_respondent_for_survey(r, sess):
@@ -396,9 +411,9 @@ def enrol_respondent_for_survey(r, sess):
         .filter(Enrolment.respondent_id == r.id).one()
     enrolment.status = EnrolmentStatus.ENABLED
     sess.add(enrolment)
-    log.info("Enabling pending enrolment for respondent {} to survey_id {} for business_id {}" \
-             .format(str(r.party_uuid), \
-                     str(pending_enrolment.survey_id), \
+    log.info("Enabling pending enrolment for respondent {} to survey_id {} for business_id {}"
+             .format(str(r.party_uuid),
+                     str(pending_enrolment.survey_id),
                      str(pending_enrolment.business_id)))
     # Send an enrolment event to the case service
     case_id = pending_enrolment.case_id
@@ -408,8 +423,7 @@ def enrol_respondent_for_survey(r, sess):
 
 # Helper function to set the 'verified' flag on the OAuth2 server for a user. If it fails a raise_for_status is executed
 def set_user_verified(respondent_email):
-    # TODO: Comments and explanation
-
+# TODO: Comments and explanation
     log.info("Setting user active on OAuth2 server")
 
     oauth_payload = {
@@ -504,7 +518,7 @@ def post_case_event(case_id, party_id, category="Default category message", desc
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/{}/events', case_svc, case_id)
     payload = {
-        'description': desc ,
+        'description': desc,
         'category': category,
         'partyId': party_id,
         'createdBy': "Party Service"
@@ -533,4 +547,3 @@ def notify(email, template_id, url, party_id):
             log.info("Unable to send Verification email for party_id {}".format(party_id))
     else:
         log.info("Email not sent - feature flag is set to OFF:: send_email_to_gov_notify=false")
-
