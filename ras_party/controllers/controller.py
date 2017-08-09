@@ -408,7 +408,7 @@ def set_user_verified(respondent_email):
     oauth_payload = {
         "username": respondent_email,
         "client_id": current_app.config.dependency['oauth2-service']['client_id'],
-        "client_secret": current_app.config.dependency['oauth2-service']['client_secret']
+        "client_secret": current_app.config.dependency['oauth2-service']['client_secret'],
         "account_verified": "true"
     }
     oauth_svc = current_app.config.dependency['oauth2-service']
