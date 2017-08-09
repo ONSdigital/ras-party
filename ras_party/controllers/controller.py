@@ -395,12 +395,14 @@ def put_email_verification(token):
             log.info("No pending enrolment for respondent {}".format(str(r.party_uuid)))
 
         # We set the user as verified on the OAuth2 server.
-        set_user_active(email_address)
+        set_user_verified(email_address)
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
 # Helper function to set the 'active' flag on the OAuth2 server for a user. If it fails a raise_for_status is executed
-def set_user_active(respondent_email):
-
+def set_user_verified(respondent_email):
+    """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
+        If it fails a raise_for_status is executed
+    """
     log.info("Setting user active on OAuth2 server")
 
     oauth_payload = {
