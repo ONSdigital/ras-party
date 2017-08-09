@@ -32,7 +32,6 @@ class GovUKNotify:
                 template_id=template_id,
                 personalisation=personalisation,
                 reference=reference)
-            assert response.status_code == 201
         except Exception as e:
             msg = 'Gov uk notify can not send the message' + str(e)
             log.error(msg)
