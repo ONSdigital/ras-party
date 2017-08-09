@@ -21,7 +21,7 @@
 
 service:
     NAME: ras-party
-    VERSION: 0.0.1
+    VERSION: 0.1.0
     SCHEME: http
     HOST: 0.0.0.0
     PORT: 8081
