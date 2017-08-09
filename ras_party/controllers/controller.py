@@ -542,10 +542,10 @@ def post_case_event(case_id, party_id, category="Default category message", desc
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/{}/events', case_svc, case_id)
     payload = {
-        'description': desc,
-        'category': category,
-        'partyId': party_id,
-        'createdBy': "Party Service"
+        "description": desc,
+        "category": category,
+        "partyId": party_id,
+        "createdBy": "Party Service"
     }
 
     log.info("POST {} payload={}".format(case_url, payload))
