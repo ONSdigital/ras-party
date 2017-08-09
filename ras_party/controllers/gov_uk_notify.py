@@ -19,22 +19,27 @@ class GovUKNotify:
 
     def send_message(self, email, template_id, personalisation=None, reference=None):
         """
-         Send message to gov.uk notify
-         :param email: email address of recipient
-         :param template_id: the template id on gov.uk notify to use
-         :param personalisation: placeholder values in the template
-         :param reference: reference to generated if not using Notify's id
-         :rtype: 201 if success
-         """
+        Send message to gov.uk notify
+        :param email: email address of recipient
+        :param template_id: the template id on gov.uk notify to use
+        :param personalisation: placeholder values in the template
+        :param reference: reference to generated if not using Notify's id
+        :rtype: 201 if success
+        """
         try:
             response = self.notifications_client.send_email_notification(
                 email_address=email,
                 template_id=template_id,
                 personalisation=personalisation,
                 reference=reference)
-            log.info('Message sent to gov.uk notify with notification id {}'.format(response['id']))
-
+            assert response.status_code == 201
         except Exception as e:
             msg = 'Gov uk notify can not send the message' + str(e)
             log.error(msg)
-            raise RasNotifyError(msg, status_code=500)
+            raise RasNotifyError(msg, status_code=400)
+
+        try:
+            log.info('Message sent to gov.uk notify with notification id {}'.format(response['id']))
+        except TypeError:
+            log.info('Response object is not subscriptable - we must be running a unit test!')
+        return 201

@@ -8,7 +8,6 @@
             "properties": {
                 "ruref": {"type": "string"},
                 "birthdate": {"type": "string"},
-                "cellNo": {"type": "string"},
                 "checkletter": {"type": "string"},
                 "currency": {"type": "string"},
                 "entname1": {"type": "string"},

@@ -51,6 +51,7 @@ class PartyTestClient(TestCase):
         return json.loads(response.get_data(as_text=True))
 
     def post_to_businesses(self, payload, expected_status):
+
         response = self.client.open('/party-api/v1/businesses',
                                     method='POST',
                                     data=json.dumps(payload),
@@ -79,26 +80,21 @@ class PartyTestClient(TestCase):
         return json.loads(response.get_data(as_text=True))
 
     def get_business_by_id(self, id, expected_status=200):
-        response = self.client.open('/party-api/v1/businesses/id/{}'.format(id),
-                                    method='GET')
+        response = self.client.open('/party-api/v1/businesses/id/{}'.format(id), method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def get_business_by_ref(self, ref, expected_status=200):
-        response = self.client.open('/party-api/v1/businesses/ref/{}'.format(ref),
-                                    method='GET')
+        response = self.client.open('/party-api/v1/businesses/ref/{}'.format(ref), method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def get_respondent_by_id(self, id, expected_status=200):
-        response = self.client.open('/party-api/v1/respondents/id/{}'.format(id),
-                                    method='GET')
+        response = self.client.open('/party-api/v1/respondents/id/{}'.format(id), method='GET')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def put_email_verification(self, token, expected_status):
-        response = self.client.open('/party-api/v1/emailverification/{}'.format(token),
-                                    method='PUT')
-
+        response = self.client.open('/party-api/v1/emailverification/{}'.format(token), method='PUT')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))

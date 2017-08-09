@@ -57,7 +57,8 @@ if __name__ == '__main__':
 
     scheme, host, port = app.config['SCHEME'], app.config['HOST'], int(app.config['PORT'])
 
-    if app.config.feature.gateway_registration:
-        call_in_background(make_registration_func(app))
+    # The gateway no longer exists !!
+    #if app.config.feature.gateway_registration:
+    #    call_in_background(make_registration_func(app))
 
     app.run(debug=app.config['DEBUG'], host=host, port=port)

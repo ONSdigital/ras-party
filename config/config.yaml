@@ -35,8 +35,8 @@ dependencies:
         service: rds
         plan: shared-psql
         schema: partysvc
-        uri: "sqlite:///ras-party"
-        # uri: "postgresql://postgres:postgres@localhost:5432/postgres"
+        #uri: "sqlite:///ras-party"
+        uri: "postgresql://postgres:postgres@localhost:5432/postgres"
     case-service:
         scheme: http
         host: localhost

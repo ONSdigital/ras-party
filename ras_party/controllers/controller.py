@@ -1,5 +1,4 @@
 import uuid
-
 import requests
 from flask import make_response, jsonify, current_app
 from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
@@ -79,7 +78,7 @@ def get_business_by_ref(ref):
     if not business:
         return make_response(jsonify({'errors': "Business with reference '{}' does not exist.".format(ref)}), 404)
 
-    return make_response(jsonify(business.to_flattened_dict()), 200)
+    return make_response(jsonify(business.to_business_dict()), 200)
 
 
 @translate_exceptions
@@ -100,7 +99,7 @@ def get_business_by_id(id):
     if not business:
         return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
 
-    return make_response(jsonify(business.to_flattened_dict()), 200)
+    return make_response(jsonify(business.to_business_dict()), 200)
 
 
 @translate_exceptions
@@ -145,7 +144,7 @@ def parties_post(json_packet, structured=True):
 
         b = Business.from_party_dict(json_packet)
         tran.merge(b)
-        resp = b.to_structured_dict() if structured else b.to_flattened_dict()
+        resp = b.to_party_dict() if structured else b.to_business_dict()
         return make_response(jsonify(resp), 200)
 
 
@@ -383,7 +382,7 @@ def put_email_verification(token):
         if not r.status == RespondentStatus.CREATED:
             # Do we really want to raise an error if their account is already verified?
             # raise RasError("Verification token is invalid or already used.", 409)
-            return make_response(jsonify(r.to_respondent_dict()), 200)
+            return make_response(jsonify(r.to_respondent_dict()), 409)
 
         # We set the party as ACTIVE in this service
         r.status = RespondentStatus.ACTIVE
@@ -396,9 +395,26 @@ def put_email_verification(token):
             log.info("No pending enrolment for respondent {}".format(str(r.party_uuid)))
 
         # We set the user as verified on the OAuth2 server.
-        set_user_verified(email_address)
-
+        set_user_active(email_address)
         return make_response(jsonify(r.to_respondent_dict()), 200)
+
+# Helper function to set the 'active' flag on the OAuth2 server for a user. If it fails a raise_for_status is executed
+def set_user_active(respondent_email):
+
+    log.info("Setting user active on OAuth2 server")
+
+    oauth_payload = {
+        "username": respondent_email,
+        "client_id": current_app.config.dependency['oauth2-service']['client_id'],
+        "client_secret": current_app.config.dependency['oauth2-service']['client_secret']
+    }
+    oauth_svc = current_app.config.dependency['oauth2-service']
+    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['activate_endpoint'])
+    oauth_response = requests.post(oauth_url, data=oauth_payload)
+    if not oauth_response.status_code == 201:
+        log.error("Unable to set the user active on the OAuth2 server")
+        oauth_response.raise_for_status()
+    log.info("User has been activated on the oauth2 server")
 
 
 # Handle the pending enrolment that was created during registration
