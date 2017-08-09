@@ -38,7 +38,7 @@ class PartyTestClient(TestCase):
         return app
 
     def get_info(self, expected_status=200):
-        response = self.client.open('/party-api/v1/info', method='GET')
+        response = self.client.open('/info', method='GET')
         self.assertStatus(response, expected_status)
         return json.loads(response.get_data(as_text=True))
 

@@ -6,7 +6,6 @@ from ras_common_utils.ras_config.flask_extended import Flask
 from ras_common_utils.ras_database.ras_database import RasDatabase
 from ras_common_utils.ras_logger.ras_logger import configure_logger
 
-from ras_party.controllers.gw_registration import make_registration_func, call_in_background
 from ras_party.controllers.ras_error import RasError
 
 logger = structlog.get_logger()
@@ -29,7 +28,9 @@ def create_app(config):
 
     # register view blueprints
     from ras_party.views.party_view import party_view
+    from ras_party.views.info_view import info_view
     app.register_blueprint(party_view, url_prefix='/party-api/v1')
+    app.register_blueprint(info_view)
 
     CORS(app)
     return app
@@ -56,8 +57,5 @@ if __name__ == '__main__':
     initialise_db(app)
 
     scheme, host, port = app.config['SCHEME'], app.config['HOST'], int(app.config['PORT'])
-
-    if app.config.feature.gateway_registration:
-        call_in_background(make_registration_func(app))
 
     app.run(debug=app.config['DEBUG'], host=host, port=port)

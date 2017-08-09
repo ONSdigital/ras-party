@@ -3,16 +3,10 @@ from flask import Blueprint, request
 from ras_party.controllers import controller
 from ras_party.controllers.log_decorator import log_route
 
-party_view = Blueprint('party_views', __name__)
+party_view = Blueprint('party_view', __name__)
 
 
 # TODO: unify this code with the controller
-
-
-@party_view.route('/info', methods=['GET'])
-@log_route
-def get_info():
-    return controller.get_info()
 
 
 @party_view.route('/businesses', methods=['POST'])
