@@ -333,15 +333,14 @@ def respondents_post(party, tran):
             template_id = notify_service['gov_notify_template_id']
             log.info("Verification URL for party_id: {} {}".format(str(r.party_uuid), frontstage_url))
             notify(party['emailAddress'], template_id, frontstage_url, r.party_uuid)
-        except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError)\
-                as db_error:
+        except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError):
             msg = "Error updating database for user id: {} ".format(party['id'])
             raise RasError(msg, status_code=500)
         except KeyError:
             msg = "Missing config keys during enrolment"
             raise RasError(msg, status_code=500)
         except Exception as e:
-            msg = "Error during enrolment process.".format(e)
+            msg = "Error during enrolment process {}".format(e)
             raise RasError(msg, status_code=500)
 
         register_user(party, tran)
@@ -433,28 +432,6 @@ def enrol_respondent_for_survey(r, sess):
     log.info("Pending enrolment for case_id :: " + str(case_id))
     post_case_event(str(case_id), str(r.party_uuid), "RESPONDENT_ENROLED", "Respondent enrolled")
     sess.delete(pending_enrolment)
-
-
-def set_user_verified(respondent_email):
-    """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
-        If it fails a raise_for_status is executed
-    """
-    # TODO: Comments and explanation
-    log.info("Setting user active on OAuth2 server")
-
-    oauth_payload = {
-        "username": respondent_email,
-        "client_id": current_app.config.dependency['oauth2-service']['client_id'],
-        "client_secret": current_app.config.dependency['oauth2-service']['client_secret'],
-        "account_verified": "true"
-    }
-    oauth_svc = current_app.config.dependency['oauth2-service']
-    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    oauth_response = requests.put(oauth_url, data=oauth_payload)
-    if not oauth_response.status_code == 201:
-        log.error("Unable to set the user active on the OAuth2 server")
-        oauth_response.raise_for_status()
-    log.info("User has been activated on the oauth2 server")
 
 
 def register_user(party, tran):
