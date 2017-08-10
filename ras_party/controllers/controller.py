@@ -553,7 +553,6 @@ def notify(email, template_id, url, party_id):
         'ACCOUNT_VERIFICATION_URL': url
     }
 
-    # TODO add this logic into the gov_uk_notify.py file and remove the notify function. Or remove the GovUKNotify class
     if current_app.config.feature['send_email_to_gov_notify']:
         log.info("Sending verification email for party_id: {}".format(party_id))
         try:
@@ -561,6 +560,6 @@ def notify(email, template_id, url, party_id):
             notifier.send_message(email, template_id, personalisation, party_id)
         except RasNotifyError:
             # Note: intentionally suppresses exception
-            log.info("Unable to send Verification email for party_id {}".format(party_id))
+            log.error("Error sending verification email for party_id {}".format(party_id))
     else:
-        log.info("Email not sent - feature flag is set to OFF:: send_email_to_gov_notify=false")
+        log.info("Verification email not sent. Feature send_email_to_gov_notify=false")

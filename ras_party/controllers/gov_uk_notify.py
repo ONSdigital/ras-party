@@ -33,8 +33,8 @@ class GovUKNotify:
                 personalisation=personalisation,
                 reference=reference)
 
-            log.info('Message sent to gov.uk notify with notification id {}'.format(response['id']))
+            log.info('Message sent to GOV.UK Notify with notification id {}'.format(response['id']))
 
         except Exception as e:
-            msg = 'Gov uk notify can not send the message' + str(e)
+            msg = 'Unable to send message to GOV.UK Notify  ' + str(e)
             raise RasNotifyError(msg, status_code=500)
