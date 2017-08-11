@@ -1,7 +1,6 @@
 import datetime
 import enum
 import uuid
-from json import loads
 
 from jsonschema import Draft4Validator
 from ras_common_utils.ras_database.base import Base
@@ -12,11 +11,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
 from ras_party.controllers.util import filter_falsey_values
-
-
-# FIXME: hoist this out of here, should not be directly referencing file paths at this level
-with open('ras_party/schemas/party_schema.json') as io:
-    PARTY_SCHEMA = loads(io.read())
 
 
 class Business(Base):
@@ -32,14 +26,15 @@ class Business(Base):
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
     @staticmethod
-    def validate(json_packet):
+    def validate(json_packet, schema):
         """
-        Validate the JSON packet against the PARTY SCHEMA (see schemas/party_schema.json)
+        Validate the JSON packet against the supplied schema
 
         :param json_packet: The incoming JSON packet (typically via a POST)
+        :param schema: the JSON schema to validate against
         :return: an error iterator if the packet is invalid, otherwise False
         """
-        validator = Draft4Validator(PARTY_SCHEMA)
+        validator = Draft4Validator(schema)
         if not validator.is_valid(json_packet):
             return validator.iter_errors(json_packet)
         return False
@@ -58,8 +53,7 @@ class Business(Base):
         structured = {}
         for key in ['sampleUnitRef', 'sampleUnitType', 'id']:
             if key in json_packet:
-                structured[key] = json_packet[key]
-                json_packet.pop(key)
+                structured[key] = json_packet.pop(key)
 
         structured['attributes'] = json_packet
         return structured

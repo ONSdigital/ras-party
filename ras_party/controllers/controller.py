@@ -53,15 +53,17 @@ def get_info():
     return make_response(jsonify(info), 200)
 
 
-def error_result(result):
+def error_result(errors):
     """
     Standard error response
 
-    :param result: dictionary containing the error(s)
+    :param errors: list of error messages
     :return: valid Flask Response
     """
-    log.error(result)
-    return make_response(jsonify(result), 400)
+    # TODO: standard error handling should be migrated to error decorator (invoked via raising an exception)
+    messages = [{'message': error.message, 'validator': error.validator} for error in errors]
+    log.error(messages)
+    return make_response(jsonify(messages), 400)
 
 
 @translate_exceptions
@@ -111,7 +113,7 @@ def businesses_post(json_packet):
     necessarily expecting this endpoint to be hit in production.
 
     :param json_packet: packet containing the data to post
-    :type json_packet: JSON data maching the schema described in schemas/party_schema.json
+    :type json_packet: JSON data matching the schema described in schemas/party_schema.json
     """
     json_packet = Business.add_structure(json_packet)
     return parties_post(json_packet, structured=False)
@@ -127,15 +129,12 @@ def parties_post(json_packet, structured=True):
     :param structured: The format we output on completion
     :type bool: Structured or Flat
     """
-    result = []
-    errors = Business.validate(json_packet)
+    errors = Business.validate(json_packet, current_app.config['PARTY_SCHEMA'])
     if errors:
-        [result.append({'message': error.message, 'validator': error.validator}) for error in errors]
-        return error_result(result)
+        return error_result(errors)
 
     if json_packet['sampleUnitType'] != Business.UNIT_TYPE:
-        result.append({'message': 'sampleUnitType must be of type ({})'.format(Business.UNIT_TYPE)})
-        return error_result(result)
+        return error_result([{'message': 'sampleUnitType must be of type ({})'.format(Business.UNIT_TYPE)}])
 
     with db_session() as tran:
         existing_business = tran.query(Business).filter(Business.business_ref == json_packet['sampleUnitRef']).first()

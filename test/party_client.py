@@ -8,6 +8,7 @@ from ras_common_utils.ras_logger.ras_logger import configure_logger
 
 from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
 from run import create_app, initialise_db
+from test.fixtures import party_schema
 from test.fixtures.config import test_config
 
 
@@ -34,6 +35,7 @@ class PartyTestClient(TestCase):
     def create_app(self):
         app = create_app(self.config)
         configure_logger(app.config)
+        app.config['PARTY_SCHEMA'] = party_schema.schema
         initialise_db(app)
         return app
 
