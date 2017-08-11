@@ -2,30 +2,47 @@ import json
 import random
 from collections import defaultdict
 
-
 from ras_party.controllers.util import partition_dict
-from ras_party.models.models import Business
 from test.fixtures import get_case_by_iac, get_ce_by_id, get_survey_by_id, get_iac
 
 
 class MockBusiness:
 
+    REQUIRED_ATTRIBUTES = ['id', 'sampleUnitType', 'sampleUnitRef']
+
     def __init__(self):
+
+        ruref = str(random.randrange(100000000, 999999999))
+
         self._attributes = {
             'sampleUnitType': 'B',
-            'businessRef': str(random.randrange(100000000, 999999999)),
-            'contactName': "John Doe",
-            'employeeCount': 50,
-            'enterpriseName': "ABC Limited",
-            'facsimile': "+44 1234 567890",
-            'fulltimeCount': 35,
-            'legalStatus': "Private Limited Company",
-            'name': "Bolts and Ratchets Ltd",
-            'sic2003': "2520",
-            'sic2007': "2520",
-            'telephone': "+44 1234 567890",
-            'tradingName': "ABC Trading Ltd",
-            'turnover': 350
+            'sampleUnitRef': ruref,
+            "ruref": ruref,
+            "birthdate": "1/1/2001",
+            "checkletter": "A",
+            "currency": "S",
+            "entname1": "Ent-1",
+            "entname2": "Ent-2",
+            "entname3": "Ent-3",
+            "entref": "Entref",
+            "entremkr": "Entremkr",
+            "formType": "FormType",
+            "formtype": "formtype",
+            "froempment": 8,
+            "frosic2007": "frosic2007",
+            "frosic92": "frosic92",
+            "frotover": 9,
+            "inclexcl": "inclexcl",
+            "legalstatus": "Legal Status",
+            "region": "UK",
+            "runame1": "Runame-1",
+            "runame2": "Runame-2",
+            "runame3": "Runame-3",
+            "rusic2007": "rusic2007",
+            "rusic92": "rusic92",
+            "seltype": "seltype",
+            "tradstyle1": "tradstyle1",
+            "cell_no": 1
         }
 
     def attributes(self, **kwargs):
@@ -33,10 +50,7 @@ class MockBusiness:
         return self
 
     def as_business(self):
-        props, attrs = partition_dict(self._attributes,
-                                      Business.REQUIRED_ATTRIBUTES + ['id', 'sampleUnitType', 'businessRef'])
-        props['attributes'] = attrs
-        return props
+        return self._attributes
 
     def as_party(self):
 
@@ -44,7 +58,7 @@ class MockBusiness:
             return 'sampleUnitRef' if k == 'businessRef' else k
 
         attributes = {translate(k): v for k, v in self._attributes.items()}
-        props, attrs = partition_dict(attributes, ['id', 'sampleUnitType', 'sampleUnitRef'])
+        props, attrs = partition_dict(attributes, self.REQUIRED_ATTRIBUTES)
 
         props['attributes'] = attrs
         return props
@@ -137,6 +151,20 @@ class MockRequests:
         def __call__(self, uri, data=None, json=None, timeout=None):
             return MockResponse('{}', status_code=201)
 
+    class Put:
+
+        status_code = 200
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __call__(self, *args, **kwargs):
+            return MockResponse('{}', status_code=201)
+
+        def raise_for_status(self):
+            pass
+
     def __init__(self):
         self.get = self.Get()
         self.post = self.Post()
+        self.put = self.Put()

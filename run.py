@@ -1,3 +1,5 @@
+from json import loads
+
 import structlog
 from flask import jsonify
 from flask_cors import CORS
@@ -6,7 +8,6 @@ from ras_common_utils.ras_config.flask_extended import Flask
 from ras_common_utils.ras_database.ras_database import RasDatabase
 from ras_common_utils.ras_logger.ras_logger import configure_logger
 
-from ras_party.controllers.gw_registration import make_registration_func, call_in_background
 from ras_party.controllers.ras_error import RasError
 
 logger = structlog.get_logger()
@@ -37,18 +38,20 @@ def create_app(config):
 
 def initialise_db(app):
     # Initialise the database with the specified SQLAlchemy model
-    PartyDatabase = RasDatabase.make(model_paths=['ras_party.models.models'])
-    db = PartyDatabase('ras-party-db', app.config)
+    party_database = RasDatabase.make(model_paths=['ras_party.models.models'])
+    db = party_database('ras-party-db', app.config)
     # TODO: this isn't entirely safe, use a get_db() lazy initializer instead...
     app.db = db
 
 
 if __name__ == '__main__':
     config_path = 'config/config.yaml'
-    with open(config_path) as f:
-        config = ras_config.from_yaml_file(config_path)
+
+    config = ras_config.from_yaml_file(config_path)
 
     app = create_app(config)
+    with open(app.config['PARTY_SCHEMA']) as io:
+        app.config['PARTY_SCHEMA'] = loads(io.read())
     configure_logger(app.config)
     logger.debug("Created Flask app.")
     logger.debug("Config is {}".format(app.config))
@@ -56,8 +59,5 @@ if __name__ == '__main__':
     initialise_db(app)
 
     scheme, host, port = app.config['SCHEME'], app.config['HOST'], int(app.config['PORT'])
-
-    if app.config.feature.gateway_registration:
-        call_in_background(make_registration_func(app))
 
     app.run(debug=app.config['DEBUG'], host=host, port=port)
