@@ -10,8 +10,11 @@ from ras_common_utils.ras_database.json_column import JsonColumn
 from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
-from ras_party.controllers.util import filter_falsey_values, partition_dict
 
+from ras_party.controllers.util import filter_falsey_values
+
+
+# FIXME: hoist this out of here, should not be directly referencing file paths at this level
 with open('ras_party/schemas/party_schema.json') as io:
     PARTY_SCHEMA = loads(io.read())
 

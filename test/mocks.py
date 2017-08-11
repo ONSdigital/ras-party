@@ -2,9 +2,7 @@ import json
 import random
 from collections import defaultdict
 
-
 from ras_party.controllers.util import partition_dict
-from ras_party.models.models import Business
 from test.fixtures import get_case_by_iac, get_ce_by_id, get_survey_by_id, get_iac
 
 
@@ -53,9 +51,6 @@ class MockBusiness:
 
     def as_business(self):
         return self._attributes
-        #props, attrs = partition_dict(self._attributes, self.REQUIRED_ATTRIBUTES)
-        #props['attributes'] = attrs
-        #return props
 
     def as_party(self):
 
@@ -111,8 +106,6 @@ class MockResponse:
 
 class MockRequests:
 
-    static='Hello!'
-
     class Get:
 
         def __init__(self):
@@ -165,12 +158,11 @@ class MockRequests:
         def __init__(self, *args, **kwargs):
             pass
 
-        def __call__(self, *args, **kwargs): #uri, data=None, json=None, timeout=None):
+        def __call__(self, *args, **kwargs):
             return MockResponse('{}', status_code=201)
 
         def raise_for_status(self):
             pass
-
 
     def __init__(self):
         self.get = self.Get()

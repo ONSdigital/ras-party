@@ -252,13 +252,8 @@ class TestParties(PartyTestClient):
         self.post_to_respondents(mock_respondent, 200)
 
         # When the email is verified twice
-        #frontstage_url = mock_notify.call_args[0][0]
         frontstage_url = mock_notify.call_args[0][2]
         token = frontstage_url.split('/')[-1]
-
-        #_, token = frontstage_url.split('=')
-        #token = frontstage_url
-
 
         self.put_email_verification(token, 200)
         # Then the response is a 409

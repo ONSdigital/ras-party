@@ -389,7 +389,7 @@ def put_email_verification(token):
         set_user_verified(email_address)
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
-# Helper function to set the 'active' flag on the OAuth2 server for a user. If it fails a raise_for_status is executed
+
 def set_user_verified(respondent_email):
     """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
         If it fails a raise_for_status is executed
