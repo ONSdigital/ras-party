@@ -29,6 +29,7 @@ service:
     LOG_LEVEL: debug
     SECRET_KEY: aardvark
     EMAIL_TOKEN_SALT: aardvark
+    PARTY_SCHEMA: ras_party/schemas/party_schema.json
 
 dependencies:
     ras-party-db:
