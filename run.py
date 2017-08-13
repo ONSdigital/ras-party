@@ -1,3 +1,5 @@
+from json import loads
+
 import structlog
 from flask import jsonify
 from flask_cors import CORS
@@ -38,18 +40,20 @@ def create_app(config):
 
 def initialise_db(app):
     # Initialise the database with the specified SQLAlchemy model
-    PartyDatabase = RasDatabase.make(model_paths=['ras_party.models.models'])
-    db = PartyDatabase('ras-party-db', app.config)
+    party_database = RasDatabase.make(model_paths=['ras_party.models.models'])
+    db = party_database('ras-party-db', app.config)
     # TODO: this isn't entirely safe, use a get_db() lazy initializer instead...
     app.db = db
 
 
 if __name__ == '__main__':
     config_path = 'config/config.yaml'
-    with open(config_path) as f:
-        config = ras_config.from_yaml_file(config_path)
+
+    config = ras_config.from_yaml_file(config_path)
 
     app = create_app(config)
+    with open(app.config['PARTY_SCHEMA']) as io:
+        app.config['PARTY_SCHEMA'] = loads(io.read())
     configure_logger(app.config)
     logger.debug("Created Flask app.")
     logger.debug("Config is {}".format(app.config))

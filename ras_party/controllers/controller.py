@@ -1,20 +1,39 @@
 import uuid
-
 import requests
 from flask import make_response, jsonify, current_app
 from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
 from sqlalchemy import orm
 from structlog import get_logger
+from pathlib import Path
+from json import loads
 
 from ras_party.controllers.error_decorator import translate_exceptions
-from ras_party.controllers.ras_error import RasError
+from ras_party.controllers.ras_error import RasError, RasNotifyError
 from ras_party.controllers.session_context import db_session
 from ras_party.controllers.transactional import transactional
 from ras_party.controllers.util import build_url
 from ras_party.controllers.validate import Validator, IsUuid, Exists, IsIn
-from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus
+from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus, \
+    PendingEnrolment, EnrolmentStatus
+from ras_party.controllers.gov_uk_notify import GovUKNotify
 
 log = get_logger()
+
+#
+#   On the one hand these will be environment dependent and should probably be
+#   environment variables, but on the other hand, the requests should be wrapped
+#   in error detection and retry code and we shouldn't be relying on these anyway ...
+#
+REQUESTS_GET_TIMEOUT = 2.0
+REQUESTS_POST_TIMEOUT = 2.0
+
+#
+#   TODO: the spec seems to read as a need for /info, currently this endpoint responds on /party-api/v1/info
+#
+_health_check = {}
+if Path('git_info').exists():
+    with open('git_info') as io:
+        _health_check = loads(io.read())
 
 
 # TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
@@ -25,11 +44,8 @@ def get_info():
     info = {
         "name": current_app.config['NAME'],
         "version": current_app.config['VERSION'],
-        "origin": "git@github.com:ONSdigital/ras-party.git",
-        "commit": "TBD",
-        "branch": "TBD",
-        "built": "TBD"
     }
+    info = dict(_health_check, **info)
 
     if current_app.config.feature.report_dependencies:
         info["dependencies"] = [{'name': name} for name in current_app.config.dependency.keys()]
@@ -37,50 +53,17 @@ def get_info():
     return make_response(jsonify(info), 200)
 
 
-@translate_exceptions
-def businesses_post(business):
+def error_result(errors):
     """
-    adds a reporting unit of type Business
-    Adds a new Business, or updates an existing Business based on the business reference provided
-    :param business: Business to add
-    :type business: dict | bytes
+    Standard error response
 
-    :rtype: None
+    :param errors: list of error messages
+    :return: valid Flask Response
     """
-    with db_session() as tran:
-        if 'businessRef' in business:
-            existing_business = tran.query(Business).filter(Business.business_ref == business['businessRef']).first()
-            if existing_business:
-                business['id'] = str(existing_business.party_uuid)
-
-        b = Business.from_business_dict(business)
-        if b.valid:
-            tran.merge(b)
-            return make_response(jsonify(b.to_business_dict()), 200)
-        else:
-            return make_response(jsonify(b.errors), 400)
-
-
-@translate_exceptions
-def get_business_by_id(id):
-    """
-    Get a Business by its Party ID
-    Returns a single Party
-    :param id: ID of Party to return
-    :type id: str
-
-    :rtype: Business
-    """
-
-    v = Validator(IsUuid('id'))
-    if not v.validate({'id': id}):
-        return make_response(jsonify(v.errors), 400)
-
-    business = current_app.db.session.query(Business).filter(Business.party_uuid == id).first()
-    if not business:
-        return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
-
-    return make_response(jsonify(business.to_business_dict()), 200)
+    # TODO: standard error handling should be migrated to error decorator (invoked via raising an exception)
+    messages = [{'message': error.message, 'validator': error.validator} for error in errors]
+    log.error(messages)
+    return make_response(jsonify(messages), 400)
 
 
 @translate_exceptions
@@ -101,34 +84,67 @@ def get_business_by_ref(ref):
 
 
 @translate_exceptions
-def parties_post(party):
+def get_business_by_id(id):
     """
-    given a sampleUnitType B | H this adds a reporting unit of type Business or Household
-    Adds a new Party of type sampleUnitType or updates an existing Party based on the reference provided
-    :param party: Party to add
-    :type party: dict | bytes
+    Get a Business by its Party ID
+    Returns a single Party
+    :param id: ID of Party to return
+    :type id: str
 
-    :rtype: None
+    :rtype: Business
     """
-    v = Validator(Exists('sampleUnitType'), IsIn('sampleUnitType', 'B'))
-    if 'id' in party:
-        v.add_rule(IsUuid('id'))
-    if party.get('sampleUnitType') == Business.UNIT_TYPE:
-        v.add_rule(Exists('sampleUnitRef'))
-    if not v.validate(party):
+    v = Validator(IsUuid('id'))
+    if not v.validate({'id': id}):
         return make_response(jsonify(v.errors), 400)
 
-    if party['sampleUnitType'] == Business.UNIT_TYPE:
-        with db_session() as tran:
-            existing_business = tran.query(Business).filter(Business.business_ref == party['sampleUnitRef']).first()
-            if existing_business:
-                party['id'] = str(existing_business.party_uuid)
-            b = Business.from_party_dict(party)
-            if b.valid:
-                tran.merge(b)
-                return make_response(jsonify(b.to_party_dict()), 200)
-            else:
-                return make_response(jsonify(b.errors), 400)
+    business = current_app.db.session.query(Business).filter(Business.party_uuid == id).first()
+    if not business:
+        return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
+
+    return make_response(jsonify(business.to_business_dict()), 200)
+
+
+@translate_exceptions
+def businesses_post(json_packet):
+    """
+    This performs the same function as 'parties_post' except that the data is presented in a 'flat' format.
+    As a result, we structure the data, then pass it through to parties_post, setting structured to False
+    which forces the resulting output to be presented in the same format we received it. Note; we're not
+    necessarily expecting this endpoint to be hit in production.
+
+    :param json_packet: packet containing the data to post
+    :type json_packet: JSON data matching the schema described in schemas/party_schema.json
+    """
+    json_packet = Business.add_structure(json_packet)
+    return parties_post(json_packet, structured=False)
+
+
+@translate_exceptions
+def parties_post(json_packet, structured=True):
+    """
+    Post a new party (with sampleUnitType B)
+
+    :param json_packet: packet containing the data to post
+    :type json_packet: JSON data maching the schema described in schemas/party_schema.json
+    :param structured: The format we output on completion
+    :type bool: Structured or Flat
+    """
+    errors = Business.validate(json_packet, current_app.config['PARTY_SCHEMA'])
+    if errors:
+        return error_result(errors)
+
+    if json_packet['sampleUnitType'] != Business.UNIT_TYPE:
+        return error_result([{'message': 'sampleUnitType must be of type ({})'.format(Business.UNIT_TYPE)}])
+
+    with db_session() as tran:
+        existing_business = tran.query(Business).filter(Business.business_ref == json_packet['sampleUnitRef']).first()
+        if existing_business:
+            json_packet['id'] = str(existing_business.party_uuid)
+
+        b = Business.from_party_dict(json_packet)
+        tran.merge(b)
+        resp = b.to_party_dict() if structured else b.to_business_dict()
+        return make_response(jsonify(resp), 200)
 
 
 @translate_exceptions
@@ -196,6 +212,24 @@ def get_respondent_by_id(id):
 
 
 @translate_exceptions
+def get_respondent_by_email(email):
+    """
+    Get a Respondent by its EMail Address
+    Returns a single Party
+    :param email: EMail of Respondent to return
+    :type id: str
+
+    :rtype: Respondent
+    """
+    respondent = current_app.db.session.query(Respondent).filter(Respondent.email_address == email).first()
+    if not respondent:
+        return make_response(jsonify({'errors': "Respondent with email address '{}' does not exist.".format(email)}),
+                             404)
+
+    return make_response(jsonify(respondent.to_respondent_dict()), 200)
+
+
+@translate_exceptions
 @transactional
 def respondents_post(party, tran):
     """
@@ -206,7 +240,7 @@ def respondents_post(party, tran):
     4. Lookup the collection exercise from the collection exercise service
     5. Lookup the survey from the survey service
     6. Generate an email verification token, and an email verification url
-    7. Invoke the email verification (this is currently mocked out)
+    7. Invoke the email verification
     8. Update the database with the new respondent, establishing an association to the business, and an entry
        in the enrolment table (along with the survey id / survey name)
     9. Post a case event to the case service to notify that a new respondent has been created
@@ -229,62 +263,93 @@ def respondents_post(party, tran):
     if not iac.get('active'):
         raise RasError("Enrolment code is not active.", status_code=400)
 
-    existing = current_app.db.session.query(Respondent)\
-        .filter(Respondent.email_address == party['emailAddress'])\
+    existing = current_app.db.session.query(Respondent) \
+        .filter(Respondent.email_address == party['emailAddress']) \
         .first()
     if existing:
         raise RasError("User with email address {} already exists.".format(party['emailAddress']), status_code=400)
 
-    register_user(party, tran)
-
     case_context = request_case(party['enrolmentCode'])
     case_id = case_context['id']
-
     business_id = case_context['partyId']
     collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
     collection_exercise = request_collection_exercise(collection_exercise_id)
 
-    survey_id = collection_exercise['surveyId']
-    survey = request_survey(survey_id)
-    survey_name = survey['longName']
+    try:
+        survey_id = collection_exercise['surveyId']
+        survey = request_survey(survey_id)
+        survey_name = survey['longName']
+    except KeyError:
+        raise RasError("There is no survey bound for this user with email address: {}".format(party['emailAddress']))
 
     translated_party = {
         'party_uuid': party.get('id') or str(uuid.uuid4()),
         'email_address': party['emailAddress'],
         'first_name': party['firstName'],
         'last_name': party['lastName'],
-        'telephone': party['telephone']
+        'telephone': party['telephone'],
+        'status': RespondentStatus.CREATED
     }
-
-    secret_key = current_app.config["SECRET_KEY"]
-    email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
-    timed_serializer = URLSafeTimedSerializer(secret_key)
-    token = timed_serializer.dumps(party['emailAddress'], salt=email_token_salt)
-    frontstage_svc = current_app.config.dependency['frontstage-service']
-    frontstage_url = build_url('{}://{}:{}/activate-account?t={}', frontstage_svc, token)
-
-    # TODO: invoke real notification service passing the frontstage_url
-    notify(frontstage_url)
 
     with db_session() as sess:
         try:
             b = sess.query(Business).filter(Business.party_uuid == business_id).one()
+        except orm.exc.MultipleResultsFound:
+            # FIXME: this is not possible - party_uuid is a unique key
+            msg = "There were multiple results found for a business ID while enrolling user with email: {}" \
+                .format(party['emailAddress'])
+            raise RasError(msg, status_code=409)  # TODO This might be better as a 404
         except orm.exc.NoResultFound:
             msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
             raise RasError(msg, status_code=404)
 
-        r = Respondent(**translated_party)
-        br = BusinessRespondent(business=b, respondent=r)
-        Enrolment(business_respondent=br, survey_id=survey_id, survey_name=survey_name)
+        try:
+            #  Create the enrolment respondent-business-survey associations
+            r = Respondent(**translated_party)
+            br = BusinessRespondent(business=b, respondent=r)
+            pending_enrolment = PendingEnrolment(case_id=case_id,
+                                                 respondent=r,
+                                                 business_id=business_id,
+                                                 survey_id=survey_id)
+            Enrolment(business_respondent=br,
+                      survey_id=survey_id,
+                      survey_name=survey_name,
+                      status=EnrolmentStatus.PENDING)
+            sess.add(r)
+            sess.add(pending_enrolment)
 
-        sess.add(r)
+            # Notify the case service of this account being created
+            post_case_event(case_id, r.party_uuid, "RESPONDENT_ACCOUNT_CREATED", "New respondent account created")
 
-        post_case_event(case_id, r.party_uuid)
+            # Create and send the email verification token
+            secret_key = current_app.config["SECRET_KEY"]
+            email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
+            timed_serializer = URLSafeTimedSerializer(secret_key)
+            token = timed_serializer.dumps(party['emailAddress'], salt=email_token_salt)
+            frontstage_svc = current_app.config.dependency['frontstage-service']
+            frontstage_url = build_url('{}://{}:{}/register/activate-account/{}', frontstage_svc, token)
+            notify_service = current_app.config.dependency['gov-uk-notify-service']
+            template_id = notify_service['gov_notify_template_id']
+            log.info("Verification URL for party_id: {} {}".format(str(r.party_uuid), frontstage_url))
+            notify(party['emailAddress'], template_id, frontstage_url, r.party_uuid)
+        except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError):
+            msg = "Error updating database for user id: {} ".format(party['id'])
+            raise RasError(msg, status_code=500)
+        except KeyError:
+            msg = "Missing config keys during enrolment"
+            raise RasError(msg, status_code=500)
+        except Exception as e:
+            msg = "Error during enrolment process {}".format(e)
+            raise RasError(msg, status_code=500)
+
+        register_user(party, tran)
+
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
 
 @translate_exceptions
 def put_email_verification(token):
+    # TODO Add some doc string or comments.
     log.info("Verifying email - checking email token: {}".format(token))
     timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
     duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
@@ -307,36 +372,69 @@ def put_email_verification(token):
             raise RasError("Couldn't locate user.", status_code=404)
 
         if not r.status == RespondentStatus.CREATED:
-            raise RasError("Verification token is invalid or already used.", 409)
+            return make_response(jsonify(r.to_respondent_dict()), 409)
 
-        # We need to set the user as active on the OAuth2 server.
-        set_user_active(email_address)
-
+        # We set the party as ACTIVE in this service
         r.status = RespondentStatus.ACTIVE
 
+        # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
+        # TODO: Think about adding transaction to this function
+        if r.pending_enrolment:
+            enrol_respondent_for_survey(r, sess)
+        else:
+            log.info("No pending enrolment for respondent {}".format(str(r.party_uuid)))
+
+        # We set the user as verified on the OAuth2 server.
+        set_user_verified(email_address)
         return make_response(jsonify(r.to_respondent_dict()), 200)
 
 
-# Helper function to set the 'active' flag on the OAuth2 server for a user. If it fails a raise_for_status is executed
-def set_user_active(respondent_email):
-
+def set_user_verified(respondent_email):
+    """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
+        If it fails a raise_for_status is executed
+    """
     log.info("Setting user active on OAuth2 server")
 
     oauth_payload = {
         "username": respondent_email,
         "client_id": current_app.config.dependency['oauth2-service']['client_id'],
-        "client_secret": current_app.config.dependency['oauth2-service']['client_secret']
+        "client_secret": current_app.config.dependency['oauth2-service']['client_secret'],
+        "account_verified": "true"
     }
     oauth_svc = current_app.config.dependency['oauth2-service']
-    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['activate_endpoint'])
-    oauth_response = requests.post(oauth_url, data=oauth_payload)
+    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
+    oauth_response = requests.put(oauth_url, data=oauth_payload)
     if not oauth_response.status_code == 201:
         log.error("Unable to set the user active on the OAuth2 server")
         oauth_response.raise_for_status()
     log.info("User has been activated on the oauth2 server")
 
 
+# Handle the pending enrolment that was created during registration
+def enrol_respondent_for_survey(r, sess):
+    # TODO: Need to handle all the DB/SQLAlchemy errors that could occur here!
+    # TODO: comments and explanation
+    pending_enrolment_id = r.pending_enrolment[0].id
+    pending_enrolment = sess.query(PendingEnrolment).filter(PendingEnrolment.id == pending_enrolment_id).one()
+    enrolment = sess.query(Enrolment)\
+        .filter(Enrolment.business_id == str(pending_enrolment.business_id))\
+        .filter(Enrolment.survey_id == str(pending_enrolment.survey_id)) \
+        .filter(Enrolment.respondent_id == r.id).one()
+    enrolment.status = EnrolmentStatus.ENABLED
+    sess.add(enrolment)
+    log.info("Enabling pending enrolment for respondent {} to survey_id {} for business_id {}"
+             .format(str(r.party_uuid),
+                     str(pending_enrolment.survey_id),
+                     str(pending_enrolment.business_id)))
+    # Send an enrolment event to the case service
+    case_id = pending_enrolment.case_id
+    log.info("Pending enrolment for case_id :: " + str(case_id))
+    post_case_event(str(case_id), str(r.party_uuid), "RESPONDENT_ENROLED", "Respondent enrolled")
+    sess.delete(pending_enrolment)
+
+
 def register_user(party, tran):
+    # TODO: Comments and explanation
     oauth_payload = {
         "username": party['emailAddress'],
         "password": party['password'],
@@ -345,7 +443,7 @@ def register_user(party, tran):
     }
     oauth_svc = current_app.config.dependency['oauth2-service']
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    oauth_response = requests.post(oauth_url, data=oauth_payload, timeout=0.1)
+    oauth_response = requests.post(oauth_url, data=oauth_payload, timeout=REQUESTS_POST_TIMEOUT)
     if not oauth_response.status_code == 201:
         oauth_response.raise_for_status()
 
@@ -362,63 +460,82 @@ def register_user(party, tran):
 
 def request_iac(enrolment_code):
     # TODO: factor out commonality from these request_* functions
-    case_svc = current_app.config.dependency['iac-service']
-    case_url = build_url('{}://{}:{}/iacs/{}', case_svc, enrolment_code)
-    log.info("GET URL {}".format(case_url))
-    response = requests.get(case_url, timeout=0.1)
+    # TODO: Comments and explanation
+    iac_svc = current_app.config.dependency['iac-service']
+    iac_url = build_url('{}://{}:{}/iacs/{}', iac_svc, enrolment_code)
+    log.info("GET URL {}".format(iac_url))
+    response = requests.get(iac_url, timeout=REQUESTS_GET_TIMEOUT)
     log.info("IAC service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
 
 
 def request_case(enrolment_code):
+    # TODO: Comments and explanation
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
     log.info("GET URL {}".format(case_url))
-    response = requests.get(case_url, timeout=0.1)
+    response = requests.get(case_url, timeout=REQUESTS_GET_TIMEOUT)
     log.info("Case service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
 
 
 def request_collection_exercise(collection_exercise_id):
+    # TODO: Comments and explanation
     ce_svc = current_app.config.dependency['collectionexercise-service']
     ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
     log.info("GET {}".format(ce_url))
-    response = requests.get(ce_url, timeout=0.1)
+    response = requests.get(ce_url, timeout=REQUESTS_GET_TIMEOUT)
     log.info("Collection exercise service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
 
 
 def request_survey(survey_id):
+    # TODO: Comments and explanation
     survey_svc = current_app.config.dependency['survey-service']
     survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
     log.info("GET {}".format(survey_url))
-    response = requests.get(survey_url, timeout=0.1)
+    response = requests.get(survey_url, timeout=REQUESTS_GET_TIMEOUT)
     log.info("Survey service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
 
 
-def post_case_event(case_id, party_id):
+def post_case_event(case_id, party_id, category="Default category message", desc="Default description message"):
+    # TODO: Comments and explanation
+    # TODO: Consider making this it's own python module in the Flask App. Or having a class for this.
+
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/{}/events', case_svc, case_id)
-
     payload = {
-        'description': "New respondent account created",
-        'category': "RESPONDENT_ACCOUNT_CREATED",
+        'description': desc,
+        'category': category,
         'partyId': party_id,
         'createdBy': "Party Service"
     }
 
     log.info("POST {} payload={}".format(case_url, payload))
-    response = requests.post(case_url, json=payload, timeout=0.1)
+    response = requests.post(case_url, json=payload, timeout=REQUESTS_POST_TIMEOUT)
     log.info("Case service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
 
 
-def notify(_):
-    # TODO: this currently exists solely for unit test purposes and needs to be replaced with the real thing
-    pass
+def notify(email, template_id, url, party_id):
+    # TODO: Comments and explanation
+    personalisation = {
+        'ACCOUNT_VERIFICATION_URL': url
+    }
+
+    if current_app.config.feature['send_email_to_gov_notify']:
+        log.info("Sending verification email for party_id: {}".format(party_id))
+        try:
+            notifier = GovUKNotify()
+            notifier.send_message(email, template_id, personalisation, party_id)
+        except RasNotifyError:
+            # Note: intentionally suppresses exception
+            log.error("Error sending verification email for party_id {}".format(party_id))
+    else:
+        log.info("Verification email not sent. Feature send_email_to_gov_notify=false")

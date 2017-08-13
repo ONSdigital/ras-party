@@ -2,6 +2,7 @@ import datetime
 import enum
 import uuid
 
+from jsonschema import Draft4Validator
 from ras_common_utils.ras_database.base import Base
 from ras_common_utils.ras_database.guid import GUID
 from ras_common_utils.ras_database.json_column import JsonColumn
@@ -9,19 +10,13 @@ from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyCo
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
-from ras_party.controllers.util import filter_falsey_values, partition_dict
-from ras_party.controllers.validate import Validator, Exists, IsUuid
+from ras_party.controllers.util import filter_falsey_values
 
 
 class Business(Base):
     __tablename__ = 'business'
 
     UNIT_TYPE = 'B'
-
-    REQUIRED_ATTRIBUTES = [
-        'contactName', 'employeeCount', 'enterpriseName', 'facsimile', 'fulltimeCount', 'legalStatus', 'name',
-        'sic2003', 'sic2007', 'telephone', 'tradingName', 'turnover'
-    ]
 
     # TODO: consider using postgres uuid for uuid pkey
     party_uuid = Column(GUID, unique=True, primary_key=True)
@@ -31,61 +26,47 @@ class Business(Base):
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
     @staticmethod
-    def from_business_dict(d):
-        v = Validator(Exists('businessRef',
-                             'contactName',
-                             'employeeCount',
-                             'enterpriseName',
-                             'facsimile',
-                             'fulltimeCount',
-                             'legalStatus',
-                             'name',
-                             'sic2003',
-                             'sic2007',
-                             'telephone',
-                             'tradingName',
-                             'turnover'
-                             ))
-        if 'id' in d:
-            v.add_rule(IsUuid('id'))
+    def validate(json_packet, schema):
+        """
+        Validate the JSON packet against the supplied schema
 
-        if v.validate(d):
-            b = Business(party_uuid=d.get('id', uuid.uuid4()), business_ref=d['businessRef'])
-            _, attr = partition_dict(d, ['id', 'businessRef', 'sampleUnitType', 'attributes'])
-            b.attributes = attr
-            b.attributes.update(d.get('attributes', {}))
-            b.valid = True
-            return b
-
-        return v
+        :param json_packet: The incoming JSON packet (typically via a POST)
+        :param schema: the JSON schema to validate against
+        :return: an error iterator if the packet is invalid, otherwise False
+        """
+        validator = Draft4Validator(schema)
+        if not validator.is_valid(json_packet):
+            return validator.iter_errors(json_packet)
+        return False
 
     @staticmethod
-    def from_party_dict(d):
-        v = Validator(Exists('sampleUnitRef',
-                             'sampleUnitType',
-                             'attributes.contactName',
-                             'attributes.employeeCount',
-                             'attributes.enterpriseName',
-                             'attributes.facsimile',
-                             'attributes.fulltimeCount',
-                             'attributes.legalStatus',
-                             'attributes.name',
-                             'attributes.sic2003',
-                             'attributes.sic2007',
-                             'attributes.telephone',
-                             'attributes.tradingName',
-                             'attributes.turnover'
-                             ))
-        if 'id' in d:
-            v.add_rule(IsUuid('id'))
+    def add_structure(json_packet):
+        """
+        The Business posting is now the same as the Party posting, except that the Business version
+        has a flat structure and the party service has attributes in a dictionary item called 'attributes'.
+        So for business postings, we just convert the incoming version into the Party version, then we can
+        use the Party code to post the object.
 
-        if v.validate(d):
-            b = Business(party_uuid=d.get('id', uuid.uuid4()), business_ref=d['sampleUnitRef'])
-            b.attributes = d.get('attributes')
-            b.valid = True
-            return b
+        :param json_packet: The incoming JSON packet (Business/flat format)
+        :return: The json_packet in structured (Party) format
+        """
+        structured = {}
+        for key in ['sampleUnitRef', 'sampleUnitType', 'id']:
+            if key in json_packet:
+                structured[key] = json_packet.pop(key)
 
-        return v
+        structured['attributes'] = json_packet
+        return structured
+
+    @staticmethod
+    def from_party_dict(party):
+
+        b = Business(party_uuid=party.get('id', uuid.uuid4()), business_ref=party['sampleUnitRef'])
+        b.attributes = party.get('attributes')
+        name = '{runame1} {runame2} {runame3}'.format(**b.attributes)
+        b.attributes['name'] = ' '.join(name.split())
+        b.valid = True
+        return b
 
     @staticmethod
     def _get_respondents_associations(respondents):
@@ -99,7 +80,8 @@ class Business(Base):
             for enrolment in enrolments:
                 enrolments_dict = {
                     "name": enrolment.survey_name,
-                    "surveyId": enrolment.survey_id
+                    "surveyId": enrolment.survey_id,
+                    "enrolmentStatus": EnrolmentStatus(enrolment.status).name
                 }
                 respondent_dict['enrolments'].append(enrolments_dict)
             associations.append(respondent_dict)
@@ -108,26 +90,20 @@ class Business(Base):
     def to_business_dict(self):
         d = {
             'id': self.party_uuid,
-            'businessRef': self.business_ref,
+            'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
-            'associations': self._get_respondents_associations(self.respondents)
+            'associations': self._get_respondents_associations(self.respondents),
         }
-        props, attrs = partition_dict(self.attributes, self.REQUIRED_ATTRIBUTES)
-        d.update(props)
-        d['attributes'] = filter_falsey_values(attrs)
-
-        return d
+        return dict(d, **self.attributes)
 
     def to_party_dict(self):
-        d = {
+        return {
             'id': self.party_uuid,
             'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
             'attributes': self.attributes,
             'associations': self._get_respondents_associations(self.respondents)
         }
-
-        return filter_falsey_values(d)
 
 
 class BusinessRespondentStatus(enum.IntEnum):
@@ -142,7 +118,7 @@ class BusinessRespondent(Base):
 
     business_id = Column(GUID, ForeignKey('business.party_uuid'), primary_key=True)
     respondent_id = Column(Integer, ForeignKey('respondent.id'), primary_key=True)
-    status = Column('status', Enum(BusinessRespondentStatus))
+    status = Column('status', Enum(BusinessRespondentStatus), default=BusinessRespondentStatus.ACTIVE)
     effective_from = Column(DateTime, default=datetime.datetime.utcnow)
     effective_to = Column(DateTime)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
@@ -156,6 +132,24 @@ class RespondentStatus(enum.IntEnum):
     CREATED = 0
     ACTIVE = 1
     SUSPENDED = 2
+
+
+class PendingEnrolment(Base):
+    __tablename__ = 'pending_enrolment'
+
+    id = Column(Integer, primary_key=True)
+    case_id = Column(GUID)
+    respondent_id = Column(Integer, ForeignKey('respondent.id'))
+    business_id = Column(GUID)
+    survey_id = Column(GUID)
+
+    created_on = Column(DateTime, default=datetime.datetime.utcnow)
+    respondent = relationship('Respondent')
+
+    __table_args__ = (
+        ForeignKeyConstraint(['respondent_id'],
+                             ['respondent.id']),
+    )
 
 
 class Respondent(Base):
@@ -172,6 +166,7 @@ class Respondent(Base):
     last_name = Column(Text)
     telephone = Column(Text)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
+    pending_enrolment = relationship('PendingEnrolment', back_populates='respondent')
 
     @staticmethod
     def _get_business_associations(businesses):
@@ -186,7 +181,8 @@ class Respondent(Base):
             for enrolment in enrolments:
                 enrolments_dict = {
                     "name": enrolment.survey_name,
-                    "surveyId": enrolment.survey_id
+                    "surveyId": enrolment.survey_id,
+                    "enrolmentStatus": EnrolmentStatus(enrolment.status).name
                 }
                 business_dict['enrolments'].append(enrolments_dict)
             associations.append(business_dict)
@@ -200,6 +196,7 @@ class Respondent(Base):
             'firstName': self.first_name,
             'lastName': self.last_name,
             'telephone': self.telephone,
+            'status': RespondentStatus(self.status).name,
             'associations': self._get_business_associations(self.businesses)
         }
 
@@ -209,12 +206,13 @@ class Respondent(Base):
         d = {
             'id': self.party_uuid,
             'sampleUnitType': self.UNIT_TYPE,
+            'status': RespondentStatus(self.status).name,
             'attributes': filter_falsey_values({
                 'emailAddress': self.email_address,
                 'firstName': self.first_name,
                 'lastName': self.last_name,
-                'telephone': self.telephone,
-                'associations': self._get_business_associations(self.businesses)})
+                'telephone': self.telephone}),
+            'associations': self._get_business_associations(self.businesses)
         }
 
         return d
@@ -234,7 +232,7 @@ class Enrolment(Base):
     respondent_id = Column(Integer, primary_key=True)
     survey_id = Column(Text, primary_key=True)
     survey_name = Column(Text)
-    status = Column('status', Enum(EnrolmentStatus))
+    status = Column('status', Enum(EnrolmentStatus), default=EnrolmentStatus.PENDING)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
     business_respondent = relationship('BusinessRespondent', back_populates='enrolment')
