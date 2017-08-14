@@ -358,10 +358,10 @@ def put_email_verification(token):
     try:
         email_address = timed_serializer.loads(token, salt=email_token_salt, max_age=duration)
     except SignatureExpired:
-        msg="Expired email verification token {}".format(token)
+        msg = "Expired email verification token {}".format(token)
         raise RasError(msg, 409)
     except (BadSignature, BadData) as e:
-        msg="Bad email verification token {} error {}".format(token, e)
+        msg = "Bad email verification token {} error {}".format(token, e)
         raise RasError(msg, 404)
 
     with db_session() as sess:
@@ -381,7 +381,8 @@ def put_email_verification(token):
         if r.pending_enrolment:
             enrol_respondent_for_survey(r, sess)
         else:
-            log.info("No pending enrolment for respondent {} while checking email verification token".format(str(r.party_uuid)))
+            log.info("No pending enrolment for respondent {} while checking email verification token"
+                     .format(str(r.party_uuid)))
 
         # We set the user as verified on the OAuth2 server.
         set_user_verified(email_address)
@@ -444,7 +445,8 @@ def register_user(party, tran):
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
     oauth_response = requests.post(oauth_url, data=oauth_payload, timeout=REQUESTS_POST_TIMEOUT)
     if not oauth_response.status_code == 201:
-        log.info("Registering respondent OAuth2 server responded with {} {}".format(str(oauth_response.status_code), str(oauth_response.content)))
+        log.info("Registering respondent OAuth2 server responded with {} {}"
+                 .format(oauth_response.status_code, oauth_response.content))
         oauth_response.raise_for_status()
 
     def dummy_compensating_action():
