@@ -241,7 +241,7 @@ class TestParties(PartyTestClient):
 
     @patch('ras_party.controllers.controller.notify')
     @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_email_verification_twice_produces_a_409(self, _, mock_notify):
+    def test_email_verification_twice_produces_a_200(self, _, mock_notify):
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -256,8 +256,8 @@ class TestParties(PartyTestClient):
         token = frontstage_url.split('/')[-1]
 
         self.put_email_verification(token, 200)
-        # Then the response is a 409
-        self.put_email_verification(token, 409)
+        # Then the response is a 200
+        self.put_email_verification(token, 200)
 
     @patch('ras_party.controllers.controller.notify')
     @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
