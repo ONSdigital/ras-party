@@ -25,6 +25,7 @@ log = get_logger()
 #   environment variables, but on the other hand, the requests should be wrapped
 #   in error detection and retry code and we shouldn't be relying on these anyway ...
 #
+
 try:
     REQUESTS_GET_TIMEOUT = int(os.getenv('REQUESTS_GET_TIMEOUT', '20'))
     REQUESTS_POST_TIMEOUT = int(os.getenv('REQUESTS_POST_TIMEOUT', '20'))
@@ -32,6 +33,10 @@ except Exception as e:
     log.error(e)
     REQUESTS_GET_TIMEOUT = 20
     REQUESTS_POST_TIMEOUT = 20
+
+NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
+EMAIL_ALREADY_VERIFIED = 'The Respondent for that party ID is already verified'
+EMAIL_VERIFICATION_SEND = 'A new verification email has been sent'
 
 #
 #   TODO: the spec seems to read as a need for /info, currently this endpoint responds on /party-api/v1/info
@@ -327,17 +332,7 @@ def respondents_post(party, tran):
             # Notify the case service of this account being created
             post_case_event(case_id, r.party_uuid, "RESPONDENT_ACCOUNT_CREATED", "New respondent account created")
 
-            # Create and send the email verification token
-            secret_key = current_app.config["SECRET_KEY"]
-            email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
-            timed_serializer = URLSafeTimedSerializer(secret_key)
-            token = timed_serializer.dumps(party['emailAddress'], salt=email_token_salt)
-            frontstage_svc = current_app.config.dependency['frontstage-service']
-            frontstage_url = build_url('{}://{}:{}/register/activate-account/{}', frontstage_svc, token)
-            notify_service = current_app.config.dependency['gov-uk-notify-service']
-            template_id = notify_service['gov_notify_template_id']
-            log.info("Verification URL for party_id: {} {}".format(str(r.party_uuid), frontstage_url))
-            notify(party['emailAddress'], template_id, frontstage_url, r.party_uuid)
+            _send_email_verification(r.party_uuid, party['emailAddress'])
         except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError):
             msg = "Error updating database for user id: {} ".format(party['id'])
             raise RasError(msg, status_code=500)
@@ -531,8 +526,86 @@ def post_case_event(case_id, party_id, category="Default category message", desc
     return response.json()
 
 
-def notify(email, template_id, url, party_id):
-    # TODO: Comments and explanation
+def _query_respondent_by_party_uuid(party_uuid):
+    """
+    Query to return respondent based on party uuid
+    :param party_uuid: the pary uuid
+    :return: respondent
+    """
+    log.debug('Querying respondents with party_uuid {}'.format(party_uuid))
+
+    with db_session() as tran:
+        return tran.query(Respondent).filter(Respondent.party_uuid == party_uuid).first()
+
+
+def resend_verification_email(party_uuid):
+    """
+    Check and resend an email verification email
+    :param party_uuid: the party uuid
+    :return: make_response
+    """
+    log.debug('attempting to resend verification_email with party_uuid {}'.format(party_uuid))
+
+    respondent = _query_respondent_by_party_uuid(party_uuid)
+
+    if not respondent:
+        log.debug(NO_RESPONDENT_FOR_PARTY_ID)
+        return make_response(NO_RESPONDENT_FOR_PARTY_ID, 404)
+
+    if respondent.status == RespondentStatus.ACTIVE:
+        log.debug(EMAIL_ALREADY_VERIFIED)
+        return make_response(EMAIL_ALREADY_VERIFIED, 200)
+
+    _send_email_verification(party_uuid, respondent.email_address)
+
+    return make_response(EMAIL_VERIFICATION_SEND, 200)
+
+
+def _send_email_verification(party_uuid, email):
+    """
+    Send an email verification to the respondent
+    :param email:
+    :param party_uuid:
+    """
+
+    verification_url = _create_verification_url(email)
+    log.info("Verification URL for party_id: {} {}".format(party_uuid, verification_url))
+
+    notify_service = current_app.config.dependency['gov-uk-notify-service']
+    template_id = notify_service['gov_notify_template_id']
+    _send_message_to_gov_uk_notify(email, template_id, verification_url, party_uuid)
+
+
+def _create_verification_url(email):
+    """
+    Create a verification url for an email
+    :param email:
+    :return: verification_url
+    """
+
+    log.info('creating verification url')
+
+    secret_key = current_app.config["SECRET_KEY"]
+    email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
+    timed_serializer = URLSafeTimedSerializer(secret_key)
+    token = timed_serializer.dumps(email, salt=email_token_salt)
+    frontstage_service = current_app.config.dependency['frontstage-service']
+    verification_url = build_url('{}://{}:{}/register/activate-account/{}', frontstage_service, token)
+
+    return verification_url
+
+
+def _send_message_to_gov_uk_notify(email, template_id, url, party_id):
+    """
+    Send a message to GOVUK notify
+    :param email: respondents email address
+    :param template_id:
+    :param url:
+    :param party_id:
+    """
+
+    log.info('sending message to gov uk notify')
+
     personalisation = {
         'ACCOUNT_VERIFICATION_URL': url
     }
