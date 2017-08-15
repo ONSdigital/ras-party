@@ -1,5 +1,6 @@
 import uuid
 import requests
+import os
 from flask import make_response, jsonify, current_app
 from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
 from sqlalchemy import orm
@@ -24,8 +25,13 @@ log = get_logger()
 #   environment variables, but on the other hand, the requests should be wrapped
 #   in error detection and retry code and we shouldn't be relying on these anyway ...
 #
-REQUESTS_GET_TIMEOUT = 2.0
-REQUESTS_POST_TIMEOUT = 2.0
+try:
+    REQUESTS_GET_TIMEOUT = int(os.getenv('REQUESTS_GET_TIMEOUT', '20'))
+    REQUESTS_POST_TIMEOUT = int(os.getenv('REQUESTS_POST_TIMEOUT', '20'))
+except Exception as e:
+    log.error(e)
+    REQUESTS_GET_TIMEOUT = 20
+    REQUESTS_POST_TIMEOUT = 20
 
 #
 #   TODO: the spec seems to read as a need for /info, currently this endpoint responds on /party-api/v1/info
