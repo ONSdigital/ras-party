@@ -33,8 +33,6 @@ service:
 
 dependencies:
     ras-party-db:
-        service: rds
-        plan: shared-psql
         schema: partysvc
         #uri: "sqlite:///ras-party"
         uri: "postgresql://postgres:postgres@localhost:5432/postgres"
