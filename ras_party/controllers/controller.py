@@ -1,5 +1,6 @@
 import uuid
 import requests
+import os
 from flask import make_response, jsonify, current_app
 from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
 from sqlalchemy import orm
@@ -24,8 +25,13 @@ log = get_logger()
 #   environment variables, but on the other hand, the requests should be wrapped
 #   in error detection and retry code and we shouldn't be relying on these anyway ...
 #
-REQUESTS_GET_TIMEOUT = 2.0
-REQUESTS_POST_TIMEOUT = 2.0
+try:
+    REQUESTS_GET_TIMEOUT = int(os.getenv('REQUESTS_GET_TIMEOUT', '20'))
+    REQUESTS_POST_TIMEOUT = int(os.getenv('REQUESTS_POST_TIMEOUT', '20'))
+except Exception as e:
+    log.error(e)
+    REQUESTS_GET_TIMEOUT = 20
+    REQUESTS_POST_TIMEOUT = 20
 
 #
 #   TODO: the spec seems to read as a need for /info, currently this endpoint responds on /party-api/v1/info
@@ -350,7 +356,7 @@ def respondents_post(party, tran):
 @translate_exceptions
 def put_email_verification(token):
     # TODO Add some doc string or comments.
-    log.info("Verifying email - checking email token: {}".format(token))
+    log.info("Checking email verification token: {}".format(token))
     timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
     duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
     email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
@@ -358,21 +364,20 @@ def put_email_verification(token):
     try:
         email_address = timed_serializer.loads(token, salt=email_token_salt, max_age=duration)
     except SignatureExpired:
-        log.info("An email verification token expired for a user. The token is: {}".format(token))
-        raise RasError("Verification token has expired", 409)
+        msg = "Expired email verification token {}".format(token)
+        raise RasError(msg, 409)
     except (BadSignature, BadData) as e:
-        log.warning("An email verification token looks like it's corrupt. The token value is: {} and the error is: {}"
-                    .format(token, e))
-        raise RasError("Email verification is corrupt or does not exist", 404)
+        msg = "Bad email verification token {} error {}".format(token, e)
+        raise RasError(msg, 404)
 
     with db_session() as sess:
         try:
             r = sess.query(Respondent).filter(Respondent.email_address == email_address).one()
         except orm.exc.NoResultFound:
-            raise RasError("Couldn't locate user.", status_code=404)
+            raise RasError("Unable to find user while checking email verification token", status_code=404)
 
-        if not r.status == RespondentStatus.CREATED:
-            return make_response(jsonify(r.to_respondent_dict()), 409)
+        if r.status == RespondentStatus.ACTIVE:
+            return make_response(jsonify(r.to_respondent_dict()), 200)
 
         # We set the party as ACTIVE in this service
         r.status = RespondentStatus.ACTIVE
@@ -382,7 +387,8 @@ def put_email_verification(token):
         if r.pending_enrolment:
             enrol_respondent_for_survey(r, sess)
         else:
-            log.info("No pending enrolment for respondent {}".format(str(r.party_uuid)))
+            log.info("No pending enrolment for respondent {} while checking email verification token"
+                     .format(str(r.party_uuid)))
 
         # We set the user as verified on the OAuth2 server.
         set_user_verified(email_address)
@@ -445,6 +451,8 @@ def register_user(party, tran):
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
     oauth_response = requests.post(oauth_url, data=oauth_payload, timeout=REQUESTS_POST_TIMEOUT)
     if not oauth_response.status_code == 201:
+        log.info("Registering respondent OAuth2 server responded with {} {}"
+                 .format(oauth_response.status_code, oauth_response.content))
         oauth_response.raise_for_status()
 
     def dummy_compensating_action():
