@@ -27,4 +27,3 @@ logger.debug("Config is {}".format(app.config))
 initialise_db(app)
 
 scheme, host, port = app.config['SCHEME'], app.config['HOST'], int(app.config['PORT'])
-
