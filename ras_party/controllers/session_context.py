@@ -1,9 +1,9 @@
 from contextlib import contextmanager
 
 from flask import current_app
+from ras_common_utils.ras_error.ras_error import RasError, RasDatabaseError
 from structlog import get_logger
 
-from ras_party.controllers.ras_error import RasDatabaseError, RasError
 
 log = get_logger()
 
