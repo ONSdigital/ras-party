@@ -6,9 +6,9 @@ from flask_cors import CORS
 from ras_common_utils.ras_config import ras_config
 from ras_common_utils.ras_config.flask_extended import Flask
 from ras_common_utils.ras_database.ras_database import RasDatabase
+from ras_common_utils.ras_error.ras_error import RasError
 from ras_common_utils.ras_logger.ras_logger import configure_logger
 
-from ras_party.controllers.ras_error import RasError
 
 logger = structlog.get_logger()
 
