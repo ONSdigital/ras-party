@@ -30,7 +30,9 @@ def create_app(config):
 
     # register view blueprints
     from ras_party.views.party_view import party_view
+    from ras_party.views.info_view import info_view
     app.register_blueprint(party_view, url_prefix='/party-api/v1')
+    app.register_blueprint(info_view)
 
     CORS(app)
     return app
