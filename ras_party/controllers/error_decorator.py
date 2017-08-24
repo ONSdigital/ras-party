@@ -2,9 +2,9 @@ from functools import wraps
 
 import structlog
 from flask import current_app
+from ras_common_utils.ras_error.ras_error import RasError
 from requests import HTTPError
 
-from ras_party.controllers.ras_error import RasError
 
 log = structlog.get_logger()
 
