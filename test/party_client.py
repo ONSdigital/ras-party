@@ -100,3 +100,8 @@ class PartyTestClient(TestCase):
         response = self.client.open('/party-api/v1/emailverification/{}'.format(token), method='PUT')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
+
+    def resend_verification_email(self, email, expected_status=200):
+        response = self.client.open('/party-api/v1/resend-verification-email/{}'.format(email), method='GET')
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return response.get_data(as_text=True)

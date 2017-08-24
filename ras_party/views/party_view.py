@@ -70,3 +70,9 @@ def post_respondent():
 @log_route
 def put_email_verification(token):
     return controller.put_email_verification(token)
+
+
+@party_view.route('/resend-verification-email/<party_uuid>', methods=['GET'])
+@log_route
+def resend_verification_email(party_uuid):
+    return controller.resend_verification_email(party_uuid)
