@@ -8,6 +8,8 @@ service:
     LOG_LEVEL: error
     SECRET_KEY: aardvark
     EMAIL_TOKEN_SALT: bulbous
+    SECURITY_USER_NAME: username
+    SECURITY_USER_PASSWORD: password
 
 dependencies:
     ras-party-db:

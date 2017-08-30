@@ -30,12 +30,16 @@ service:
     SECRET_KEY: aardvark
     EMAIL_TOKEN_SALT: aardvark
     PARTY_SCHEMA: ras_party/schemas/party_schema.json
+    SECURITY_USER_NAME: dummy_user
+    SECURITY_USER_PASSWORD: dummy_password
+    SECURITY_REALM: sdc
+    REQUESTS_GET_TIMEOUT: 20
+    REQUESTS_POST_TIMEOUT: 20
 
 dependencies:
     ras-party-db:
         schema: partysvc
-        #uri: "sqlite:///ras-party"
-        uri: "postgresql://postgres:postgres@localhost:5432/postgres"
+        uri: "sqlite:///ras-party"
     case-service:
         scheme: http
         host: localhost
