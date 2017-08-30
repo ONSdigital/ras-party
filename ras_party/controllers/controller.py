@@ -11,7 +11,7 @@ from structlog import get_logger
 from ras_party.controllers.error_decorator import translate_exceptions
 from ras_party.controllers.gov_uk_notify import GovUKNotify
 from ras_party.controllers.requests_wrapper import Requests
-from ras_party.controllers.session_context import db_session
+from ras_party.controllers.session_decorator import with_db_session
 from ras_party.controllers.transactional import transactional
 from ras_party.controllers.util import build_url
 from ras_party.controllers.validate import Validator, IsUuid, Exists, IsIn
@@ -69,7 +69,8 @@ def error_result(errors):
 
 
 @translate_exceptions
-def get_business_by_ref(ref):
+@with_db_session
+def get_business_by_ref(ref, session):
     """
     Get a Business by its unique business reference
     Returns a single Business
@@ -78,7 +79,7 @@ def get_business_by_ref(ref):
 
     :rtype: Business
     """
-    business = current_app.db.session.query(Business).filter(Business.business_ref == ref).first()
+    business = session.query(Business).filter(Business.business_ref == ref).first()
     if not business:
         return make_response(jsonify({'errors': "Business with reference '{}' does not exist.".format(ref)}), 404)
 
@@ -86,7 +87,8 @@ def get_business_by_ref(ref):
 
 
 @translate_exceptions
-def get_business_by_id(id):
+@with_db_session
+def get_business_by_id(id, session):
     """
     Get a Business by its Party ID
     Returns a single Party
@@ -99,7 +101,7 @@ def get_business_by_id(id):
     if not v.validate({'id': id}):
         return make_response(jsonify(v.errors), 400)
 
-    business = current_app.db.session.query(Business).filter(Business.party_uuid == id).first()
+    business = session.query(Business).filter(Business.party_uuid == id).first()
     if not business:
         return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
 
@@ -122,7 +124,8 @@ def businesses_post(json_packet):
 
 
 @translate_exceptions
-def parties_post(json_packet, structured=True):
+@with_db_session
+def parties_post(json_packet, session, structured=True):
     """
     Post a new party (with sampleUnitType B)
 
@@ -138,19 +141,19 @@ def parties_post(json_packet, structured=True):
     if json_packet['sampleUnitType'] != Business.UNIT_TYPE:
         return error_result([{'message': 'sampleUnitType must be of type ({})'.format(Business.UNIT_TYPE)}])
 
-    with db_session() as tran:
-        existing_business = tran.query(Business).filter(Business.business_ref == json_packet['sampleUnitRef']).first()
-        if existing_business:
-            json_packet['id'] = str(existing_business.party_uuid)
+    existing_business = session.query(Business).filter(Business.business_ref == json_packet['sampleUnitRef']).first()
+    if existing_business:
+        json_packet['id'] = str(existing_business.party_uuid)
 
-        b = Business.from_party_dict(json_packet)
-        tran.merge(b)
-        resp = b.to_party_dict() if structured else b.to_business_dict()
-        return make_response(jsonify(resp), 200)
+    b = Business.from_party_dict(json_packet)
+    session.merge(b)
+    resp = b.to_party_dict() if structured else b.to_business_dict()
+    return make_response(jsonify(resp), 200)
 
 
 @translate_exceptions
-def get_party_by_ref(sampleUnitType, sampleUnitRef):
+@with_db_session
+def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
     """
     Get a Party by its unique reference (ruref / uprn)
     Returns a single Party
@@ -160,32 +163,33 @@ def get_party_by_ref(sampleUnitType, sampleUnitRef):
     :rtype: Party
     """
     v = Validator(IsIn('sampleUnitType', 'B'))
-    if not v.validate({'sampleUnitType': sampleUnitType}):
+    if not v.validate({'sampleUnitType': sample_unit_type}):
         return make_response(jsonify(v.errors), 400)
 
-    business = current_app.db.session.query(Business).filter(Business.business_ref == sampleUnitRef).first()
+    business = session.query(Business).filter(Business.business_ref == sample_unit_ref).first()
     if not business:
         return make_response(jsonify(
-            {'errors': "Business with reference '{}' does not exist.".format(sampleUnitRef)}), 404)
+            {'errors': "Business with reference '{}' does not exist.".format(sample_unit_ref)}), 404)
 
     return make_response(jsonify(business.to_party_dict()), 200)
 
 
 @translate_exceptions
-def get_party_by_id(sampleUnitType, id):
+@with_db_session
+def get_party_by_id(sample_unit_type, id, session):
     v = Validator(IsIn('sampleUnitType', 'B', 'BI'))
-    if not v.validate({'sampleUnitType': sampleUnitType}):
+    if not v.validate({'sampleUnitType': sample_unit_type}):
         return make_response(jsonify(v.errors), 400)
 
-    if sampleUnitType == Business.UNIT_TYPE:
-        business = current_app.db.session.query(Business).filter(Business.party_uuid == id).first()
+    if sample_unit_type == Business.UNIT_TYPE:
+        business = session.query(Business).filter(Business.party_uuid == id).first()
         if not business:
             return make_response(jsonify({'errors': "Business with id '{}' does not exist.".format(id)}), 404)
 
         return make_response(jsonify(business.to_party_dict()), 200)
 
-    elif sampleUnitType == Respondent.UNIT_TYPE:
-        respondent = current_app.db.session.query(Respondent).filter(Respondent.party_uuid == id).first()
+    elif sample_unit_type == Respondent.UNIT_TYPE:
+        respondent = session.query(Respondent).filter(Respondent.party_uuid == id).first()
         if not respondent:
             return make_response(jsonify({'errors': "Respondent with id '{}' does not exist.".format(id)}), 404)
 
@@ -193,7 +197,8 @@ def get_party_by_id(sampleUnitType, id):
 
 
 @translate_exceptions
-def get_respondent_by_id(id):
+@with_db_session
+def get_respondent_by_id(id, session):
     """
     Get a Respondent by its Party ID
     Returns a single Party
@@ -206,7 +211,7 @@ def get_respondent_by_id(id):
     if not v.validate({'id': id}):
         return make_response(jsonify(v.errors), 400)
 
-    respondent = current_app.db.session.query(Respondent).filter(Respondent.party_uuid == id).first()
+    respondent = session.query(Respondent).filter(Respondent.party_uuid == id).first()
     if not respondent:
         return make_response(jsonify({'errors': "Respondent with party id '{}' does not exist.".format(id)}), 404)
 
@@ -214,7 +219,8 @@ def get_respondent_by_id(id):
 
 
 @translate_exceptions
-def get_respondent_by_email(email):
+@with_db_session
+def get_respondent_by_email(email, session):
     """
     Get a Respondent by its EMail Address
     Returns a single Party
@@ -223,17 +229,17 @@ def get_respondent_by_email(email):
 
     :rtype: Respondent
     """
-    respondent = current_app.db.session.query(Respondent).filter(Respondent.email_address == email).first()
+    respondent = session.query(Respondent).filter(Respondent.email_address == email).first()
     if not respondent:
-        return make_response(jsonify({'errors': "Respondent with email address '{}' does not exist.".format(email)}),
-                             404)
+        return make_response(jsonify({'errors': "Respondent does not exist."}), 404)
 
     return make_response(jsonify(respondent.to_respondent_dict()), 200)
 
 
 @translate_exceptions
 @transactional
-def respondents_post(party, tran):
+@with_db_session
+def respondents_post(party, tran, session):
     """
     This function is quite complicated, as it performs a number of steps to complete a new respondent enrolment:
     1. Validate the enrolment code and email address
@@ -265,7 +271,7 @@ def respondents_post(party, tran):
     if not iac.get('active'):
         raise RasError("Enrolment code is not active.", status_code=400)
 
-    existing = current_app.db.session.query(Respondent) \
+    existing = session.query(Respondent) \
         .filter(Respondent.email_address == party['emailAddress']) \
         .first()
     if existing:
@@ -293,54 +299,54 @@ def respondents_post(party, tran):
         'status': RespondentStatus.CREATED
     }
 
-    with db_session() as sess:
-        try:
-            b = sess.query(Business).filter(Business.party_uuid == business_id).one()
-        except orm.exc.MultipleResultsFound:
-            # FIXME: this is not possible - party_uuid is a unique key
-            msg = "There were multiple results found for a business ID while enrolling user with email: {}" \
-                .format(party['emailAddress'])
-            raise RasError(msg, status_code=409)  # TODO This might be better as a 404
-        except orm.exc.NoResultFound:
-            msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
-            raise RasError(msg, status_code=404)
+    try:
+        b = session.query(Business).filter(Business.party_uuid == business_id).one()
+    except orm.exc.MultipleResultsFound:
+        # FIXME: this is not possible - party_uuid is a unique key
+        msg = "There were multiple results found for a business ID while enrolling user with email: {}" \
+            .format(party['emailAddress'])
+        raise RasError(msg, status_code=409)  # TODO This might be better as a 404
+    except orm.exc.NoResultFound:
+        msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
+        raise RasError(msg, status_code=404)
 
-        try:
-            #  Create the enrolment respondent-business-survey associations
-            r = Respondent(**translated_party)
-            br = BusinessRespondent(business=b, respondent=r)
-            pending_enrolment = PendingEnrolment(case_id=case_id,
-                                                 respondent=r,
-                                                 business_id=business_id,
-                                                 survey_id=survey_id)
-            Enrolment(business_respondent=br,
-                      survey_id=survey_id,
-                      survey_name=survey_name,
-                      status=EnrolmentStatus.PENDING)
-            sess.add(r)
-            sess.add(pending_enrolment)
+    try:
+        #  Create the enrolment respondent-business-survey associations
+        r = Respondent(**translated_party)
+        br = BusinessRespondent(business=b, respondent=r)
+        pending_enrolment = PendingEnrolment(case_id=case_id,
+                                             respondent=r,
+                                             business_id=business_id,
+                                             survey_id=survey_id)
+        Enrolment(business_respondent=br,
+                  survey_id=survey_id,
+                  survey_name=survey_name,
+                  status=EnrolmentStatus.PENDING)
+        session.add(r)
+        session.add(pending_enrolment)
 
-            # Notify the case service of this account being created
-            post_case_event(case_id, r.party_uuid, "RESPONDENT_ACCOUNT_CREATED", "New respondent account created")
+        # Notify the case service of this account being created
+        post_case_event(case_id, r.party_uuid, "RESPONDENT_ACCOUNT_CREATED", "New respondent account created")
 
-            _send_email_verification(r.party_uuid, party['emailAddress'])
-        except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError):
-            msg = "Error updating database for user id: {} ".format(party['id'])
-            raise RasError(msg, status_code=500)
-        except KeyError:
-            msg = "Missing config keys during enrolment"
-            raise RasError(msg, status_code=500)
-        except Exception as e:
-            msg = "Error during enrolment process {}".format(e)
-            raise RasError(msg, status_code=500)
+        _send_email_verification(r.party_uuid, party['emailAddress'])
+    except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError):
+        msg = "Error updating database for user id: {} ".format(party['id'])
+        raise RasError(msg, status_code=500)
+    except KeyError:
+        msg = "Missing config keys during enrolment"
+        raise RasError(msg, status_code=500)
+    except Exception as e:
+        msg = "Error during enrolment process {}".format(e)
+        raise RasError(msg, status_code=500)
 
-        register_user(party, tran)
+    register_user(party, tran)
 
-        return make_response(jsonify(r.to_respondent_dict()), 200)
+    return make_response(jsonify(r.to_respondent_dict()), 200)
 
 
 @translate_exceptions
-def put_email_verification(token):
+@with_db_session
+def put_email_verification(token, session):
     # TODO Add some doc string or comments.
     log.info("Checking email verification token: {}".format(token))
     timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
@@ -356,29 +362,28 @@ def put_email_verification(token):
         msg = "Bad email verification token {} error {}".format(token, e)
         raise RasError(msg, 404)
 
-    with db_session() as sess:
-        try:
-            r = sess.query(Respondent).filter(Respondent.email_address == email_address).one()
-        except orm.exc.NoResultFound:
-            raise RasError("Unable to find user while checking email verification token", status_code=404)
+    try:
+        r = session.query(Respondent).filter(Respondent.email_address == email_address).one()
+    except orm.exc.NoResultFound:
+        raise RasError("Unable to find user while checking email verification token", status_code=404)
 
-        if r.status == RespondentStatus.ACTIVE:
-            return make_response(jsonify(r.to_respondent_dict()), 200)
-
-        # We set the party as ACTIVE in this service
-        r.status = RespondentStatus.ACTIVE
-
-        # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
-        # TODO: Think about adding transaction to this function
-        if r.pending_enrolment:
-            enrol_respondent_for_survey(r, sess)
-        else:
-            log.info("No pending enrolment for respondent {} while checking email verification token"
-                     .format(str(r.party_uuid)))
-
-        # We set the user as verified on the OAuth2 server.
-        set_user_verified(email_address)
+    if r.status == RespondentStatus.ACTIVE:
         return make_response(jsonify(r.to_respondent_dict()), 200)
+
+    # We set the party as ACTIVE in this service
+    r.status = RespondentStatus.ACTIVE
+
+    # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
+    # TODO: Think about adding transaction to this function
+    if r.pending_enrolment:
+        enrol_respondent_for_survey(r, session)
+    else:
+        log.info("No pending enrolment for respondent {} while checking email verification token"
+                 .format(str(r.party_uuid)))
+
+    # We set the user as verified on the OAuth2 server.
+    set_user_verified(email_address)
+    return make_response(jsonify(r.to_respondent_dict()), 200)
 
 
 def set_user_verified(respondent_email):
@@ -525,7 +530,8 @@ def post_case_event(case_id, party_id, category="Default category message", desc
     return response.json()
 
 
-def _query_respondent_by_party_uuid(party_uuid):
+@with_db_session
+def _query_respondent_by_party_uuid(party_uuid, session):
     """
     Query to return respondent based on party uuid
     :param party_uuid: the pary uuid
@@ -533,8 +539,7 @@ def _query_respondent_by_party_uuid(party_uuid):
     """
     log.debug('Querying respondents with party_uuid {}'.format(party_uuid))
 
-    with db_session() as tran:
-        return tran.query(Respondent).filter(Respondent.party_uuid == party_uuid).first()
+    return session.query(Respondent).filter(Respondent.party_uuid == party_uuid).first()
 
 
 def resend_verification_email(party_uuid):
