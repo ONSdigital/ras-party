@@ -601,8 +601,7 @@ def _send_message_to_gov_uk_notify(email, template_id, url, party_id):
         'ACCOUNT_VERIFICATION_URL': url
     }
 
-    send_email_to_gov_notify = current_app.config.feature['send_email_to_gov_notify']
-    if send_email_to_gov_notify and send_email_to_gov_notify.lower() in ('true', 't', '1'):
+    if current_app.config.feature['send_email_to_gov_notify']:
         log.info("Sending verification email for party_id: {}".format(party_id))
         try:
             notifier = GovUKNotify()
