@@ -1,6 +1,7 @@
 import uuid
 import requests
 import os
+
 from flask import make_response, jsonify, current_app
 from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
 from ras_common_utils.ras_error.ras_error import RasError, RasNotifyError
@@ -569,6 +570,7 @@ def _send_email_verification(party_uuid, email):
     """
 
     verification_url = _create_verification_url(email)
+    # verification_url = "http://this-is-a-test"
     log.info("Verification URL for party_id: {} {}".format(party_uuid, verification_url))
 
     notify_service = current_app.config.dependency['gov-uk-notify-service']
@@ -590,7 +592,7 @@ def _create_verification_url(email):
     timed_serializer = URLSafeTimedSerializer(secret_key)
     token = timed_serializer.dumps(email, salt=email_token_salt)
     public_email_verification_url = current_app.config["PUBLIC_EMAIL_VERIFICATION_URL"]
-    verification_url = build_url('{}://{}:{}/register/activate-account/{}', public_email_verification_url, token)
+    verification_url = '{}/register/activate-account/{}'.format(public_email_verification_url, token)
 
     return verification_url
 

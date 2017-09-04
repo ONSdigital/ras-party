@@ -8,7 +8,7 @@ service:
     LOG_LEVEL: error
     SECRET_KEY: aardvark
     EMAIL_TOKEN_SALT: bulbous
-    PUBLIC_EMAIL_VERIFICATION_URL: http://ons.survey.gov/bres/
+    PUBLIC_EMAIL_VERIFICATION_URL: http://bananas.survey.gov/bres
 
 dependencies:
     ras-party-db:
