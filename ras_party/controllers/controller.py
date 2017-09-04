@@ -387,15 +387,19 @@ def set_user_verified(respondent_email):
     """
     log.info("Setting user active on OAuth2 server")
 
+    client_id = current_app.config.dependency['oauth2-service']['client_id']
+    client_secret = current_app.config.dependency['oauth2-service']['client_secret']
+
     oauth_payload = {
         "username": respondent_email,
-        "client_id": current_app.config.dependency['oauth2-service']['client_id'],
-        "client_secret": current_app.config.dependency['oauth2-service']['client_secret'],
+        "client_id": client_id,
+        "client_secret": client_secret,
         "account_verified": "true"
     }
     oauth_svc = current_app.config.dependency['oauth2-service']
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    oauth_response = Requests.put(oauth_url, data=oauth_payload)
+    auth = (client_id, client_secret)
+    oauth_response = Requests.put(oauth_url, auth=auth, data=oauth_payload)
     if not oauth_response.status_code == 201:
         log.error("Unable to set the user active on the OAuth2 server")
         oauth_response.raise_for_status()
@@ -427,15 +431,19 @@ def enrol_respondent_for_survey(r, sess):
 
 def register_user(party, tran):
     # TODO: Comments and explanation
+    client_id = current_app.config.dependency['oauth2-service']['client_id']
+    client_secret = current_app.config.dependency['oauth2-service']['client_secret']
+
     oauth_payload = {
         "username": party['emailAddress'],
         "password": party['password'],
-        "client_id": current_app.config.dependency['oauth2-service']['client_id'],
-        "client_secret": current_app.config.dependency['oauth2-service']['client_secret']
+        "client_id": client_id,
+        "client_secret": client_secret
     }
     oauth_svc = current_app.config.dependency['oauth2-service']
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    oauth_response = Requests.post(oauth_url, data=oauth_payload)
+    auth = (client_id, client_secret)
+    oauth_response = Requests.post(oauth_url, auth=auth, data=oauth_payload)
     if not oauth_response.status_code == 201:
         log.info("Registering respondent OAuth2 server responded with {} {}"
                  .format(oauth_response.status_code, oauth_response.content))

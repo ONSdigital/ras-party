@@ -20,12 +20,24 @@ class Requests:
 
     @classmethod
     def get(cls, *args, **kwargs):
-        return cls._lib.get(*args, **kwargs, auth=cls.auth(), timeout=cls.get_timeout())
+        try:
+            auth = kwargs.pop('auth')
+        except KeyError:
+            auth = cls.auth()
+        return cls._lib.get(*args, **kwargs, auth=auth, timeout=cls.get_timeout())
 
     @classmethod
     def put(cls, *args, **kwargs):
-        return cls._lib.put(*args, **kwargs, auth=cls.auth(), timeout=cls.post_timeout())
+        try:
+            auth = kwargs.pop('auth')
+        except KeyError:
+            auth = cls.auth()
+        return cls._lib.put(*args, **kwargs, auth=auth, timeout=cls.post_timeout())
 
     @classmethod
     def post(cls, *args, **kwargs):
-        return cls._lib.post(*args, **kwargs, auth=cls.auth(), timeout=cls.post_timeout())
+        try:
+            auth = kwargs.pop('auth')
+        except KeyError:
+            auth = cls.auth()
+        return cls._lib.post(*args, **kwargs, auth=auth, timeout=cls.post_timeout())
