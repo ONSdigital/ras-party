@@ -30,13 +30,13 @@ service:
     SECRET_KEY: aardvark
     EMAIL_TOKEN_SALT: aardvark
     PARTY_SCHEMA: ras_party/schemas/party_schema.json
-    PUBLIC_EMAIL_VERIFICATION_URL: surveys.onsdigital.uk
+    PUBLIC_EMAIL_VERIFICATION_URL: http://ons.survey.gov/bres/
 
 dependencies:
     ras-party-db:
         schema: partysvc
-        #uri: "sqlite:///ras-party"
-        uri: "postgresql://postgres:postgres@localhost:5432/postgres"
+        uri: "sqlite:///ras-party"
+        #uri: "postgresql://postgres:postgres@localhost:5432/postgres"
     case-service:
         scheme: http
         host: localhost
