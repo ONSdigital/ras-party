@@ -266,7 +266,6 @@ class TestParties(PartyTestClient):
         frontstage_url = mock_notify.call_args[0][2]
         self.assertIn(test_url, frontstage_url)
 
-
     @patch('ras_party.controllers.controller._send_message_to_gov_uk_notify')
     @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
     def test_email_verification_twice_produces_a_200(self, _, mock_notify):
