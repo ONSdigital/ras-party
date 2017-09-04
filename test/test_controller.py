@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from itsdangerous import URLSafeTimedSerializer
 
+from ras_party.controllers.requests_wrapper import Requests
 from ras_party.models.models import RespondentStatus
 from test.mocks import MockBusiness, MockRespondent, MockRequests, MockResponse
 from test.party_client import PartyTestClient, businesses, respondents, business_respondent_associations, enrolments
@@ -12,6 +13,11 @@ from ras_party.controllers.controller import NO_RESPONDENT_FOR_PARTY_ID, EMAIL_A
 
 
 class TestParties(PartyTestClient):
+
+    def setUp(self):
+        self.mock_requests = MockRequests()
+        Requests._lib = self.mock_requests
+
     def test_post_valid_business_adds_to_db(self):
         mock_business = MockBusiness().attributes(source='test_post_valid_party_adds_to_db').as_business()
         self.post_to_businesses(mock_business, 200)
@@ -37,8 +43,7 @@ class TestParties(PartyTestClient):
         for x in mock_business:
             self.assertTrue(x in response)
 
-    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_post_valid_respondent_adds_to_db(self, _):
+    def test_post_valid_respondent_adds_to_db(self):
         # Given the database contains no respondents
         self.assertEqual(len(respondents()), 0)
         # And there is a business (related to the IAC code case context)
@@ -51,8 +56,7 @@ class TestParties(PartyTestClient):
         # Then the database contains a respondent
         self.assertEqual(len(respondents()), 1)
 
-    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_get_respondent_by_id_returns_correct_representation(self, _):
+    def test_get_respondent_by_id_returns_correct_representation(self):
         # Given there is a business (related to the IAC code case context)
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -117,11 +121,6 @@ class TestParties(PartyTestClient):
         self.assertEqual(len(businesses()), 1)
         self.assertEqual(response_2['version'], 2)
 
-    def test_existing_respondent_can_be_updated(self):
-        # TODO: clarify the PK on which an update would be done
-        # FIXME: this functionality is likely to be broken following enrolment updates
-        pass
-
     def test_existing_party_can_be_updated(self):
         mock_party = MockBusiness() \
             .attributes(source='test_existing_respondent_can_be_updated', version=1)
@@ -135,19 +134,17 @@ class TestParties(PartyTestClient):
         self.assertEqual(len(businesses()), 1)
         self.assertEqual(response_2['attributes']['version'], 2)
 
-    @patch('ras_party.controllers.controller.requests')
-    def test_post_respondent_with_inactive_iac(self, mock):
+    def test_post_respondent_with_inactive_iac(self):
         # Given the IAC code is inactive
         def mock_get_iac(*args, **kwargs):
             return MockResponse('{"active": false}')
-        mock.get = mock_get_iac
+        self.mock_requests.get = mock_get_iac
         # When a new respondent is posted
         mock_respondent = MockRespondent().attributes().as_respondent()
         # Then status code 400 is returned
         self.post_to_respondents(mock_respondent, 400)
 
-    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_post_respondent_requests_the_iac_details(self, mock):
+    def test_post_respondent_requests_the_iac_details(self):
         # Given there is a business (related to the IAC code case context)
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -156,10 +153,9 @@ class TestParties(PartyTestClient):
         mock_respondent = MockRespondent().attributes().as_respondent()
         self.post_to_respondents(mock_respondent, 200)
         # Then the case service is called with the supplied IAC code
-        mock.get.assert_called_once_with('http://mockhost:1111/cases/iac/fb747cq725lj')
+        self.mock_requests.get.assert_called_once_with('http://mockhost:1111/cases/iac/fb747cq725lj')
 
-    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_post_respondent_creates_the_business_respondent_association(self, _):
+    def test_post_respondent_creates_the_business_respondent_association(self):
         # Given the database contains no associations
         self.assertEqual(len(business_respondent_associations()), 0)
         # And there is a business (related to the IAC code case context)
@@ -178,8 +174,7 @@ class TestParties(PartyTestClient):
         self.assertEqual(str(business_id), '3b136c4b-7a14-4904-9e01-13364dd7b972')
         self.assertEqual(str(respondent_id), created_respondent['id'])
 
-    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_post_respondent_creates_the_enrolment(self, _):
+    def test_post_respondent_creates_the_enrolment(self):
         # Given the database contains no enrolments
         self.assertEqual(len(enrolments()), 0)
         # And there is a business (related to the IAC code case context)
@@ -202,8 +197,7 @@ class TestParties(PartyTestClient):
                          '3b136c4b-7a14-4904-9e01-13364dd7b972')
 
     @patch('ras_party.controllers.controller._send_message_to_gov_uk_notify')
-    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_post_respondent_calls_the_notify_service(self, _, mock_notify):
+    def test_post_respondent_calls_the_notify_service(self, mock_notify):
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -217,8 +211,7 @@ class TestParties(PartyTestClient):
         self.assertTrue(mock_notify.call_count == 1)
 
     @patch('ras_party.controllers.controller._send_message_to_gov_uk_notify')
-    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_email_verification_activates_a_respondent(self, _, mock_notify):
+    def test_email_verification_activates_a_respondent(self, mock_notify):
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -241,8 +234,7 @@ class TestParties(PartyTestClient):
         self.assertEqual(db_respondent.status, RespondentStatus.ACTIVE)
 
     @patch('ras_party.controllers.controller._send_message_to_gov_uk_notify')
-    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_email_verification_twice_produces_a_200(self, _, mock_notify):
+    def test_email_verification_twice_produces_a_200(self, mock_notify):
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -261,7 +253,6 @@ class TestParties(PartyTestClient):
         self.put_email_verification(token, 200)
 
     @patch('ras_party.controllers.controller._send_message_to_gov_uk_notify')
-    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
     def test_email_verification_unknown_token_produces_a_404(self, *_):
         # When an unknown email token exists
         secret_key = "aardvark"
@@ -310,8 +301,7 @@ class TestParties(PartyTestClient):
         self.get_respondent_by_id('123', 400)
 
     @patch('ras_party.controllers.controller._send_message_to_gov_uk_notify')
-    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_resend_verification_email(self, _, mock_notify):
+    def test_resend_verification_email(self, _):
 
         # Given there is a business and respondent
         mock_business = MockBusiness().as_business()
@@ -327,8 +317,7 @@ class TestParties(PartyTestClient):
         self.assertEqual(response, EMAIL_VERIFICATION_SEND)
 
     @patch('ras_party.controllers.controller._send_message_to_gov_uk_notify')
-    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_resend_verification_email_status_active(self, _, mock_notify):
+    def test_resend_verification_email_status_active(self, mock_notify):
 
         # Given there is a business and respondent and the account is already active
         mock_business = MockBusiness().as_business()

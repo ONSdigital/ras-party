@@ -1,22 +1,22 @@
 import uuid
-import requests
-import os
+from json import loads
+from pathlib import Path
+
 from flask import make_response, jsonify, current_app
 from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
 from ras_common_utils.ras_error.ras_error import RasError, RasNotifyError
 from sqlalchemy import orm
 from structlog import get_logger
-from pathlib import Path
-from json import loads
 
 from ras_party.controllers.error_decorator import translate_exceptions
+from ras_party.controllers.gov_uk_notify import GovUKNotify
+from ras_party.controllers.requests_wrapper import Requests
 from ras_party.controllers.session_context import db_session
 from ras_party.controllers.transactional import transactional
 from ras_party.controllers.util import build_url
 from ras_party.controllers.validate import Validator, IsUuid, Exists, IsIn
 from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus, \
     PendingEnrolment, EnrolmentStatus
-from ras_party.controllers.gov_uk_notify import GovUKNotify
 
 log = get_logger()
 
@@ -25,14 +25,6 @@ log = get_logger()
 #   environment variables, but on the other hand, the requests should be wrapped
 #   in error detection and retry code and we shouldn't be relying on these anyway ...
 #
-
-try:
-    REQUESTS_GET_TIMEOUT = int(os.getenv('REQUESTS_GET_TIMEOUT', '20'))
-    REQUESTS_POST_TIMEOUT = int(os.getenv('REQUESTS_POST_TIMEOUT', '20'))
-except Exception as e:
-    log.error(e)
-    REQUESTS_GET_TIMEOUT = 20
-    REQUESTS_POST_TIMEOUT = 20
 
 NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
 EMAIL_ALREADY_VERIFIED = 'The Respondent for that party ID is already verified'
@@ -45,7 +37,6 @@ _health_check = {}
 if Path('git_info').exists():
     with open('git_info') as io:
         _health_check = loads(io.read())
-
 
 # TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
 
@@ -396,15 +387,19 @@ def set_user_verified(respondent_email):
     """
     log.info("Setting user active on OAuth2 server")
 
+    client_id = current_app.config.dependency['oauth2-service']['client_id']
+    client_secret = current_app.config.dependency['oauth2-service']['client_secret']
+
     oauth_payload = {
         "username": respondent_email,
-        "client_id": current_app.config.dependency['oauth2-service']['client_id'],
-        "client_secret": current_app.config.dependency['oauth2-service']['client_secret'],
+        "client_id": client_id,
+        "client_secret": client_secret,
         "account_verified": "true"
     }
     oauth_svc = current_app.config.dependency['oauth2-service']
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    oauth_response = requests.put(oauth_url, data=oauth_payload)
+    auth = (client_id, client_secret)
+    oauth_response = Requests.put(oauth_url, auth=auth, data=oauth_payload)
     if not oauth_response.status_code == 201:
         log.error("Unable to set the user active on the OAuth2 server")
         oauth_response.raise_for_status()
@@ -436,15 +431,19 @@ def enrol_respondent_for_survey(r, sess):
 
 def register_user(party, tran):
     # TODO: Comments and explanation
+    client_id = current_app.config.dependency['oauth2-service']['client_id']
+    client_secret = current_app.config.dependency['oauth2-service']['client_secret']
+
     oauth_payload = {
         "username": party['emailAddress'],
         "password": party['password'],
-        "client_id": current_app.config.dependency['oauth2-service']['client_id'],
-        "client_secret": current_app.config.dependency['oauth2-service']['client_secret']
+        "client_id": client_id,
+        "client_secret": client_secret
     }
     oauth_svc = current_app.config.dependency['oauth2-service']
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    oauth_response = requests.post(oauth_url, data=oauth_payload, timeout=REQUESTS_POST_TIMEOUT)
+    auth = (client_id, client_secret)
+    oauth_response = Requests.post(oauth_url, auth=auth, data=oauth_payload)
     if not oauth_response.status_code == 201:
         log.info("Registering respondent OAuth2 server responded with {} {}"
                  .format(oauth_response.status_code, oauth_response.content))
@@ -467,7 +466,7 @@ def request_iac(enrolment_code):
     iac_svc = current_app.config.dependency['iac-service']
     iac_url = build_url('{}://{}:{}/iacs/{}', iac_svc, enrolment_code)
     log.info("GET URL {}".format(iac_url))
-    response = requests.get(iac_url, timeout=REQUESTS_GET_TIMEOUT)
+    response = Requests.get(iac_url)
     log.info("IAC service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
@@ -478,7 +477,7 @@ def request_case(enrolment_code):
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
     log.info("GET URL {}".format(case_url))
-    response = requests.get(case_url, timeout=REQUESTS_GET_TIMEOUT)
+    response = Requests.get(case_url)
     log.info("Case service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
@@ -489,7 +488,7 @@ def request_collection_exercise(collection_exercise_id):
     ce_svc = current_app.config.dependency['collectionexercise-service']
     ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
     log.info("GET {}".format(ce_url))
-    response = requests.get(ce_url, timeout=REQUESTS_GET_TIMEOUT)
+    response = Requests.get(ce_url)
     log.info("Collection exercise service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
@@ -500,7 +499,7 @@ def request_survey(survey_id):
     survey_svc = current_app.config.dependency['survey-service']
     survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
     log.info("GET {}".format(survey_url))
-    response = requests.get(survey_url, timeout=REQUESTS_GET_TIMEOUT)
+    response = Requests.get(survey_url)
     log.info("Survey service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()
@@ -520,7 +519,7 @@ def post_case_event(case_id, party_id, category="Default category message", desc
     }
 
     log.info("POST {} payload={}".format(case_url, payload))
-    response = requests.post(case_url, json=payload, timeout=REQUESTS_POST_TIMEOUT)
+    response = Requests.post(case_url, json=payload)
     log.info("Case service responded with {}".format(response.status_code))
     response.raise_for_status()
     return response.json()

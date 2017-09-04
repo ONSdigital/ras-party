@@ -56,7 +56,6 @@ if __name__ == '__main__':
         app.config['PARTY_SCHEMA'] = loads(io.read())
     configure_logger(app.config)
     logger.debug("Created Flask app.")
-    logger.debug("Config is {}".format(app.config))
 
     initialise_db(app)
 
