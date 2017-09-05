@@ -57,10 +57,6 @@ dependencies:
         gov_notify_api_key: notify_key_placeholder
         gov_notify_template_id: notify_template_id_placeholder
         gov_notify_service_id: notify_service_id_placeholder
-    frontstage-service:       # ToDo We can remove this for next release as we no longer have dependency on the FS
-        scheme: http
-        host: localhost
-        port: 8080
     api-gateway:
         scheme: http
         host: localhost

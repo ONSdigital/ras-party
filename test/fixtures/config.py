@@ -46,11 +46,6 @@ dependencies:
         activate_endpoint: "/api/account/activate"
         client_id: "ons@ons.gov"
         client_secret: "password"
-    frontstage-service:
-        # TODO: find out the correct values
-        scheme: http
-        host: mockhost
-        port: 5555
     iac-service:
         scheme: http
         host: mockhost
