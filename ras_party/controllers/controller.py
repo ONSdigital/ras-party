@@ -570,7 +570,6 @@ def _send_email_verification(party_uuid, email):
     """
 
     verification_url = _create_verification_url(email)
-    # verification_url = "http://this-is-a-test"
     log.info("Verification URL for party_id: {} {}".format(party_uuid, verification_url))
 
     notify_service = current_app.config.dependency['gov-uk-notify-service']

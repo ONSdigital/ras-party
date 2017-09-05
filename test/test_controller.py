@@ -259,10 +259,9 @@ class TestParties(PartyTestClient):
         # out the verification email to the notify service
         config_data = yaml.load(test_config)
         test_url = config_data['service']['PUBLIC_EMAIL_VERIFICATION_URL']
-        # print("***** config values are: {}".format(test_url))
 
         # When the email is verified get the email URL from the argument list in the '_send_message_to_gov_uk_notify'
-        # method
+        # method then check the URL is the same as the value configured in the config file
         frontstage_url = mock_notify.call_args[0][2]
         self.assertIn(test_url, frontstage_url)
 
