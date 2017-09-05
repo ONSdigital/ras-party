@@ -593,8 +593,8 @@ def _create_verification_url(email):
     email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
     timed_serializer = URLSafeTimedSerializer(secret_key)
     token = timed_serializer.dumps(email, salt=email_token_salt)
-    frontstage_service = current_app.config.dependency['frontstage-service']
-    verification_url = build_url('{}://{}:{}/register/activate-account/{}', frontstage_service, token)
+    public_email_verification_url = current_app.config["PUBLIC_EMAIL_VERIFICATION_URL"]
+    verification_url = '{}/register/activate-account/{}'.format(public_email_verification_url, token)
 
     return verification_url
 

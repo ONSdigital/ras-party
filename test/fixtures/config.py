@@ -12,6 +12,7 @@ service:
     SECURITY_USER_PASSWORD: password
     REQUESTS_GET_TIMEOUT: 99
     REQUESTS_POST_TIMEOUT: 99
+    PUBLIC_EMAIL_VERIFICATION_URL: http://bananas.survey.gov/bres
 
 dependencies:
     ras-party-db:

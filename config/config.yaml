@@ -35,6 +35,7 @@ service:
     SECURITY_REALM: sdc
     REQUESTS_GET_TIMEOUT: 20
     REQUESTS_POST_TIMEOUT: 20
+    PUBLIC_EMAIL_VERIFICATION_URL: aardvark                   # Do not add trailing slash e.g. http://x.y/parent/child/ BAD http://x.y/parent/child GOOD
 
 dependencies:
     ras-party-db:
@@ -56,7 +57,7 @@ dependencies:
         gov_notify_api_key: notify_key_placeholder
         gov_notify_template_id: notify_template_id_placeholder
         gov_notify_service_id: notify_service_id_placeholder
-    frontstage-service:
+    frontstage-service:       # ToDo We can remove this for next release as we no longer have dependency on the FS
         scheme: http
         host: localhost
         port: 8080

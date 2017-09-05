@@ -2,7 +2,8 @@ from __future__ import absolute_import
 
 import uuid
 from unittest.mock import patch
-
+import yaml
+from test.fixtures.config import test_config
 from itsdangerous import URLSafeTimedSerializer
 
 from ras_party.controllers.requests_wrapper import Requests
@@ -223,15 +224,39 @@ class TestParties(PartyTestClient):
         # And the respondent state is CREATED
         db_respondent = respondents()[0]
         self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
-
         # When the email is verified
         frontstage_url = mock_notify.call_args[0][2]
         token = frontstage_url.split('/')[-1]
         self.put_email_verification(token, 200)
-
         # Then the respondent state is ACTIVE
         db_respondent = respondents()[0]
         self.assertEqual(db_respondent.status, RespondentStatus.ACTIVE)
+
+    # This tests that the email verification URL is dynamically taken from a parameter in the configuration called
+    #  'PUBLIC_EMAIL_VERIFICATION_URL' and not a static or hard coded value
+    @patch('ras_party.controllers.controller._send_message_to_gov_uk_notify')
+    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
+    def test_email_verification_url_is_from_config_yml_file(self, _, mock_notify):
+        # Given there is a business
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        # And an associated respondent
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        # Send POST to /respondents endpoint which adds a user to the DB (which generates an email verification)
+        self.post_to_respondents(mock_respondent, 200)
+        # And the respondent state is CREATED
+        db_respondent = respondents()[0]
+        self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
+        # Load the public email verfication URL from our test config file. make sure this is the URL used when sending
+        # out the verification email to the notify service
+        config_data = yaml.load(test_config)
+        test_url = config_data['service']['PUBLIC_EMAIL_VERIFICATION_URL']
+
+        # When the email is verified get the email URL from the argument list in the '_send_message_to_gov_uk_notify'
+        # method then check the URL is the same as the value configured in the config file
+        frontstage_url = mock_notify.call_args[0][2]
+        self.assertIn(test_url, frontstage_url)
 
     @patch('ras_party.controllers.controller._send_message_to_gov_uk_notify')
     def test_email_verification_twice_produces_a_200(self, mock_notify):

@@ -30,7 +30,8 @@ def enrolments():
 
 
 class PartyTestClient(TestCase):
-    config_data = yaml.load(test_config)
+    config_data = yaml.load(test_config)    # ToDo use actual config.yml to minimise changes to both files just support
+    # the one file.
     config = ras_config.make(config_data)
 
     def create_app(self):
