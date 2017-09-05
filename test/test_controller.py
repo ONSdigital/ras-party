@@ -232,11 +232,8 @@ class TestParties(PartyTestClient):
         db_respondent = respondents()[0]
         self.assertEqual(db_respondent.status, RespondentStatus.ACTIVE)
 
-    # This tests that the email verification URL is dynamically taken from a parameter in the configuration called
-    #  'PUBLIC_EMAIL_VERIFICATION_URL' and not a static or hard coded value
     @patch('ras_party.controllers.controller._send_message_to_gov_uk_notify')
-    @patch('ras_party.controllers.controller.requests', new_callable=MockRequests)
-    def test_email_verification_url_is_from_config_yml_file(self, _, mock_notify):
+    def test_email_verification_url_is_from_config_yml_file(self, mock_notify):
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
