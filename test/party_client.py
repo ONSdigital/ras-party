@@ -1,3 +1,4 @@
+import base64
 import json
 
 import yaml
@@ -40,69 +41,75 @@ class PartyTestClient(TestCase):
         initialise_db(app)
         return app
 
+    @property
+    def auth_headers(self):
+        return {
+            'Authorization': 'Basic %s' % base64.b64encode(b"username:password").decode("ascii")
+        }
+
     def get_info(self, expected_status=200):
         response = self.client.open('/info', method='GET')
         self.assertStatus(response, expected_status)
         return json.loads(response.get_data(as_text=True))
 
     def post_to_parties(self, payload, expected_status):
-        response = self.client.open('/party-api/v1/parties',
-                                    method='POST',
+        response = self.client.post('/party-api/v1/parties',
+                                    headers=self.auth_headers,
                                     data=json.dumps(payload),
                                     content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def post_to_businesses(self, payload, expected_status):
-
-        response = self.client.open('/party-api/v1/businesses',
-                                    method='POST',
+        response = self.client.post('/party-api/v1/businesses',
+                                    headers=self.auth_headers,
                                     data=json.dumps(payload),
                                     content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def post_to_respondents(self, payload, expected_status):
-        response = self.client.open('/party-api/v1/respondents',
-                                    method='POST',
+        response = self.client.post('/party-api/v1/respondents',
+                                    headers=self.auth_headers,
                                     data=json.dumps(payload),
                                     content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def get_party_by_ref(self, party_type, ref, expected_status=200):
-        response = self.client.open('/party-api/v1/parties/type/{}/ref/{}'.format(party_type, ref),
-                                    method='GET')
+        response = self.client.get('/party-api/v1/parties/type/{}/ref/{}'.format(party_type, ref),
+                                   headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def get_party_by_id(self, party_type, id, expected_status=200):
-        response = self.client.open('/party-api/v1/parties/type/{}/id/{}'.format(party_type, id),
-                                    method='GET')
+        response = self.client.get('/party-api/v1/parties/type/{}/id/{}'.format(party_type, id),
+                                   headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def get_business_by_id(self, id, expected_status=200):
-        response = self.client.open('/party-api/v1/businesses/id/{}'.format(id), method='GET')
+        response = self.client.get('/party-api/v1/businesses/id/{}'.format(id), headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def get_business_by_ref(self, ref, expected_status=200):
-        response = self.client.open('/party-api/v1/businesses/ref/{}'.format(ref), method='GET')
+        response = self.client.get('/party-api/v1/businesses/ref/{}'.format(ref), headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def get_respondent_by_id(self, id, expected_status=200):
-        response = self.client.open('/party-api/v1/respondents/id/{}'.format(id), method='GET')
+        response = self.client.get('/party-api/v1/respondents/id/{}'.format(id), headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def put_email_verification(self, token, expected_status):
-        response = self.client.open('/party-api/v1/emailverification/{}'.format(token), method='PUT')
+        response = self.client.put('/party-api/v1/emailverification/{}'.format(token), headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def resend_verification_email(self, email, expected_status=200):
-        response = self.client.open('/party-api/v1/resend-verification-email/{}'.format(email), method='GET')
+        response = self.client.get('/party-api/v1/resend-verification-email/{}'.format(email),
+                                   headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return response.get_data(as_text=True)

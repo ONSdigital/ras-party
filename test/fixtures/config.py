@@ -8,6 +8,10 @@ service:
     LOG_LEVEL: error
     SECRET_KEY: aardvark
     EMAIL_TOKEN_SALT: bulbous
+    SECURITY_USER_NAME: username
+    SECURITY_USER_PASSWORD: password
+    REQUESTS_GET_TIMEOUT: 99
+    REQUESTS_POST_TIMEOUT: 99
     PUBLIC_EMAIL_VERIFICATION_URL: http://bananas.survey.gov/bres
 
 dependencies:
