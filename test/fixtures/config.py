@@ -8,6 +8,7 @@ service:
     LOG_LEVEL: error
     SECRET_KEY: aardvark
     EMAIL_TOKEN_SALT: bulbous
+    PARTY_SCHEMA: ras_party/schemas/party_schema.json
     SECURITY_USER_NAME: username
     SECURITY_USER_PASSWORD: password
     REQUESTS_GET_TIMEOUT: 99

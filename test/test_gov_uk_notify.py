@@ -1,7 +1,7 @@
 from unittest.mock import patch, Mock
 
 from ras_party.controllers.gov_uk_notify import GovUKNotify
-from ras_party.controllers.ras_error import RasNotifyError
+from ras_party.support.ras_error import RasNotifyError
 from test.party_client import PartyTestClient
 
 

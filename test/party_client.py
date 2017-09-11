@@ -120,4 +120,4 @@ class PartyTestClient(TestCase):
         response = self.client.get('/party-api/v1/resend-verification-email/{}'.format(email),
                                    headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
-        return response.get_data(as_text=True)
+        return json.loads(response.get_data(as_text=True))

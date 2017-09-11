@@ -2,7 +2,7 @@ from flask import current_app
 from notifications_python_client import NotificationsAPIClient
 from structlog import get_logger
 
-from ras_party.controllers.ras_error import RasNotifyError
+from ras_party.support.ras_error import RasNotifyError
 
 log = get_logger()
 

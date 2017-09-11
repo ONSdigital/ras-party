@@ -1,7 +1,7 @@
 import itertools
 import uuid
 
-from ras_party.controllers.util import flatten_keys
+from ras_party.support.util import flatten_keys
 
 
 class ValidatorBase:
