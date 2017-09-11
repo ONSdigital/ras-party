@@ -29,6 +29,7 @@ log = get_logger()
 NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
 EMAIL_ALREADY_VERIFIED = 'The Respondent for that party ID is already verified'
 EMAIL_VERIFICATION_SEND = 'A new verification email has been sent'
+EMAIL_CHANGED = 'Respondents email has been changed'
 
 #
 #   TODO: the spec seems to read as a need for /info, currently this endpoint responds on /party-api/v1/info
@@ -411,6 +412,35 @@ def set_user_verified(respondent_email):
     log.info("User has been activated on the oauth2 server")
 
 
+def set_user_unverified(respondent_email):
+    """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
+        If it fails a raise_for_status is executed
+    """
+    log.info("Setting user unverified on OAuth2 server")
+    oauth_response = update_user_verification(respondent_email, 'true')
+    if not oauth_response.status_code == 201:
+        log.error("Unable to set the user active on the OAuth2 server")
+        oauth_response.raise_for_status()
+    log.info("User has been activated on the oauth2 server")
+
+
+def update_user_verification(respondent_email, verified):
+    client_id = current_app.config.dependency['oauth2-service']['client_id']
+    client_secret = current_app.config.dependency['oauth2-service']['client_secret']
+
+    oauth_payload = {
+        "username": respondent_email,
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "account_verified": verified
+    }
+    oauth_svc = current_app.config.dependency['oauth2-service']
+    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
+    auth = (client_id, client_secret)
+    response = Requests.put(oauth_url, auth=auth, data=oauth_payload)
+    return response
+
+
 # Handle the pending enrolment that was created during registration
 def enrol_respondent_for_survey(r, sess):
     # TODO: Need to handle all the DB/SQLAlchemy errors that could occur here!
@@ -624,3 +654,20 @@ def _send_message_to_gov_uk_notify(email, template_id, url, party_id):
             log.error("Error sending verification email for party_id {}".format(party_id))
     else:
         log.info("Verification email not sent. Feature send_email_to_gov_notify=false")
+
+
+@translate_exceptions
+@with_db_session
+def change_respondent_email(party_uuid, email_address, session):
+    respondent = session.query(Respondent).filter(Respondent.party_uuid == party_uuid).first()
+    if not respondent:
+        return make_response(jsonify({'errors': "Respondent with party id '{}' does not exist.".format(party_uuid)}), 404)
+
+    set_user_unverified(respondent.email_address)
+
+    respondent.email_address = email_address
+    respondent.status = RespondentStatus.CREATED
+
+    _send_email_verification(party_uuid, respondent.email_address)
+
+    return make_response(jsonify(respondent.to_respondent_dict()), 200)
