@@ -79,6 +79,19 @@ def get_respondent_by_email(email):
     return controller.get_respondent_by_email(email)
 
 
+@party_view.route('/respondents/email', methods=['PUT'])
+@auth.login_required
+@log_route
+def change_respondent_email():
+    request_data = request.json
+    email_address = request_data.get('email_address')
+    new_email_address = request_data.get('new_email_address')
+    if not email_address or not new_email_address:
+        return make_response(jsonify({'errors': 'No email provided'}), 400)
+
+    return controller.change_respondent_email(email_address, new_email_address)
+
+
 @party_view.route('/respondents', methods=['POST'])
 @auth.login_required
 @log_route
@@ -99,16 +112,3 @@ def put_email_verification(token):
 @log_route
 def resend_verification_email(party_uuid):
     return controller.resend_verification_email(party_uuid)
-
-
-@party_view.route('/change-respondent-email/<party_uuid>', methods=['POST'])
-@auth.login_required
-@log_route
-def change_respondent_email(party_uuid):
-    request_data = request.json
-    email_address = request_data.get('email')
-
-    if not email_address:
-        return make_response(jsonify({'errors': 'No email provided'}), 400)
-
-    return controller.change_respondent_email(party_uuid, email_address)

@@ -412,33 +412,30 @@ def set_user_verified(respondent_email):
     log.info("User has been activated on the oauth2 server")
 
 
-def set_user_unverified(respondent_email):
-    """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
-        If it fails a raise_for_status is executed
-    """
-    log.info("Setting user unverified on OAuth2 server")
-    oauth_response = update_user_verification(respondent_email, 'true')
-    if not oauth_response.status_code == 201:
-        log.error("Unable to set the user active on the OAuth2 server")
-        oauth_response.raise_for_status()
-    log.info("User has been activated on the oauth2 server")
-
-
-def update_user_verification(respondent_email, verified):
+def update_oauth_user(original_email, password=None, verified=None, new_email=None):
     client_id = current_app.config.dependency['oauth2-service']['client_id']
     client_secret = current_app.config.dependency['oauth2-service']['client_secret']
 
     oauth_payload = {
-        "username": respondent_email,
+        "username": original_email,
         "client_id": client_id,
-        "client_secret": client_secret,
-        "account_verified": verified
+        "client_secret": client_secret
     }
+    if password:
+        oauth_payload['password'] = password
+    if verified:
+        oauth_payload['account_verified'] = verified
+    if new_email:
+        oauth_payload['new_username'] = new_email
+
     oauth_svc = current_app.config.dependency['oauth2-service']
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
     auth = (client_id, client_secret)
-    response = Requests.put(oauth_url, auth=auth, data=oauth_payload)
-    return response
+    oauth_response = Requests.put(oauth_url, auth=auth, data=oauth_payload)
+    if oauth_response.status_code != 201:
+        log.info("Failed to update oauth user, status_code:{}, response:{}"
+                 .format(oauth_response.status_code, oauth_response.content))
+        oauth_response.raise_for_status()
 
 
 # Handle the pending enrolment that was created during registration
@@ -648,7 +645,7 @@ def _send_message_to_gov_uk_notify(email, template_id, url, party_id):
         log.info("Sending verification email for party_id: {}".format(party_id))
         try:
             notifier = GovUKNotify()
-            notifier.send_message(email, template_id, personalisation, party_id)
+            notifier.send_message(email, template_id, personalisation, str(party_id))
         except RasNotifyError:
             # Note: intentionally suppresses exception
             log.error("Error sending verification email for party_id {}".format(party_id))
@@ -658,16 +655,17 @@ def _send_message_to_gov_uk_notify(email, template_id, url, party_id):
 
 @translate_exceptions
 @with_db_session
-def change_respondent_email(party_uuid, email_address, session):
-    respondent = session.query(Respondent).filter(Respondent.party_uuid == party_uuid).first()
+def change_respondent_email(old_email_address, new_email_address, session):
+    respondent = session.query(Respondent).filter(Respondent.email_address == old_email_address).first()
     if not respondent:
-        return make_response(jsonify({'errors': "Respondent with party id '{}' does not exist.".format(party_uuid)}), 404)
+        return make_response(jsonify({'errors': "Respondent with email '{}' does not exist.".format(old_email_address)}), 404)
+    log.debug("Changing respondent's email", party_id=respondent.party_uuid)
 
-    set_user_unverified(respondent.email_address)
-
-    respondent.email_address = email_address
-    respondent.status = RespondentStatus.CREATED
-
-    _send_email_verification(party_uuid, respondent.email_address)
+    respondent.email_address = new_email_address
+    update_oauth_user(original_email=old_email_address,
+                      password=None,
+                      verified='false',
+                      new_email=new_email_address)
+    _send_email_verification(respondent.party_uuid, respondent.email_address)
 
     return make_response(jsonify(respondent.to_respondent_dict()), 200)
