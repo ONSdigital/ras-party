@@ -391,24 +391,34 @@ def set_user_verified(respondent_email):
         If it fails a raise_for_status is executed
     """
     log.info("Setting user active on OAuth2 server")
+    update_oauth_user(original_email=respondent_email, verified='true')
+    log.info("User has been activated on the oauth2 server")
 
+
+def update_oauth_user(original_email, password=None, verified=None, new_email=None):
     client_id = current_app.config.dependency['oauth2-service']['client_id']
     client_secret = current_app.config.dependency['oauth2-service']['client_secret']
 
     oauth_payload = {
-        "username": respondent_email,
+        "username": original_email,
         "client_id": client_id,
-        "client_secret": client_secret,
-        "account_verified": "true"
+        "client_secret": client_secret
     }
+    if password:
+        oauth_payload['password'] = password
+    if verified:
+        oauth_payload['account_verified'] = verified
+    if new_email:
+        oauth_payload['new_username'] = new_email
+
     oauth_svc = current_app.config.dependency['oauth2-service']
     oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
     auth = (client_id, client_secret)
     oauth_response = Requests.put(oauth_url, auth=auth, data=oauth_payload)
-    if not oauth_response.status_code == 201:
-        log.error("Unable to set the user active on the OAuth2 server")
+    if oauth_response.status_code != 201:
+        log.info("Failed to update oauth user, status_code:{}, response:{}"
+                 .format(oauth_response.status_code, oauth_response.content))
         oauth_response.raise_for_status()
-    log.info("User has been activated on the oauth2 server")
 
 
 # Handle the pending enrolment that was created during registration
@@ -618,9 +628,28 @@ def _send_message_to_gov_uk_notify(email, template_id, url, party_id):
         log.info("Sending verification email for party_id: {}".format(party_id))
         try:
             notifier = GovUKNotify()
-            notifier.send_message(email, template_id, personalisation, party_id)
+            notifier.send_message(email, template_id, personalisation, str(party_id))
         except RasNotifyError:
             # Note: intentionally suppresses exception
             log.error("Error sending verification email for party_id {}".format(party_id))
     else:
         log.info("Verification email not sent. Feature send_email_to_gov_notify=false")
+
+
+@translate_exceptions
+@with_db_session
+def change_respondent_email(old_email_address, new_email_address, session):
+    respondent = session.query(Respondent).filter(Respondent.email_address == old_email_address).first()
+    if not respondent:
+        return make_response(
+            jsonify({'errors': "Respondent with email '{}' does not exist.".format(old_email_address)}), 404)
+    log.debug("Changing respondent's email", party_id=respondent.party_uuid)
+
+    respondent.email_address = new_email_address
+    update_oauth_user(original_email=old_email_address,
+                      password=None,
+                      verified='false',
+                      new_email=new_email_address)
+    _send_email_verification(respondent.party_uuid, respondent.email_address)
+
+    return make_response(jsonify(respondent.to_respondent_dict()), 200)

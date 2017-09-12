@@ -1,4 +1,4 @@
-from flask import Blueprint, request, current_app
+from flask import Blueprint, current_app, jsonify, make_response, request
 from flask_httpauth import HTTPBasicAuth
 
 from ras_party.controllers import controller
@@ -77,6 +77,19 @@ def get_respondent_by_id(id):
 @log_route
 def get_respondent_by_email(email):
     return controller.get_respondent_by_email(email)
+
+
+@party_view.route('/respondents/email', methods=['PUT'])
+@auth.login_required
+@log_route
+def change_respondent_email():
+    request_data = request.json
+    email_address = request_data.get('email_address')
+    new_email_address = request_data.get('new_email_address')
+    if not email_address or not new_email_address:
+        return make_response(jsonify({'errors': 'No email provided'}), 400)
+
+    return controller.change_respondent_email(email_address, new_email_address)
 
 
 @party_view.route('/respondents', methods=['POST'])
