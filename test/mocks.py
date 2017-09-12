@@ -113,32 +113,20 @@ class MockRequests:
 
         def __call__(self, uri, *args, **kwargs):
             self._calls[uri] += 1
-            if uri == 'http://mockhost:1111/cases/iac/fb747cq725lj':
-                return self._get_case_for_iac()
-            elif uri == 'http://mockhost:2222/collectionexercises/dab9db7f-3aa0-4866-be20-54d72ee185fb':
-                return self._get_ce_by_id()
-            elif uri == 'http://mockhost:3333/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87':
-                return self._get_survey_by_id()
-            elif uri == 'http://mockhost:6666/iacs/fb747cq725lj':
-                return self._get_iac()
 
-            raise Exception("MockRequests doesn't know about route {}".format(uri))
-
-        @staticmethod
-        def _get_case_for_iac():
-            return MockResponse(get_case_by_iac.response)
-
-        @staticmethod
-        def _get_ce_by_id():
-            return MockResponse(get_ce_by_id.response)
-
-        @staticmethod
-        def _get_survey_by_id():
-            return MockResponse(get_survey_by_id.response)
-
-        @staticmethod
-        def _get_iac():
-            return MockResponse(get_iac.response)
+            try:
+                return {
+                    'http://mockhost:1111/cases/iac/fb747cq725lj':
+                        MockResponse(get_case_by_iac.response),
+                    'http://mockhost:2222/collectionexercises/dab9db7f-3aa0-4866-be20-54d72ee185fb':
+                        MockResponse(get_ce_by_id.response),
+                    'http://mockhost:3333/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87':
+                        MockResponse(get_survey_by_id.response),
+                    'http://mockhost:6666/iacs/fb747cq725lj':
+                        MockResponse(get_iac.response)
+                }[uri]
+            except KeyError:
+                raise Exception("MockRequests doesn't know about route {}".format(uri))
 
         def assert_called_once_with(self, arg):
             assert(self._calls.get(arg, 0) == 1)
