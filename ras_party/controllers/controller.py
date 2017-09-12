@@ -657,7 +657,8 @@ def _send_message_to_gov_uk_notify(email, template_id, url, party_id):
 def change_respondent_email(old_email_address, new_email_address, session):
     respondent = session.query(Respondent).filter(Respondent.email_address == old_email_address).first()
     if not respondent:
-        return make_response(jsonify({'errors': "Respondent with email '{}' does not exist.".format(old_email_address)}), 404)
+        return make_response(
+            jsonify({'errors': "Respondent with email '{}' does not exist.".format(old_email_address)}), 404)
     log.debug("Changing respondent's email", party_id=respondent.party_uuid)
 
     respondent.email_address = new_email_address
