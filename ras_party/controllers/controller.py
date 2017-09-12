@@ -391,23 +391,7 @@ def set_user_verified(respondent_email):
         If it fails a raise_for_status is executed
     """
     log.info("Setting user active on OAuth2 server")
-
-    client_id = current_app.config.dependency['oauth2-service']['client_id']
-    client_secret = current_app.config.dependency['oauth2-service']['client_secret']
-
-    oauth_payload = {
-        "username": respondent_email,
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "account_verified": "true"
-    }
-    oauth_svc = current_app.config.dependency['oauth2-service']
-    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    auth = (client_id, client_secret)
-    oauth_response = Requests.put(oauth_url, auth=auth, data=oauth_payload)
-    if not oauth_response.status_code == 201:
-        log.error("Unable to set the user active on the OAuth2 server")
-        oauth_response.raise_for_status()
+    update_oauth_user(original_email=respondent_email, verified='true')
     log.info("User has been activated on the oauth2 server")
 
 
