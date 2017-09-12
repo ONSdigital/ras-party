@@ -35,12 +35,15 @@ service:
     SECURITY_REALM: sdc
     REQUESTS_GET_TIMEOUT: 20
     REQUESTS_POST_TIMEOUT: 20
-    PUBLIC_EMAIL_VERIFICATION_URL: aardvark                   # Do not add trailing slash e.g. http://x.y/parent/child/ BAD http://x.y/parent/child GOOD
 
 dependencies:
     ras-party-db:
         schema: partysvc
         uri: "sqlite:///ras-party"
+    public-website:
+        scheme: http
+        host: dummy.ons.gov.uk
+        port: 80
     case-service:
         scheme: http
         host: localhost
@@ -53,10 +56,11 @@ dependencies:
         scheme: http
         host: localhost
         port: 8080
-    gov-uk-notify-service:
-        gov_notify_api_key: notify_key_placeholder
-        gov_notify_template_id: notify_template_id_placeholder
-        gov_notify_service_id: notify_service_id_placeholder
+    notify-service:
+        api_key: notify_api_key
+        service_id: sdc_service_id
+        email_verification_template: email_verification_id
+        reset_password_template: reset_password_id
     api-gateway:
         scheme: http
         host: localhost
@@ -69,9 +73,6 @@ dependencies:
         scheme: http
         host: localhost
         port: 8000
-        authorization_endpoint: "/web/authorize/"
-        token_endpoint: "/api/v1/tokens/"
-        admin_endpoint: "/api/account/create"
         client_id: "ons@ons.gov"
         client_secret: "password"
 

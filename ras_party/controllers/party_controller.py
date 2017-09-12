@@ -6,6 +6,7 @@ from ras_common_utils.ras_error.ras_error import RasError, RasNotifyError
 from sqlalchemy import orm
 from structlog import get_logger
 
+from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.error_decorator import translate_exceptions
 from ras_party.controllers.gov_uk_notify import GovUKNotify
 from ras_party.controllers.validate import Validator, IsUuid, IsIn, Exists
@@ -188,14 +189,14 @@ def get_respondent_by_id(id, session):
 @with_db_session
 def get_respondent_by_email(email, session):
     """
-    Get a Respondent by its EMail Address
-    Returns a single Party
-    :param email: EMail of Respondent to return
-    :type id: str
+    Get a respondent by its email address.
+    Returns either the unique respondent identified by the supplied email address, or otherwise raises
+    a RasError to indicate the email address doesn't exist.
 
+    :param email: Email of respondent to lookup
     :rtype: Respondent
     """
-    respondent = session.query(Respondent).filter(Respondent.email_address == email).first()
+    respondent = session.query(Respondent).filter(Respondent.email_address == email).one()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
 
@@ -203,9 +204,41 @@ def get_respondent_by_email(email, session):
 
 
 @translate_exceptions
+@with_db_session
+def put_respondent_by_email(email, payload, session):
+    respondent = session.query(Respondent).filter(Respondent.email_address == email).one()
+    if not respondent:
+        raise RasError("Respondent does not exist.", status_code=404)
+
+    """
+    payload will contain a subset of the following:
+    first_name
+    last_name
+    telephone
+
+    new_email
+    password
+
+    Where supplied, the first 3 items simply update the alchemy model.
+    Where supplied, new_email will update the email address both in the model and on oauth server (setting the account
+    to unverified)
+    Where supplied, password will update the password on the oauth server.
+
+    """
+
+
+@translate_exceptions
+@with_db_session
+def reset_respondent_password_by_email(email, session):
+    respondent = session.query(Respondent).filter(Respondent.email_address == email).one()
+    if not respondent:
+        raise RasError("Respondent does not exist.", status_code=404)
+
+
+@translate_exceptions
 @transactional
 @with_db_session
-def respondents_post(party, tran, session):
+def post_respondent(party, tran, session):
     """
     This function is quite complicated, as it performs a number of steps to complete a new respondent enrolment:
     1. Validate the enrolment code and email address
@@ -350,38 +383,14 @@ def put_email_verification(token, session):
     return r.to_respondent_dict()
 
 
-def set_user_verified(respondent_email):
+def set_user_verified(email_address):
     """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
         If it fails a raise_for_status is executed
     """
     log.info("Setting user active on OAuth2 server")
-    update_oauth_user(original_email=respondent_email, verified='true')
-    log.info("User has been activated on the oauth2 server")
-
-
-def update_oauth_user(original_email, password=None, verified=None, new_email=None):
-    client_id = current_app.config.dependency['oauth2-service']['client_id']
-    client_secret = current_app.config.dependency['oauth2-service']['client_secret']
-
-    oauth_payload = {
-        "username": original_email,
-        "client_id": client_id,
-        "client_secret": client_secret
-    }
-    if password:
-        oauth_payload['password'] = password
-    if verified:
-        oauth_payload['account_verified'] = verified
-    if new_email:
-        oauth_payload['new_username'] = new_email
-
-    oauth_svc = current_app.config.dependency['oauth2-service']
-    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    auth = (client_id, client_secret)
-    oauth_response = Requests.put(oauth_url, auth=auth, data=oauth_payload)
-    if oauth_response.status_code != 201:
-        log.info("Failed to update oauth user, status_code:{}, response:{}"
-                 .format(oauth_response.status_code, oauth_response.content))
+    oauth_response = OauthClient(current_app.config).update_account(username=email_address, account_verified=True)
+    if not oauth_response.status_code == 201:
+        log.error("Unable to set the user active on the OAuth2 server")
         oauth_response.raise_for_status()
 
 
@@ -406,19 +415,7 @@ def enrol_respondent_for_survey(r, sess):
 
 
 def register_user(party, tran):
-    client_id = current_app.config.dependency['oauth2-service']['client_id']
-    client_secret = current_app.config.dependency['oauth2-service']['client_secret']
-
-    oauth_payload = {
-        "username": party['emailAddress'],
-        "password": party['password'],
-        "client_id": client_id,
-        "client_secret": client_secret
-    }
-    oauth_svc = current_app.config.dependency['oauth2-service']
-    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    auth = (client_id, client_secret)
-    oauth_response = Requests.post(oauth_url, auth=auth, data=oauth_payload)
+    oauth_response = OauthClient(current_app.config).create_account(party['emailAddress'], party['password'])
     if not oauth_response.status_code == 201:
         log.info("Registering respondent OAuth2 server responded with {} {}"
                  .format(oauth_response.status_code, oauth_response.content))
@@ -535,12 +532,11 @@ def _send_email_verification(party_uuid, email):
     :param email:
     :param party_uuid:
     """
-
     verification_url = _create_verification_url(email)
     log.info("Verification URL for party_id: {} {}".format(party_uuid, verification_url))
 
-    notify_service = current_app.config.dependency['gov-uk-notify-service']
-    template_id = notify_service['gov_notify_template_id']
+    notify_service = current_app.config.dependency['notify-service']
+    template_id = notify_service['email_verification_template']
     _send_message_to_gov_uk_notify(email, template_id, verification_url, party_uuid)
 
 
@@ -557,10 +553,9 @@ def _create_verification_url(email):
     email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
     timed_serializer = URLSafeTimedSerializer(secret_key)
     token = timed_serializer.dumps(email, salt=email_token_salt)
-    public_email_verification_url = current_app.config["PUBLIC_EMAIL_VERIFICATION_URL"]
-    verification_url = '{}/register/activate-account/{}'.format(public_email_verification_url, token)
-
-    return verification_url
+    public_website = current_app.config.dependency['public-website']
+    scheme, host = public_website['scheme'], public_website['host']
+    return '{}://{}/register/activate-account/{}'.format(scheme, host, token)
 
 
 def _send_message_to_gov_uk_notify(email, template_id, url, party_id):

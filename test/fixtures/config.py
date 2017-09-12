@@ -13,7 +13,6 @@ service:
     SECURITY_USER_PASSWORD: password
     REQUESTS_GET_TIMEOUT: 99
     REQUESTS_POST_TIMEOUT: 99
-    PUBLIC_EMAIL_VERIFICATION_URL: http://bananas.survey.gov/bres
 
 dependencies:
     ras-party-db:
@@ -21,6 +20,10 @@ dependencies:
         plan: shared-psql
         schema: ras-party
         uri: "sqlite:///:memory:"
+    public-website:
+        scheme: http
+        host: dummy.ons.gov.uk
+        port: 80
     case-service:
         scheme: http
         host: mockhost
@@ -33,18 +36,15 @@ dependencies:
         scheme: http
         host: mockhost
         port: 3333
-    gov-uk-notify-service:
-        gov_notify_api_key: notify_api_key_placeholder
-        gov_notify_template_id: notify_template_id_placeholder
-        gov_notify_service_id: notify_service_id__placeholder
+    notify-service:
+        api_key: notify_api_key
+        service_id: sdc_service_id
+        email_verification_template: email_verification_id
+        reset_password_template: reset_password_id
     oauth2-service:
         scheme: http
         host: mockhost
         port: 4444
-        authorization_endpoint: "/web/authorize/"
-        token_endpoint: "/api/v1/tokens/"
-        admin_endpoint: "/api/account/create"
-        activate_endpoint: "/api/account/activate"
         client_id: "ons@ons.gov"
         client_secret: "password"
     iac-service:

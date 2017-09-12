@@ -76,7 +76,7 @@ def get_respondent_by_id(id):
     return make_response(jsonify(response), 200)
 
 
-@party_view.route('/respondents/email/<email>', methods=['GET'])
+@party_view.route('/respondents/email/<string:email>', methods=['GET'])
 @auth.login_required
 @log_route
 def get_respondent_by_email(email):
@@ -84,17 +84,21 @@ def get_respondent_by_email(email):
     return make_response(jsonify(response), 200)
 
 
-@party_view.route('/respondents/email', methods=['PUT'])
+@party_view.route('/respondents/email/<string:email>', methods=['PUT'])
 @auth.login_required
 @log_route
-def change_respondent_email():
-    request_data = request.json
-    email_address = request_data.get('email_address')
-    new_email_address = request_data.get('new_email_address')
-    if not email_address or not new_email_address:
-        return make_response(jsonify({'errors': 'No email provided'}), 400)
+def put_respondent_by_email(email):
+    payload = request.get_json() or {}
+    response = ras_party.controllers.party_controller.put_respondent_by_email(email, payload)
+    return make_response(jsonify(response), 200)
 
-    return ras_party.controllers.party_controller.change_respondent_email(email_address, new_email_address)
+
+@party_view.route('/respondents/reset_email/<string:email>', methods=['POST'])
+@auth.login_required
+@log_route
+def post_respondent_reset_password_by_email(email):
+    response = ras_party.controllers.party_controller.reset_respondent_password_by_email(email)
+    return make_response(jsonify(response), 200)
 
 
 @party_view.route('/respondents', methods=['POST'])
@@ -102,7 +106,7 @@ def change_respondent_email():
 @log_route
 def post_respondent():
     payload = request.get_json() or {}
-    response = ras_party.controllers.party_controller.respondents_post(payload)
+    response = ras_party.controllers.party_controller.post_respondent(payload)
     return make_response(jsonify(response), 200)
 
 

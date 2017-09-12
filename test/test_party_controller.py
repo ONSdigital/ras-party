@@ -1,13 +1,11 @@
 import uuid
 from unittest.mock import patch
 
-import yaml
 from itsdangerous import URLSafeTimedSerializer
 
 from ras_party.controllers.party_controller import EMAIL_ALREADY_VERIFIED, NO_RESPONDENT_FOR_PARTY_ID
 from ras_party.models.models import RespondentStatus
 from ras_party.support.requests_wrapper import Requests
-from test.fixtures.config import test_config
 from test.mocks import MockBusiness, MockRespondent, MockRequests, MockResponse
 from test.party_client import PartyTestClient, businesses, respondents, business_respondent_associations, enrolments
 
@@ -278,15 +276,13 @@ class TestParties(PartyTestClient):
         # And the respondent state is CREATED
         db_respondent = respondents()[0]
         self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
-        # Load the public email verfication URL from our test config file. make sure this is the URL used when sending
-        # out the verification email to the notify service
-        config_data = yaml.load(test_config)
-        test_url = config_data['service']['PUBLIC_EMAIL_VERIFICATION_URL']
+
+        expected_url = 'http://dummy.ons.gov.uk/register/activate-account/'
 
         # When the email is verified get the email URL from the argument list in the '_send_message_to_gov_uk_notify'
         # method then check the URL is the same as the value configured in the config file
         frontstage_url = mock_notify.call_args[0][2]
-        self.assertIn(test_url, frontstage_url)
+        self.assertIn(expected_url, frontstage_url)
 
     @patch('ras_party.controllers.party_controller._send_message_to_gov_uk_notify')
     def test_email_verification_twice_produces_a_200(self, mock_notify):

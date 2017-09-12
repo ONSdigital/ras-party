@@ -157,7 +157,7 @@ class Respondent(Base):
     businesses = relationship('BusinessRespondent', back_populates='respondent')
     party_uuid = Column(GUID, unique=True)
     status = Column('status', Enum(RespondentStatus), default=RespondentStatus.CREATED)
-    email_address = Column(Text)
+    email_address = Column(Text, unique=True)
     first_name = Column(Text)
     last_name = Column(Text)
     telephone = Column(Text)

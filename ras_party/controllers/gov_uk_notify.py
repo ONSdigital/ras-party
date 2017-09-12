@@ -10,12 +10,13 @@ log = get_logger()
 class GovUKNotify:
     """ Gov uk notify class"""
 
-    def __init__(self):
+    CLIENT_CLASS = NotificationsAPIClient
 
-        notify_service = current_app.config.dependency['gov-uk-notify-service']
-        notify_keys = 'key-name-{}-{}'.format(notify_service['gov_notify_service_id'],
-                                              notify_service['gov_notify_api_key'])
-        self.notifications_client = NotificationsAPIClient(notify_keys)
+    def __init__(self):
+        notify_service = current_app.config.dependency['notify-service']
+        notify_keys = 'key-name-{}-{}'.format(notify_service['service_id'],
+                                              notify_service['api_key'])
+        self.notifications_client = self.CLIENT_CLASS(notify_keys)
 
     def send_message(self, email, template_id, personalisation=None, reference=None):
         """
