@@ -29,7 +29,6 @@ log = get_logger()
 NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
 EMAIL_ALREADY_VERIFIED = 'The Respondent for that party ID is already verified'
 EMAIL_VERIFICATION_SEND = 'A new verification email has been sent'
-EMAIL_CHANGED = 'Respondents email has been changed'
 
 #
 #   TODO: the spec seems to read as a need for /info, currently this endpoint responds on /party-api/v1/info

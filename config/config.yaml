@@ -40,7 +40,7 @@ service:
 dependencies:
     ras-party-db:
         schema: partysvc
-        uri: "postgres:///rasparty"
+        uri: "sqlite:///ras-party"
     case-service:
         scheme: http
         host: localhost
