@@ -180,3 +180,26 @@ This page documents the Party service API endpoints. All endpoints return an `HT
     "status": "ACTIVE"
 }
 ```
+
+* `PUT /respondents/email`
+### Example JSON DATA for the put
+```json
+{
+   "email_address": "old@email.com",
+   "new_email_address": "new@email.com"
+}
+```
+&mdash; This endpoint will update a respondent's email in the ras-party database and the oauth2 server. This email will need verified again so it will also set the user as unverified in the oauth server and will send a new verification email to the respondent.
+
+### Example JSON Response
+```json
+{
+   "emailAddress": "testtest@test.test",
+   "firstName": "Test",
+   "id": "ef7737df-2097-4a73-a530-e98dba7bfe43",
+   "lastName": "tseT",
+   "sampleUnitType": "BI",
+   "status": "ACTIVE",
+   "telephone": "07846608000"
+}
+```
