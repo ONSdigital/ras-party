@@ -81,7 +81,7 @@ def businesses_post(business_data, session):
     # FIXME: this is incorrect, it doesn't make sense to require sampleUnitType for the concrete endpoints
     errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
     if errors:
-        raise RasError(errors, status_code=400)
+        raise RasError([e.split('\n')[0] for e in errors], status_code=400)
 
     existing_business = session.query(Business).filter(Business.business_ref == party_data['sampleUnitRef']).first()
     if existing_business:
@@ -105,7 +105,7 @@ def parties_post(party_data, session):
     """
     errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
     if errors:
-        raise RasError(errors, status_code=400)
+        raise RasError([e.split('\n')[0] for e in errors], status_code=400)
 
     if party_data['sampleUnitType'] != Business.UNIT_TYPE:
         raise RasError([{'message': 'sampleUnitType must be of type ({})'.format(Business.UNIT_TYPE)}], status_code=400)
@@ -321,7 +321,7 @@ def request_password_change(payload, session):
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
 
-    verification_url = PublicWebsite(current_app.config).forgot_password_url(email_address)
+    verification_url = PublicWebsite(current_app.config).reset_password_url(email_address)
 
     personalisation = {
         'RESET_PASSWORD_URL': verification_url,

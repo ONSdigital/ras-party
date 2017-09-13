@@ -19,8 +19,8 @@ class PublicWebsite:
     def port(self):
         return self.website_config['port']
 
-    def forgot_password_url(self, email):
-        return '{}://{}/passwords/forgot-password/{}'.format(self.scheme, self.host, self._generate_token(email))
+    def reset_password_url(self, email):
+        return '{}://{}/passwords/reset-password/{}'.format(self.scheme, self.host, self._generate_token(email))
 
     def activate_account_url(self, email):
         return '{}://{}/register/activate-account/{}'.format(self.scheme, self.host, self._generate_token(email))
