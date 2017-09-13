@@ -231,7 +231,7 @@ def change_respondent(payload, tran, session):
     respondent.email_address = new_email_address
 
     oauth_response = OauthClient(current_app.config).update_account(username=email_address,
-                                                                    new_email_address=new_email_address,
+                                                                    new_username=new_email_address,
                                                                     account_verified=False)
 
     if oauth_response.status_code != 201:
@@ -239,8 +239,8 @@ def change_respondent(payload, tran, session):
 
     def compensate_oauth_change():
         rollback_response = OauthClient(current_app.config).update_account(username=new_email_address,
-                                                                        new_email_address=email_address,
-                                                                        account_verified=True)
+                                                                           new_username=email_address,
+                                                                           account_verified=True)
         if rollback_response.status_code != 201:
             raise RasError("Failed to rollback change to repsondent email. Please investigate.")
 
