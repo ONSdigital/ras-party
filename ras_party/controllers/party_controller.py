@@ -248,8 +248,6 @@ def change_respondent(payload, tran, session):
 
     _send_email_verification(respondent.party_uuid, respondent.email_address)
 
-    # TODO: send RESPONDENT_EMAIL_AMENDED case event
-
     return respondent.to_respondent_dict()
 
 
