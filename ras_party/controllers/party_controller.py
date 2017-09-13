@@ -232,7 +232,7 @@ def change_respondent(payload, tran, session):
 
     oauth_response = OauthClient(current_app.config).update_account(username=email_address,
                                                                     new_username=new_email_address,
-                                                                    account_verified=False)
+                                                                    account_verified='false')
 
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent email")
@@ -240,7 +240,7 @@ def change_respondent(payload, tran, session):
     def compensate_oauth_change():
         rollback_response = OauthClient(current_app.config).update_account(username=new_email_address,
                                                                            new_username=email_address,
-                                                                           account_verified=True)
+                                                                           account_verified='true')
         if rollback_response.status_code != 201:
             raise RasError("Failed to rollback change to repsondent email. Please investigate.")
 
@@ -497,7 +497,7 @@ def set_user_verified(email_address):
         If it fails a raise_for_status is executed
     """
     log.info("Setting user active on OAuth2 server")
-    oauth_response = OauthClient(current_app.config).update_account(username=email_address, account_verified=True)
+    oauth_response = OauthClient(current_app.config).update_account(username=email_address, account_verified='true')
     if oauth_response.status_code != 201:
         log.error("Unable to set the user active on the OAuth2 server")
         oauth_response.raise_for_status()
