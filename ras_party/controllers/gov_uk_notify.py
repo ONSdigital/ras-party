@@ -28,7 +28,7 @@ class GovUkNotify:
         :rtype: 201 if success
         """
 
-        if self.config.feature.disable_gov_notify:
+        if not self.config.feature.send_email_to_gov_notify:
             log.info("Notification not sent. GOV.UK Notify is disabled.")
             return
 

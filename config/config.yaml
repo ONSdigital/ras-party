@@ -81,4 +81,4 @@ dependencies:
 features:
     translate_exceptions: true
     report_dependencies: false
-    disable_gov_notify: true
+    send_email_to_gov_notify: false
