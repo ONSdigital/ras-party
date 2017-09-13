@@ -5,6 +5,16 @@ from ras_party.support.util import flatten_keys
 
 
 class ValidatorBase:
+    """
+    Base class for performing validation of a dictionary against a specific criteria, for example checking
+    existence of specific keys, format of specific values, etc.
+
+    Each subclass must be a callable, i.e. must implement dunder method __call__, which accepts the
+    dictionary to be validated and returns True if the dictionary is deemed valid. The member property
+    _errors should also be set, this is a list of string values, where each string value is an error
+    message (where errors exist). I.e. multiple errors may be found for any given dictionary, thus
+    multiple error messages can be set.
+    """
 
     def __init__(self):
         self._errors = []
@@ -28,6 +38,21 @@ class Exists(ValidatorBase):
         self._diff = self._keys.difference(keys)
         self._errors = [self.ERROR_MESSAGE.format(d) for d in self._diff]
         return len(self._diff) == 0
+
+
+class MutuallyExclusive(ValidatorBase):
+
+    ERROR_MESSAGE = "Mutually exclusive keys '{}' have been provided."
+
+    def __init__(self, *keys):
+        super().__init__()
+        self._keys = set(keys)
+
+    def __call__(self, data):
+        keys = flatten_keys(data)
+        self._intersection = self._keys.intersection(keys)
+        self._errors = [self.ERROR_MESSAGE.format(list(self._intersection))]
+        return len(self._intersection) <= 1
 
 
 class IsUuid(ValidatorBase):

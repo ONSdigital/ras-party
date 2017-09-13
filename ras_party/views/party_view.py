@@ -84,12 +84,12 @@ def get_respondent_by_email(email):
     return make_response(jsonify(response), 200)
 
 
-@party_view.route('/respondents/email/<string:email>', methods=['PUT'])
+@party_view.route('/respondents/email', methods=['PUT'])
 @auth.login_required
 @log_route
-def put_respondent_by_email(email):
+def put_respondent_by_email():
     payload = request.get_json() or {}
-    response = ras_party.controllers.party_controller.put_respondent_by_email(email, payload)
+    response = ras_party.controllers.party_controller.put_respondent_by_email(payload)
     return make_response(jsonify(response), 200)
 
 

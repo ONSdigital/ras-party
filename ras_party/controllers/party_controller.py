@@ -9,7 +9,7 @@ from structlog import get_logger
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.error_decorator import translate_exceptions
 from ras_party.controllers.gov_uk_notify import GovUKNotify
-from ras_party.controllers.validate import Validator, IsUuid, IsIn, Exists
+from ras_party.controllers.validate import Validator, IsUuid, IsIn, Exists, MutuallyExclusive
 from ras_party.models.models import Business, Respondent, RespondentStatus, BusinessRespondent, PendingEnrolment, \
     Enrolment, EnrolmentStatus
 from ras_party.support.requests_wrapper import Requests
@@ -18,7 +18,6 @@ from ras_party.support.transactional import transactional
 from ras_party.support.util import build_url
 
 log = get_logger()
-
 
 NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
 EMAIL_ALREADY_VERIFIED = 'The Respondent for that party ID is already verified'
@@ -143,7 +142,6 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
 @translate_exceptions
 @with_db_session
 def get_party_by_id(sample_unit_type, id, session):
-
     v = Validator(IsIn('sampleUnitType', 'B', 'BI'))
     if not v.validate({'sampleUnitType': sample_unit_type}):
         raise RasError(v.errors, status_code=400)
@@ -205,26 +203,42 @@ def get_respondent_by_email(email, session):
 
 @translate_exceptions
 @with_db_session
-def put_respondent_by_email(email, payload, session):
-    respondent = session.query(Respondent).filter(Respondent.email_address == email).one()
+def put_respondent_by_email(payload, session):
+
+    v = Validator(Exists('email_address'), MutuallyExclusive('email_address', 'password'))
+    if not v.validate(payload):
+        raise RasError(v.errors, 400)
+
+    email_address = payload['email_address']
+
+    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).one()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
 
-    """
-    payload will contain a subset of the following:
-    first_name
-    last_name
-    telephone
+    respondent.first_name = payload.get('first_name', respondent.first_name)
+    respondent.last_name = payload.get('last_name', respondent.last_name)
+    respondent.telephone = payload.get('telephone', respondent.telephone)
+    respondent.email_address = payload.get('new_email_address', respondent.email_address)
 
-    new_email
-    password
+    if 'new_email_address' in payload and email_address != payload['new_email_address']:
+        oauth_response = OauthClient(current_app.config).update_account(username=email_address,
+                                                                        new_email_address=payload['new_email_address'],
+                                                                        account_verified=False)
 
-    Where supplied, the first 3 items simply update the alchemy model.
-    Where supplied, new_email will update the email address both in the model and on oauth server (setting the account
-    to unverified)
-    Where supplied, password will update the password on the oauth server.
+        # TODO: compensation
+        if oauth_response.status_code != 201:
+            raise RasError("Failed to change respondent email")
 
-    """
+        _send_email_verification(respondent.party_uuid, respondent.email_address)
+    elif 'password' in payload:
+        oauth_response = OauthClient(current_app.config).update_account(username=email_address,
+                                                                        password=payload['password'])
+
+        # TODO: compensation
+        if oauth_response.status_code != 201:
+            raise RasError("Failed to change respondent password.")
+
+    return respondent.to_respondent_dict()
 
 
 @translate_exceptions
@@ -389,7 +403,7 @@ def set_user_verified(email_address):
     """
     log.info("Setting user active on OAuth2 server")
     oauth_response = OauthClient(current_app.config).update_account(username=email_address, account_verified=True)
-    if not oauth_response.status_code == 201:
+    if oauth_response.status_code != 201:
         log.error("Unable to set the user active on the OAuth2 server")
         oauth_response.raise_for_status()
 
@@ -397,8 +411,8 @@ def set_user_verified(email_address):
 def enrol_respondent_for_survey(r, sess):
     pending_enrolment_id = r.pending_enrolment[0].id
     pending_enrolment = sess.query(PendingEnrolment).filter(PendingEnrolment.id == pending_enrolment_id).one()
-    enrolment = sess.query(Enrolment)\
-        .filter(Enrolment.business_id == str(pending_enrolment.business_id))\
+    enrolment = sess.query(Enrolment) \
+        .filter(Enrolment.business_id == str(pending_enrolment.business_id)) \
         .filter(Enrolment.survey_id == str(pending_enrolment.survey_id)) \
         .filter(Enrolment.respondent_id == r.id).one()
     enrolment.status = EnrolmentStatus.ENABLED
@@ -475,7 +489,6 @@ def request_survey(survey_id):
 
 
 def post_case_event(case_id, party_id, category="Default category message", desc="Default description message"):
-    # TODO: Consider making this it's own python module in the Flask App. Or having a class for this.
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/{}/events', case_svc, case_id)
     payload = {
@@ -583,22 +596,3 @@ def _send_message_to_gov_uk_notify(email, template_id, url, party_id):
             log.error("Error sending verification email for party_id {}".format(party_id))
     else:
         log.info("Verification email not sent. Feature send_email_to_gov_notify=false")
-
-
-@translate_exceptions
-@with_db_session
-def change_respondent_email(old_email_address, new_email_address, session):
-    respondent = session.query(Respondent).filter(Respondent.email_address == old_email_address).first()
-    if not respondent:
-        return make_response(
-            jsonify({'errors': "Respondent with email '{}' does not exist.".format(old_email_address)}), 404)
-    log.debug("Changing respondent's email", party_id=respondent.party_uuid)
-
-    respondent.email_address = new_email_address
-    update_oauth_user(original_email=old_email_address,
-                      password=None,
-                      verified='false',
-                      new_email=new_email_address)
-    _send_email_verification(respondent.party_uuid, respondent.email_address)
-
-    return make_response(jsonify(respondent.to_respondent_dict()), 200)

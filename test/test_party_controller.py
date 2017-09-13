@@ -171,7 +171,7 @@ class TestParties(PartyTestClient):
         respondent = respondents()[0]
         self.assertEqual("test@test.test", respondent.email_address)
 
-    @patch('ras_party.controllers.controller._send_message_to_gov_uk_notify')
+    @patch('ras_party.controllers.party_controller._send_message_to_gov_uk_notify')
     def test_put_respondent_email_calls_the_notify_service(self, mock_notify):
         self.assertTrue(mock_notify.call_count == 0)
         mock_business = MockBusiness().as_business()
@@ -179,13 +179,13 @@ class TestParties(PartyTestClient):
         self.post_to_businesses(mock_business, 200)
         mock_respondent = MockRespondent().attributes().as_respondent()
         self.post_to_respondents(mock_respondent, 200)
-        self.assertTrue(mock_notify.call_count == 1)
+        self.assertEqual(mock_notify.call_count, 1)
         put_data = {
             "email_address": mock_respondent['emailAddress'],
             "new_email_address": "test@test.test"
         }
         self.put_email_to_respondents(put_data, 200)
-        self.assertTrue(mock_notify.call_count == 2)
+        self.assertEqual(mock_notify.call_count, 2)
 
     def test_post_respondent_creates_the_business_respondent_association(self):
         # Given the database contains no associations
