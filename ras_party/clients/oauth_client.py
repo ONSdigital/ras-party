@@ -15,11 +15,18 @@ class OauthClient:
     def create_account(self, username, password):
         payload = {
             'username': username,
-            'password': password
+            'password': password,
+            'client_id': self.client_id,
+            'client_secret': self.client_secret
         }
         basic_auth = (self.client_id, self.client_secret)
         return Requests.post(self.admin_url, auth=basic_auth, data=payload)
 
     def update_account(self, **kwargs):
         basic_auth = (self.client_id, self.client_secret)
-        return Requests.put(self.admin_url, auth=basic_auth, data=kwargs)
+        payload = {
+            'client_id': self.client_id,
+            'client_secret': self.client_secret
+        }
+        payload.update(kwargs)
+        return Requests.put(self.admin_url, auth=basic_auth, data=payload)
