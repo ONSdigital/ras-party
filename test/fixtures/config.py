@@ -53,5 +53,5 @@ dependencies:
         port: 6666
 
 features:
-    skip_oauth_registration: true
+    disable_gov_notify: false
 """

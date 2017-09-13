@@ -60,7 +60,8 @@ dependencies:
         api_key: notify_api_key
         service_id: sdc_service_id
         email_verification_template: email_verification_id
-        reset_password_template: reset_password_id
+        request_password_change_template: request_password_change_id
+        confirm_password_change_template: confirm_password_change_id
     api-gateway:
         scheme: http
         host: localhost
@@ -78,9 +79,6 @@ dependencies:
 
 
 features:
-    gateway_registration: False
-    translate_exceptions: True
-    oauth_registration: True
-    case_service_get_party: False
-    report_dependencies: False
-    send_email_to_gov_notify: False
+    translate_exceptions: true
+    report_dependencies: false
+    disable_gov_notify: true

@@ -1,21 +1,23 @@
 import uuid
 
 from flask import current_app
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature, BadData
+from itsdangerous import SignatureExpired, BadSignature, BadData
 from ras_common_utils.ras_error.ras_error import RasError, RasNotifyError
 from sqlalchemy import orm
 from structlog import get_logger
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.error_decorator import translate_exceptions
-from ras_party.controllers.gov_uk_notify import GovUKNotify
-from ras_party.controllers.validate import Validator, IsUuid, IsIn, Exists, MutuallyExclusive
+from ras_party.controllers.gov_uk_notify import GovUkNotify
+from ras_party.controllers.validate import Validator, IsUuid, IsIn, Exists
 from ras_party.models.models import Business, Respondent, RespondentStatus, BusinessRespondent, PendingEnrolment, \
     Enrolment, EnrolmentStatus
+from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.transactional import transactional
 from ras_party.support.util import build_url
+from ras_party.support.verification import decode_email_token
 
 log = get_logger()
 
@@ -194,7 +196,7 @@ def get_respondent_by_email(email, session):
     :param email: Email of respondent to lookup
     :rtype: Respondent
     """
-    respondent = session.query(Respondent).filter(Respondent.email_address == email).one()
+    respondent = session.query(Respondent).filter(Respondent.email_address == email).first()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
 
@@ -203,50 +205,137 @@ def get_respondent_by_email(email, session):
 
 @translate_exceptions
 @with_db_session
-def put_respondent_by_email(payload, session):
-
-    v = Validator(Exists('email_address'), MutuallyExclusive('email_address', 'password'))
+def change_respondent(payload, session):
+    """
+    Modify an existing respondent's email address, identified by their current email address.
+    """
+    v = Validator(Exists('email_address', 'new_email_address'))
     if not v.validate(payload):
         raise RasError(v.errors, 400)
 
     email_address = payload['email_address']
+    new_email_address = payload['new_email_address']
 
     respondent = session.query(Respondent).filter(Respondent.email_address == email_address).one()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
 
-    respondent.first_name = payload.get('first_name', respondent.first_name)
-    respondent.last_name = payload.get('last_name', respondent.last_name)
-    respondent.telephone = payload.get('telephone', respondent.telephone)
-    respondent.email_address = payload.get('new_email_address', respondent.email_address)
+    if new_email_address == email_address:
+        return respondent.to_respondent_dict()
 
-    if 'new_email_address' in payload and email_address != payload['new_email_address']:
-        oauth_response = OauthClient(current_app.config).update_account(username=email_address,
-                                                                        new_email_address=payload['new_email_address'],
-                                                                        account_verified=False)
+    respondent_with_new_email = session.query(Respondent).filter(Respondent.email_address == new_email_address).first()
+    if respondent_with_new_email:
+        raise RasError("New email address already taken.", status_code=409)
 
-        # TODO: compensation
-        if oauth_response.status_code != 201:
-            raise RasError("Failed to change respondent email")
+    respondent.email_address = new_email_address
 
-        _send_email_verification(respondent.party_uuid, respondent.email_address)
-    elif 'password' in payload:
-        oauth_response = OauthClient(current_app.config).update_account(username=email_address,
-                                                                        password=payload['password'])
+    oauth_response = OauthClient(current_app.config).update_account(username=email_address,
+                                                                    new_email_address=payload['new_email_address'],
+                                                                    account_verified=False)
 
-        # TODO: compensation
-        if oauth_response.status_code != 201:
-            raise RasError("Failed to change respondent password.")
+    # TODO: compensation
+    if oauth_response.status_code != 201:
+        raise RasError("Failed to change respondent email")
+
+    _send_email_verification(respondent.party_uuid, respondent.email_address)
+
+    # TODO: send RESPONDENT_EMAIL_AMENDED case event
 
     return respondent.to_respondent_dict()
 
 
 @translate_exceptions
 @with_db_session
-def reset_respondent_password_by_email(email, session):
-    respondent = session.query(Respondent).filter(Respondent.email_address == email).one()
+def verify_token(token, session):
+    try:
+        duration = 900  # 15 minutes
+        email_address = decode_email_token(token, duration, current_app.config)
+    except SignatureExpired:
+        msg = "Expired email verification token {}".format(token)
+        raise RasError(msg, 409)
+    except (BadSignature, BadData) as e:
+        msg = "Unknown email verification token {} error {}".format(token, e)
+        raise RasError(msg, 404)
+
+    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).first()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
+
+    return {'response': "Ok"}
+
+
+@translate_exceptions
+@with_db_session
+def change_respondent_password(token, payload, session):
+    v = Validator(Exists('new_password'))
+    if not v.validate(payload):
+        raise RasError(v.errors, 400)
+
+    try:
+        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+        email_address = decode_email_token(token, duration, current_app.config)
+    except SignatureExpired:
+        msg = "Expired email verification token {}".format(token)
+        raise RasError(msg, 409)
+    except (BadSignature, BadData) as e:
+        msg = "Unknown email verification token {} error {}".format(token, e)
+        raise RasError(msg, 404)
+
+    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).first()
+    if not respondent:
+        raise RasError("Respondent does not exist.", status_code=404)
+
+    new_password = payload['new_password']
+
+    oauth_response = OauthClient(current_app.config).update_account(username=email_address,
+                                                                    password=new_password)
+
+    # TODO: compensation
+    if oauth_response.status_code != 201:
+        raise RasError("Failed to change respondent password.")
+
+    personalisation = {
+        'FIRST_NAME': respondent.first_name
+    }
+
+    party_id = respondent.party_uuid
+
+    try:
+        GovUkNotify(current_app.config).confirm_password_change(email_address, personalisation, str(party_id))
+    except RasNotifyError:
+        log.error("Error sending notification email for party_id {}".format(party_id))
+
+    return {'response': "Ok"}
+
+
+@translate_exceptions
+@with_db_session
+def request_password_change(payload, session):
+    v = Validator(Exists('email_address'))
+    if not v.validate(payload):
+        raise RasError(v.errors, 400)
+
+    email_address = payload['email_address']
+
+    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).first()
+    if not respondent:
+        raise RasError("Respondent does not exist.", status_code=404)
+
+    verification_url = PublicWebsite(current_app.config).forgot_password_url(email_address)
+
+    personalisation = {
+        'RESET_PASSWORD_URL': verification_url,
+        'FIRST_NAME': respondent.first_name
+    }
+
+    party_id = respondent.party_uuid
+    try:
+        GovUkNotify(current_app.config).request_password_change(email_address, personalisation, str(party_id))
+    except RasNotifyError:
+        # Note: intentionally suppresses exception
+        log.error("Error sending notification email for party_id {}".format(party_id))
+
+    return {'response': "Ok"}
 
 
 @translate_exceptions
@@ -360,13 +449,9 @@ def post_respondent(party, tran, session):
 @translate_exceptions
 @with_db_session
 def put_email_verification(token, session):
-    log.info("Checking email verification token: {}".format(token))
-    timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
-    duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
-    email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
-
     try:
-        email_address = timed_serializer.loads(token, salt=email_token_salt, max_age=duration)
+        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+        email_address = decode_email_token(token, duration, current_app.config)
     except SignatureExpired:
         msg = "Expired email verification token {}".format(token)
         raise RasError(msg, 409)
@@ -539,60 +624,19 @@ def resend_verification_email(party_uuid):
     return {'message': EMAIL_VERIFICATION_SENT}
 
 
-def _send_email_verification(party_uuid, email):
+def _send_email_verification(party_id, email):
     """
     Send an email verification to the respondent
-    :param email:
-    :param party_uuid:
     """
-    verification_url = _create_verification_url(email)
-    log.info("Verification URL for party_id: {} {}".format(party_uuid, verification_url))
-
-    notify_service = current_app.config.dependency['notify-service']
-    template_id = notify_service['email_verification_template']
-    _send_message_to_gov_uk_notify(email, template_id, verification_url, party_uuid)
-
-
-def _create_verification_url(email):
-    """
-    Create a verification url for an email
-    :param email:
-    :return: verification_url
-    """
-
-    log.info('creating verification url')
-
-    secret_key = current_app.config["SECRET_KEY"]
-    email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
-    timed_serializer = URLSafeTimedSerializer(secret_key)
-    token = timed_serializer.dumps(email, salt=email_token_salt)
-    public_website = current_app.config.dependency['public-website']
-    scheme, host = public_website['scheme'], public_website['host']
-    return '{}://{}/register/activate-account/{}'.format(scheme, host, token)
-
-
-def _send_message_to_gov_uk_notify(email, template_id, url, party_id):
-    """
-    Send a message to GOVUK notify
-    :param email: respondents email address
-    :param template_id:
-    :param url:
-    :param party_id:
-    """
-
-    log.info('sending message to gov uk notify')
+    verification_url = PublicWebsite(current_app.config).activate_account_url(email)
+    log.info("Verification URL for party_id: {} {}".format(party_id, verification_url))
 
     personalisation = {
-        'ACCOUNT_VERIFICATION_URL': url
+        'ACCOUNT_VERIFICATION_URL': verification_url
     }
 
-    if current_app.config.feature['send_email_to_gov_notify']:
-        log.info("Sending verification email for party_id: {}".format(party_id))
-        try:
-            notifier = GovUKNotify()
-            notifier.send_message(email, template_id, personalisation, str(party_id))
-        except RasNotifyError:
-            # Note: intentionally suppresses exception
-            log.error("Error sending verification email for party_id {}".format(party_id))
-    else:
-        log.info("Verification email not sent. Feature send_email_to_gov_notify=false")
+    try:
+        GovUkNotify(current_app.config).verify_email(email, personalisation, str(party_id))
+    except RasNotifyError:
+        # Note: intentionally suppresses exception
+        log.error("Error sending verification email for party_id {}".format(party_id))

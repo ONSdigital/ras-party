@@ -84,20 +84,39 @@ def get_respondent_by_email(email):
     return make_response(jsonify(response), 200)
 
 
+@party_view.route('/respondents/change_email', methods=['PUT'])
 @party_view.route('/respondents/email', methods=['PUT'])
 @auth.login_required
 @log_route
 def put_respondent_by_email():
     payload = request.get_json() or {}
-    response = ras_party.controllers.party_controller.put_respondent_by_email(payload)
+    response = ras_party.controllers.party_controller.change_respondent(payload)
     return make_response(jsonify(response), 200)
 
 
-@party_view.route('/respondents/reset_email/<string:email>', methods=['POST'])
+@party_view.route('/tokens/verify/<token>', methods=['GET'])
 @auth.login_required
 @log_route
-def post_respondent_reset_password_by_email(email):
-    response = ras_party.controllers.party_controller.reset_respondent_password_by_email(email)
+def get_verify_token(token):
+    response = ras_party.controllers.party_controller.verify_token(token)
+    return make_response(jsonify(response), 200)
+
+
+@party_view.route('/respondents/change_password/<token>', methods=['PUT'])
+@auth.login_required
+@log_route
+def change_respondent_password(token):
+    payload = request.get_json() or {}
+    response = ras_party.controllers.party_controller.change_respondent_password(token, payload)
+    return make_response(jsonify(response), 200)
+
+
+@party_view.route('/respondents/request_password_change', methods=['POST'])
+@auth.login_required
+@log_route
+def post_respondent_reset_password_by_email():
+    payload = request.get_json() or {}
+    response = ras_party.controllers.party_controller.request_password_change(payload)
     return make_response(jsonify(response), 200)
 
 

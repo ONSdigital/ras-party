@@ -1,8 +1,9 @@
 import uuid
-from unittest.mock import patch
+from unittest.mock import MagicMock
 
 from itsdangerous import URLSafeTimedSerializer
 
+import ras_party
 from ras_party.controllers.party_controller import EMAIL_ALREADY_VERIFIED, NO_RESPONDENT_FOR_PARTY_ID
 from ras_party.models.models import RespondentStatus
 from ras_party.support.requests_wrapper import Requests
@@ -171,21 +172,23 @@ class TestParties(PartyTestClient):
         respondent = respondents()[0]
         self.assertEqual("test@test.test", respondent.email_address)
 
-    @patch('ras_party.controllers.party_controller._send_message_to_gov_uk_notify')
-    def test_put_respondent_email_calls_the_notify_service(self, mock_notify):
+    def test_put_respondent_email_calls_the_notify_service(self):
+        mock_notify = MagicMock()
+        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+
         self.assertTrue(mock_notify.call_count == 0)
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
         self.post_to_businesses(mock_business, 200)
         mock_respondent = MockRespondent().attributes().as_respondent()
         self.post_to_respondents(mock_respondent, 200)
-        self.assertEqual(mock_notify.call_count, 1)
+        self.assertEqual(mock_notify.send_email_notification.call_count, 1)
         put_data = {
             "email_address": mock_respondent['emailAddress'],
             "new_email_address": "test@test.test"
         }
         self.put_email_to_respondents(put_data, 200)
-        self.assertEqual(mock_notify.call_count, 2)
+        self.assertEqual(mock_notify.send_email_notification.call_count, 2)
 
     def test_post_respondent_creates_the_business_respondent_association(self):
         # Given the database contains no associations
@@ -228,8 +231,9 @@ class TestParties(PartyTestClient):
         self.assertEqual(str(enrolment.business_respondent.business.party_uuid),
                          '3b136c4b-7a14-4904-9e01-13364dd7b972')
 
-    @patch('ras_party.controllers.party_controller._send_message_to_gov_uk_notify')
-    def test_post_respondent_calls_the_notify_service(self, mock_notify):
+    def test_post_respondent_calls_the_notify_service(self):
+        mock_notify = MagicMock()
+        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -239,11 +243,12 @@ class TestParties(PartyTestClient):
         # When a new respondent is posted
         self.post_to_respondents(mock_respondent, 200)
         # Then the (mock) notify service is called
-        self.assertTrue(mock_notify.called)
-        self.assertTrue(mock_notify.call_count == 1)
+        self.assertTrue(mock_notify.send_email_notification.called)
+        self.assertTrue(mock_notify.send_email_notification.call_count == 1)
 
-    @patch('ras_party.controllers.party_controller._send_message_to_gov_uk_notify')
-    def test_email_verification_activates_a_respondent(self, mock_notify):
+    def test_email_verification_activates_a_respondent(self):
+        mock_notify = MagicMock()
+        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -256,15 +261,17 @@ class TestParties(PartyTestClient):
         db_respondent = respondents()[0]
         self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
         # When the email is verified
-        frontstage_url = mock_notify.call_args[0][2]
+        # TODO: this is an awful way of discovering the token, needs to be cleaned-up:
+        frontstage_url = mock_notify.send_email_notification.call_args[1]['personalisation']['ACCOUNT_VERIFICATION_URL']
         token = frontstage_url.split('/')[-1]
         self.put_email_verification(token, 200)
         # Then the respondent state is ACTIVE
         db_respondent = respondents()[0]
         self.assertEqual(db_respondent.status, RespondentStatus.ACTIVE)
 
-    @patch('ras_party.controllers.party_controller._send_message_to_gov_uk_notify')
-    def test_email_verification_url_is_from_config_yml_file(self, mock_notify):
+    def test_email_verification_url_is_from_config_yml_file(self):
+        mock_notify = MagicMock()
+        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -281,11 +288,12 @@ class TestParties(PartyTestClient):
 
         # When the email is verified get the email URL from the argument list in the '_send_message_to_gov_uk_notify'
         # method then check the URL is the same as the value configured in the config file
-        frontstage_url = mock_notify.call_args[0][2]
+        frontstage_url = mock_notify.send_email_notification.call_args[1]['personalisation']['ACCOUNT_VERIFICATION_URL']
         self.assertIn(expected_url, frontstage_url)
 
-    @patch('ras_party.controllers.party_controller._send_message_to_gov_uk_notify')
-    def test_email_verification_twice_produces_a_200(self, mock_notify):
+    def test_email_verification_twice_produces_a_200(self):
+        mock_notify = MagicMock()
+        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -296,15 +304,16 @@ class TestParties(PartyTestClient):
         self.post_to_respondents(mock_respondent, 200)
 
         # When the email is verified twice
-        frontstage_url = mock_notify.call_args[0][2]
+        frontstage_url = mock_notify.send_email_notification.call_args[1]['personalisation']['ACCOUNT_VERIFICATION_URL']
         token = frontstage_url.split('/')[-1]
 
         self.put_email_verification(token, 200)
         # Then the response is a 200
         self.put_email_verification(token, 200)
 
-    @patch('ras_party.controllers.party_controller._send_message_to_gov_uk_notify')
     def test_email_verification_unknown_token_produces_a_404(self, *_):
+        mock_notify = MagicMock()
+        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # When an unknown email token exists
         secret_key = "aardvark"
         timed_serializer = URLSafeTimedSerializer(secret_key)
@@ -346,9 +355,9 @@ class TestParties(PartyTestClient):
     def test_get_respondent_with_invalid_id(self):
         self.get_respondent_by_id('123', 400)
 
-    @patch('ras_party.controllers.party_controller._send_message_to_gov_uk_notify')
-    def test_resend_verification_email(self, _):
-
+    def test_resend_verification_email(self):
+        mock_notify = MagicMock()
+        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business and respondent
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -359,16 +368,16 @@ class TestParties(PartyTestClient):
         # When the resend verification end point is hit
         self.resend_verification_email(resp['id'], 200)
 
-    @patch('ras_party.controllers.party_controller._send_message_to_gov_uk_notify')
-    def test_resend_verification_email_status_active(self, mock_notify):
-
+    def test_resend_verification_email_status_active(self):
+        mock_notify = MagicMock()
+        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business and respondent and the account is already active
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
         self.post_to_businesses(mock_business, 200)
         mock_respondent = MockRespondent().attributes().as_respondent()
         resp = self.post_to_respondents(mock_respondent, 200)
-        frontstage_url = mock_notify.call_args[0][2]
+        frontstage_url = mock_notify.send_email_notification.call_args[1]['personalisation']['ACCOUNT_VERIFICATION_URL']
         token = frontstage_url.split('/')[-1]
         self.put_email_verification(token, 200)
 
