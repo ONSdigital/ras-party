@@ -204,8 +204,9 @@ def get_respondent_by_email(email, session):
 
 
 @translate_exceptions
+@transactional
 @with_db_session
-def change_respondent(payload, session):
+def change_respondent(payload, tran, session):
     """
     Modify an existing respondent's email address, identified by their current email address.
     """
@@ -230,12 +231,20 @@ def change_respondent(payload, session):
     respondent.email_address = new_email_address
 
     oauth_response = OauthClient(current_app.config).update_account(username=email_address,
-                                                                    new_email_address=payload['new_email_address'],
+                                                                    new_email_address=new_email_address,
                                                                     account_verified=False)
 
-    # TODO: compensation
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent email")
+
+    def compensate_oauth_change():
+        rollback_response = OauthClient(current_app.config).update_account(username=new_email_address,
+                                                                        new_email_address=email_address,
+                                                                        account_verified=True)
+        if rollback_response.status_code != 201:
+            raise RasError("Failed to rollback change to repsondent email. Please investigate.")
+
+    tran.compensate(compensate_oauth_change)
 
     _send_email_verification(respondent.party_uuid, respondent.email_address)
 
@@ -290,7 +299,6 @@ def change_respondent_password(token, payload, session):
     oauth_response = OauthClient(current_app.config).update_account(username=email_address,
                                                                     password=new_password)
 
-    # TODO: compensation
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent password.")
 
@@ -327,6 +335,8 @@ def request_password_change(payload, session):
         'RESET_PASSWORD_URL': verification_url,
         'FIRST_NAME': respondent.first_name
     }
+
+    log.info('Reset password url: {}'.format(verification_url))
 
     party_id = respondent.party_uuid
     try:
