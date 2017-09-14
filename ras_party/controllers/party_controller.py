@@ -259,7 +259,7 @@ def change_respondent(payload, tran, session):
 @with_db_session
 def verify_token(token, session):
     try:
-        duration = 900  # 15 minutes
+        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
         email_address = decode_email_token(token, duration, current_app.config)
     except SignatureExpired:
         msg = "Expired email verification token {}".format(token)
