@@ -300,7 +300,8 @@ def change_respondent_password(token, payload, tran, session):
     new_password = payload['new_password']
 
     oauth_response = OauthClient(current_app.config).update_account(username=email_address,
-                                                                    password=new_password)
+                                                                    password=new_password,
+                                                                    account_verified='true')
 
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent password.")
