@@ -53,5 +53,5 @@ dependencies:
         port: 6666
 
 features:
-    disable_gov_notify: false
+    send_email_to_gov_notify: true
 """
