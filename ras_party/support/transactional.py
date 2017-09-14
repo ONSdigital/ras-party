@@ -14,9 +14,17 @@ class Transaction:
 
     def __init__(self):
         self._compensating_actions = []
+        self._success_actions = []
 
     def compensate(self, c):
         self._compensating_actions.append(c)
+
+    def on_success(self, f):
+        self._success_actions.append(f)
+
+    def commit(self):
+        for func in self._success_actions:
+            func()
 
     def rollback(self):
         if self._compensating_actions:
@@ -46,7 +54,9 @@ def transactional(f):
         tran = Transaction()
         try:
             kwargs['tran'] = tran
-            return f(*args, **kwargs)
+            result = f(*args, **kwargs)
+            tran.commit()
+            return result
         except Exception:
             tran.rollback()
             raise

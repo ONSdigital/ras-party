@@ -248,6 +248,10 @@ def change_respondent(payload, tran, session):
 
     _send_email_verification(respondent.party_uuid, respondent.email_address)
 
+    # This ensures the log message is only written once the DB transaction is committed
+    tran.on_success(
+        lambda: log.info('Respondent with id {} has changed their email address'.format(respondent.party_uuid)))
+
     return respondent.to_respondent_dict()
 
 
@@ -272,8 +276,9 @@ def verify_token(token, session):
 
 
 @translate_exceptions
+@transactional
 @with_db_session
-def change_respondent_password(token, payload, session):
+def change_respondent_password(token, payload, tran, session):
     v = Validator(Exists('new_password'))
     if not v.validate(payload):
         raise RasError(v.errors, 400)
@@ -310,6 +315,9 @@ def change_respondent_password(token, payload, session):
         GovUkNotify(current_app.config).confirm_password_change(email_address, personalisation, str(party_id))
     except RasNotifyError:
         log.error("Error sending notification email for party_id {}".format(party_id))
+
+    # This ensures the log message is only written once the DB transaction is committed
+    tran.on_success(lambda: log.info('Respondent with id {} has changed their password'.format(party_id)))
 
     return {'response': "Ok"}
 
