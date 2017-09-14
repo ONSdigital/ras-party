@@ -481,18 +481,16 @@ def put_email_verification(token, session):
     except orm.exc.NoResultFound:
         raise RasError("Unable to find user while checking email verification token", status_code=404)
 
-    if r.status == RespondentStatus.ACTIVE:
-        return r.to_respondent_dict()
+    if r.status != RespondentStatus.ACTIVE:
+        # We set the party as ACTIVE in this service
+        r.status = RespondentStatus.ACTIVE
 
-    # We set the party as ACTIVE in this service
-    r.status = RespondentStatus.ACTIVE
-
-    # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
-    if r.pending_enrolment:
-        enrol_respondent_for_survey(r, session)
-    else:
-        log.info("No pending enrolment for respondent {} while checking email verification token"
-                 .format(str(r.party_uuid)))
+        # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
+        if r.pending_enrolment:
+            enrol_respondent_for_survey(r, session)
+        else:
+            log.info("No pending enrolment for respondent {} while checking email verification token"
+                     .format(str(r.party_uuid)))
 
     # We set the user as verified on the OAuth2 server.
     set_user_verified(email_address)
