@@ -14,8 +14,7 @@ logger = structlog.get_logger()
 
 
 config_path = 'config/config.yaml'
-with open(config_path) as f:
-    config = ras_config.from_yaml_file(config_path)
+config = ras_config.from_yaml_file(config_path)
 
 app = create_app(config)
 with open(app.config['PARTY_SCHEMA']) as io:

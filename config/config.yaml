@@ -21,7 +21,7 @@
 
 service:
     NAME: ras-party
-    VERSION: 0.1.0
+    VERSION: 0.2.0
     SCHEME: http
     HOST: 0.0.0.0
     PORT: 8081
@@ -35,12 +35,15 @@ service:
     SECURITY_REALM: sdc
     REQUESTS_GET_TIMEOUT: 20
     REQUESTS_POST_TIMEOUT: 20
-    PUBLIC_EMAIL_VERIFICATION_URL: aardvark                   # Do not add trailing slash e.g. http://x.y/parent/child/ BAD http://x.y/parent/child GOOD
 
 dependencies:
     ras-party-db:
         schema: partysvc
         uri: "sqlite:///ras-party"
+    public-website:
+        scheme: http
+        host: dummy.ons.gov.uk
+        port: 80
     case-service:
         scheme: http
         host: localhost
@@ -53,10 +56,12 @@ dependencies:
         scheme: http
         host: localhost
         port: 8080
-    gov-uk-notify-service:
-        gov_notify_api_key: notify_key_placeholder
-        gov_notify_template_id: notify_template_id_placeholder
-        gov_notify_service_id: notify_service_id_placeholder
+    notify-service:
+        api_key: notify_api_key
+        service_id: sdc_service_id
+        email_verification_template: email_verification_id
+        request_password_change_template: request_password_change_id
+        confirm_password_change_template: confirm_password_change_id
     api-gateway:
         scheme: http
         host: localhost
@@ -69,17 +74,11 @@ dependencies:
         scheme: http
         host: localhost
         port: 8000
-        authorization_endpoint: "/web/authorize/"
-        token_endpoint: "/api/v1/tokens/"
-        admin_endpoint: "/api/account/create"
         client_id: "ons@ons.gov"
         client_secret: "password"
 
 
 features:
-    gateway_registration: False
-    translate_exceptions: True
-    oauth_registration: True
-    case_service_get_party: False
-    report_dependencies: False
-    send_email_to_gov_notify: False
+    translate_exceptions: true
+    report_dependencies: false
+    send_email_to_gov_notify: false

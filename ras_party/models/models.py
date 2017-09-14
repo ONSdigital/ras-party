@@ -10,7 +10,7 @@ from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyCo
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 
-from ras_party.controllers.util import filter_falsey_values
+from ras_party.support.util import filter_falsey_values, partition_dict
 
 
 class Business(Base):
@@ -36,27 +36,23 @@ class Business(Base):
         """
         validator = Draft4Validator(schema)
         if not validator.is_valid(json_packet):
-            return validator.iter_errors(json_packet)
-        return False
+            return [str(e) for e in validator.iter_errors(json_packet)]
 
     @staticmethod
-    def add_structure(json_packet):
+    def to_party(business_data):
         """
-        The Business posting is now the same as the Party posting, except that the Business version
+        The Business posting is now the same as the Party posting (FIXME: not exactly), except that the Business version
         has a flat structure and the party service has attributes in a dictionary item called 'attributes'.
         So for business postings, we just convert the incoming version into the Party version, then we can
         use the Party code to post the object.
 
-        :param json_packet: The incoming JSON packet (Business/flat format)
-        :return: The json_packet in structured (Party) format
+        :param business_data: The raw data in dictionary form
+        :return: The same data transformed to generic party format
         """
-        structured = {}
-        for key in ['sampleUnitRef', 'sampleUnitType', 'id']:
-            if key in json_packet:
-                structured[key] = json_packet.pop(key)
 
-        structured['attributes'] = json_packet
-        return structured
+        party, attrs = partition_dict(business_data, ['sampleUnitRef', 'sampleUnitType', 'id'])
+        party['attributes'] = attrs
+        return party
 
     @staticmethod
     def from_party_dict(party):
@@ -161,7 +157,7 @@ class Respondent(Base):
     businesses = relationship('BusinessRespondent', back_populates='respondent')
     party_uuid = Column(GUID, unique=True)
     status = Column('status', Enum(RespondentStatus), default=RespondentStatus.CREATED)
-    email_address = Column(Text)
+    email_address = Column(Text, unique=True)
     first_name = Column(Text)
     last_name = Column(Text)
     telephone = Column(Text)

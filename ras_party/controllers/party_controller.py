@@ -1,71 +1,29 @@
 import uuid
-from json import loads
-from pathlib import Path
 
-from flask import make_response, jsonify, current_app
-from itsdangerous import URLSafeTimedSerializer, BadSignature, BadData, SignatureExpired
+from flask import current_app
+from itsdangerous import SignatureExpired, BadSignature, BadData
 from ras_common_utils.ras_error.ras_error import RasError, RasNotifyError
 from sqlalchemy import orm
 from structlog import get_logger
 
+from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.error_decorator import translate_exceptions
-from ras_party.controllers.gov_uk_notify import GovUKNotify
-from ras_party.controllers.requests_wrapper import Requests
-from ras_party.controllers.session_decorator import with_db_session
-from ras_party.controllers.transactional import transactional
-from ras_party.controllers.util import build_url
-from ras_party.controllers.validate import Validator, IsUuid, Exists, IsIn
-from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment, RespondentStatus, \
-    PendingEnrolment, EnrolmentStatus
+from ras_party.controllers.gov_uk_notify import GovUkNotify
+from ras_party.controllers.validate import Validator, IsUuid, IsIn, Exists
+from ras_party.models.models import Business, Respondent, RespondentStatus, BusinessRespondent, PendingEnrolment, \
+    Enrolment, EnrolmentStatus
+from ras_party.support.public_website import PublicWebsite
+from ras_party.support.requests_wrapper import Requests
+from ras_party.support.session_decorator import with_db_session
+from ras_party.support.transactional import transactional
+from ras_party.support.util import build_url
+from ras_party.support.verification import decode_email_token
 
 log = get_logger()
 
-#
-#   On the one hand these will be environment dependent and should probably be
-#   environment variables, but on the other hand, the requests should be wrapped
-#   in error detection and retry code and we shouldn't be relying on these anyway ...
-#
-
 NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
 EMAIL_ALREADY_VERIFIED = 'The Respondent for that party ID is already verified'
-EMAIL_VERIFICATION_SEND = 'A new verification email has been sent'
-
-#
-#   TODO: the spec seems to read as a need for /info, currently this endpoint responds on /party-api/v1/info
-#
-_health_check = {}
-if Path('git_info').exists():
-    with open('git_info') as io:
-        _health_check = loads(io.read())
-
-# TODO: consider a decorator to get a db session where needed (maybe replace transaction context mgr)
-
-
-@translate_exceptions
-def get_info():
-    info = {
-        "name": current_app.config['NAME'],
-        "version": current_app.config['VERSION'],
-    }
-    info = dict(_health_check, **info)
-
-    if current_app.config.feature.report_dependencies:
-        info["dependencies"] = [{'name': name} for name in current_app.config.dependency.keys()]
-
-    return make_response(jsonify(info), 200)
-
-
-def error_result(errors):
-    """
-    Standard error response
-
-    :param errors: list of error messages
-    :return: valid Flask Response
-    """
-    # TODO: standard error handling should be migrated to error decorator (invoked via raising an exception)
-    messages = [{'message': error.message, 'validator': error.validator} for error in errors]
-    log.error(messages)
-    return make_response(jsonify(messages), 400)
+EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 
 
 @translate_exceptions
@@ -81,9 +39,9 @@ def get_business_by_ref(ref, session):
     """
     business = session.query(Business).filter(Business.business_ref == ref).first()
     if not business:
-        return make_response(jsonify({'errors': "Business with reference '{}' does not exist.".format(ref)}), 404)
+        raise RasError("Business with reference '{}' does not exist.".format(ref), status_code=404)
 
-    return make_response(jsonify(business.to_business_dict()), 200)
+    return business.to_business_dict()
 
 
 @translate_exceptions
@@ -99,56 +57,66 @@ def get_business_by_id(id, session):
     """
     v = Validator(IsUuid('id'))
     if not v.validate({'id': id}):
-        return make_response(jsonify(v.errors), 400)
+        raise RasError(v.errors, status_code=400)
 
     business = session.query(Business).filter(Business.party_uuid == id).first()
     if not business:
-        return make_response(jsonify({'errors': "Business with party id '{}' does not exist.".format(id)}), 404)
+        raise RasError("Business with party id '{}' does not exist.".format(id), status_code=404)
 
-    return make_response(jsonify(business.to_business_dict()), 200)
-
-
-@translate_exceptions
-def businesses_post(json_packet):
-    """
-    This performs the same function as 'parties_post' except that the data is presented in a 'flat' format.
-    As a result, we structure the data, then pass it through to parties_post, setting structured to False
-    which forces the resulting output to be presented in the same format we received it. Note; we're not
-    necessarily expecting this endpoint to be hit in production.
-
-    :param json_packet: packet containing the data to post
-    :type json_packet: JSON data matching the schema described in schemas/party_schema.json
-    """
-    json_packet = Business.add_structure(json_packet)
-    return parties_post(json_packet, structured=False)
+    return business.to_business_dict()
 
 
 @translate_exceptions
 @with_db_session
-def parties_post(json_packet, session, structured=True):
+def businesses_post(business_data, session):
+    """
+    Create a new business in the database based on the supplied data dictionary.
+
+    :param business_data: dictionary containing the attributes of the business.
+    :param session: database session.
+    :return: Jsonified representation of the created business.
+    """
+    party_data = Business.to_party(business_data)
+
+    # FIXME: this is incorrect, it doesn't make sense to require sampleUnitType for the concrete endpoints
+    errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
+    if errors:
+        raise RasError([e.split('\n')[0] for e in errors], status_code=400)
+
+    existing_business = session.query(Business).filter(Business.business_ref == party_data['sampleUnitRef']).first()
+    if existing_business:
+        party_data['id'] = str(existing_business.party_uuid)
+
+    b = Business.from_party_dict(party_data)
+    session.merge(b)
+    return b.to_business_dict()
+
+
+@translate_exceptions
+@with_db_session
+def parties_post(party_data, session):
     """
     Post a new party (with sampleUnitType B)
 
-    :param json_packet: packet containing the data to post
-    :type json_packet: JSON data maching the schema described in schemas/party_schema.json
-    :param structured: The format we output on completion
+    :param party_data: packet containing the data to post
+    :type party_data: JSON data maching the schema described in schemas/party_schema.json
+    :param party_format_response: The format we output on completion
     :type bool: Structured or Flat
     """
-    errors = Business.validate(json_packet, current_app.config['PARTY_SCHEMA'])
+    errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
     if errors:
-        return error_result(errors)
+        raise RasError([e.split('\n')[0] for e in errors], status_code=400)
 
-    if json_packet['sampleUnitType'] != Business.UNIT_TYPE:
-        return error_result([{'message': 'sampleUnitType must be of type ({})'.format(Business.UNIT_TYPE)}])
+    if party_data['sampleUnitType'] != Business.UNIT_TYPE:
+        raise RasError([{'message': 'sampleUnitType must be of type ({})'.format(Business.UNIT_TYPE)}], status_code=400)
 
-    existing_business = session.query(Business).filter(Business.business_ref == json_packet['sampleUnitRef']).first()
+    existing_business = session.query(Business).filter(Business.business_ref == party_data['sampleUnitRef']).first()
     if existing_business:
-        json_packet['id'] = str(existing_business.party_uuid)
+        party_data['id'] = str(existing_business.party_uuid)
 
-    b = Business.from_party_dict(json_packet)
+    b = Business.from_party_dict(party_data)
     session.merge(b)
-    resp = b.to_party_dict() if structured else b.to_business_dict()
-    return make_response(jsonify(resp), 200)
+    return b.to_party_dict()
 
 
 @translate_exceptions
@@ -164,14 +132,13 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
     """
     v = Validator(IsIn('sampleUnitType', 'B'))
     if not v.validate({'sampleUnitType': sample_unit_type}):
-        return make_response(jsonify(v.errors), 400)
+        raise RasError(v.errors, status_code=400)
 
     business = session.query(Business).filter(Business.business_ref == sample_unit_ref).first()
     if not business:
-        return make_response(jsonify(
-            {'errors': "Business with reference '{}' does not exist.".format(sample_unit_ref)}), 404)
+        raise RasError("Business with reference '{}' does not exist.".format(sample_unit_ref), status_code=404)
 
-    return make_response(jsonify(business.to_party_dict()), 200)
+    return business.to_party_dict()
 
 
 @translate_exceptions
@@ -179,21 +146,21 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
 def get_party_by_id(sample_unit_type, id, session):
     v = Validator(IsIn('sampleUnitType', 'B', 'BI'))
     if not v.validate({'sampleUnitType': sample_unit_type}):
-        return make_response(jsonify(v.errors), 400)
+        raise RasError(v.errors, status_code=400)
 
     if sample_unit_type == Business.UNIT_TYPE:
         business = session.query(Business).filter(Business.party_uuid == id).first()
         if not business:
-            return make_response(jsonify({'errors': "Business with id '{}' does not exist.".format(id)}), 404)
+            raise RasError("Business with id '{}' does not exist.".format(id), status_code=404)
 
-        return make_response(jsonify(business.to_party_dict()), 200)
+        return business.to_party_dict()
 
     elif sample_unit_type == Respondent.UNIT_TYPE:
         respondent = session.query(Respondent).filter(Respondent.party_uuid == id).first()
         if not respondent:
-            return make_response(jsonify({'errors': "Respondent with id '{}' does not exist.".format(id)}), 404)
+            return RasError("Respondent with id '{}' does not exist.".format(id), status_code=404)
 
-        return make_response(jsonify(respondent.to_party_dict()), 200)
+        return respondent.to_party_dict()
 
 
 @translate_exceptions
@@ -209,37 +176,189 @@ def get_respondent_by_id(id, session):
     """
     v = Validator(IsUuid('id'))
     if not v.validate({'id': id}):
-        return make_response(jsonify(v.errors), 400)
+        raise RasError(v.errors, status_code=400)
 
     respondent = session.query(Respondent).filter(Respondent.party_uuid == id).first()
     if not respondent:
-        return make_response(jsonify({'errors': "Respondent with party id '{}' does not exist.".format(id)}), 404)
+        raise RasError("Respondent with party id '{}' does not exist.".format(id), status_code=404)
 
-    return make_response(jsonify(respondent.to_respondent_dict()), 200)
+    return respondent.to_respondent_dict()
 
 
 @translate_exceptions
 @with_db_session
 def get_respondent_by_email(email, session):
     """
-    Get a Respondent by its EMail Address
-    Returns a single Party
-    :param email: EMail of Respondent to return
-    :type id: str
+    Get a respondent by its email address.
+    Returns either the unique respondent identified by the supplied email address, or otherwise raises
+    a RasError to indicate the email address doesn't exist.
 
+    :param email: Email of respondent to lookup
     :rtype: Respondent
     """
     respondent = session.query(Respondent).filter(Respondent.email_address == email).first()
     if not respondent:
-        return make_response(jsonify({'errors': "Respondent does not exist."}), 404)
+        raise RasError("Respondent does not exist.", status_code=404)
 
-    return make_response(jsonify(respondent.to_respondent_dict()), 200)
+    return respondent.to_respondent_dict()
 
 
 @translate_exceptions
 @transactional
 @with_db_session
-def respondents_post(party, tran, session):
+def change_respondent(payload, tran, session):
+    """
+    Modify an existing respondent's email address, identified by their current email address.
+    """
+    v = Validator(Exists('email_address', 'new_email_address'))
+    if not v.validate(payload):
+        raise RasError(v.errors, 400)
+
+    email_address = payload['email_address']
+    new_email_address = payload['new_email_address']
+
+    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).one()
+    if not respondent:
+        raise RasError("Respondent does not exist.", status_code=404)
+
+    if new_email_address == email_address:
+        return respondent.to_respondent_dict()
+
+    respondent_with_new_email = session.query(Respondent).filter(Respondent.email_address == new_email_address).first()
+    if respondent_with_new_email:
+        raise RasError("New email address already taken.", status_code=409)
+
+    respondent.email_address = new_email_address
+
+    oauth_response = OauthClient(current_app.config).update_account(username=email_address,
+                                                                    new_username=new_email_address,
+                                                                    account_verified='false')
+
+    if oauth_response.status_code != 201:
+        raise RasError("Failed to change respondent email")
+
+    def compensate_oauth_change():
+        rollback_response = OauthClient(current_app.config).update_account(username=new_email_address,
+                                                                           new_username=email_address,
+                                                                           account_verified='true')
+        if rollback_response.status_code != 201:
+            raise RasError("Failed to rollback change to repsondent email. Please investigate.")
+
+    tran.compensate(compensate_oauth_change)
+
+    _send_email_verification(respondent.party_uuid, respondent.email_address)
+
+    # This ensures the log message is only written once the DB transaction is committed
+    tran.on_success(
+        lambda: log.info('Respondent with id {} has changed their email address'.format(respondent.party_uuid)))
+
+    return respondent.to_respondent_dict()
+
+
+@translate_exceptions
+@with_db_session
+def verify_token(token, session):
+    try:
+        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+        email_address = decode_email_token(token, duration, current_app.config)
+    except SignatureExpired:
+        msg = "Expired email verification token {}".format(token)
+        raise RasError(msg, 409)
+    except (BadSignature, BadData) as e:
+        msg = "Unknown email verification token {} error {}".format(token, e)
+        raise RasError(msg, 404)
+
+    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).first()
+    if not respondent:
+        raise RasError("Respondent does not exist.", status_code=404)
+
+    return {'response': "Ok"}
+
+
+@translate_exceptions
+@transactional
+@with_db_session
+def change_respondent_password(token, payload, tran, session):
+    v = Validator(Exists('new_password'))
+    if not v.validate(payload):
+        raise RasError(v.errors, 400)
+
+    try:
+        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+        email_address = decode_email_token(token, duration, current_app.config)
+    except SignatureExpired:
+        msg = "Expired email verification token {}".format(token)
+        raise RasError(msg, 409)
+    except (BadSignature, BadData) as e:
+        msg = "Unknown email verification token {} error {}".format(token, e)
+        raise RasError(msg, 404)
+
+    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).first()
+    if not respondent:
+        raise RasError("Respondent does not exist.", status_code=404)
+
+    new_password = payload['new_password']
+
+    oauth_response = OauthClient(current_app.config).update_account(username=email_address,
+                                                                    password=new_password,
+                                                                    account_verified='true')
+
+    if oauth_response.status_code != 201:
+        raise RasError("Failed to change respondent password.")
+
+    personalisation = {
+        'FIRST_NAME': respondent.first_name
+    }
+
+    party_id = respondent.party_uuid
+
+    try:
+        GovUkNotify(current_app.config).confirm_password_change(email_address, personalisation, str(party_id))
+    except RasNotifyError:
+        log.error("Error sending notification email for party_id {}".format(party_id))
+
+    # This ensures the log message is only written once the DB transaction is committed
+    tran.on_success(lambda: log.info('Respondent with id {} has changed their password'.format(party_id)))
+
+    return {'response': "Ok"}
+
+
+@translate_exceptions
+@with_db_session
+def request_password_change(payload, session):
+    v = Validator(Exists('email_address'))
+    if not v.validate(payload):
+        raise RasError(v.errors, 400)
+
+    email_address = payload['email_address']
+
+    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).first()
+    if not respondent:
+        raise RasError("Respondent does not exist.", status_code=404)
+
+    verification_url = PublicWebsite(current_app.config).reset_password_url(email_address)
+
+    personalisation = {
+        'RESET_PASSWORD_URL': verification_url,
+        'FIRST_NAME': respondent.first_name
+    }
+
+    log.info('Reset password url: {}'.format(verification_url))
+
+    party_id = respondent.party_uuid
+    try:
+        GovUkNotify(current_app.config).request_password_change(email_address, personalisation, str(party_id))
+    except RasNotifyError:
+        # Note: intentionally suppresses exception
+        log.error("Error sending notification email for party_id {}".format(party_id))
+
+    return {'response': "Ok"}
+
+
+@translate_exceptions
+@transactional
+@with_db_session
+def post_respondent(party, tran, session):
     """
     This function is quite complicated, as it performs a number of steps to complete a new respondent enrolment:
     1. Validate the enrolment code and email address
@@ -261,7 +380,7 @@ def respondents_post(party, tran, session):
     if 'id' in party:
         # Note: there's not strictly a requirement to be able to pass in a UUID, this is currently supported to
         # aid with testing.
-        log.debug("ID in respondent post message. Adding validation rule IsUuid")
+        log.debug("'id' in respondent post message. Adding validation rule IsUuid")
         v.add_rule(IsUuid('id'))
 
     if not v.validate(party):
@@ -341,20 +460,15 @@ def respondents_post(party, tran, session):
 
     register_user(party, tran)
 
-    return make_response(jsonify(r.to_respondent_dict()), 200)
+    return r.to_respondent_dict()
 
 
 @translate_exceptions
 @with_db_session
 def put_email_verification(token, session):
-    # TODO Add some doc string or comments.
-    log.info("Checking email verification token: {}".format(token))
-    timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
-    duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
-    email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
-
     try:
-        email_address = timed_serializer.loads(token, salt=email_token_salt, max_age=duration)
+        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+        email_address = decode_email_token(token, duration, current_app.config)
     except SignatureExpired:
         msg = "Expired email verification token {}".format(token)
         raise RasError(msg, 409)
@@ -367,68 +481,38 @@ def put_email_verification(token, session):
     except orm.exc.NoResultFound:
         raise RasError("Unable to find user while checking email verification token", status_code=404)
 
-    if r.status == RespondentStatus.ACTIVE:
-        return make_response(jsonify(r.to_respondent_dict()), 200)
+    if r.status != RespondentStatus.ACTIVE:
+        # We set the party as ACTIVE in this service
+        r.status = RespondentStatus.ACTIVE
 
-    # We set the party as ACTIVE in this service
-    r.status = RespondentStatus.ACTIVE
-
-    # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
-    # TODO: Think about adding transaction to this function
-    if r.pending_enrolment:
-        enrol_respondent_for_survey(r, session)
-    else:
-        log.info("No pending enrolment for respondent {} while checking email verification token"
-                 .format(str(r.party_uuid)))
+        # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
+        if r.pending_enrolment:
+            enrol_respondent_for_survey(r, session)
+        else:
+            log.info("No pending enrolment for respondent {} while checking email verification token"
+                     .format(str(r.party_uuid)))
 
     # We set the user as verified on the OAuth2 server.
     set_user_verified(email_address)
-    return make_response(jsonify(r.to_respondent_dict()), 200)
+    return r.to_respondent_dict()
 
 
-def set_user_verified(respondent_email):
+def set_user_verified(email_address):
     """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
         If it fails a raise_for_status is executed
     """
     log.info("Setting user active on OAuth2 server")
-    update_oauth_user(original_email=respondent_email, verified='true')
-    log.info("User has been activated on the oauth2 server")
-
-
-def update_oauth_user(original_email, password=None, verified=None, new_email=None):
-    client_id = current_app.config.dependency['oauth2-service']['client_id']
-    client_secret = current_app.config.dependency['oauth2-service']['client_secret']
-
-    oauth_payload = {
-        "username": original_email,
-        "client_id": client_id,
-        "client_secret": client_secret
-    }
-    if password:
-        oauth_payload['password'] = password
-    if verified:
-        oauth_payload['account_verified'] = verified
-    if new_email:
-        oauth_payload['new_username'] = new_email
-
-    oauth_svc = current_app.config.dependency['oauth2-service']
-    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    auth = (client_id, client_secret)
-    oauth_response = Requests.put(oauth_url, auth=auth, data=oauth_payload)
+    oauth_response = OauthClient(current_app.config).update_account(username=email_address, account_verified='true')
     if oauth_response.status_code != 201:
-        log.info("Failed to update oauth user, status_code:{}, response:{}"
-                 .format(oauth_response.status_code, oauth_response.content))
+        log.error("Unable to set the user active on the OAuth2 server")
         oauth_response.raise_for_status()
 
 
-# Handle the pending enrolment that was created during registration
 def enrol_respondent_for_survey(r, sess):
-    # TODO: Need to handle all the DB/SQLAlchemy errors that could occur here!
-    # TODO: comments and explanation
     pending_enrolment_id = r.pending_enrolment[0].id
     pending_enrolment = sess.query(PendingEnrolment).filter(PendingEnrolment.id == pending_enrolment_id).one()
-    enrolment = sess.query(Enrolment)\
-        .filter(Enrolment.business_id == str(pending_enrolment.business_id))\
+    enrolment = sess.query(Enrolment) \
+        .filter(Enrolment.business_id == str(pending_enrolment.business_id)) \
         .filter(Enrolment.survey_id == str(pending_enrolment.survey_id)) \
         .filter(Enrolment.respondent_id == r.id).one()
     enrolment.status = EnrolmentStatus.ENABLED
@@ -445,20 +529,7 @@ def enrol_respondent_for_survey(r, sess):
 
 
 def register_user(party, tran):
-    # TODO: Comments and explanation
-    client_id = current_app.config.dependency['oauth2-service']['client_id']
-    client_secret = current_app.config.dependency['oauth2-service']['client_secret']
-
-    oauth_payload = {
-        "username": party['emailAddress'],
-        "password": party['password'],
-        "client_id": client_id,
-        "client_secret": client_secret
-    }
-    oauth_svc = current_app.config.dependency['oauth2-service']
-    oauth_url = build_url('{}://{}:{}{}', oauth_svc, oauth_svc['admin_endpoint'])
-    auth = (client_id, client_secret)
-    oauth_response = Requests.post(oauth_url, auth=auth, data=oauth_payload)
+    oauth_response = OauthClient(current_app.config).create_account(party['emailAddress'], party['password'])
     if not oauth_response.status_code == 201:
         log.info("Registering respondent OAuth2 server responded with {} {}"
                  .format(oauth_response.status_code, oauth_response.content))
@@ -488,7 +559,6 @@ def request_iac(enrolment_code):
 
 
 def request_case(enrolment_code):
-    # TODO: Comments and explanation
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
     log.info("GET URL {}".format(case_url))
@@ -499,7 +569,6 @@ def request_case(enrolment_code):
 
 
 def request_collection_exercise(collection_exercise_id):
-    # TODO: Comments and explanation
     ce_svc = current_app.config.dependency['collectionexercise-service']
     ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
     log.info("GET {}".format(ce_url))
@@ -510,7 +579,6 @@ def request_collection_exercise(collection_exercise_id):
 
 
 def request_survey(survey_id):
-    # TODO: Comments and explanation
     survey_svc = current_app.config.dependency['survey-service']
     survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
     log.info("GET {}".format(survey_url))
@@ -521,9 +589,6 @@ def request_survey(survey_id):
 
 
 def post_case_event(case_id, party_id, category="Default category message", desc="Default description message"):
-    # TODO: Comments and explanation
-    # TODO: Consider making this it's own python module in the Flask App. Or having a class for this.
-
     case_svc = current_app.config.dependency['case-service']
     case_url = build_url('{}://{}:{}/cases/{}/events', case_svc, case_id)
     payload = {
@@ -563,93 +628,30 @@ def resend_verification_email(party_uuid):
     respondent = _query_respondent_by_party_uuid(party_uuid)
 
     if not respondent:
-        log.debug(NO_RESPONDENT_FOR_PARTY_ID)
-        return make_response(NO_RESPONDENT_FOR_PARTY_ID, 404)
+        raise RasError(NO_RESPONDENT_FOR_PARTY_ID, status_code=404)
 
     if respondent.status == RespondentStatus.ACTIVE:
         log.debug(EMAIL_ALREADY_VERIFIED)
-        return make_response(EMAIL_ALREADY_VERIFIED, 200)
+        return EMAIL_ALREADY_VERIFIED
 
     _send_email_verification(party_uuid, respondent.email_address)
 
-    return make_response(EMAIL_VERIFICATION_SEND, 200)
+    return {'message': EMAIL_VERIFICATION_SENT}
 
 
-def _send_email_verification(party_uuid, email):
+def _send_email_verification(party_id, email):
     """
     Send an email verification to the respondent
-    :param email:
-    :param party_uuid:
     """
-
-    verification_url = _create_verification_url(email)
-    log.info("Verification URL for party_id: {} {}".format(party_uuid, verification_url))
-
-    notify_service = current_app.config.dependency['gov-uk-notify-service']
-    template_id = notify_service['gov_notify_template_id']
-    _send_message_to_gov_uk_notify(email, template_id, verification_url, party_uuid)
-
-
-def _create_verification_url(email):
-    """
-    Create a verification url for an email
-    :param email:
-    :return: verification_url
-    """
-
-    log.info('creating verification url')
-
-    secret_key = current_app.config["SECRET_KEY"]
-    email_token_salt = current_app.config["EMAIL_TOKEN_SALT"] or 'email-confirm-key'
-    timed_serializer = URLSafeTimedSerializer(secret_key)
-    token = timed_serializer.dumps(email, salt=email_token_salt)
-    public_email_verification_url = current_app.config["PUBLIC_EMAIL_VERIFICATION_URL"]
-    verification_url = '{}/register/activate-account/{}'.format(public_email_verification_url, token)
-
-    return verification_url
-
-
-def _send_message_to_gov_uk_notify(email, template_id, url, party_id):
-    """
-    Send a message to GOVUK notify
-    :param email: respondents email address
-    :param template_id:
-    :param url:
-    :param party_id:
-    """
-
-    log.info('sending message to gov uk notify')
+    verification_url = PublicWebsite(current_app.config).activate_account_url(email)
+    log.info("Verification URL for party_id: {} {}".format(party_id, verification_url))
 
     personalisation = {
-        'ACCOUNT_VERIFICATION_URL': url
+        'ACCOUNT_VERIFICATION_URL': verification_url
     }
 
-    if current_app.config.feature['send_email_to_gov_notify']:
-        log.info("Sending verification email for party_id: {}".format(party_id))
-        try:
-            notifier = GovUKNotify()
-            notifier.send_message(email, template_id, personalisation, str(party_id))
-        except RasNotifyError:
-            # Note: intentionally suppresses exception
-            log.error("Error sending verification email for party_id {}".format(party_id))
-    else:
-        log.info("Verification email not sent. Feature send_email_to_gov_notify=false")
-
-
-@translate_exceptions
-@with_db_session
-def change_respondent_email(old_email_address, new_email_address, session):
-    respondent = session.query(Respondent).filter(Respondent.email_address == old_email_address).first()
-    if not respondent:
-        return make_response(
-            jsonify({'errors': "Respondent with email '{}' does not exist.".format(old_email_address)}), 404)
-    log.debug("Changing respondent's email", party_id=respondent.party_uuid)
-
-    respondent.email_address = new_email_address
-    update_oauth_user(original_email=old_email_address,
-                      password=None,
-                      verified='false',
-                      new_email=new_email_address)
-    _send_email_verification(respondent.party_uuid, respondent.email_address)
-
-    return make_response(jsonify(respondent.to_respondent_dict()), 200)
+    try:
+        GovUkNotify(current_app.config).verify_email(email, personalisation, str(party_id))
+    except RasNotifyError:
+        # Note: intentionally suppresses exception
+        log.error("Error sending verification email for party_id {}".format(party_id))
