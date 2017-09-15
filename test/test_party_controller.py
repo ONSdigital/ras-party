@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from itsdangerous import URLSafeTimedSerializer
 
 import ras_party
-from ras_party.controllers.party_controller import EMAIL_ALREADY_VERIFIED, NO_RESPONDENT_FOR_PARTY_ID
+from ras_party.controllers.party_controller import NO_RESPONDENT_FOR_PARTY_ID
 from ras_party.models.models import RespondentStatus
 from ras_party.support.requests_wrapper import Requests
 from test.mocks import MockBusiness, MockRespondent, MockRequests, MockResponse
