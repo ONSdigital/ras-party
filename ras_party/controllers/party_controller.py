@@ -22,7 +22,6 @@ from ras_party.support.verification import decode_email_token
 log = get_logger()
 
 NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
-EMAIL_ALREADY_VERIFIED = 'The Respondent for that party ID is already verified'
 EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 
 
