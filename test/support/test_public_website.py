@@ -23,7 +23,7 @@ class MockConfig:
 
 class TestPublicWebsite(TestCase):
 
-    def test_reset_password_url(self):
+    def test_reset_password_url_includes_port_when_nonstandard(self):
 
         config = MockConfig()
         unit = PublicWebsite(config)
@@ -42,7 +42,41 @@ class TestPublicWebsite(TestCase):
 
         self.assertIn(expected_url_substring, actual_url)
 
-    def test_activate_account_url(self):
+        config = MockConfig(port='80')
+        unit = PublicWebsite(config)
+
+        expected_url_substring = "http://mockhost/passwords/reset-password/"
+        actual_url = unit.reset_password_url('test@email.com')
+
+        self.assertIn(expected_url_substring, actual_url)
+
+        config = MockConfig(scheme='https', port=443)
+        unit = PublicWebsite(config)
+
+        expected_url_substring = "https://mockhost/passwords/reset-password/"
+        actual_url = unit.reset_password_url('test@email.com')
+
+        self.assertIn(expected_url_substring, actual_url)
+
+        config = MockConfig(scheme='https', port='443')
+        unit = PublicWebsite(config)
+
+        expected_url_substring = "https://mockhost/passwords/reset-password/"
+        actual_url = unit.reset_password_url('test@email.com')
+
+        self.assertIn(expected_url_substring, actual_url)
+
+        self.assertIn(expected_url_substring, actual_url)
+
+        config = MockConfig(scheme='https', port='80')
+        unit = PublicWebsite(config)
+
+        expected_url_substring = "https://mockhost:80/passwords/reset-password/"
+        actual_url = unit.reset_password_url('test@email.com')
+
+        self.assertIn(expected_url_substring, actual_url)
+
+    def test_activate_account_url_includes_port_when_nonstandard(self):
 
         config = MockConfig()
         unit = PublicWebsite(config)
@@ -56,6 +90,38 @@ class TestPublicWebsite(TestCase):
         unit = PublicWebsite(config)
 
         expected_url_substring = "http://mockhost/register/activate-account/"
+        actual_url = unit.activate_account_url('test@email.com')
+
+        self.assertIn(expected_url_substring, actual_url)
+
+        config = MockConfig(port='80')
+        unit = PublicWebsite(config)
+
+        expected_url_substring = "http://mockhost/register/activate-account/"
+        actual_url = unit.activate_account_url('test@email.com')
+
+        self.assertIn(expected_url_substring, actual_url)
+
+        config = MockConfig(scheme='https', port=443)
+        unit = PublicWebsite(config)
+
+        expected_url_substring = "https://mockhost/register/activate-account/"
+        actual_url = unit.activate_account_url('test@email.com')
+
+        self.assertIn(expected_url_substring, actual_url)
+
+        config = MockConfig(scheme='https', port='443')
+        unit = PublicWebsite(config)
+
+        expected_url_substring = "https://mockhost/register/activate-account/"
+        actual_url = unit.activate_account_url('test@email.com')
+
+        self.assertIn(expected_url_substring, actual_url)
+
+        config = MockConfig(scheme='https', port='80')
+        unit = PublicWebsite(config)
+
+        expected_url_substring = "https://mockhost:80/register/activate-account/"
         actual_url = unit.activate_account_url('test@email.com')
 
         self.assertIn(expected_url_substring, actual_url)
