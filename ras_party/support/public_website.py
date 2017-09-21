@@ -17,11 +17,17 @@ class PublicWebsite:
 
     @property
     def port(self):
-        return self.website_config['port']
+        return int(self.website_config['port'])
 
     @property
     def host_port(self):
-        return self.host if self.port == 80 else "{}:{}".format(self.host, self.port)
+        if self.scheme == 'https' and self.port == 443:
+            result = self.host
+        elif self.scheme == 'http' and self.port == 80:
+            result = self.host
+        else:
+            result = "{}:{}".format(self.host, self.port)
+        return result
 
     def reset_password_url(self, email):
         return '{}://{}/passwords/reset-password/{}'.format(self.scheme, self.host_port, self._generate_token(email))
