@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from itsdangerous import URLSafeTimedSerializer
 
 import ras_party
-from ras_party.controllers.party_controller import EMAIL_ALREADY_VERIFIED, NO_RESPONDENT_FOR_PARTY_ID
+from ras_party.controllers.party_controller import NO_RESPONDENT_FOR_PARTY_ID
 from ras_party.models.models import RespondentStatus
 from ras_party.support.requests_wrapper import Requests
 from test.mocks import MockBusiness, MockRespondent, MockRequests, MockResponse
@@ -367,25 +367,6 @@ class TestParties(PartyTestClient):
 
         # When the resend verification end point is hit
         self.resend_verification_email(resp['id'], 200)
-
-    def test_resend_verification_email_status_active(self):
-        mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
-        # Given there is a business and respondent and the account is already active
-        mock_business = MockBusiness().as_business()
-        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
-        self.post_to_businesses(mock_business, 200)
-        mock_respondent = MockRespondent().attributes().as_respondent()
-        resp = self.post_to_respondents(mock_respondent, 200)
-        frontstage_url = mock_notify.send_email_notification.call_args[1]['personalisation']['ACCOUNT_VERIFICATION_URL']
-        token = frontstage_url.split('/')[-1]
-        self.put_email_verification(token, 200)
-
-        # When the resend verification end point is hit
-        response = self.resend_verification_email(resp['id'], 200)
-
-        # Then an email is not sent and a message saying the account is already active is returned
-        self.assertEqual(response, EMAIL_ALREADY_VERIFIED)
 
     def test_resend_verification_email_party_id_not_found(self):
 

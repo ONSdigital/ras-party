@@ -22,7 +22,6 @@ from ras_party.support.verification import decode_email_token
 log = get_logger()
 
 NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
-EMAIL_ALREADY_VERIFIED = 'The Respondent for that party ID is already verified'
 EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 
 
@@ -623,16 +622,11 @@ def resend_verification_email(party_uuid):
     :param party_uuid: the party uuid
     :return: make_response
     """
-    log.debug('attempting to resend verification_email with party_uuid {}'.format(party_uuid))
+    log.debug('Attempting to resend verification_email with party_uuid {}'.format(party_uuid))
 
     respondent = _query_respondent_by_party_uuid(party_uuid)
-
     if not respondent:
         raise RasError(NO_RESPONDENT_FOR_PARTY_ID, status_code=404)
-
-    if respondent.status == RespondentStatus.ACTIVE:
-        log.debug(EMAIL_ALREADY_VERIFIED)
-        return EMAIL_ALREADY_VERIFIED
 
     _send_email_verification(party_uuid, respondent.email_address)
 
@@ -652,6 +646,7 @@ def _send_email_verification(party_id, email):
 
     try:
         GovUkNotify(current_app.config).verify_email(email, personalisation, str(party_id))
+        log.info("Verification email sent", party_id=party_id)
     except RasNotifyError:
         # Note: intentionally suppresses exception
         log.error("Error sending verification email for party_id {}".format(party_id))
