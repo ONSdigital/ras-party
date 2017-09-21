@@ -19,7 +19,7 @@ def with_db_session(f):
         log.info("Acquiring database session.")
         session = current_app.db.session()
         try:
-            result = f(*args, **kwargs, session=session)
+            result = f(*args, session=session, **kwargs)
             log.info("Committing database session.")
             session.commit()
             return result

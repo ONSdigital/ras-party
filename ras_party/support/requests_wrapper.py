@@ -24,7 +24,7 @@ class Requests:
             auth = kwargs.pop('auth')
         except KeyError:
             auth = cls.auth()
-        return cls._lib.get(*args, **kwargs, auth=auth, timeout=cls.get_timeout())
+        return cls._lib.get(*args, auth=auth, timeout=cls.get_timeout(), **kwargs)
 
     @classmethod
     def put(cls, *args, **kwargs):
@@ -32,7 +32,7 @@ class Requests:
             auth = kwargs.pop('auth')
         except KeyError:
             auth = cls.auth()
-        return cls._lib.put(*args, **kwargs, auth=auth, timeout=cls.post_timeout())
+        return cls._lib.put(*args, auth=auth, timeout=cls.post_timeout(), **kwargs)
 
     @classmethod
     def post(cls, *args, **kwargs):
@@ -40,4 +40,4 @@ class Requests:
             auth = kwargs.pop('auth')
         except KeyError:
             auth = cls.auth()
-        return cls._lib.post(*args, **kwargs, auth=auth, timeout=cls.post_timeout())
+        return cls._lib.post(*args, auth=auth, timeout=cls.post_timeout(), **kwargs)
