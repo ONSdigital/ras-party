@@ -76,11 +76,11 @@ def get_respondent_by_id(id):
     return make_response(jsonify(response), 200)
 
 
-@party_view.route('/respondents/email/<string:email>', methods=['GET'])
+@party_view.route('/respondents/email/<string:token>', methods=['GET'])
 @auth.login_required
 @log_route
-def get_respondent_by_email(email):
-    response = ras_party.controllers.party_controller.get_respondent_by_email(email)
+def get_respondent_by_email(token):
+    response = ras_party.controllers.party_controller.get_respondent_by_email(token)
     return make_response(jsonify(response), 200)
 
 

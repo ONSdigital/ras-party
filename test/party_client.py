@@ -8,6 +8,7 @@ from ras_common_utils.ras_config import ras_config
 from ras_common_utils.ras_logger.ras_logger import configure_logger
 
 from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
+from ras_party.support.verification import generate_email_token
 from run import create_app, initialise_db
 from test.fixtures import party_schema
 from test.fixtures.config import test_config
@@ -46,6 +47,11 @@ class PartyTestClient(TestCase):
         return {
             'Authorization': 'Basic %s' % base64.b64encode(b"username:password").decode("ascii")
         }
+
+    @staticmethod
+    def generate_token(email):
+        token = generate_email_token(email, current_app.config)
+        return token
 
     def get_info(self, expected_status=200):
         response = self.client.open('/info', method='GET')
@@ -108,6 +114,11 @@ class PartyTestClient(TestCase):
 
     def get_respondent_by_id(self, id, expected_status=200):
         response = self.client.get('/party-api/v1/respondents/id/{}'.format(id), headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def get_respondent_by_email(self, token, expected_status=200):
+        response = self.client.get('/party-api/v1/respondents/email/{}'.format(token), headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 

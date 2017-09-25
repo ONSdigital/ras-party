@@ -186,19 +186,20 @@ def get_respondent_by_id(id, session):
 
 @translate_exceptions
 @with_db_session
-def get_respondent_by_email(email, session):
+def get_respondent_by_email(token, session):
     """
     Get a respondent by its email address.
     Returns either the unique respondent identified by the supplied email address, or otherwise raises
     a RasError to indicate the email address doesn't exist.
 
-    :param email: Email of respondent to lookup
+    :param token: Encoded string of user email_address
     :rtype: Respondent
     """
-    respondent = session.query(Respondent).filter(Respondent.email_address == email).first()
+    email_address = get_email_from_token(token)
+    log.debug('Decoded email token', token=token)
+    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).first()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
-
     return respondent.to_respondent_dict()
 
 
@@ -257,16 +258,7 @@ def change_respondent(payload, tran, session):
 @translate_exceptions
 @with_db_session
 def verify_token(token, session):
-    try:
-        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
-        email_address = decode_email_token(token, duration, current_app.config)
-    except SignatureExpired:
-        msg = "Expired email verification token {}".format(token)
-        raise RasError(msg, 409)
-    except (BadSignature, BadData) as e:
-        msg = "Unknown email verification token {} error {}".format(token, e)
-        raise RasError(msg, 404)
-
+    email_address = get_email_from_token(token)
     respondent = session.query(Respondent).filter(Respondent.email_address == email_address).first()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
@@ -281,16 +273,7 @@ def change_respondent_password(token, payload, tran, session):
     v = Validator(Exists('new_password'))
     if not v.validate(payload):
         raise RasError(v.errors, 400)
-
-    try:
-        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
-        email_address = decode_email_token(token, duration, current_app.config)
-    except SignatureExpired:
-        msg = "Expired email verification token {}".format(token)
-        raise RasError(msg, 409)
-    except (BadSignature, BadData) as e:
-        msg = "Unknown email verification token {} error {}".format(token, e)
-        raise RasError(msg, 404)
+    email_address = get_email_from_token(token)
 
     respondent = session.query(Respondent).filter(Respondent.email_address == email_address).first()
     if not respondent:
@@ -465,15 +448,7 @@ def post_respondent(party, tran, session):
 @translate_exceptions
 @with_db_session
 def put_email_verification(token, session):
-    try:
-        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
-        email_address = decode_email_token(token, duration, current_app.config)
-    except SignatureExpired:
-        msg = "Expired email verification token {}".format(token)
-        raise RasError(msg, 409)
-    except (BadSignature, BadData) as e:
-        msg = "Bad email verification token {} error {}".format(token, e)
-        raise RasError(msg, 404)
+    email_address = get_email_from_token(token)
 
     try:
         r = session.query(Respondent).filter(Respondent.email_address == email_address).one()
@@ -650,3 +625,16 @@ def _send_email_verification(party_id, email):
     except RasNotifyError:
         # Note: intentionally suppresses exception
         log.error("Error sending verification email for party_id {}".format(party_id))
+
+
+def get_email_from_token(token):
+    try:
+        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+        email_address = decode_email_token(token, duration, current_app.config)
+    except SignatureExpired:
+        msg = "Expired email verification token {}".format(token)
+        raise RasError(msg, 409)
+    except (BadSignature, BadData) as e:
+        msg = "Unknown email verification token {} error {}".format(token, e)
+        raise RasError(msg, 404)
+    return email_address
