@@ -355,6 +355,22 @@ class TestParties(PartyTestClient):
     def test_get_respondent_with_invalid_id(self):
         self.get_respondent_by_id('123', 400)
 
+    def test_get_respondent_by_email_success(self):
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        self.post_to_respondents(mock_respondent, 200)
+        email = mock_respondent['emailAddress']
+        token = self.generate_token(email)
+        self.get_respondent_by_email(token, 200)
+
+    def test_get_respondent_by_email_no_respondent(self):
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        email = mock_respondent['emailAddress']
+        token = self.generate_token(email)
+        self.get_respondent_by_email(token, 404)
+
     def test_resend_verification_email(self):
         mock_notify = MagicMock()
         ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
