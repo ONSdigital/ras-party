@@ -1,11 +1,13 @@
 import uuid
 from unittest.mock import MagicMock
 
+from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 
 import ras_party
 from ras_party.controllers.party_controller import NO_RESPONDENT_FOR_PARTY_ID
-from ras_party.models.models import RespondentStatus
+from ras_party.models.models import RespondentStatus, Respondent
+from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from test.mocks import MockBusiness, MockRespondent, MockRequests, MockResponse
 from test.party_client import PartyTestClient, businesses, respondents, business_respondent_associations, enrolments
@@ -379,6 +381,31 @@ class TestParties(PartyTestClient):
 
     def test_resend_verification_email_party_id_malformed(self):
         self.resend_verification_email('malformed', 500)
+
+    def test_should_reset_password_when_email_wrong_case(self):
+        # Given
+        # Create respondent
+        respondent = Respondent()
+        respondent.email_address = 'john@example.com'
+        current_app.db.session.add(respondent)
+        current_app.db.session.commit()
+
+        # Mock notification
+        mock_notify = MagicMock()
+        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+
+        # When
+        self.request_password_change('John@example.com', expected_status=200)
+
+        # Then
+        personalisation = {
+            'RESET_PASSWORD_URL': PublicWebsite(current_app.config).reset_password_url(respondent.email_address),
+            'FIRST_NAME': respondent.first_name
+        }
+        mock_notify.send_email_notification.assert_called_once_with(email_address='john@example.com',
+                                                                    template_id='request_password_change_id',
+                                                                    personalisation=personalisation,
+                                                                    reference='None')
 
 
 if __name__ == '__main__':
