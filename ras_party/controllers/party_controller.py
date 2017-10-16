@@ -3,7 +3,7 @@ import uuid
 from flask import current_app
 from itsdangerous import SignatureExpired, BadSignature, BadData
 from ras_common_utils.ras_error.ras_error import RasError, RasNotifyError
-from sqlalchemy import orm
+from sqlalchemy import orm, func
 from structlog import get_logger
 
 from ras_party.clients.oauth_client import OauthClient
@@ -331,10 +331,11 @@ def request_password_change(payload, session):
 
     email_address = payload['email_address']
 
-    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).first()
+    respondent = session.query(Respondent).filter(func.lower(Respondent.email_address) == email_address.lower()).first()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
 
+    email_address = respondent.email_address
     verification_url = PublicWebsite(current_app.config).reset_password_url(email_address)
 
     personalisation = {
