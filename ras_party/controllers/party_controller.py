@@ -27,12 +27,14 @@ EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 
 @translate_exceptions
 @with_db_session
-def get_business_by_ref(ref, session):
+def get_business_by_ref(ref, session, verbose=False):
     """
     Get a Business by its unique business reference
     Returns a single Business
     :param ref: Reference of the Business to return
     :type ref: str
+
+    :param verbose: Verbosity of business details
 
     :rtype: Business
     """
@@ -40,17 +42,19 @@ def get_business_by_ref(ref, session):
     if not business:
         raise RasError("Business with reference '{}' does not exist.".format(ref), status_code=404)
 
-    return business.to_business_dict()
+    return business.to_business_dict(summary=not verbose)
 
 
 @translate_exceptions
 @with_db_session
-def get_business_by_id(id, session):
+def get_business_by_id(id, session, verbose=False):
     """
     Get a Business by its Party ID
     Returns a single Party
     :param id: ID of Party to return
     :type id: str
+
+    :param verbose: Verbosity of business details
 
     :rtype: Business
     """
@@ -62,7 +66,7 @@ def get_business_by_id(id, session):
     if not business:
         raise RasError("Business with party id '{}' does not exist.".format(id), status_code=404)
 
-    return business.to_business_dict()
+    return business.to_business_dict(summary=not verbose)
 
 
 @translate_exceptions
