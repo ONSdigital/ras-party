@@ -47,24 +47,24 @@ def get_business_by_ref(ref, session, verbose=False):
 
 @translate_exceptions
 @with_db_session
-def get_business_by_id(id, session, verbose=False):
+def get_business_by_id(party_uuid, session, verbose=False):
     """
     Get a Business by its Party ID
     Returns a single Party
-    :param id: ID of Party to return
-    :type id: str
+    :param party_uuid: ID of Party to return
+    :type party_uuid: str
 
     :param verbose: Verbosity of business details
 
     :rtype: Business
     """
     v = Validator(IsUuid('id'))
-    if not v.validate({'id': id}):
+    if not v.validate({'id': party_uuid}):
         raise RasError(v.errors, status_code=400)
 
-    business = session.query(Business).filter(Business.party_uuid == id).first()
+    business = session.query(Business).filter(Business.party_uuid == party_uuid).first()
     if not business:
-        raise RasError("Business with party id '{}' does not exist.".format(id), status_code=404)
+        raise RasError("Business with party id '{}' does not exist.".format(party_uuid), status_code=404)
 
     return business.to_business_dict(summary=not verbose)
 
