@@ -42,7 +42,10 @@ def get_business_by_ref(ref, session, verbose=False):
     if not business:
         raise RasError("Business with reference '{}' does not exist.".format(ref), status_code=404)
 
-    return business.to_business_dict(summary=not verbose)
+    if verbose:
+        return business.to_business_dict()
+    else:
+        return business.to_business_summary_dict()
 
 
 @translate_exceptions
@@ -66,7 +69,10 @@ def get_business_by_id(party_uuid, session, verbose=False):
     if not business:
         raise RasError("Business with party id '{}' does not exist.".format(party_uuid), status_code=404)
 
-    return business.to_business_dict(summary=not verbose)
+    if verbose:
+        return business.to_business_dict()
+    else:
+        return business.to_business_summary_dict()
 
 
 @translate_exceptions

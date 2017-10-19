@@ -83,27 +83,21 @@ class Business(Base):
             associations.append(respondent_dict)
         return associations
 
-    def to_business_dict(self, summary=False):
+    def to_business_dict(self):
+        d = self.to_business_summary_dict()
 
-        if summary:
-            d = {
-                'id': self.party_uuid,
-                'sampleUnitRef': self.business_ref,
-                'sampleUnitType': self.UNIT_TYPE,
-                'name': self.attributes.get('name'),
-                'associations': self._get_respondents_associations(self.respondents)
-            }
+        return dict(d, **self.attributes)
 
-            return d
-        else:
-            d = {
-                'id': self.party_uuid,
-                'sampleUnitRef': self.business_ref,
-                'sampleUnitType': self.UNIT_TYPE,
-                'associations': self._get_respondents_associations(self.respondents),
-            }
+    def to_business_summary_dict(self):
+        d = {
+            'id': self.party_uuid,
+            'sampleUnitRef': self.business_ref,
+            'sampleUnitType': self.UNIT_TYPE,
+            'name': self.attributes.get('name'),
+            'associations': self._get_respondents_associations(self.respondents)
+        }
 
-            return dict(d, **self.attributes)
+        return d
 
     def to_party_dict(self):
         return {
