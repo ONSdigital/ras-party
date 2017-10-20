@@ -84,13 +84,20 @@ class Business(Base):
         return associations
 
     def to_business_dict(self):
+        d = self.to_business_summary_dict()
+
+        return dict(d, **self.attributes)
+
+    def to_business_summary_dict(self):
         d = {
             'id': self.party_uuid,
             'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
-            'associations': self._get_respondents_associations(self.respondents),
+            'name': self.attributes.get('name'),
+            'associations': self._get_respondents_associations(self.respondents)
         }
-        return dict(d, **self.attributes)
+
+        return d
 
     def to_party_dict(self):
         return {
@@ -98,6 +105,7 @@ class Business(Base):
             'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
             'attributes': self.attributes,
+            'name': self.attributes.get('name'),
             'associations': self._get_respondents_associations(self.respondents)
         }
 

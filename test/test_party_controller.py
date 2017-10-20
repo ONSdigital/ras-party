@@ -32,7 +32,18 @@ class TestParties(PartyTestClient):
         party_id = self.post_to_businesses(mock_business, 200)['id']
 
         response = self.get_business_by_id(party_id)
-        self.assertTrue(response.items() >= mock_business.items())
+        self.assertEqual(len(response.items()), 5)
+        self.assertEqual(response.get('id'), party_id)
+        self.assertEqual(response.get('name'), mock_business.get('name'))
+
+    def test_get_business_by_id_returns_correct_representation_verbose(self):
+        mock_business = MockBusiness() \
+            .attributes(source='test_get_business_by_id_returns_correct_representation_summary') \
+            .as_business()
+        party_id = self.post_to_businesses(mock_business, 200)['id']
+
+        response = self.get_business_by_id(party_id, query_string={"verbose": "true"})
+        self.assertTrue(len(response.items()) >= len(mock_business.items()))
 
     def test_get_business_by_ref_returns_correct_representation(self):
         mock_business = MockBusiness() \
@@ -41,6 +52,17 @@ class TestParties(PartyTestClient):
         self.post_to_businesses(mock_business, 200)
 
         response = self.get_business_by_ref(mock_business['sampleUnitRef'])
+        self.assertEqual(len(response.items()), 5)
+        self.assertEqual(response.get('sampleUnitRef'), mock_business['sampleUnitRef'])
+        self.assertEqual(response.get('name'), mock_business.get('name'))
+
+    def test_get_business_by_ref_returns_correct_representation_verbose(self):
+        mock_business = MockBusiness() \
+            .attributes(source='test_get_business_by_ref_returns_correct_representation') \
+            .as_business()
+        self.post_to_businesses(mock_business, 200)
+
+        response = self.get_business_by_ref(mock_business['sampleUnitRef'], query_string={"verbose": "true"})
         for x in mock_business:
             self.assertTrue(x in response)
 
