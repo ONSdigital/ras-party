@@ -37,10 +37,10 @@ dependencies:
         host: mockhost
         port: 3333
     notify-service:
-        api_key: notify_api_key
-        service_id: sdc_service_id
+        url: http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/
         email_verification_template: email_verification_id
-        reset_password_template: reset_password_id
+        request_password_change_template: request_password_change_id
+        confirm_password_change_template: confirm_password_change_id
     oauth2-service:
         scheme: http
         host: mockhost
