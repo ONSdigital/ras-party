@@ -1,14 +1,14 @@
 import uuid
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 
-import ras_party
-from ras_party.controllers.party_controller import NO_RESPONDENT_FOR_PARTY_ID
+from ras_party.controllers import party_controller
 from ras_party.models.models import RespondentStatus, Respondent
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
+from ras_party.support.verification import generate_email_token
 from test.mocks import MockBusiness, MockRespondent, MockRequests, MockResponse
 from test.party_client import PartyTestClient, businesses, respondents, business_respondent_associations, enrolments
 
@@ -182,6 +182,8 @@ class TestParties(PartyTestClient):
         self.put_email_to_respondents({}, 400)
 
     def test_put_respondent_email_changes_email(self):
+        mock_notify = MagicMock()
+        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
         self.post_to_businesses(mock_business, 200)
@@ -198,7 +200,7 @@ class TestParties(PartyTestClient):
 
     def test_put_respondent_email_calls_the_notify_service(self):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
 
         self.assertTrue(mock_notify.call_count == 0)
         mock_business = MockBusiness().as_business()
@@ -257,7 +259,7 @@ class TestParties(PartyTestClient):
 
     def test_post_respondent_calls_the_notify_service(self):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -272,7 +274,7 @@ class TestParties(PartyTestClient):
 
     def test_email_verification_activates_a_respondent(self):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -295,7 +297,7 @@ class TestParties(PartyTestClient):
 
     def test_email_verification_url_is_from_config_yml_file(self):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -317,7 +319,7 @@ class TestParties(PartyTestClient):
 
     def test_email_verification_twice_produces_a_200(self):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -337,7 +339,7 @@ class TestParties(PartyTestClient):
 
     def test_email_verification_unknown_token_produces_a_404(self, *_):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # When an unknown email token exists
         secret_key = "aardvark"
         timed_serializer = URLSafeTimedSerializer(secret_key)
@@ -381,7 +383,7 @@ class TestParties(PartyTestClient):
 
     def test_resend_verification_email(self):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business and respondent
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -399,7 +401,7 @@ class TestParties(PartyTestClient):
         response = self.resend_verification_email('3b136c4b-7a14-4904-9e01-13364dd7b972', 404)
 
         # Then an email is not sent and a message saying there is no respondent is returned
-        self.assertIn(NO_RESPONDENT_FOR_PARTY_ID, response['errors'])
+        self.assertIn(party_controller.NO_RESPONDENT_FOR_PARTY_ID, response['errors'])
 
     def test_resend_verification_email_party_id_malformed(self):
         self.resend_verification_email('malformed', 500)
@@ -414,7 +416,7 @@ class TestParties(PartyTestClient):
 
         # Mock notification
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
 
         # When
         self.request_password_change('John@example.com', expected_status=200)
@@ -428,6 +430,96 @@ class TestParties(PartyTestClient):
                                                                     template_id='request_password_change_id',
                                                                     personalisation=personalisation,
                                                                     reference='None')
+
+    @staticmethod
+    def test_verify_token_uses_case_insensitive_email_query():
+        with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db:
+            # Given
+            token = generate_email_token('test@example.com', current_app.config)
+
+            # When
+            # pylint: disable=E1120
+            # session is injected by decorator
+            party_controller.verify_token(token)
+
+            # Then
+            query.assert_called_once_with('test@example.com', db.session())
+
+    @staticmethod
+    def test_change_respondent_password_uses_case_insensitive_email_query():
+        with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db,\
+                patch('ras_party.controllers.party_controller.OauthClient') as client,\
+                patch('ras_party.controllers.party_controller.GovUkNotify'):
+            # Given
+            token = generate_email_token('test@example.com', current_app.config)
+            client().update_account().status_code = 201
+
+            # When
+            # pylint: disable=E1120
+            # session is injected by decorator
+            party_controller.change_respondent_password(token, {'new_password': 'abc'})
+
+            # Then
+            query.assert_called_once_with('test@example.com', db.session())
+
+    @staticmethod
+    def test_request_password_change_uses_case_insensitive_email_query():
+        with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db,\
+                patch('ras_party.controllers.party_controller.GovUkNotify'),\
+                patch('ras_party.controllers.party_controller.PublicWebsite'):
+            # Given
+            payload = {'email_address': 'test@example.com'}
+
+            # When
+            # pylint: disable=E1120
+            # session is injected by decorator
+            party_controller.request_password_change(payload)
+
+            # Then
+            query.assert_called_once_with('test@example.com', db.session())
+
+    @staticmethod
+    def test_post_respondent_uses_case_insensitive_email_query():
+        with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db,\
+                patch('ras_party.controllers.party_controller.GovUkNotify'),\
+                patch('ras_party.controllers.party_controller.Requests'):
+            # Given
+            payload = {
+                'emailAddress': 'test@example.com',
+                'firstName': 'Joe',
+                'lastName': 'bloggs',
+                'password': 'secure',
+                'telephone': '111',
+                'enrolmentCode': 'abc'
+            }
+            query('test@example.com', db.session()).first.return_value = None
+
+            # When
+            # pylint: disable=E1120
+            # session is injected by decorator
+            party_controller.post_respondent(payload)
+
+            # Then
+            query('test@example.com', db.session()).first.assert_called_once()
+
+    @staticmethod
+    def test_put_email_verification_uses_case_insensitive_email_query():
+        with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db:
+            # Given
+            token = generate_email_token('test@example.com', current_app.config)
+
+            # When
+            # pylint: disable=E1120
+            # session is injected by decorator
+            party_controller.put_email_verification(token)
+
+            # Then
+            query.assert_called_once_with('test@example.com', db.session())
 
 
 if __name__ == '__main__':

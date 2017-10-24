@@ -205,7 +205,7 @@ def get_respondent_by_email(email, session):
     :param email: Email of respondent to lookup
     :rtype: Respondent
     """
-    respondent = session.query(Respondent).filter(Respondent.email_address == email).first()
+    respondent = _query_respondent_by_email(email, session).first()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
 
@@ -226,14 +226,14 @@ def change_respondent(payload, tran, session):
     email_address = payload['email_address']
     new_email_address = payload['new_email_address']
 
-    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).one()
+    respondent = _query_respondent_by_email(email_address, session).first()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
 
     if new_email_address == email_address:
         return respondent.to_respondent_dict()
 
-    respondent_with_new_email = session.query(Respondent).filter(Respondent.email_address == new_email_address).first()
+    respondent_with_new_email = _query_respondent_by_email(new_email_address, session).first()
     if respondent_with_new_email:
         raise RasError("New email address already taken.", status_code=409)
 
@@ -277,7 +277,7 @@ def verify_token(token, session):
         msg = "Unknown email verification token {} error {}".format(token, e)
         raise RasError(msg, 404)
 
-    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).first()
+    respondent = _query_respondent_by_email(email_address, session).first()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
 
@@ -302,7 +302,7 @@ def change_respondent_password(token, payload, tran, session):
         msg = "Unknown email verification token {} error {}".format(token, e)
         raise RasError(msg, 404)
 
-    respondent = session.query(Respondent).filter(Respondent.email_address == email_address).first()
+    respondent = _query_respondent_by_email(email_address, session).first()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
 
@@ -341,7 +341,7 @@ def request_password_change(payload, session):
 
     email_address = payload['email_address']
 
-    respondent = session.query(Respondent).filter(func.lower(Respondent.email_address) == email_address.lower()).first()
+    respondent = _query_respondent_by_email(email_address, session).first()
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
 
@@ -400,9 +400,7 @@ def post_respondent(party, tran, session):
     if not iac.get('active'):
         raise RasError("Enrolment code is not active.", status_code=400)
 
-    existing = session.query(Respondent) \
-        .filter(Respondent.email_address == party['emailAddress']) \
-        .first()
+    existing = _query_respondent_by_email(party['emailAddress'], session).first()
     if existing:
         raise RasError("User with email address {} already exists.".format(party['emailAddress']), status_code=400)
 
@@ -486,25 +484,24 @@ def put_email_verification(token, session):
         msg = "Bad email verification token {} error {}".format(token, e)
         raise RasError(msg, 404)
 
-    try:
-        r = session.query(Respondent).filter(Respondent.email_address == email_address).one()
-    except orm.exc.NoResultFound:
+    respondent = _query_respondent_by_email(email_address, session).first()
+    if not respondent:
         raise RasError("Unable to find user while checking email verification token", status_code=404)
 
-    if r.status != RespondentStatus.ACTIVE:
+    if respondent.status != RespondentStatus.ACTIVE:
         # We set the party as ACTIVE in this service
-        r.status = RespondentStatus.ACTIVE
+        respondent.status = RespondentStatus.ACTIVE
 
         # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
-        if r.pending_enrolment:
-            enrol_respondent_for_survey(r, session)
+        if respondent.pending_enrolment:
+            enrol_respondent_for_survey(respondent, session)
         else:
             log.info("No pending enrolment for respondent {} while checking email verification token"
-                     .format(str(r.party_uuid)))
+                     .format(str(respondent.party_uuid)))
 
     # We set the user as verified on the OAuth2 server.
     set_user_verified(email_address)
-    return r.to_respondent_dict()
+    return respondent.to_respondent_dict()
 
 
 def set_user_verified(email_address):
@@ -625,6 +622,10 @@ def _query_respondent_by_party_uuid(party_uuid, session):
     log.debug('Querying respondents with party_uuid {}'.format(party_uuid))
 
     return session.query(Respondent).filter(Respondent.party_uuid == party_uuid).first()
+
+
+def _query_respondent_by_email(email_address, session):
+    return session.query(Respondent).filter(func.lower(Respondent.email_address) == email_address.lower())
 
 
 def resend_verification_email(party_uuid):
