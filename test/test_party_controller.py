@@ -5,7 +5,7 @@ from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 
 import ras_party
-from ras_party.controllers.party_controller import NO_RESPONDENT_FOR_PARTY_ID
+from ras_party.controllers.account_controller import NO_RESPONDENT_FOR_PARTY_ID
 from ras_party.models.models import RespondentStatus, Respondent
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
@@ -198,7 +198,7 @@ class TestParties(PartyTestClient):
 
     def test_put_respondent_email_calls_the_notify_service(self):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        ras_party.controllers.account_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
 
         self.assertTrue(mock_notify.call_count == 0)
         mock_business = MockBusiness().as_business()
@@ -257,7 +257,7 @@ class TestParties(PartyTestClient):
 
     def test_post_respondent_calls_the_notify_service(self):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        ras_party.controllers.account_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -272,7 +272,7 @@ class TestParties(PartyTestClient):
 
     def test_email_verification_activates_a_respondent(self):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        ras_party.controllers.account_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -295,7 +295,7 @@ class TestParties(PartyTestClient):
 
     def test_email_verification_url_is_from_config_yml_file(self):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        ras_party.controllers.account_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -317,7 +317,7 @@ class TestParties(PartyTestClient):
 
     def test_email_verification_twice_produces_a_200(self):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        ras_party.controllers.account_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -337,7 +337,7 @@ class TestParties(PartyTestClient):
 
     def test_email_verification_unknown_token_produces_a_404(self, *_):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        ras_party.controllers.account_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # When an unknown email token exists
         secret_key = "aardvark"
         timed_serializer = URLSafeTimedSerializer(secret_key)
@@ -381,7 +381,7 @@ class TestParties(PartyTestClient):
 
     def test_resend_verification_email(self):
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        ras_party.controllers.account_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         # Given there is a business and respondent
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -414,7 +414,7 @@ class TestParties(PartyTestClient):
 
         # Mock notification
         mock_notify = MagicMock()
-        ras_party.controllers.party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        ras_party.controllers.account_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
 
         # When
         self.request_password_change('John@example.com', expected_status=200)

@@ -7,7 +7,7 @@ import ras_party.controllers.party_controller
 import ras_party.controllers.respondent_controller
 from ras_party.support.log_decorator import log_route
 
-party_view = Blueprint('party_view', __name__)
+respondent_view = Blueprint('respondent_view', __name__)
 
 
 auth = HTTPBasicAuth()
@@ -21,26 +21,17 @@ def get_pw(username):
         return config_password
 
 
-@party_view.route('/parties', methods=['POST'])
+@respondent_view.route('/respondents/id/<id>', methods=['GET'])
 @auth.login_required
 @log_route
-def post_party():
-    payload = request.get_json() or {}
-    response = ras_party.controllers.party_controller.parties_post(payload)
+def get_respondent_by_id(id):
+    response = ras_party.controllers.respondent_controller.get_respondent_by_id(id)
     return make_response(jsonify(response), 200)
 
 
-@party_view.route('/parties/type/<sampleUnitType>/ref/<sampleUnitRef>', methods=['GET'])
+@respondent_view.route('/respondents/email/<string:email>', methods=['GET'])
 @auth.login_required
 @log_route
-def get_party_by_ref(sampleUnitType, sampleUnitRef):
-    response = ras_party.controllers.party_controller.get_party_by_ref(sampleUnitType, sampleUnitRef)
-    return make_response(jsonify(response), 200)
-
-
-@party_view.route('/parties/type/<sampleUnitType>/id/<id>', methods=['GET'])
-@auth.login_required
-@log_route
-def get_party_by_id(sampleUnitType, id):
-    response = ras_party.controllers.party_controller.get_party_by_id(sampleUnitType, id)
+def get_respondent_by_email(email):
+    response = ras_party.controllers.respondent_controller.get_respondent_by_email(email)
     return make_response(jsonify(response), 200)
