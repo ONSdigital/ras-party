@@ -46,6 +46,8 @@ def post_respondent(party, tran, session):
     10. If something goes wrong after step 1, attempt to perform a compensating action to remove the OAuth2 user
        (this is currently mocked out as the OAuth2 server doesn't implement an endpoint to achieve this)
     """
+
+    # Validation, curation and checks
     expected = ('emailAddress', 'firstName', 'lastName', 'password', 'telephone', 'enrolmentCode')
 
     v = Validator(Exists(*expected))
@@ -79,6 +81,12 @@ def post_respondent(party, tran, session):
     except KeyError:
         raise RasError("There is no survey bound for this user with email address: {}".format(party['emailAddress']))
 
+    b = query_business_by_party_uuid(business_id, session)
+    if not b:
+        msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
+        raise RasError(msg, status_code=404)
+
+    # Chain of enrolment processes
     translated_party = {
         'party_uuid': party.get('id') or str(uuid.uuid4()),
         'email_address': party['emailAddress'],
@@ -87,11 +95,6 @@ def post_respondent(party, tran, session):
         'telephone': party['telephone'],
         'status': RespondentStatus.CREATED
     }
-
-    b = query_business_by_party_uuid(business_id, session)
-    if not b:
-        msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
-        raise RasError(msg, status_code=404)
 
     try:
         #  Create the enrolment respondent-business-survey associations

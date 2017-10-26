@@ -20,6 +20,7 @@ def get_pw(username):
     if username == config_username:
         return config_password
 
+
 @account_view.route('/respondents/change_email', methods=['PUT'])
 @account_view.route('/respondents/email', methods=['PUT'])
 @auth.login_required
