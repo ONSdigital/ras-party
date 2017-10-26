@@ -38,7 +38,7 @@ class TestNotify(PartyTestClient):
 
         notify = GovUkNotify(current_app.config)
         # When an email is sent
-        notify.verify_email("email", personalisation="personalised message", reference="reference")
+        notify.request_password_change("email", personalisation="personalised message", reference="reference")
         # Then send_email_notification is called
         expected_data = {"emailAddress": "email", "personalisation": "personalised message", "reference": "reference"}
         expected_request = {"auth": (current_app.config['SECURITY_USER_NAME'],
@@ -46,7 +46,7 @@ class TestNotify(PartyTestClient):
                             "timeout": 99, "json": expected_data}
 
         self.mock_requests.post.assert_called_with(
-            "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/email_verification_id",
+            "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/request_password_change_id",
             expected_request)
 
     def test_notify_exception_is_translated_to_ras_exception(self):
@@ -59,4 +59,4 @@ class TestNotify(PartyTestClient):
         notify = GovUkNotify(current_app.config)
         # Then a RasNotifyError is raised
         with self.assertRaises(RasNotifyError):
-            notify.verify_email('email')
+            notify.confirm_password_change('email')

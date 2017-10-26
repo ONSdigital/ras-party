@@ -142,8 +142,6 @@ class MockRequests:
             return MockResponse(self.response_payload, status_code=201)
 
         def assert_called_with(self, uri, expected_payload):
-            print('actual_payload: ', self._calls.get(uri))
-            print('expected_payload: ', expected_payload)
             assert(self._calls.get(uri) == expected_payload)
 
     class Put:
