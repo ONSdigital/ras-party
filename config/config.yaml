@@ -57,7 +57,7 @@ dependencies:
         host: localhost
         port: 8080
     notify-service:
-        url: "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails"
+        url: "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/"
         email_verification_template: email_verification_id
         request_password_change_template: request_password_change_id
         confirm_password_change_template: confirm_password_change_id

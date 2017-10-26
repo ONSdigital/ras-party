@@ -30,8 +30,7 @@ class GovUkNotify:
 
         try:
             notification = {
-                "email_address": email,
-                "template_id": template_id
+                "emailAddress": email,
             }
             if personalisation:
                 notification.update({"personalisation": personalisation})
