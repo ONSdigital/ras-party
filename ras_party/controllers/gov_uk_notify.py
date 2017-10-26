@@ -39,7 +39,7 @@ class GovUkNotify:
 
             url = urlparse.urljoin(str(self.notify_config['url']), str(template_id))
 
-            response = Requests.post(url, data=notification)
+            response = Requests.post(url, json=notification)
 
             log.info('Notification id {} sent via RM Notify-Gateway to GOV.UK Notify.'
                      .format(response.json()["id"]))

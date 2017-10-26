@@ -22,14 +22,15 @@ class TestNotify(PartyTestClient):
         notify.verify_email('email')
         # Then send_email_notification is called
 
-        expected_data = {"email_address": "email", "template_id": "email_verification_id"}
+        expected_data = {"emailAddress": "email"}
 
         expected_request = {"auth": (current_app.config['SECURITY_USER_NAME'],
                                      current_app.config['SECURITY_USER_PASSWORD']),
-                            "timeout": 99, "data": expected_data}
+                            "timeout": 99, "json": expected_data}
 
         self.mock_requests.post.assert_called_with(
-            "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/email_verification_id", expected_request)
+            "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/email_verification_id",
+            expected_request)
 
     def test_notify_sends_notification_with_extended_message(self):
         # Given a mocked gov.uk notify and response
@@ -37,16 +38,16 @@ class TestNotify(PartyTestClient):
 
         notify = GovUkNotify(current_app.config)
         # When an email is sent
-        notify.verify_email('email', personalisation="personalised message", reference="reference")
+        notify.verify_email("email", personalisation="personalised message", reference="reference")
         # Then send_email_notification is called
-        expected_data = {"email_address": "email", "personalisation": "personalised message", "reference": "reference",
-                         "template_id": "email_verification_id"}
+        expected_data = {"emailAddress": "email", "personalisation": "personalised message", "reference": "reference"}
         expected_request = {"auth": (current_app.config['SECURITY_USER_NAME'],
                                      current_app.config['SECURITY_USER_PASSWORD']),
-                            "timeout": 99, "data": expected_data}
+                            "timeout": 99, "json": expected_data}
 
         self.mock_requests.post.assert_called_with(
-            "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/email_verification_id", expected_request)
+            "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/email_verification_id",
+            expected_request)
 
     def test_notify_exception_is_translated_to_ras_exception(self):
         # Given a mocked gov.uk notify and exception
