@@ -183,7 +183,7 @@ class TestParties(PartyTestClient):
 
     def test_put_respondent_email_changes_email(self):
         mock_notify = MagicMock()
-        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        party_controller.NotifyGateway = MagicMock(return_value=mock_notify)
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
         self.post_to_businesses(mock_business, 200)
@@ -200,7 +200,7 @@ class TestParties(PartyTestClient):
 
     def test_put_respondent_email_calls_the_notify_service(self):
         mock_notify = MagicMock()
-        party_controller.GovUkNotify = MagicMock(return_value=mock_notify)
+        party_controller.NotifyGateway = MagicMock(return_value=mock_notify)
 
         self.assertTrue(mock_notify.call_count == 0)
         mock_business = MockBusiness().as_business()
@@ -259,7 +259,7 @@ class TestParties(PartyTestClient):
 
     def test_post_respondent_calls_the_notify_service(self):
         mock_notify = MagicMock()
-        party_controller.GovUkNotify = MagicMock(return_value=mock_notify)
+        party_controller.NotifyGateway = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -274,7 +274,7 @@ class TestParties(PartyTestClient):
 
     def test_email_verification_activates_a_respondent(self):
         mock_notify = MagicMock()
-        party_controller.GovUkNotify = MagicMock(return_value=mock_notify)
+        party_controller.NotifyGateway = MagicMock(return_value=mock_notify)
         # Given there is a business and an associated respondent
         self.populate_with_business_and_respondent()
 
@@ -292,7 +292,7 @@ class TestParties(PartyTestClient):
 
     def test_email_verification_url_is_from_config_yml_file(self):
         mock_notify = MagicMock()
-        party_controller.GovUkNotify = MagicMock(return_value=mock_notify)
+        party_controller.NotifyGateway = MagicMock(return_value=mock_notify)
         # Given there is a business and an associated respondent
         self.populate_with_business_and_respondent()
 
@@ -309,7 +309,7 @@ class TestParties(PartyTestClient):
 
     def test_email_verification_twice_produces_a_200(self):
         mock_notify = MagicMock()
-        party_controller.GovUkNotify = MagicMock(return_value=mock_notify)
+        party_controller.NotifyGateway = MagicMock(return_value=mock_notify)
         # Given there is a business and an associated respondent
         self.populate_with_business_and_respondent()
 
@@ -323,7 +323,7 @@ class TestParties(PartyTestClient):
 
     def test_email_verification_unknown_token_produces_a_404(self, *_):
         mock_notify = MagicMock()
-        party_controller.GovUkNotify = MagicMock(return_value=mock_notify)
+        party_controller.NotifyGateway = MagicMock(return_value=mock_notify)
         # When an unknown email token exists
         secret_key = "aardvark"
         timed_serializer = URLSafeTimedSerializer(secret_key)
@@ -367,7 +367,7 @@ class TestParties(PartyTestClient):
 
     def test_resend_verification_email(self):
         mock_notify = MagicMock()
-        party_controller.GovUkNotify = MagicMock(return_value=mock_notify)
+        party_controller.NotifyGateway = MagicMock(return_value=mock_notify)
         # Given there is a business and respondent
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
@@ -391,7 +391,7 @@ class TestParties(PartyTestClient):
 
     def test_request_password_change_calls_notify_gateway(self):
         mock_notify = MagicMock()
-        party_controller.GovUkNotify = MagicMock(return_value=mock_notify)
+        party_controller.NotifyGateway = MagicMock(return_value=mock_notify)
         # Given there is a business and a respondent
         self.populate_with_business_and_respondent()
 
@@ -404,7 +404,7 @@ class TestParties(PartyTestClient):
 
     def test_change_password_with_incorrect_token(self):
         mock_notify = MagicMock()
-        party_controller.GovUkNotify = MagicMock(return_value=mock_notify)
+        party_controller.NotifyGateway = MagicMock(return_value=mock_notify)
         # Given there is a business and a respondent
         self.populate_with_business_and_respondent()
 
@@ -426,7 +426,7 @@ class TestParties(PartyTestClient):
             "token": token
         }
         # When the password is
-        self.change_password(token, payload)
+        self.change_password(token, payload, expected_status=200)
 
     def test_verify_token_with_bad_token(self):
         # given a bad token
@@ -442,7 +442,7 @@ class TestParties(PartyTestClient):
         token = self.generate_valid_token()
 
         # the verify end point verifies the token
-        self.verify_token(token)
+        self.verify_token(token, expected_status=200)
 
     def populate_with_business_and_respondent(self):
         mock_business = MockBusiness().as_business()
@@ -454,13 +454,13 @@ class TestParties(PartyTestClient):
     def generate_valid_token(self):
         # ugly way to generate token taken from previous tests
         mock_notify = MagicMock()
-        party_controller.GovUkNotify = MagicMock(return_value=mock_notify)
+        party_controller.NotifyGateway = MagicMock(return_value=mock_notify)
         self.populate_with_business_and_respondent()
         frontstage_url = mock_notify.verify_email.call_args[0][1]['ACCOUNT_VERIFICATION_URL']
         token = frontstage_url.split('/')[-1]
         return token
 
-      def test_should_reset_password_when_email_wrong_case(self):
+    def test_should_reset_password_when_email_wrong_case(self):
         # Given
         # Create respondent
         respondent = Respondent()
@@ -470,7 +470,7 @@ class TestParties(PartyTestClient):
 
         # Mock notification
         mock_notify = MagicMock()
-        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+        party_controller.NotifyGateway = MagicMock(return_value=mock_notify)
 
         # When
         self.request_password_change('John@example.com', expected_status=200)
@@ -480,10 +480,7 @@ class TestParties(PartyTestClient):
             'RESET_PASSWORD_URL': PublicWebsite(current_app.config).reset_password_url(respondent.email_address),
             'FIRST_NAME': respondent.first_name
         }
-        mock_notify.send_email_notification.assert_called_once_with(email_address='john@example.com',
-                                                                    template_id='request_password_change_id',
-                                                                    personalisation=personalisation,
-                                                                    reference='None')
+        mock_notify.request_password_change.assert_called_once_with('john@example.com', personalisation, 'None')
 
     @staticmethod
     def test_verify_token_uses_case_insensitive_email_query():
@@ -505,7 +502,7 @@ class TestParties(PartyTestClient):
         with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
                 patch('ras_party.support.session_decorator.current_app.db') as db,\
                 patch('ras_party.controllers.party_controller.OauthClient') as client,\
-                patch('ras_party.controllers.party_controller.GovUkNotify'):
+                patch('ras_party.controllers.party_controller.NotifyGateway'):
             # Given
             token = generate_email_token('test@example.com', current_app.config)
             client().update_account().status_code = 201
@@ -522,7 +519,7 @@ class TestParties(PartyTestClient):
     def test_request_password_change_uses_case_insensitive_email_query():
         with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
                 patch('ras_party.support.session_decorator.current_app.db') as db,\
-                patch('ras_party.controllers.party_controller.GovUkNotify'),\
+                patch('ras_party.controllers.party_controller.NotifyGateway'),\
                 patch('ras_party.controllers.party_controller.PublicWebsite'):
             # Given
             payload = {'email_address': 'test@example.com'}
@@ -539,7 +536,7 @@ class TestParties(PartyTestClient):
     def test_post_respondent_uses_case_insensitive_email_query():
         with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
                 patch('ras_party.support.session_decorator.current_app.db') as db,\
-                patch('ras_party.controllers.party_controller.GovUkNotify'),\
+                patch('ras_party.controllers.party_controller.NotifyGateway'),\
                 patch('ras_party.controllers.party_controller.Requests'):
             # Given
             payload = {

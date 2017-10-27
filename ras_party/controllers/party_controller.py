@@ -8,7 +8,7 @@ from structlog import get_logger
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.error_decorator import translate_exceptions
-from ras_party.controllers.gov_uk_notify import GovUkNotify
+from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.validate import Validator, IsUuid, IsIn, Exists
 from ras_party.models.models import Business, Respondent, RespondentStatus, BusinessRespondent, PendingEnrolment, \
     Enrolment, EnrolmentStatus
@@ -322,7 +322,7 @@ def change_respondent_password(token, payload, tran, session):
     party_id = respondent.party_uuid
 
     try:
-        GovUkNotify(current_app.config).confirm_password_change(email_address, personalisation, str(party_id))
+        NotifyGateway(current_app.config).confirm_password_change(email_address, personalisation, str(party_id))
     except RasNotifyError:
         log.error("Error sending notification email for party_id {}".format(party_id))
 
@@ -357,7 +357,7 @@ def request_password_change(payload, session):
 
     party_id = respondent.party_uuid
     try:
-        GovUkNotify(current_app.config).request_password_change(email_address, personalisation, str(party_id))
+        NotifyGateway(current_app.config).request_password_change(email_address, personalisation, str(party_id))
     except RasNotifyError:
         # Note: intentionally suppresses exception
         log.error("Error sending notification email for party_id {}".format(party_id))
@@ -657,7 +657,7 @@ def _send_email_verification(party_id, email):
     }
 
     try:
-        GovUkNotify(current_app.config).verify_email(email, personalisation, str(party_id))
+        NotifyGateway(current_app.config).verify_email(email, personalisation, str(party_id))
         log.info("Verification email sent", party_id=party_id)
     except RasNotifyError:
         # Note: intentionally suppresses exception

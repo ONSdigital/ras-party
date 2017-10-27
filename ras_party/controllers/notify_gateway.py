@@ -7,8 +7,8 @@ from urllib import parse as urlparse
 log = get_logger()
 
 
-class GovUkNotify:
-    """ Gov uk notify class"""
+class NotifyGateway:
+    """ Client for Notify gateway"""
 
     def __init__(self, config):
         self.config = config
@@ -37,15 +37,15 @@ class GovUkNotify:
             if reference:
                 notification.update({"reference": reference})
 
-            url = urlparse.urljoin(str(self.notify_config['url']), str(template_id))
+            url = urlparse.urljoin(self.notify_config['url'], str(template_id))
 
             response = Requests.post(url, json=notification)
 
-            log.info('Notification id {} sent via RM Notify-Gateway to GOV.UK Notify.'
+            log.info('Notification id {} sent via Notify-Gateway to GOV.UK Notify.'
                      .format(response.json()["id"]))
 
         except Exception as e:
-            msg = 'There was a problem sending a notification via GOV.UK Notify  ' + str(e)
+            msg = 'There was a problem sending a notification via Notify-Gateway to GOV.UK Notify  ' + str(e)
             raise RasNotifyError(msg, status_code=500)
 
     def verify_email(self, email, personalisation=None, reference=None):
