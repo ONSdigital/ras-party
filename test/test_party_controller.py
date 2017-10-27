@@ -441,7 +441,7 @@ class TestParties(PartyTestClient):
 
     @staticmethod
     def test_verify_token_uses_case_insensitive_email_query():
-        with patch('ras_party.controllers.queries.query_respondent_by_email') as query,\
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
                 patch('ras_party.support.session_decorator.current_app.db') as db:
             # Given
             token = generate_email_token('test@example.com', current_app.config)
@@ -456,7 +456,7 @@ class TestParties(PartyTestClient):
 
     @staticmethod
     def test_change_respondent_password_uses_case_insensitive_email_query():
-        with patch('ras_party.controllers.queries.query_respondent_by_email') as query,\
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
                 patch('ras_party.support.session_decorator.current_app.db') as db,\
                 patch('ras_party.controllers.account_controller.OauthClient') as client,\
                 patch('ras_party.controllers.account_controller.GovUkNotify'):
@@ -474,7 +474,7 @@ class TestParties(PartyTestClient):
 
     @staticmethod
     def test_request_password_change_uses_case_insensitive_email_query():
-        with patch('ras_party.controllers.queries.query_respondent_by_email') as query,\
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
                 patch('ras_party.support.session_decorator.current_app.db') as db,\
                 patch('ras_party.controllers.account_controller.GovUkNotify'),\
                 patch('ras_party.controllers.account_controller.PublicWebsite'):
@@ -516,7 +516,7 @@ class TestParties(PartyTestClient):
 
     @staticmethod
     def test_put_email_verification_uses_case_insensitive_email_query():
-        with patch('ras_party.controllers.queries.query_respondent_by_email') as query,\
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
                 patch('ras_party.support.session_decorator.current_app.db') as db:
             # Given
             token = generate_email_token('test@example.com', current_app.config)

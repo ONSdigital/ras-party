@@ -259,7 +259,7 @@ def request_password_change(payload, session):
 
     email_address = payload['email_address']
 
-    respondent = session.query(Respondent).filter(func.lower(Respondent.email_address) == email_address.lower()).first()
+    respondent = query_respondent_by_email(email_address, session)
     if not respondent:
         raise RasError("Respondent does not exist.", status_code=404)
 
