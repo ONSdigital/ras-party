@@ -31,7 +31,10 @@ def post_business():
 @auth.login_required
 @log_route
 def get_business_by_id(id):
-    response = ras_party.controllers.party_controller.get_business_by_id(id)
+    verbose = request.args.get('verbose', '')
+    verbose = True if verbose and verbose.lower() == 'true' else False
+
+    response = ras_party.controllers.party_controller.get_business_by_id(id, verbose=verbose)
     return make_response(jsonify(response), 200)
 
 
@@ -39,7 +42,10 @@ def get_business_by_id(id):
 @auth.login_required
 @log_route
 def get_business_by_ref(ref):
-    response = ras_party.controllers.party_controller.get_business_by_ref(ref)
+    verbose = request.args.get('verbose', '')
+    verbose = True if verbose and verbose.lower() == 'true' else False
+
+    response = ras_party.controllers.party_controller.get_business_by_ref(ref, verbose=verbose)
     return make_response(jsonify(response), 200)
 
 

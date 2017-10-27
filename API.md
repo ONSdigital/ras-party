@@ -56,11 +56,11 @@ This page documents the Party service API endpoints. All endpoints return an `HT
         "cell_no": 1,     
         "formtype": "0001",
         "currency": "H",
-        "name": "Bolts and Ratchets Ltd"
     },
     "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
     "sampleUnitRef": "50012345678",
-    "sampleUnitType": "B"
+    "sampleUnitType": "B",
+    "name": "Bolts and Ratchets Ltd"
 }
 ```
 
@@ -84,13 +84,40 @@ This page documents the Party service API endpoints. All endpoints return an `HT
         "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233"
         }
     ],
+    "name": "Bolts and Ratchets Ltd",
+    "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
+    "sampleUnitRef": "50012345678",
+    "sampleUnitType": "B"
+}
+```
+
+*  Using verbose parameter: `GET /businesses/id/d826818e-179e-467b-9936-6a8603dc8b46?verbose=true`
+
+&mdash; Verbose concrete representation of the business party.
+
+### Example JSON Response
+
+```json
+{
+    "associations": [
+        {
+        "enrolments": [
+            {
+                "enrolmentStatus": "ENABLED",
+                "name": "Business Register and Employment Survey",
+                "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+            }
+        ],
+        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233"
+        }
+    ],
     "ruref": "50012345678",
     "checkletter": "A",
     "frosic92": "11111",
     "rusic92": "11111",
     "frosic2007": "11111",
     "rusic2007": "11111",
-    "froempment": 50,    
+    "froempment": 50,
     "frotover": 50,
     "entref": "1234567890",
     "legalstatus": "B",
@@ -108,7 +135,7 @@ This page documents the Party service API endpoints. All endpoints return an `HT
     "tradstyle3": "TRADSTYLE3",
     "seltype": "F",
     "inclexcl": "G",
-    "cell_no": 1,     
+    "cell_no": 1,
     "formtype": "0001",
     "currency": "H",
     "name": "Bolts and Ratchets Ltd",
