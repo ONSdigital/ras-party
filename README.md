@@ -5,21 +5,43 @@ This is the RAS Party micro-service. See [Confluence] for further information.
 
 The API is specified [here](./API.md).
 
+## Setup
+Install postgresql
+```bash
+brew install postgresql
+```
 
-## Tests
-To run the tests with [tox], install tox (see link) then simply run the command `tox` in the root of the project.
-tox will create a unique virtualenv, run the unit tests with py.test, then run flake8 coverage.
+Install pipenv
+```bash
+pip install pipenv
+```
 
-To install and run: Create a (Python 3.5+) virtualenv, then:
-``` bash
-pip install -r requirements.txt
-python run.py
+Use pipenv to create a virtualenv and install dependencies
+```bash
+pipenv install
+```
+
+## Running
+[Install Docker](https://docs.docker.com/engine/installation/)
+```bash
+docker-compose up
 ```
 
 To test the service is up:
 
 ```
-curl http://localhost:8080/party-api/v1/info
+curl http://localhost:8081/info
+```
+
+## Tests
+Ensure dev dependencies have been installed
+```bash
+pipenv install --dev
+```
+
+Run tests with tox
+```bash
+pipenv run tox
 ```
 
 ## Database
