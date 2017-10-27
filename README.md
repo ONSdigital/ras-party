@@ -5,6 +5,16 @@ This is the RAS Party micro-service. See [Confluence] for further information.
 
 The API is specified [here](./API.md).
 
+## Setup
+Install pipenv
+```bash
+pip install pipenv
+```
+
+Use pipenv to create a virtualenv and install dependencies
+```bash
+pipenv --python 3.5 install --dev
+```
 
 ## Tests
 To run the tests with [tox], install tox (see link) then simply run the command `tox` in the root of the project.
