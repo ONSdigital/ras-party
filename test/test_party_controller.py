@@ -1,11 +1,14 @@
 import uuid
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 
 from ras_party.controllers import party_controller
-from ras_party.models.models import RespondentStatus
+from ras_party.models.models import RespondentStatus, Respondent
+from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
+from ras_party.support.verification import generate_email_token
 from test.mocks import MockBusiness, MockRespondent, MockRequests, MockResponse
 from test.party_client import PartyTestClient, businesses, respondents, business_respondent_associations, enrolments
 
@@ -29,7 +32,18 @@ class TestParties(PartyTestClient):
         party_id = self.post_to_businesses(mock_business, 200)['id']
 
         response = self.get_business_by_id(party_id)
-        self.assertTrue(response.items() >= mock_business.items())
+        self.assertEqual(len(response.items()), 5)
+        self.assertEqual(response.get('id'), party_id)
+        self.assertEqual(response.get('name'), mock_business.get('name'))
+
+    def test_get_business_by_id_returns_correct_representation_verbose(self):
+        mock_business = MockBusiness() \
+            .attributes(source='test_get_business_by_id_returns_correct_representation_summary') \
+            .as_business()
+        party_id = self.post_to_businesses(mock_business, 200)['id']
+
+        response = self.get_business_by_id(party_id, query_string={"verbose": "true"})
+        self.assertTrue(len(response.items()) >= len(mock_business.items()))
 
     def test_get_business_by_ref_returns_correct_representation(self):
         mock_business = MockBusiness() \
@@ -38,6 +52,17 @@ class TestParties(PartyTestClient):
         self.post_to_businesses(mock_business, 200)
 
         response = self.get_business_by_ref(mock_business['sampleUnitRef'])
+        self.assertEqual(len(response.items()), 5)
+        self.assertEqual(response.get('sampleUnitRef'), mock_business['sampleUnitRef'])
+        self.assertEqual(response.get('name'), mock_business.get('name'))
+
+    def test_get_business_by_ref_returns_correct_representation_verbose(self):
+        mock_business = MockBusiness() \
+            .attributes(source='test_get_business_by_ref_returns_correct_representation') \
+            .as_business()
+        self.post_to_businesses(mock_business, 200)
+
+        response = self.get_business_by_ref(mock_business['sampleUnitRef'], query_string={"verbose": "true"})
         for x in mock_business:
             self.assertTrue(x in response)
 
@@ -157,6 +182,8 @@ class TestParties(PartyTestClient):
         self.put_email_to_respondents({}, 400)
 
     def test_put_respondent_email_changes_email(self):
+        mock_notify = MagicMock()
+        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
         self.post_to_businesses(mock_business, 200)
@@ -352,7 +379,6 @@ class TestParties(PartyTestClient):
         self.resend_verification_email(resp['id'], 200)
 
     def test_resend_verification_email_party_id_not_found(self):
-
         # Given the party_id sent doesn't exist
         # When the resend verification end point is hit
         response = self.resend_verification_email('3b136c4b-7a14-4904-9e01-13364dd7b972', 404)
@@ -433,6 +459,121 @@ class TestParties(PartyTestClient):
         frontstage_url = mock_notify.verify_email.call_args[0][1]['ACCOUNT_VERIFICATION_URL']
         token = frontstage_url.split('/')[-1]
         return token
+
+      def test_should_reset_password_when_email_wrong_case(self):
+        # Given
+        # Create respondent
+        respondent = Respondent()
+        respondent.email_address = 'john@example.com'
+        current_app.db.session.add(respondent)
+        current_app.db.session.commit()
+
+        # Mock notification
+        mock_notify = MagicMock()
+        party_controller.GovUkNotify.CLIENT_CLASS = MagicMock(return_value=mock_notify)
+
+        # When
+        self.request_password_change('John@example.com', expected_status=200)
+
+        # Then
+        personalisation = {
+            'RESET_PASSWORD_URL': PublicWebsite(current_app.config).reset_password_url(respondent.email_address),
+            'FIRST_NAME': respondent.first_name
+        }
+        mock_notify.send_email_notification.assert_called_once_with(email_address='john@example.com',
+                                                                    template_id='request_password_change_id',
+                                                                    personalisation=personalisation,
+                                                                    reference='None')
+
+    @staticmethod
+    def test_verify_token_uses_case_insensitive_email_query():
+        with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db:
+            # Given
+            token = generate_email_token('test@example.com', current_app.config)
+
+            # When
+            # pylint: disable=E1120
+            # session is injected by decorator
+            party_controller.verify_token(token)
+
+            # Then
+            query.assert_called_once_with('test@example.com', db.session())
+
+    @staticmethod
+    def test_change_respondent_password_uses_case_insensitive_email_query():
+        with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db,\
+                patch('ras_party.controllers.party_controller.OauthClient') as client,\
+                patch('ras_party.controllers.party_controller.GovUkNotify'):
+            # Given
+            token = generate_email_token('test@example.com', current_app.config)
+            client().update_account().status_code = 201
+
+            # When
+            # pylint: disable=E1120
+            # session is injected by decorator
+            party_controller.change_respondent_password(token, {'new_password': 'abc'})
+
+            # Then
+            query.assert_called_once_with('test@example.com', db.session())
+
+    @staticmethod
+    def test_request_password_change_uses_case_insensitive_email_query():
+        with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db,\
+                patch('ras_party.controllers.party_controller.GovUkNotify'),\
+                patch('ras_party.controllers.party_controller.PublicWebsite'):
+            # Given
+            payload = {'email_address': 'test@example.com'}
+
+            # When
+            # pylint: disable=E1120
+            # session is injected by decorator
+            party_controller.request_password_change(payload)
+
+            # Then
+            query.assert_called_once_with('test@example.com', db.session())
+
+    @staticmethod
+    def test_post_respondent_uses_case_insensitive_email_query():
+        with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db,\
+                patch('ras_party.controllers.party_controller.GovUkNotify'),\
+                patch('ras_party.controllers.party_controller.Requests'):
+            # Given
+            payload = {
+                'emailAddress': 'test@example.com',
+                'firstName': 'Joe',
+                'lastName': 'bloggs',
+                'password': 'secure',
+                'telephone': '111',
+                'enrolmentCode': 'abc'
+            }
+            query('test@example.com', db.session()).first.return_value = None
+
+            # When
+            # pylint: disable=E1120
+            # session is injected by decorator
+            party_controller.post_respondent(payload)
+
+            # Then
+            query('test@example.com', db.session()).first.assert_called_once()
+
+    @staticmethod
+    def test_put_email_verification_uses_case_insensitive_email_query():
+        with patch('ras_party.controllers.party_controller._query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db:
+            # Given
+            token = generate_email_token('test@example.com', current_app.config)
+
+            # When
+            # pylint: disable=E1120
+            # session is injected by decorator
+            party_controller.put_email_verification(token)
+
+            # Then
+            query.assert_called_once_with('test@example.com', db.session())
 
 
 if __name__ == '__main__':
