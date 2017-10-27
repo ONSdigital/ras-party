@@ -3,7 +3,7 @@ import uuid
 from flask import current_app
 from itsdangerous import SignatureExpired, BadSignature, BadData
 from ras_common_utils.ras_error.ras_error import RasError, RasNotifyError
-from sqlalchemy import orm, func
+from sqlalchemy import orm
 from structlog import get_logger
 
 from ras_party.clients.oauth_client import OauthClient

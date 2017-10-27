@@ -1,4 +1,4 @@
-from flask import Blueprint, request, current_app, make_response, jsonify
+from flask import Blueprint, current_app, make_response, jsonify
 from flask_httpauth import HTTPBasicAuth
 
 import ras_party.controllers.account_controller
