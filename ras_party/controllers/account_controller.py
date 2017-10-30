@@ -26,7 +26,6 @@ NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
 EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 
 
-
 @transactional
 @with_db_session
 def post_respondent(party, tran, session):
