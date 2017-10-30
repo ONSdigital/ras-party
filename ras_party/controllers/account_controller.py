@@ -7,7 +7,6 @@ from sqlalchemy import orm
 from structlog import get_logger
 
 from ras_party.clients.oauth_client import OauthClient
-from ras_party.controllers.error_decorator import translate_exceptions
 from ras_party.controllers.gov_uk_notify import GovUkNotify
 from ras_party.controllers.queries import query_business_by_party_uuid, query_respondent_by_email, \
     query_respondent_by_party_uuid
@@ -27,7 +26,7 @@ NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
 EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 
 
-@translate_exceptions
+
 @transactional
 @with_db_session
 def post_respondent(party, tran, session):
@@ -130,7 +129,6 @@ def post_respondent(party, tran, session):
     return respondent.to_respondent_dict()
 
 
-@translate_exceptions
 @transactional
 @with_db_session
 def change_respondent(payload, tran, session):
@@ -182,7 +180,6 @@ def change_respondent(payload, tran, session):
     return respondent.to_respondent_dict()
 
 
-@translate_exceptions
 @with_db_session
 def verify_token(token, session):
     try:
@@ -202,7 +199,6 @@ def verify_token(token, session):
     return {'response': "Ok"}
 
 
-@translate_exceptions
 @transactional
 @with_db_session
 def change_respondent_password(token, payload, tran, session):
@@ -250,7 +246,6 @@ def change_respondent_password(token, payload, tran, session):
     return {'response': "Ok"}
 
 
-@translate_exceptions
 @with_db_session
 def request_password_change(payload, session):
     v = Validator(Exists('email_address'))
@@ -283,7 +278,6 @@ def request_password_change(payload, session):
     return {'response': "Ok"}
 
 
-@translate_exceptions
 @with_db_session
 def put_email_verification(token, session):
     try:

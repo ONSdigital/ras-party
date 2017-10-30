@@ -3,7 +3,6 @@ from flask import current_app
 from ras_common_utils.ras_error.ras_error import RasError
 from structlog import get_logger
 
-from ras_party.controllers.error_decorator import translate_exceptions
 from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid
 from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.models.models import Business
@@ -13,7 +12,6 @@ from ras_party.support.session_decorator import with_db_session
 log = get_logger()
 
 
-@translate_exceptions
 @with_db_session
 def get_business_by_ref(ref, session, verbose=False):
     """
@@ -36,7 +34,6 @@ def get_business_by_ref(ref, session, verbose=False):
         return business.to_business_summary_dict()
 
 
-@translate_exceptions
 @with_db_session
 def get_business_by_id(party_uuid, session, verbose=False):
     """
@@ -63,7 +60,6 @@ def get_business_by_id(party_uuid, session, verbose=False):
         return business.to_business_summary_dict()
 
 
-@translate_exceptions
 @with_db_session
 def businesses_post(business_data, session):
     """

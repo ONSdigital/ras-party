@@ -1,11 +1,9 @@
 from json import loads
 
-from flask import jsonify
 from flask_cors import CORS
 from ras_common_utils.ras_config import ras_config
 from ras_common_utils.ras_config.flask_extended import Flask
 from ras_common_utils.ras_database.ras_database import RasDatabase
-from ras_common_utils.ras_error.ras_error import RasError
 from ras_common_utils.ras_logger.ras_logger import configure_logger
 
 
@@ -14,27 +12,19 @@ def create_app(config):
     app = Flask(__name__)
     app.config.from_ras_config(config)
 
-    @app.errorhandler(Exception)
-    def handle_error(error):
-        if isinstance(error, RasError):
-            response = jsonify(error.to_dict())
-            response.status_code = error.status_code
-        else:
-            response = jsonify({'errors': [str(error)]})
-            response.status_code = 500
-        return response
-
     # register view blueprints
     from ras_party.views.party_view import party_view
     from ras_party.views.business_view import business_view
     from ras_party.views.respondent_view import respondent_view
     from ras_party.views.account_view import account_view
     from ras_party.views.info_view import info_view
+    from ras_party import error_handlers
     app.register_blueprint(party_view, url_prefix='/party-api/v1')
     app.register_blueprint(account_view, url_prefix='/party-api/v1')
     app.register_blueprint(business_view, url_prefix='/party-api/v1')
     app.register_blueprint(respondent_view, url_prefix='/party-api/v1')
     app.register_blueprint(info_view)
+    app.register_blueprint(error_handlers.blueprint)
 
     CORS(app)
     return app

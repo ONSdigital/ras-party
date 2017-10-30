@@ -2,7 +2,6 @@
 from ras_common_utils.ras_error.ras_error import RasError
 from structlog import get_logger
 
-from ras_party.controllers.error_decorator import translate_exceptions
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_respondent_by_email
 from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.support.session_decorator import with_db_session
@@ -10,7 +9,6 @@ from ras_party.support.session_decorator import with_db_session
 log = get_logger()
 
 
-@translate_exceptions
 @with_db_session
 def get_respondent_by_id(id, session):
     """
@@ -32,7 +30,6 @@ def get_respondent_by_id(id, session):
     return respondent.to_respondent_dict()
 
 
-@translate_exceptions
 @with_db_session
 def get_respondent_by_email(email, session):
     """
