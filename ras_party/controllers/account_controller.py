@@ -81,8 +81,8 @@ def post_respondent(party, tran, session):
     except KeyError:
         raise RasError("There is no survey bound for this user with email address: {}".format(party['emailAddress']))
 
-    b = query_business_by_party_uuid(business_id, session)
-    if not b:
+    business = query_business_by_party_uuid(business_id, session)
+    if not business:
         msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
         raise RasError(msg, status_code=404)
 
@@ -98,23 +98,23 @@ def post_respondent(party, tran, session):
 
     try:
         #  Create the enrolment respondent-business-survey associations
-        r = Respondent(**translated_party)
-        br = BusinessRespondent(business=b, respondent=r)
+        respondent = Respondent(**translated_party)
+        br = BusinessRespondent(business=business, respondent=respondent)
         pending_enrolment = PendingEnrolment(case_id=case_id,
-                                             respondent=r,
+                                             respondent=respondent,
                                              business_id=business_id,
                                              survey_id=survey_id)
         Enrolment(business_respondent=br,
                   survey_id=survey_id,
                   survey_name=survey_name,
                   status=EnrolmentStatus.PENDING)
-        session.add(r)
+        session.add(respondent)
         session.add(pending_enrolment)
 
         # Notify the case service of this account being created
-        post_case_event(case_id, r.party_uuid, "RESPONDENT_ACCOUNT_CREATED", "New respondent account created")
+        post_case_event(case_id, respondent.party_uuid, "RESPONDENT_ACCOUNT_CREATED", "New respondent account created")
 
-        _send_email_verification(r.party_uuid, party['emailAddress'])
+        _send_email_verification(respondent.party_uuid, party['emailAddress'])
     except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError):
         msg = "Error updating database for user id: {} ".format(party['id'])
         raise RasError(msg, status_code=500)
@@ -127,7 +127,7 @@ def post_respondent(party, tran, session):
 
     register_user(party, tran)
 
-    return r.to_respondent_dict()
+    return respondent.to_respondent_dict()
 
 
 @translate_exceptions
