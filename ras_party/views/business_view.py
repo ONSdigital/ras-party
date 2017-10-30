@@ -13,6 +13,13 @@ business_view = Blueprint('business_view', __name__)
 auth = HTTPBasicAuth()
 
 
+@business_view.before_request
+@auth.login_required
+@log_route
+def before_business_view():
+    pass
+
+
 @auth.get_password
 def get_pw(username):
     config_username = current_app.config['SECURITY_USER_NAME']
@@ -22,8 +29,6 @@ def get_pw(username):
 
 
 @business_view.route('/businesses', methods=['POST'])
-@auth.login_required
-@log_route
 def post_business():
     payload = request.get_json() or {}
     response = ras_party.controllers.business_controller.businesses_post(payload)
@@ -31,8 +36,6 @@ def post_business():
 
 
 @business_view.route('/businesses/id/<id>', methods=['GET'])
-@auth.login_required
-@log_route
 def get_business_by_id(id):
     verbose = request.args.get('verbose', '')
     verbose = True if verbose and verbose.lower() == 'true' else False
@@ -42,8 +45,6 @@ def get_business_by_id(id):
 
 
 @business_view.route('/businesses/ref/<ref>', methods=['GET'])
-@auth.login_required
-@log_route
 def get_business_by_ref(ref):
     verbose = request.args.get('verbose', '')
     verbose = True if verbose and verbose.lower() == 'true' else False

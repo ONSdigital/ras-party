@@ -13,6 +13,13 @@ account_view = Blueprint('account_view', __name__)
 auth = HTTPBasicAuth()
 
 
+@account_view.before_request
+@auth.login_required
+@log_route
+def before_account_view():
+    pass
+
+
 @auth.get_password
 def get_pw(username):
     config_username = current_app.config['SECURITY_USER_NAME']
@@ -23,8 +30,6 @@ def get_pw(username):
 
 @account_view.route('/respondents/change_email', methods=['PUT'])
 @account_view.route('/respondents/email', methods=['PUT'])
-@auth.login_required
-@log_route
 def put_respondent_by_email():
     payload = request.get_json() or {}
     response = ras_party.controllers.account_controller.change_respondent(payload)
@@ -32,16 +37,12 @@ def put_respondent_by_email():
 
 
 @account_view.route('/tokens/verify/<token>', methods=['GET'])
-@auth.login_required
-@log_route
 def get_verify_token(token):
     response = ras_party.controllers.account_controller.verify_token(token)
     return make_response(jsonify(response), 200)
 
 
 @account_view.route('/respondents/change_password/<token>', methods=['PUT'])
-@auth.login_required
-@log_route
 def change_respondent_password(token):
     payload = request.get_json() or {}
     response = ras_party.controllers.account_controller.change_respondent_password(token, payload)
@@ -49,8 +50,6 @@ def change_respondent_password(token):
 
 
 @account_view.route('/respondents/request_password_change', methods=['POST'])
-@auth.login_required
-@log_route
 def post_respondent_reset_password_by_email():
     payload = request.get_json() or {}
     response = ras_party.controllers.account_controller.request_password_change(payload)
@@ -58,8 +57,6 @@ def post_respondent_reset_password_by_email():
 
 
 @account_view.route('/respondents', methods=['POST'])
-@auth.login_required
-@log_route
 def post_respondent():
     payload = request.get_json() or {}
     response = ras_party.controllers.account_controller.post_respondent(payload)
@@ -67,16 +64,12 @@ def post_respondent():
 
 
 @account_view.route('/emailverification/<token>', methods=['PUT'])
-@auth.login_required
-@log_route
 def put_email_verification(token):
     response = ras_party.controllers.account_controller.put_email_verification(token)
     return make_response(jsonify(response), 200)
 
 
 @account_view.route('/resend-verification-email/<party_uuid>', methods=['GET'])
-@auth.login_required
-@log_route
 def resend_verification_email(party_uuid):
     response = ras_party.controllers.account_controller.resend_verification_email(party_uuid)
     return make_response(jsonify(response), 200)

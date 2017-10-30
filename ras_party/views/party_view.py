@@ -13,6 +13,13 @@ party_view = Blueprint('party_view', __name__)
 auth = HTTPBasicAuth()
 
 
+@party_view.before_request
+@auth.login_required
+@log_route
+def before_party_view():
+    pass
+
+
 @auth.get_password
 def get_pw(username):
     config_username = current_app.config['SECURITY_USER_NAME']
@@ -22,25 +29,19 @@ def get_pw(username):
 
 
 @party_view.route('/parties', methods=['POST'])
-@auth.login_required
-@log_route
 def post_party():
     payload = request.get_json() or {}
     response = ras_party.controllers.party_controller.parties_post(payload)
     return make_response(jsonify(response), 200)
 
 
-@party_view.route('/parties/type/<sampleUnitType>/ref/<sampleUnitRef>', methods=['GET'])
-@auth.login_required
-@log_route
-def get_party_by_ref(sampleUnitType, sampleUnitRef):
-    response = ras_party.controllers.party_controller.get_party_by_ref(sampleUnitType, sampleUnitRef)
+@party_view.route('/parties/type/<sample_unit_type>/ref/<sample_unit_ref>', methods=['GET'])
+def get_party_by_ref(sample_unit_type, sample_unit_ref):
+    response = ras_party.controllers.party_controller.get_party_by_ref(sample_unit_type, sample_unit_ref)
     return make_response(jsonify(response), 200)
 
 
-@party_view.route('/parties/type/<sampleUnitType>/id/<id>', methods=['GET'])
-@auth.login_required
-@log_route
-def get_party_by_id(sampleUnitType, id):
-    response = ras_party.controllers.party_controller.get_party_by_id(sampleUnitType, id)
+@party_view.route('/parties/type/<sample_unit_type>/id/<id>', methods=['GET'])
+def get_party_by_id(sample_unit_type, id):
+    response = ras_party.controllers.party_controller.get_party_by_id(sample_unit_type, id)
     return make_response(jsonify(response), 200)

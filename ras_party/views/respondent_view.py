@@ -13,6 +13,13 @@ respondent_view = Blueprint('respondent_view', __name__)
 auth = HTTPBasicAuth()
 
 
+@respondent_view.before_request
+@auth.login_required
+@log_route
+def before_respondent_view():
+    pass
+
+
 @auth.get_password
 def get_pw(username):
     config_username = current_app.config['SECURITY_USER_NAME']
@@ -22,16 +29,12 @@ def get_pw(username):
 
 
 @respondent_view.route('/respondents/id/<id>', methods=['GET'])
-@auth.login_required
-@log_route
 def get_respondent_by_id(id):
     response = ras_party.controllers.respondent_controller.get_respondent_by_id(id)
     return make_response(jsonify(response), 200)
 
 
 @respondent_view.route('/respondents/email/<string:email>', methods=['GET'])
-@auth.login_required
-@log_route
 def get_respondent_by_email(email):
     response = ras_party.controllers.respondent_controller.get_respondent_by_email(email)
     return make_response(jsonify(response), 200)
