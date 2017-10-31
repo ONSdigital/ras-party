@@ -3,8 +3,6 @@ from pathlib import Path
 
 from flask import current_app
 
-from ras_party.controllers.error_decorator import translate_exceptions
-
 
 _health_check = {}
 
@@ -13,7 +11,6 @@ if Path('git_info').exists():
         _health_check = loads(io.read())
 
 
-@translate_exceptions
 def get_info():
     info = {
         "name": current_app.config['NAME'],
