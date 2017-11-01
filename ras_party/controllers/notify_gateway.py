@@ -1,48 +1,51 @@
-from notifications_python_client import NotificationsAPIClient
 from structlog import get_logger
 
 from ras_party.support.ras_error import RasNotifyError
+from ras_party.support.requests_wrapper import Requests
+from urllib import parse as urlparse
 
 log = get_logger()
 
 
-class GovUkNotify:
-    """ Gov uk notify class"""
-
-    CLIENT_CLASS = NotificationsAPIClient
+class NotifyGateway:
+    """ Client for Notify gateway"""
 
     def __init__(self, config):
         self.config = config
         self.notify_config = config.dependency['notify-service']
-        notify_keys = 'key-name-{}-{}'.format(self.notify_config['service_id'],
-                                              self.notify_config['api_key'])
-        self.notifications_client = self.CLIENT_CLASS(notify_keys)
 
     def _send_message(self, email, template_id, personalisation=None, reference=None):
         """
-        Send message to gov.uk notify
+        Send message to gov.uk notify wrapper
         :param email: email address of recipient
         :param template_id: the template id on gov.uk notify to use
         :param personalisation: placeholder values in the template
-        :param reference: reference to generated if not using Notify's id
+        :param reference: reference to be generated if not using Notify's id
         :rtype: 201 if success
         """
 
         if not self.config.feature.send_email_to_gov_notify:
-            log.info("Notification not sent. GOV.UK Notify is disabled.")
+            log.info("Notification not sent. Notify is disabled.")
             return
 
         try:
-            response = self.notifications_client.send_email_notification(
-                email_address=email,
-                template_id=template_id,
-                personalisation=personalisation,
-                reference=reference)
+            notification = {
+                "emailAddress": email,
+            }
+            if personalisation:
+                notification.update({"personalisation": personalisation})
+            if reference:
+                notification.update({"reference": reference})
 
-            log.info('Notification id {} sent via GOV.UK Notify.'.format(response['id']))
+            url = urlparse.urljoin(self.notify_config['url'], str(template_id))
+
+            response = Requests.post(url, json=notification)
+
+            log.info('Notification id {} sent via Notify-Gateway to GOV.UK Notify.'
+                     .format(response.json()["id"]))
 
         except Exception as e:
-            msg = 'There was a problem sending a notification via GOV.UK Notify  ' + str(e)
+            msg = 'There was a problem sending a notification via Notify-Gateway to GOV.UK Notify  ' + str(e)
             raise RasNotifyError(msg, status_code=500)
 
     def verify_email(self, email, personalisation=None, reference=None):

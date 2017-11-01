@@ -133,3 +133,16 @@ class PartyTestClient(TestCase):
                                     content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
+
+    def change_password(self, token, payload, expected_status=200):
+        response = self.client.put('/party-api/v1/respondents/change_password/{}'.format(token),
+                                   headers=self.auth_headers, data=json.dumps(payload),
+                                   content_type='application/vnd.ons.business+json')
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def verify_token(self, token, expected_status=200):
+        response = self.client.get('/party-api/v1/tokens/verify/{}'.format(token),
+                                   headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))

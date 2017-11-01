@@ -135,10 +135,15 @@ class MockRequests:
     class Post:
 
         def __init__(self):
-            pass
+            self._calls = defaultdict()
+            self.response_payload = '{}'
 
-        def __call__(self, *args, **kwargs):
-            return MockResponse('{}', status_code=201)
+        def __call__(self, uri, *args, **kwargs):
+            self._calls[uri] = kwargs
+            return MockResponse(self.response_payload, status_code=201)
+
+        def assert_called_with(self, uri, expected_payload):
+            assert(self._calls.get(uri) == expected_payload)
 
     class Put:
 

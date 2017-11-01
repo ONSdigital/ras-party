@@ -4,7 +4,6 @@ Flask_Cors==3.0.3
 gunicorn==19.7.1
 itsdangerous==0.24
 jsonschema==2.6.0
-notifications-python-client==4.3.1
 SQLAlchemy_Utils==0.32.14
 SQLAlchemy==1.1.10
 six==1.10.0
