@@ -39,7 +39,7 @@ service:
 dependencies:
     ras-party-db:
         schema: partysvc
-        uri: "postgres://postgres:postgres@db:5432/postgres"
+        uri: "postgres://postgres:postgres@localhost:5432/postgres"
     public-website:
         scheme: http
         host: dummy.ons.gov.uk

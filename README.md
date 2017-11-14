@@ -22,10 +22,18 @@ pipenv install
 ```
 
 ## Running
+
 [Install Docker](https://docs.docker.com/engine/installation/)
 ```bash
 docker-compose up
 ```
+
+or run locally (this requires postgres running locally on port 5432):
+```bash
+pipenv run python3 run.py
+```
+
+
 
 To test the service is up:
 
