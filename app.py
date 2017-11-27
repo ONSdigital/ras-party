@@ -26,7 +26,7 @@ logger.debug("Created Flask app.")
 try:
     initialise_db(app)
 except RetryError:
-    logger.error('Failed to initialise database')
-    raise
+    logger.exception('Failed to initialise database')
+    exit(1)
 
 scheme, host, port = app.config['SCHEME'], app.config['HOST'], int(app.config['PORT'])
