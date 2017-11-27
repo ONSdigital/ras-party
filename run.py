@@ -5,6 +5,8 @@ from ras_common_utils.ras_config import ras_config
 from ras_common_utils.ras_config.flask_extended import Flask
 from ras_common_utils.ras_database.ras_database import RasDatabase
 from ras_common_utils.ras_logger.ras_logger import configure_logger
+from retrying import retry
+from sqlalchemy.exc import DatabaseError
 
 
 def create_app(config):
@@ -30,6 +32,11 @@ def create_app(config):
     return app
 
 
+def retry_if_database_error(exception):
+    return isinstance(exception, DatabaseError)
+
+
+@retry(retry_on_exception=retry_if_database_error, wait_fixed=2000, stop_max_delay=30000)
 def initialise_db(app):
     # Initialise the database with the specified SQLAlchemy model
     party_database = RasDatabase.make(model_paths=['ras_party.models.models'])
