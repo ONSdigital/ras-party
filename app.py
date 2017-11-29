@@ -3,6 +3,7 @@ from json import loads
 import structlog
 from ras_common_utils.ras_config import ras_config
 from ras_common_utils.ras_logger.ras_logger import configure_logger
+from retrying import RetryError
 
 from run import create_app, initialise_db
 
@@ -22,6 +23,10 @@ with open(app.config['PARTY_SCHEMA']) as io:
 configure_logger(app.config)
 logger.debug("Created Flask app.")
 
-initialise_db(app)
+try:
+    initialise_db(app)
+except RetryError:
+    logger.exception('Failed to initialise database')
+    exit(1)
 
 scheme, host, port = app.config['SCHEME'], app.config['HOST'], int(app.config['PORT'])
