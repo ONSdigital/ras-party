@@ -182,8 +182,10 @@
             "version": "==3.12"
         },
         "ras-common-utils": {
-            "git": "https://github.com/ONSdigital/ras-common-utils.git",
-            "ref": "0.0.7"
+            "hashes": [
+                "sha256:96b1741717afe0f213aafcb89c9caba7085f99dec50e616143d28a14e9056168"
+            ],
+            "version": "==1.0.2"
         },
         "requests": {
             "hashes": [
