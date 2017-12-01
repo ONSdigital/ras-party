@@ -56,6 +56,24 @@ class TestRespondents(PartyTestClient):
     def test_get_respondent_with_invalid_id(self):
         self.get_respondent_by_id('123', 400)
 
+    def test_get_respondent_with_valid_id(self):
+        self.get_respondent_by_id(str(uuid.uuid4()), 404)
+
+    def test_get_respondent_by_id_returns_correct_representation(self):
+        # Given there is a respondent in the db
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+
+        # And we get the new respondent
+        response = self.get_respondent_by_id(respondent.party_uuid)
+
+        # Then the response matches the posted respondent
+        self.assertTrue('id' in response)
+        self.assertEqual(response['emailAddress'], self.mock_respondent['emailAddress'])
+        self.assertEqual(response['firstName'], self.mock_respondent['firstName'])
+        self.assertEqual(response['lastName'], self.mock_respondent['lastName'])
+        self.assertEqual(response['sampleUnitType'], self.mock_respondent['sampleUnitType'])
+        self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
+
     def test_resend_verification_email(self):
         # Given there is a respondent
         respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
@@ -316,28 +334,6 @@ class TestRespondents(PartyTestClient):
 
             # Then
             query.assert_called_once_with('test@example.com', db.session())
-
-    def test_get_respondent_by_id_returns_correct_representation(self):
-        # Given there is a business (related to the IAC code case context)
-        mock_business = MockBusiness().as_business()
-        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
-        self.post_to_businesses(mock_business, 200)
-        # When a new respondent is posted
-        mock_respondent = MockRespondent().attributes().as_respondent()
-        resp = self.post_to_respondents(mock_respondent, 200)
-        party_id = resp['id']
-        # And we get the new respondent
-        response = self.get_respondent_by_id(party_id)
-
-        # Not expecting the enrolmentCode to be returned as part of the respondent
-        del mock_respondent['enrolmentCode']
-        # Then the response matches the posted respondent
-        self.assertTrue('id' in response)
-        self.assertEqual(response['emailAddress'], mock_respondent['emailAddress'])
-        self.assertEqual(response['firstName'], mock_respondent['firstName'])
-        self.assertEqual(response['lastName'], mock_respondent['lastName'])
-        self.assertEqual(response['sampleUnitType'], mock_respondent['sampleUnitType'])
-        self.assertEqual(response['telephone'], mock_respondent['telephone'])
 
     def test_put_respondent_email_returns_400_when_no_email(self):
         self.put_email_to_respondents({}, 400)
