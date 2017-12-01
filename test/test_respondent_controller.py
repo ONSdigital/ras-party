@@ -234,6 +234,24 @@ class TestRespondents(PartyTestClient):
             respondent.party_uuid
         )
 
+    @staticmethod
+    def test_change_respondent_password_uses_case_insensitive_email_query():
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db,\
+                patch('ras_party.controllers.account_controller.OauthClient') as client,\
+                patch('ras_party.controllers.account_controller.NotifyGateway'):
+            # Given
+            token = generate_email_token('test@example.com', current_app.config)
+            client().update_account().status_code = 201
+
+            # When
+            # pylint: disable=E1120
+            # session is injected by decorator
+            account_controller.change_respondent_password(token, {'new_password': 'abc'})
+
+            # Then
+            query.assert_called_once_with('test@example.com', db.session())
+
     def test_verify_token_with_bad_secrets(self):
         # given a respondent and a bad token
         respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
@@ -265,7 +283,22 @@ class TestRespondents(PartyTestClient):
         token = timed_serializer.dumps(respondent.email_address, salt=current_app.config['EMAIL_TOKEN_SALT'])
 
         # the verify end point verifies the token
-        self.verify_token(token, expected_status=200)
+        self.verify_token(token)
+
+    @staticmethod
+    def test_verify_token_uses_case_insensitive_email_query():
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db:
+            # Given
+            token = generate_email_token('test@example.com', current_app.config)
+
+            # When
+            # pylint: disable=E1120
+            # session is injected by decorator
+            account_controller.verify_token(token)
+
+            # Then
+            query.assert_called_once_with('test@example.com', db.session())
 
     def test_post_valid_respondent_adds_to_db(self):
         # Given the database contains no respondents
@@ -477,11 +510,8 @@ class TestRespondents(PartyTestClient):
         # Then the response is a 404
         self.put_email_verification(token, 404)
 
-    def test_post_respondent_with_no_body_returns_400(self):
-        self.post_to_respondents(None, 400)
-
     @staticmethod
-    def test_verify_token_uses_case_insensitive_email_query():
+    def test_put_email_verification_uses_case_insensitive_email_query():
         with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
                 patch('ras_party.support.session_decorator.current_app.db') as db:
             # Given
@@ -490,28 +520,13 @@ class TestRespondents(PartyTestClient):
             # When
             # pylint: disable=E1120
             # session is injected by decorator
-            account_controller.verify_token(token)
+            account_controller.put_email_verification(token)
 
             # Then
             query.assert_called_once_with('test@example.com', db.session())
 
-    @staticmethod
-    def test_change_respondent_password_uses_case_insensitive_email_query():
-        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
-                patch('ras_party.support.session_decorator.current_app.db') as db,\
-                patch('ras_party.controllers.account_controller.OauthClient') as client,\
-                patch('ras_party.controllers.account_controller.NotifyGateway'):
-            # Given
-            token = generate_email_token('test@example.com', current_app.config)
-            client().update_account().status_code = 201
-
-            # When
-            # pylint: disable=E1120
-            # session is injected by decorator
-            account_controller.change_respondent_password(token, {'new_password': 'abc'})
-
-            # Then
-            query.assert_called_once_with('test@example.com', db.session())
+    def test_post_respondent_with_no_body_returns_400(self):
+        self.post_to_respondents(None, 400)
 
     @staticmethod
     def test_request_password_change_uses_case_insensitive_email_query():
@@ -551,21 +566,6 @@ class TestRespondents(PartyTestClient):
             # session is injected by decorator
             with self.assertRaises(RasError):
                 account_controller.post_respondent(payload)
-
-            # Then
-            query.assert_called_once_with('test@example.com', db.session())
-
-    @staticmethod
-    def test_put_email_verification_uses_case_insensitive_email_query():
-        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
-                patch('ras_party.support.session_decorator.current_app.db') as db:
-            # Given
-            token = generate_email_token('test@example.com', current_app.config)
-
-            # When
-            # pylint: disable=E1120
-            # session is injected by decorator
-            account_controller.put_email_verification(token)
 
             # Then
             query.assert_called_once_with('test@example.com', db.session())
