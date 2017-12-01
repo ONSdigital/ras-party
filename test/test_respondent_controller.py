@@ -234,18 +234,35 @@ class TestRespondents(PartyTestClient):
             respondent.party_uuid
         )
 
-    def test_verify_token_with_bad_token(self):
-        # given a bad token
+    def test_verify_token_with_bad_secrets(self):
+        # given a respondent and a bad token
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+
         secret_key = "fake_key"
         timed_serializer = URLSafeTimedSerializer(secret_key)
-        token = timed_serializer.dumps("brucie@tv.com", salt='bulbous')
+        token = timed_serializer.dumps(respondent.email_address, salt='bulbous')
+
+        # when the verify token endpoint is hit it errors
+        self.verify_token(token, expected_status=404)
+
+    def test_verify_token_with_bad_email(self):
+        # given a respondent in the db but other email
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+
+        secret_key = current_app.config['SECRET_KEY']
+        timed_serializer = URLSafeTimedSerializer(secret_key)
+        token = timed_serializer.dumps('not-mock@example.com', salt=current_app.config['EMAIL_TOKEN_SALT'])
 
         # when the verify token endpoint is hit it errors
         self.verify_token(token, expected_status=404)
 
     def test_verify_token_with_valid_token(self):
-        # given a valid token
-        token = self.generate_valid_token()
+        # given a respondent and a valid token
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+
+        secret_key = current_app.config['SECRET_KEY']
+        timed_serializer = URLSafeTimedSerializer(secret_key)
+        token = timed_serializer.dumps(respondent.email_address, salt=current_app.config['EMAIL_TOKEN_SALT'])
 
         # the verify end point verifies the token
         self.verify_token(token, expected_status=200)
