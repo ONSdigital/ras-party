@@ -60,15 +60,23 @@ class TestRespondents(PartyTestClient):
         # Given there is a respondent
         respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
         # When the resend verification end point is hit
-        self.resend_verification_email(respondent.party_uuid, 200)
+        self.resend_verification_email(respondent.party_uuid)
 
     def test_resend_verification_email_calls_notify_gateway(self):
         # Given there is a respondent
         respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
         # When the resend verification end point is hit
-        self.resend_verification_email(respondent.party_uuid, 200)
+        self.resend_verification_email(respondent.party_uuid)
         # Verification email is sent
-        self.assertEqual(self.mock_notify.verify_email.call_count, 1)
+        self.assertTrue(self.mock_notify.verify_email.called)
+
+    def test_resend_verification_email_responds_with_message(self):
+        # Given there is a respondent
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+        # When the resend verification end point is hit
+        response = self.resend_verification_email(respondent.party_uuid)
+        # Message is present in response
+        self.assertIn(account_controller.EMAIL_VERIFICATION_SENT, response['message'])
 
     def test_resend_verification_email_party_id_not_found(self):
         # Given the party_id sent doesn't exist
@@ -76,28 +84,68 @@ class TestRespondents(PartyTestClient):
         response = self.resend_verification_email('3b136c4b-7a14-4904-9e01-13364dd7b972', 404)
 
         # Then an email is not sent and a message saying there is no respondent is returned
+        self.assertFalse(self.mock_notify.verify_email.called)
         self.assertIn(account_controller.NO_RESPONDENT_FOR_PARTY_ID, response['errors'])
 
     def test_resend_verification_email_party_id_malformed(self):
         self.resend_verification_email('malformed', 500)
 
-    def test_request_password_change_calls_notify_gateway(self):
+    def test_request_password_change_with_valid_email(self):
         # Given there is a respondent
         respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
 
         # when the request password end point is hit
-        self.request_password_change(email=respondent.email_address)
+        payload = {'email_address': respondent.email_address}
+        self.request_password_change(payload)
 
-        # then a notification message is sent to the notify gateway
-        self.assertEqual(self.mock_notify.request_password_change.call_count, 1)
+    def test_request_password_change_calls_notify_gateway(self):
+        # Given there is a respondent
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+
+        # When the request password end point is hit with an existing email address
+        payload = {'email_address': respondent.email_address}
+        self.request_password_change(payload)
+
+        # Then a notification message is sent to the notify gateway
+        personalisation = {
+            'RESET_PASSWORD_URL': PublicWebsite(current_app.config).reset_password_url(respondent.email_address),
+            'FIRST_NAME': respondent.first_name
+        }
+        self.mock_notify.request_password_change.assert_called_once_with(respondent.email_address, personalisation, respondent.party_uuid)
+
+    def test_request_password_change_with_no_email(self):
+        # Given a missing email address
+        payload = {}
+        # when the request password end point is hit
+        self.request_password_change(payload, expected_status=400)
+
+    def test_request_password_change_with_empty_email(self):
+        # Given an empty string
+        payload = {'email_address': ''}
+        # when the request password end point is hit
+        self.request_password_change(payload, expected_status=404)
+
+    def test_request_password_change_with_other_email(self):
+        # Given there is a respondent
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+
+        # when the request password end point is hit
+        payload = {'email_address': 'not-mock@example.com'}
+        self.request_password_change(payload, expected_status=404)
+        self.assertFalse(self.mock_notify.request_password_change.called)
+
+    def test_request_password_change_with_malformed_email(self):
+        # when the request password end point is hit
+        payload = {'email_address': 'malformed'}
+        self.request_password_change(payload, expected_status=404)
 
     def test_should_reset_password_when_email_wrong_case(self):
-        # Given
-        # Create respondent
+        # Given there is a respondent
         respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
 
         # When
-        self.request_password_change(respondent.email_address.upper())
+        payload = {'email_address': respondent.email_address.upper()}
+        self.request_password_change(payload)
 
         # Then
         personalisation = {
@@ -108,10 +156,10 @@ class TestRespondents(PartyTestClient):
 
     def test_change_password_with_invalid_token(self):
         # when the password is changed with an incorrect token
-        token = "fake_token"
+        token = 'fake_token'
         payload = {
-            "new_password": "password",
-            "token": token
+            'new_password': 'password',
+            'token': token
         }
 
         # it produces a 404
@@ -122,11 +170,25 @@ class TestRespondents(PartyTestClient):
         token = self.generate_valid_token_from_email('mock@email.com')
         payload = {
             # "new_password": "password",
-            "token": token
+            'token': token
+        }
+
+        # Then validation fails
+        self.change_password(token, payload, expected_status=400)
+
+    def test_change_password_with_empty_password(self):
+        # Given a respondent
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+
+        # when the password is changed with a token that does not match respondent
+        token = self.generate_valid_token_from_email(respondent.email_address)
+        payload = {
+            'new_password': '',
+            'token': token
         }
 
         # it produces a 404
-        self.change_password(token, payload, expected_status=400)
+        self.change_password(token, payload)
 
     def test_change_password_with_other_token(self):
         # Given a respondent
@@ -135,8 +197,8 @@ class TestRespondents(PartyTestClient):
         # when the password is changed with a token that does not match respondent
         token = self.generate_valid_token_from_email('not-mock@email.com')
         payload = {
-            "new_password": "password",
-            "token": token
+            'new_password': 'password',
+            'token': token
         }
 
         # it produces a 404
@@ -146,8 +208,8 @@ class TestRespondents(PartyTestClient):
         # when the password is changed with no respondents in db
         token = self.generate_valid_token_from_email(self.mock_respondent['emailAddress'])
         payload = {
-            "new_password": "password",
-            "token": token
+            'new_password': 'password',
+            'token': token
         }
 
         # it produces a 404 (respondent not found)
@@ -158,15 +220,19 @@ class TestRespondents(PartyTestClient):
         respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
         token = self.generate_valid_token_from_email(respondent.email_address)
         payload = {
-            "new_password": "password",
-            "token": token
+            'new_password': 'password',
+            'token': token
         }
         # When the password is
         self.change_password(token, payload, expected_status=200)
         personalisation = {
             'FIRST_NAME': respondent.first_name
         }
-        self.mock_notify.confirm_password_change.assert_called_once_with(respondent.email_address, personalisation, respondent.party_uuid)
+        self.mock_notify.confirm_password_change.assert_called_once_with(
+            respondent.email_address,
+            personalisation,
+            respondent.party_uuid
+        )
 
     def test_verify_token_with_bad_token(self):
         # given a bad token
