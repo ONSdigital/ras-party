@@ -2,18 +2,26 @@ import uuid
 
 from flask import current_app
 from itsdangerous import SignatureExpired, BadSignature, BadData
-from ras_common_utils.ras_error.ras_error import RasError, RasNotifyError
+from ras_common_utils.ras_error.ras_error import RasError
 from sqlalchemy import orm
 from structlog import get_logger
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.notify_gateway import NotifyGateway
-from ras_party.controllers.queries import query_business_by_party_uuid, query_respondent_by_email, \
-    query_respondent_by_party_uuid
-from ras_party.controllers.validate import Validator, IsUuid, Exists
-from ras_party.models.models import Respondent, RespondentStatus, BusinessRespondent, PendingEnrolment, \
-    Enrolment, EnrolmentStatus
+from ras_party.controllers.queries import query_business_by_party_uuid
+from ras_party.controllers.queries import query_respondent_by_email
+from ras_party.controllers.queries import query_respondent_by_party_uuid
+from ras_party.controllers.validate import Validator
+from ras_party.controllers.validate import IsUuid
+from ras_party.controllers.validate import Exists
+from ras_party.models.models import Respondent
+from ras_party.models.models import RespondentStatus
+from ras_party.models.models import BusinessRespondent
+from ras_party.models.models import PendingEnrolment
+from ras_party.models.models import Enrolment
+from ras_party.models.models import EnrolmentStatus
 from ras_party.support.public_website import PublicWebsite
+from ras_party.support.ras_error import RasNotifyError
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.transactional import transactional
@@ -64,7 +72,8 @@ def post_respondent(party, tran, session):
 
     existing = query_respondent_by_email(party['emailAddress'], session)
     if existing:
-        raise RasError("User with email address {} already exists.".format(party['emailAddress']), status_code=400)
+        raise RasError("User with email address {} already exists.".format(
+            party['emailAddress']), status_code=400)
 
     case_context = request_case(party['enrolmentCode'])
     case_id = case_context['id']
@@ -77,11 +86,13 @@ def post_respondent(party, tran, session):
         survey = request_survey(survey_id)
         survey_name = survey['longName']
     except KeyError:
-        raise RasError("There is no survey bound for this user with email address: {}".format(party['emailAddress']))
+        raise RasError("There is no survey bound for this user with email address: {}".format(
+            party['emailAddress']))
 
     business = query_business_by_party_uuid(business_id, session)
     if not business:
-        msg = "Could not locate business with id '{}' when creating business association.".format(business_id)
+        msg = "Could not locate business with id '{}' when creating business association.".format(
+            business_id)
         raise RasError(msg, status_code=404)
 
     # Chain of enrolment processes
@@ -110,7 +121,10 @@ def post_respondent(party, tran, session):
         session.add(pending_enrolment)
 
         # Notify the case service of this account being created
-        post_case_event(case_id, respondent.party_uuid, "RESPONDENT_ACCOUNT_CREATED", "New respondent account created")
+        post_case_event(case_id,
+                        respondent.party_uuid,
+                        "RESPONDENT_ACCOUNT_CREATED",
+                        "New respondent account created")
 
         _send_email_verification(respondent.party_uuid, party['emailAddress'])
     except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError):
@@ -235,12 +249,14 @@ def change_respondent_password(token, payload, tran, session):
     party_id = respondent.party_uuid
 
     try:
-        NotifyGateway(current_app.config).confirm_password_change(email_address, personalisation, str(party_id))
+        NotifyGateway(current_app.config).confirm_password_change(
+            email_address, personalisation, str(party_id))
     except RasNotifyError:
         log.error("Error sending notification email for party_id {}".format(party_id))
 
     # This ensures the log message is only written once the DB transaction is committed
-    tran.on_success(lambda: log.info('Respondent with id {} has changed their password'.format(party_id)))
+    tran.on_success(lambda: log.info(
+        'Respondent with id {} has changed their password'.format(party_id)))
 
     return {'response': "Ok"}
 
@@ -269,7 +285,8 @@ def request_password_change(payload, session):
 
     party_id = respondent.party_uuid
     try:
-        NotifyGateway(current_app.config).request_password_change(email_address, personalisation, str(party_id))
+        NotifyGateway(current_app.config).request_password_change(
+            email_address, personalisation, str(party_id))
     except RasNotifyError:
         # Note: intentionally suppresses exception
         log.error("Error sending notification email for party_id {}".format(party_id))
@@ -291,7 +308,8 @@ def put_email_verification(token, session):
 
     r = query_respondent_by_email(email_address, session)
     if not r:
-        raise RasError("Unable to find user while checking email verification token", status_code=404)
+        raise RasError("Unable to find user while checking email verification token",
+                       status_code=404)
 
     if r.status != RespondentStatus.ACTIVE:
         # We set the party as ACTIVE in this service
@@ -351,7 +369,8 @@ def set_user_verified(email_address):
         If it fails a raise_for_status is executed
     """
     log.info("Setting user active on OAuth2 server")
-    oauth_response = OauthClient(current_app.config).update_account(username=email_address, account_verified='true')
+    oauth_response = OauthClient(current_app.config).update_account(
+        username=email_address, account_verified='true')
     if oauth_response.status_code != 201:
         log.error("Unable to set the user active on the OAuth2 server")
         oauth_response.raise_for_status()
@@ -359,7 +378,8 @@ def set_user_verified(email_address):
 
 def enrol_respondent_for_survey(r, sess):
     pending_enrolment_id = r.pending_enrolment[0].id
-    pending_enrolment = sess.query(PendingEnrolment).filter(PendingEnrolment.id == pending_enrolment_id).one()
+    pending_enrolment = sess.query(PendingEnrolment).filter(
+        PendingEnrolment.id == pending_enrolment_id).one()
     enrolment = sess.query(Enrolment) \
         .filter(Enrolment.business_id == str(pending_enrolment.business_id)) \
         .filter(Enrolment.survey_id == str(pending_enrolment.survey_id)) \
@@ -378,7 +398,8 @@ def enrol_respondent_for_survey(r, sess):
 
 
 def register_user(party, tran):
-    oauth_response = OauthClient(current_app.config).create_account(party['emailAddress'], party['password'])
+    oauth_response = OauthClient(current_app.config).create_account(
+        party['emailAddress'], party['password'])
     if not oauth_response.status_code == 201:
         log.info("Registering respondent OAuth2 server responded with {} {}"
                  .format(oauth_response.status_code, oauth_response.content))

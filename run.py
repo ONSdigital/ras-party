@@ -1,10 +1,15 @@
 from json import loads
 
+import structlog
 from flask_cors import CORS
 from ras_common_utils.ras_config import ras_config
 from ras_common_utils.ras_config.flask_extended import Flask
 from ras_common_utils.ras_database.ras_database import RasDatabase
 from ras_common_utils.ras_logger.ras_logger import configure_logger
+from retrying import retry, RetryError
+from sqlalchemy.exc import DatabaseError
+
+logger = structlog.get_logger()
 
 
 def create_app(config):
@@ -30,6 +35,11 @@ def create_app(config):
     return app
 
 
+def retry_if_database_error(exception):
+    return isinstance(exception, DatabaseError)
+
+
+@retry(retry_on_exception=retry_if_database_error, wait_fixed=2000, stop_max_delay=30000, wrap_exception=True)
 def initialise_db(app):
     # Initialise the database with the specified SQLAlchemy model
     party_database = RasDatabase.make(model_paths=['ras_party.models.models'])
@@ -48,7 +58,11 @@ if __name__ == '__main__':
     with open(app.config['PARTY_SCHEMA']) as io:
         app.config['PARTY_SCHEMA'] = loads(io.read())
 
-    initialise_db(app)
+    try:
+        initialise_db(app)
+    except RetryError:
+        logger.exception('Failed to initialise database')
+        exit(1)
 
     scheme, host, port = app.config['SCHEME'], app.config['HOST'], int(app.config['PORT'])
 
