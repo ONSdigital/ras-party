@@ -173,7 +173,7 @@ class TestRespondents(PartyTestClient):
         self.add_respondent_to_db_and_oauth(self.mock_respondent)
 
         # when the request password end point is hit
-        payload = {'email_address': 'not-mock@example.com'}
+        payload = {'email_address': 'not-mock@example.test'}
         self.request_password_change(payload, expected_status=404)
         self.assertFalse(self.mock_notify.request_password_change.called)
 
@@ -208,7 +208,7 @@ class TestRespondents(PartyTestClient):
                 patch('ras_party.controllers.account_controller.NotifyGateway'),\
                 patch('ras_party.controllers.account_controller.PublicWebsite'):
             # Given
-            payload = {'email_address': 'test@example.com'}
+            payload = {'email_address': 'test@example.test'}
 
             # When
             # pylint: disable=E1120
@@ -216,7 +216,7 @@ class TestRespondents(PartyTestClient):
             account_controller.request_password_change(payload)
 
             # Then
-            query.assert_called_once_with('test@example.com', db.session())
+            query.assert_called_once_with('test@example.test', db.session())
 
     def test_change_password_with_invalid_token(self):
         # when the password is changed with an incorrect token
@@ -305,7 +305,7 @@ class TestRespondents(PartyTestClient):
                 patch('ras_party.controllers.account_controller.OauthClient') as client,\
                 patch('ras_party.controllers.account_controller.NotifyGateway'):
             # Given
-            token = generate_email_token('test@example.com', current_app.config)
+            token = generate_email_token('test@example.test', current_app.config)
             client().update_account().status_code = 201
 
             # When
@@ -467,7 +467,7 @@ class TestRespondents(PartyTestClient):
         with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
                 patch('ras_party.support.session_decorator.current_app.db') as db:
             # Given
-            token = self.generate_valid_token_from_email('test@example.com')
+            token = self.generate_valid_token_from_email('test@example.test')
 
             # When
             # pylint: disable=E1120
@@ -475,7 +475,7 @@ class TestRespondents(PartyTestClient):
             account_controller.put_email_verification(token)
 
             # Then
-            query.assert_called_once_with('test@example.com', db.session())
+            query.assert_called_once_with('test@example.test', db.session())
 
     def test_post_respondent_with_no_body_returns_400(self):
         self.post_to_respondents(None, 400)
@@ -577,14 +577,14 @@ class TestRespondents(PartyTestClient):
                 patch('ras_party.controllers.account_controller.Requests'):
             # Given
             payload = {
-                'emailAddress': 'test@example.com',
+                'emailAddress': 'test@example.test',
                 'firstName': 'Joe',
                 'lastName': 'bloggs',
                 'password': 'secure',
                 'telephone': '111',
                 'enrolmentCode': 'abc'
             }
-            query('test@example.com', db.session()).return_value = None
+            query('test@example.test', db.session()).return_value = None
 
             # When
             # pylint: disable=E1120
@@ -593,4 +593,4 @@ class TestRespondents(PartyTestClient):
                 account_controller.post_respondent(payload)
 
             # Then
-            query.assert_called_once_with('test@example.com', db.session())
+            query.assert_called_once_with('test@example.test', db.session())
