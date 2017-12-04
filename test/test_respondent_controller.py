@@ -338,40 +338,58 @@ class TestRespondents(PartyTestClient):
     def test_put_respondent_email_returns_400_when_no_email(self):
         self.put_email_to_respondents({}, 400)
 
-    def test_put_respondent_email_changes_email(self):
-        mock_notify = MagicMock()
-        account_controller.NotifyGateway = MagicMock(return_value=mock_notify)
-        mock_business = MockBusiness().as_business()
-        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
-        self.post_to_businesses(mock_business, 200)
-        mock_respondent = MockRespondent().attributes().as_respondent()
-        self.post_to_respondents(mock_respondent, 200)
-        self.assertNotEqual("test@test.test", mock_respondent['emailAddress'])
+    def test_put_respondent_email_returns_400_when_no_new_email(self):
+        put_data = {'email_address': self.mock_respondent['emailAddress']}
+        self.put_email_to_respondents(put_data, 400)
+
+    def test_put_respondent_email_returns_404_when_no_respondent(self):
         put_data = {
-            "email_address": mock_respondent['emailAddress'],
-            "new_email_address": "test@test.test"
+            'email_address': self.mock_respondent['emailAddress'],
+            'new_email_address': 'test@example.test',
         }
-        self.put_email_to_respondents(put_data, 200)
-        respondent = respondents()[0]
-        self.assertEqual("test@test.test", respondent.email_address)
+        self.put_email_to_respondents(put_data, 404)
+
+    def test_put_respondent_email_returns_respondent_same_email(self):
+        self.add_respondent_to_db_and_oauth(self.mock_respondent)
+        put_data = {
+            'email_address': self.mock_respondent['emailAddress'],
+            'new_email_address': self.mock_respondent['emailAddress'],
+        }
+        response = self.put_email_to_respondents(put_data)
+        self.assertTrue(respondents()[0].email_address == response['emailAddress'])
+
+    def test_put_respondent_email_returns_409_existing_email(self):
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+        mock_respondent_b = self.mock_respondent.copy()
+        mock_respondent_b['emailAddress'] = 'test@example.test'
+        self.add_respondent_to_db_and_oauth(mock_respondent_b)
+
+        put_data = {
+            'email_address': respondent.email_address,
+            'new_email_address': mock_respondent_b['emailAddress'],
+        }
+        response = self.put_email_to_respondents(put_data, 409)
+
+    def test_put_respondent_email_new_email(self):
+        self.add_respondent_to_db_and_oauth(self.mock_respondent)
+        put_data = {
+            'email_address': self.mock_respondent['emailAddress'],
+            'new_email_address': 'test@example.test',
+        }
+        self.put_email_to_respondents(put_data)
+        self.assertEqual(respondents()[0].email_address, 'test@example.test')
 
     def test_put_respondent_email_calls_the_notify_service(self):
-        mock_notify = MagicMock()
-        account_controller.NotifyGateway = MagicMock(return_value=mock_notify)
-
-        self.assertTrue(mock_notify.call_count == 0)
-        mock_business = MockBusiness().as_business()
-        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
-        self.post_to_businesses(mock_business, 200)
-        mock_respondent = MockRespondent().attributes().as_respondent()
-        self.post_to_respondents(mock_respondent, 200)
-        self.assertEqual(mock_notify.verify_email.call_count, 1)
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
         put_data = {
-            "email_address": mock_respondent['emailAddress'],
-            "new_email_address": "test@test.test"
+            'email_address': self.mock_respondent['emailAddress'],
+            'new_email_address': 'test@example.test'
         }
-        self.put_email_to_respondents(put_data, 200)
-        self.assertEqual(mock_notify.verify_email.call_count, 2)
+        self.put_email_to_respondents(put_data)
+        personalisation = {
+            'ACCOUNT_VERIFICATION_URL': PublicWebsite(current_app.config).activate_account_url('test@example.test'),
+        }
+        self.mock_notify.verify_email.assert_called_once_with('test@example.test', personalisation, respondent.party_uuid)
 
     def test_email_verification_activates_a_respondent(self):
         mock_notify = MagicMock()
