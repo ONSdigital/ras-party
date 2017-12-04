@@ -125,6 +125,11 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
+    def get_respondent_by_email(self, email, expected_status=200):
+        response = self.client.get('/party-api/v1/respondents/email/{}'.format(email), headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
     def put_email_verification(self, token, expected_status):
         response = self.client.put('/party-api/v1/emailverification/{}'.format(token), headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))

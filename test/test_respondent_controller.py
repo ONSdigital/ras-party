@@ -74,6 +74,27 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['sampleUnitType'], self.mock_respondent['sampleUnitType'])
         self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
 
+    def test_get_respondent_with_invalid_email(self):
+        self.get_respondent_by_email('123', 404)
+
+    def test_get_respondent_with_valid_email(self):
+        self.get_respondent_by_email('test@example.test', 404)
+
+    def test_get_respondent_by_email_returns_correct_representation(self):
+        # Given there is a respondent in the db
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+
+        # And we get the new respondent
+        response = self.get_respondent_by_email(respondent.email_address)
+
+        # Then the response matches the posted respondent
+        self.assertTrue('id' in response)
+        self.assertEqual(response['emailAddress'], self.mock_respondent['emailAddress'])
+        self.assertEqual(response['firstName'], self.mock_respondent['firstName'])
+        self.assertEqual(response['lastName'], self.mock_respondent['lastName'])
+        self.assertEqual(response['sampleUnitType'], self.mock_respondent['sampleUnitType'])
+        self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
+
     def test_resend_verification_email(self):
         # Given there is a respondent
         respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
