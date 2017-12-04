@@ -293,7 +293,7 @@ class TestRespondents(PartyTestClient):
 
         secret_key = "fake_key"
         timed_serializer = URLSafeTimedSerializer(secret_key)
-        token = timed_serializer.dumps(respondent.email_address, salt='bulbous')
+        token = timed_serializer.dumps(respondent.email_address, salt='salt')
 
         # when the verify token endpoint is hit it errors
         self.verify_token(token, expected_status=404)
@@ -392,71 +392,49 @@ class TestRespondents(PartyTestClient):
         self.mock_notify.verify_email.assert_called_once_with('test@example.test', personalisation, respondent.party_uuid)
 
     def test_email_verification_activates_a_respondent(self):
-        mock_notify = MagicMock()
-        account_controller.NotifyGateway = MagicMock(return_value=mock_notify)
-        # Given there is a business and an associated respondent
-        self.populate_with_respondent()
-
-        # And the respondent state is CREATED
+        self.add_respondent_to_db_and_oauth(self.mock_respondent)
         db_respondent = respondents()[0]
         self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
-        # When the email is verified
-        # TODO: this is an awful way of discovering the token, needs to be cleaned-up:
-        frontstage_url = mock_notify.verify_email.call_args[0][1]['ACCOUNT_VERIFICATION_URL']
-        token = frontstage_url.split('/')[-1]
-        self.put_email_verification(token, 200)
-        # Then the respondent state is ACTIVE
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        response = self.put_email_verification(token, 200)
         db_respondent = respondents()[0]
         self.assertEqual(db_respondent.status, RespondentStatus.ACTIVE)
+        self.assertEqual(response['status'], RespondentStatus.ACTIVE.name)
 
     def test_email_verification_url_is_from_config_yml_file(self):
-        mock_notify = MagicMock()
-        account_controller.NotifyGateway = MagicMock(return_value=mock_notify)
-        # Given there is a business and an associated respondent
-        self.populate_with_respondent()
-
-        # And the respondent state is CREATED
-        db_respondent = respondents()[0]
-        self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
-
+        account_controller._send_email_verification(0, 'test@example.test')
         expected_url = 'http://dummy.ons.gov.uk/register/activate-account/'
-
-        # When the email is verified get the email URL from the argument list in the '_send_message_to_gov_uk_notify'
-        # method then check the URL is the same as the value configured in the config file
-        frontstage_url = mock_notify.verify_email.call_args[0][1]['ACCOUNT_VERIFICATION_URL']
+        frontstage_url = self.mock_notify.verify_email.call_args[0][1]['ACCOUNT_VERIFICATION_URL']
         self.assertIn(expected_url, frontstage_url)
 
     def test_email_verification_twice_produces_a_200(self):
-        mock_notify = MagicMock()
-        account_controller.NotifyGateway = MagicMock(return_value=mock_notify)
-        # Given there is a business and an associated respondent
-        self.populate_with_respondent()
-
-        # When the email is verified twice
-        frontstage_url = mock_notify.verify_email.call_args[0][1]['ACCOUNT_VERIFICATION_URL']
-        token = frontstage_url.split('/')[-1]
-
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+        token = self.generate_valid_token_from_email(respondent.email_address)
         self.put_email_verification(token, 200)
-        # Then the response is a 200
-        self.put_email_verification(token, 200)
+        response = self.put_email_verification(token, 200)
+        self.assertEqual(response['status'], RespondentStatus.ACTIVE.name)
 
-    def test_email_verification_unknown_token_produces_a_404(self, *_):
-        mock_notify = MagicMock()
-        account_controller.NotifyGateway = MagicMock(return_value=mock_notify)
-
-        # When an unknown email token exists
-        secret_key = "aardvark"
+    def test_email_verification_bad_token_produces_a_404(self):
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+        secret_key = "fake_key"
         timed_serializer = URLSafeTimedSerializer(secret_key)
-        token = timed_serializer.dumps("brucie@tv.com", salt='bulbous')
-        # Then the response is a 404
+        token = timed_serializer.dumps(respondent.email_address, salt='salt')
         self.put_email_verification(token, 404)
+        db_respondent = respondents()[0]
+        self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
 
-    @staticmethod
-    def test_put_email_verification_uses_case_insensitive_email_query():
+    def test_email_verification_unknown_email_produces_a_404(self):
+        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+        token = self.generate_valid_token_from_email('test@example.test')
+        self.put_email_verification(token, 404)
+        db_respondent = respondents()[0]
+        self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
+
+    def test_put_email_verification_uses_case_insensitive_email_query(self):
         with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
                 patch('ras_party.support.session_decorator.current_app.db') as db:
             # Given
-            token = generate_email_token('test@example.com', current_app.config)
+            token = self.generate_valid_token_from_email('test@example.com')
 
             # When
             # pylint: disable=E1120
