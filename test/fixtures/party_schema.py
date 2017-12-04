@@ -3,6 +3,7 @@ schema = {
     "properties": {
         "sampleUnitRef": {"type": "string"},
         "sampleUnitType": {"enum": ["B", "BI"]},
+        "sampleSummaryId": {"type": "string"},
         "attributes": {
             "type": "object",
             "properties": {
@@ -36,5 +37,5 @@ schema = {
             "required": ["runame1", "runame2"]
         }
     },
-    "required": ["sampleUnitRef", "sampleUnitType"]
+    "required": ["sampleUnitRef", "sampleUnitType", "sampleSummaryId"]
 }
