@@ -448,13 +448,10 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['status'], RespondentStatus.ACTIVE.name)
 
     def test_email_verification_bad_token_produces_a_404(self):
-        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
         secret_key = "fake_key"
         timed_serializer = URLSafeTimedSerializer(secret_key)
-        token = timed_serializer.dumps(respondent.email_address, salt='salt')
+        token = timed_serializer.dumps(self.mock_respondent['emailAddress'], salt='salt')
         self.put_email_verification(token, 404)
-        db_respondent = respondents()[0]
-        self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
 
     def test_email_verification_unknown_email_produces_a_404(self):
         self.add_respondent_to_db_and_oauth(self.mock_respondent)
