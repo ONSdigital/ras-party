@@ -1,16 +1,8 @@
 import uuid
-from unittest.mock import MagicMock, patch
 
-from flask import current_app
-from itsdangerous import URLSafeTimedSerializer
-
-from ras_common_utils.ras_error.ras_error import RasError
-from ras_party.controllers import account_controller
-from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
-from ras_party.support.verification import generate_email_token
-from test.mocks import MockBusiness, MockRequests, MockResponse
-from test.party_client import PartyTestClient, businesses, enrolments
+from test.mocks import MockBusiness, MockRequests
+from test.party_client import PartyTestClient, businesses
 
 
 class TestParties(PartyTestClient):
@@ -150,8 +142,6 @@ class TestParties(PartyTestClient):
 
     def test_get_party_with_nonexistent_ref(self):
         self.get_party_by_ref('B', '123', 404)
-
-
 
 
 if __name__ == '__main__':

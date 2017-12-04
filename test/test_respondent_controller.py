@@ -13,7 +13,7 @@ from ras_party.support.session_decorator import with_db_session
 from ras_party.support.transactional import transactional
 from ras_party.support.verification import generate_email_token
 from test.mocks import MockBusiness, MockRespondent, MockRequests, MockResponse
-from test.party_client import PartyTestClient, businesses, respondents, business_respondent_associations, enrolments
+from test.party_client import PartyTestClient, respondents, business_respondent_associations, enrolments
 
 
 class TestRespondents(PartyTestClient):
@@ -150,7 +150,11 @@ class TestRespondents(PartyTestClient):
             'RESET_PASSWORD_URL': PublicWebsite(current_app.config).reset_password_url(respondent.email_address),
             'FIRST_NAME': respondent.first_name
         }
-        self.mock_notify.request_password_change.assert_called_once_with(respondent.email_address, personalisation, respondent.party_uuid)
+        self.mock_notify.request_password_change.assert_called_once_with(
+            respondent.email_address,
+            personalisation,
+            respondent.party_uuid
+        )
 
     def test_request_password_change_with_no_email(self):
         # Given a missing email address
@@ -166,7 +170,7 @@ class TestRespondents(PartyTestClient):
 
     def test_request_password_change_with_other_email(self):
         # Given there is a respondent
-        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+        self.add_respondent_to_db_and_oauth(self.mock_respondent)
 
         # when the request password end point is hit
         payload = {'email_address': 'not-mock@example.com'}
@@ -191,7 +195,11 @@ class TestRespondents(PartyTestClient):
             'RESET_PASSWORD_URL': PublicWebsite(current_app.config).reset_password_url(respondent.email_address),
             'FIRST_NAME': respondent.first_name
         }
-        self.mock_notify.request_password_change.assert_called_once_with(respondent.email_address, personalisation, respondent.party_uuid)
+        self.mock_notify.request_password_change.assert_called_once_with(
+            respondent.email_address,
+            personalisation,
+            respondent.party_uuid
+        )
 
     @staticmethod
     def test_request_password_change_uses_case_insensitive_email_query():
@@ -248,7 +256,7 @@ class TestRespondents(PartyTestClient):
 
     def test_change_password_with_other_token(self):
         # Given a respondent
-        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+        self.add_respondent_to_db_and_oauth(self.mock_respondent)
 
         # when the password is changed with a token that does not match respondent
         token = self.generate_valid_token_from_email('not-mock@email.com')
@@ -306,7 +314,7 @@ class TestRespondents(PartyTestClient):
             account_controller.change_respondent_password(token, {'new_password': 'abc'})
 
             # Then
-            query.assert_called_once_with('test@example.com', db.session())
+            query.assert_called_once_with('test@example.test', db.session())
 
     def test_verify_token_with_bad_secrets(self):
         # given a respondent and a bad token
@@ -321,11 +329,11 @@ class TestRespondents(PartyTestClient):
 
     def test_verify_token_with_bad_email(self):
         # given a respondent in the db but other email
-        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+        self.add_respondent_to_db_and_oauth(self.mock_respondent)
 
         secret_key = current_app.config['SECRET_KEY']
         timed_serializer = URLSafeTimedSerializer(secret_key)
-        token = timed_serializer.dumps('not-mock@example.com', salt=current_app.config['EMAIL_TOKEN_SALT'])
+        token = timed_serializer.dumps('not-mock@example.test', salt=current_app.config['EMAIL_TOKEN_SALT'])
 
         # when the verify token endpoint is hit it errors
         self.verify_token(token, expected_status=404)
@@ -346,7 +354,7 @@ class TestRespondents(PartyTestClient):
         with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
                 patch('ras_party.support.session_decorator.current_app.db') as db:
             # Given
-            token = generate_email_token('test@example.com', current_app.config)
+            token = generate_email_token('test@example.test', current_app.config)
 
             # When
             # pylint: disable=E1120
@@ -354,7 +362,7 @@ class TestRespondents(PartyTestClient):
             account_controller.verify_token(token)
 
             # Then
-            query.assert_called_once_with('test@example.com', db.session())
+            query.assert_called_once_with('test@example.test', db.session())
 
     def test_put_respondent_email_returns_400_when_no_email(self):
         self.put_email_to_respondents({}, 400)
@@ -389,7 +397,7 @@ class TestRespondents(PartyTestClient):
             'email_address': respondent.email_address,
             'new_email_address': mock_respondent_b['emailAddress'],
         }
-        response = self.put_email_to_respondents(put_data, 409)
+        self.put_email_to_respondents(put_data, 409)
 
     def test_put_respondent_email_new_email(self):
         self.add_respondent_to_db_and_oauth(self.mock_respondent)
@@ -410,7 +418,11 @@ class TestRespondents(PartyTestClient):
         personalisation = {
             'ACCOUNT_VERIFICATION_URL': PublicWebsite(current_app.config).activate_account_url('test@example.test'),
         }
-        self.mock_notify.verify_email.assert_called_once_with('test@example.test', personalisation, respondent.party_uuid)
+        self.mock_notify.verify_email.assert_called_once_with(
+            'test@example.test',
+            personalisation,
+            respondent.party_uuid
+        )
 
     def test_email_verification_activates_a_respondent(self):
         self.add_respondent_to_db_and_oauth(self.mock_respondent)
@@ -445,7 +457,7 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
 
     def test_email_verification_unknown_email_produces_a_404(self):
-        respondent = self.add_respondent_to_db_and_oauth(self.mock_respondent)
+        self.add_respondent_to_db_and_oauth(self.mock_respondent)
         token = self.generate_valid_token_from_email('test@example.test')
         self.put_email_verification(token, 404)
         db_respondent = respondents()[0]
