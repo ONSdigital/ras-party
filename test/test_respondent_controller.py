@@ -414,13 +414,6 @@ class TestRespondents(PartyTestClient):
     def test_post_respondent_with_no_payload_returns_400(self):
         self.post_to_respondents(None, 400)
 
-    def test_post_business_with_payload_returns_200(self):
-        mock_business = MockBusiness().attributes().as_business()
-        self.post_to_businesses(mock_business, 200)
-
-    def test_post_business_with_no_payload_returns_400(self):
-        self.post_to_businesses(None, 400)
-
     def test_post_respondent_with_inactive_iac(self):
         # Given the IAC code is inactive
         def mock_get_iac(*args, **kwargs):
