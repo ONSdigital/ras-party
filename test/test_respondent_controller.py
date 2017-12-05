@@ -402,8 +402,24 @@ class TestRespondents(PartyTestClient):
             account_controller.put_email_verification(token)
             query.assert_called_once_with('test@example.test', db.session())
 
-    def test_post_respondent_with_no_body_returns_400(self):
+    def test_post_respondent_with_payload_returns_200(self):
+        mock_notify = MagicMock()
+        account_controller.NotifyGateway = MagicMock(return_value=mock_notify)
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        mock_respondent = MockRespondent().attributes().as_respondent()
+        self.post_to_respondents(mock_respondent, 200)
+
+    def test_post_respondent_with_no_payload_returns_400(self):
         self.post_to_respondents(None, 400)
+
+    def test_post_business_with_payload_returns_200(self):
+        mock_business = MockBusiness().attributes().as_business()
+        self.post_to_businesses(mock_business, 200)
+
+    def test_post_business_with_no_payload_returns_400(self):
+        self.post_to_businesses(None, 400)
 
     def test_post_respondent_with_inactive_iac(self):
         # Given the IAC code is inactive
