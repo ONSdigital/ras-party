@@ -11,7 +11,7 @@ from ras_party.models.models import Business, Respondent, BusinessRespondent, En
 from run import create_app, initialise_db
 from test.fixtures import party_schema
 from test.fixtures.config import test_config
-from test.mocks import MockBusiness, MockRespondent
+from test.mocks import MockBusiness
 
 
 def businesses():
@@ -46,10 +46,6 @@ class PartyTestClient(TestCase):
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
         self.post_to_businesses(mock_business, 200)
-
-    def populate_with_respondent(self):
-        mock_respondent = MockRespondent().attributes().as_respondent()
-        self.post_to_respondents(mock_respondent, 200)
 
     @property
     def auth_headers(self):
