@@ -3,6 +3,7 @@
     "properties": {
         "sampleUnitRef": { "type": "string" },
         "sampleUnitType": { "enum": ["B", "BI"]},
+        "sampleSummaryId": { "type": "string" },
         "attributes": {
             "type": "object",
             "properties": {
@@ -36,5 +37,5 @@
             "required": ["runame1", "runame2", "runame3"]
         }
     },
-    "required": ["sampleUnitRef", "sampleUnitType"]
+    "required": ["sampleUnitRef", "sampleUnitType", "sampleSummaryId"]
 }
