@@ -403,13 +403,10 @@ class TestRespondents(PartyTestClient):
             query.assert_called_once_with('test@example.test', db.session())
 
     def test_post_respondent_with_payload_returns_200(self):
-        mock_notify = MagicMock()
-        account_controller.NotifyGateway = MagicMock(return_value=mock_notify)
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
         self.post_to_businesses(mock_business, 200)
-        mock_respondent = MockRespondent().attributes().as_respondent()
-        self.post_to_respondents(mock_respondent, 200)
+        self.post_to_respondents(self.mock_respondent, 200)
 
     def test_post_respondent_with_no_payload_returns_400(self):
         self.post_to_respondents(None, 400)
@@ -420,9 +417,8 @@ class TestRespondents(PartyTestClient):
             return MockResponse('{"active": false}')
         self.mock_requests.get = mock_get_iac
         # When a new respondent is posted
-        mock_respondent = MockRespondent().attributes().as_respondent()
         # Then status code 400 is returned
-        self.post_to_respondents(mock_respondent, 400)
+        self.post_to_respondents(self.mock_respondent, 400)
 
     def test_post_respondent_requests_the_iac_details(self):
         # Given there is a business (related to the IAC code case context)
@@ -430,8 +426,7 @@ class TestRespondents(PartyTestClient):
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
         self.post_to_businesses(mock_business, 200)
         # When a new respondent is posted
-        mock_respondent = MockRespondent().attributes().as_respondent()
-        self.post_to_respondents(mock_respondent, 200)
+        self.post_to_respondents(self.mock_respondent, 200)
         # Then the case service is called with the supplied IAC code
         self.mock_requests.get.assert_called_once_with('http://mockhost:1111/cases/iac/fb747cq725lj')
 
@@ -443,8 +438,7 @@ class TestRespondents(PartyTestClient):
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
         self.post_to_businesses(mock_business, 200)
         # When a new respondent is posted
-        mock_respondent = MockRespondent().attributes().as_respondent()
-        self.post_to_respondents(mock_respondent, 200)
+        self.post_to_respondents(self.mock_respondent, 200)
         # Then the database contains a respondent
         self.assertEqual(len(respondents()), 1)
 
@@ -456,8 +450,7 @@ class TestRespondents(PartyTestClient):
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
         self.post_to_businesses(mock_business, 200)
         # When a new respondent is posted
-        mock_respondent = MockRespondent().attributes().as_respondent()
-        created_respondent = self.post_to_respondents(mock_respondent, 200)
+        created_respondent = self.post_to_respondents(self.mock_respondent, 200)
         # Then the database contains an association
         self.assertEqual(len(business_respondent_associations()), 1)
         # And the association is between the given business and respondent
@@ -475,8 +468,7 @@ class TestRespondents(PartyTestClient):
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
         self.post_to_businesses(mock_business, 200)
         # When a new respondent is posted
-        mock_respondent = MockRespondent().attributes().as_respondent()
-        created_respondent = self.post_to_respondents(mock_respondent, 200)
+        created_respondent = self.post_to_respondents(self.mock_respondent, 200)
         # Then the database contains an association
         self.assertEqual(len(enrolments()), 1)
         enrolment = enrolments()[0]
@@ -490,19 +482,15 @@ class TestRespondents(PartyTestClient):
                          '3b136c4b-7a14-4904-9e01-13364dd7b972')
 
     def test_post_respondent_calls_the_notify_service(self):
-        mock_notify = MagicMock()
-        account_controller.NotifyGateway = MagicMock(return_value=mock_notify)
         # Given there is a business
         mock_business = MockBusiness().as_business()
         mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
         self.post_to_businesses(mock_business, 200)
-        # And an associated respondent
-        mock_respondent = MockRespondent().attributes().as_respondent()
         # When a new respondent is posted
-        self.post_to_respondents(mock_respondent, 200)
+        self.post_to_respondents(self.mock_respondent, 200)
         # Then the (mock) notify service is called
-        self.assertTrue(mock_notify.verify_email.called)
-        self.assertTrue(mock_notify.verify_email.call_count == 1)
+        self.assertTrue(self.mock_notify.verify_email.called)
+        self.assertTrue(self.mock_notify.verify_email.call_count == 1)
 
     def test_post_respondent_uses_case_insensitive_email_query(self):
         with patch('ras_party.controllers.queries.query_respondent_by_email') as query,\
