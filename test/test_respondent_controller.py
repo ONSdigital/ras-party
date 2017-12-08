@@ -47,7 +47,7 @@ class TestRespondents(PartyTestClient):
         return self.respondent
 
     @staticmethod
-    def generate_valid_token_from_email(self, email):
+    def generate_valid_token_from_email(email):
         frontstage_url = PublicWebsite(current_app.config).activate_account_url(email)
         return frontstage_url.split('/')[-1]
 
