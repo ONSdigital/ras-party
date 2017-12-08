@@ -33,8 +33,9 @@ class TestParties(PartyTestClient):
         party_id = self.post_to_businesses(mock_business, 200)['id']
 
         response = self.get_business_by_id(party_id)
-        self.assertEqual(len(response.items()), 5)
+        self.assertEqual(len(response.items()), 6)
         self.assertEqual(response.get('id'), party_id)
+        self.assertEqual(response.get('sampleSummaryId'), mock_business['sampleSummaryId'])
         self.assertEqual(response.get('name'), mock_business.get('name'))
 
     def test_get_business_by_id_returns_correct_representation_verbose(self):
@@ -53,8 +54,9 @@ class TestParties(PartyTestClient):
         self.post_to_businesses(mock_business, 200)
 
         response = self.get_business_by_ref(mock_business['sampleUnitRef'])
-        self.assertEqual(len(response.items()), 5)
+        self.assertEqual(len(response.items()), 6)
         self.assertEqual(response.get('sampleUnitRef'), mock_business['sampleUnitRef'])
+        self.assertEqual(response.get('sampleSummaryId'), mock_business['sampleSummaryId'])
         self.assertEqual(response.get('name'), mock_business.get('name'))
 
     def test_get_business_by_ref_returns_correct_representation_verbose(self):

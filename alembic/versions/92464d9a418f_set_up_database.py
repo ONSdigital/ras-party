@@ -33,6 +33,8 @@ def upgrade():
                 "SELECT party_uuid, attributes FROM partysvc.business"
     conn.execute(sql_query)
 
+    op.drop_column('business', 'attributes', schema='partysvc')
+
 
 def downgrade():
     pass
