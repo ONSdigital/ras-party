@@ -1,3 +1,5 @@
+#pylint: disable=no-value-for-parameter
+
 import uuid
 from unittest.mock import MagicMock, patch
 
@@ -24,6 +26,7 @@ class TestRespondents(PartyTestClient):
         self.mock_notify = MagicMock()
         account_controller.NotifyGateway = MagicMock(return_value=self.mock_notify)
         self.mock_respondent = MockRespondent().attributes().as_respondent()
+        self.respondent = None
 
     @transactional
     @with_db_session
@@ -43,10 +46,10 @@ class TestRespondents(PartyTestClient):
         account_controller.register_user(respondent, tran)
         return self.respondent
 
+    @staticmethod
     def generate_valid_token_from_email(self, email):
         frontstage_url = PublicWebsite(current_app.config).activate_account_url(email)
-        token = frontstage_url.split('/')[-1]
-        return token
+        return frontstage_url.split('/')[-1]
 
     def test_get_respondent_with_invalid_id(self):
         self.get_respondent_by_id('123', 400)
