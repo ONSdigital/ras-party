@@ -23,6 +23,9 @@ class Business(Base):
     business_ref = Column(Text, unique=True)
     respondents = relationship('BusinessRespondent', back_populates='business')
     attributes = Column(JsonColumn())
+    attributes = relationship('BusinessAttributes', backref='business',
+                                       order_by='BusinessAttributes.created_on',
+                                       lazy="dynamic")
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
     @staticmethod
@@ -108,6 +111,17 @@ class Business(Base):
             'name': self.attributes.get('name'),
             'associations': self._get_respondents_associations(self.respondents)
         }
+
+
+class BusinessAttributes(Base):
+    __tablename__ = 'business_attributes'
+
+    id = Column("id", Integer(), primary_key=True)
+    business_id = Column(GUID, ForeignKey('business.party_uuid'))
+    sample_summary_id = Column(Text)
+    collection_exercise = Column(Text)
+    attributes = Column(JsonColumn())
+    created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
 
 class BusinessRespondentStatus(enum.IntEnum):

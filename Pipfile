@@ -28,7 +28,7 @@ structlog = "==17.2.0"
 flask-httpauth = "==3.2.3"
 ras-common-utils = {git = "https://github.com/ONSdigital/ras-common-utils.git", ref = "0.0.7"}
 retrying = "*"
-
+alembic = "*"
 
 [dev-packages]
 
