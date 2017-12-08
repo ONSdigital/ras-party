@@ -1,3 +1,4 @@
+import yaml
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from logging.config import fileConfig
@@ -13,6 +14,12 @@ from logging.config import fileConfig
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# override sqlalchemy.url
+config_path = 'config/config.yaml'
+with open(config_path, 'r') as f:
+    config_data = yaml.load(f)
+config.set_main_option("sqlalchemy.url", config_data['dependencies']['ras-party-db']['uri'])
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

@@ -18,7 +18,6 @@ def upgrade():
         'business_attributes',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('business_id', GUID),
-        # sa.Column('sample_unit_ref', sa.Text, sa.ForeignKey('business.business_ref')),
         sa.Column('sample_summary_id', sa.Text),
         sa.Column('collection_exercise', sa.Text),
         sa.Column('attributes', JsonColumn()),
