@@ -24,8 +24,8 @@ class Business(Base):
     respondents = relationship('BusinessRespondent', back_populates='business')
     attributes = Column(JsonColumn())
     attributes = relationship('BusinessAttributes', backref='business',
-                                       order_by='BusinessAttributes.created_on',
-                                       lazy="dynamic")
+                              order_by='BusinessAttributes.created_on',
+                              lazy="dynamic")
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
     @staticmethod
