@@ -64,8 +64,10 @@ class TestParties(PartyTestClient):
         self.post_to_businesses(mock_business, 200)
 
         response = self.get_business_by_ref(mock_business['sampleUnitRef'], query_string={"verbose": "true"})
+
+        del mock_business['sampleSummaryId']
         for x in mock_business:
-            self.assertTrue(x in response)
+            self.assertIn(x, response)
 
     def test_post_valid_respondent_adds_to_db(self):
         # Given the database contains no respondents
@@ -120,6 +122,8 @@ class TestParties(PartyTestClient):
         party_id_b = self.post_to_parties(mock_party_b, 200)['id']
 
         response = self.get_party_by_id('B', party_id_b)
+
+        del mock_party_b['sampleSummaryId']
         for x in mock_party_b:
             self.assertTrue(x in response)
 
@@ -129,6 +133,8 @@ class TestParties(PartyTestClient):
             .as_party()
         self.post_to_parties(mock_party_b, 200)
         response = self.get_party_by_ref('B', mock_party_b['sampleUnitRef'])
+
+        del mock_party_b['sampleSummaryId']
         for x in mock_party_b:
             self.assertTrue(x in response)
 

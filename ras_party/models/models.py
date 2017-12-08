@@ -53,7 +53,7 @@ class Business(Base):
         :return: The same data transformed to generic party format
         """
 
-        party, attrs = partition_dict(business_data, ['sampleUnitRef', 'sampleUnitType', 'id'])
+        party, attrs = partition_dict(business_data, ['sampleUnitRef', 'sampleUnitType', 'id', "sampleSummaryId"])
         party['attributes'] = attrs
         return party
 

@@ -8,15 +8,16 @@ from test.fixtures import get_case_by_iac, get_ce_by_id, get_survey_by_id, get_i
 
 class MockBusiness:
 
-    REQUIRED_ATTRIBUTES = ['id', 'sampleUnitType', 'sampleUnitRef']
+    REQUIRED_ATTRIBUTES = ['id', 'sampleUnitType', 'sampleUnitRef', "sampleSummaryId"]
 
     def __init__(self):
 
         ruref = str(random.randrange(100000000, 999999999))
 
         self._attributes = {
-            'sampleUnitType': 'B',
-            'sampleUnitRef': ruref,
+            "sampleUnitType": "B",
+            "sampleUnitRef": ruref,
+            "sampleSummaryId": ruref,
             "ruref": ruref,
             "birthdate": "1/1/2001",
             "checkletter": "A",
