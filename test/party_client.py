@@ -11,6 +11,7 @@ from ras_party.models.models import Business, Respondent, BusinessRespondent, En
 from run import create_app, initialise_db
 from test.fixtures import party_schema
 from test.fixtures.config import test_config
+from test.mocks import MockBusiness
 
 
 def businesses():
@@ -40,6 +41,11 @@ class PartyTestClient(TestCase):
         app.config['PARTY_SCHEMA'] = party_schema.schema
         initialise_db(app)
         return app
+
+    def populate_with_business(self):
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
 
     @property
     def auth_headers(self):
@@ -76,7 +82,7 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def put_email_to_respondents(self, payload, expected_status):
+    def put_email_to_respondents(self, payload, expected_status=200):
         response = self.client.put('/party-api/v1/respondents/email',
                                    headers=self.auth_headers,
                                    data=json.dumps(payload),
@@ -115,6 +121,11 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
+    def get_respondent_by_email(self, email, expected_status=200):
+        response = self.client.get('/party-api/v1/respondents/email/{}'.format(email), headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
     def put_email_verification(self, token, expected_status):
         response = self.client.put('/party-api/v1/emailverification/{}'.format(token), headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
@@ -126,9 +137,9 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def request_password_change(self, email, expected_status=200):
+    def request_password_change(self, payload, expected_status=200):
         response = self.client.post('/party-api/v1/respondents/request_password_change',
-                                    data=json.dumps({'email_address': email}),
+                                    data=json.dumps(payload),
                                     headers=self.auth_headers,
                                     content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
