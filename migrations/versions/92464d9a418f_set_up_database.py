@@ -36,4 +36,21 @@ def upgrade():
 
 
 def downgrade():
-    pass
+    op.add_column('business',
+                  sa.Column('attributes', JsonColumn()),
+                  schema='partysvc'
+                  )
+
+    conn = op.get_bind()
+
+    sql_query = "UPDATE partysvc.business " \
+                "SET attributes = (SELECT attributes " \
+                "FROM partysvc.business_attributes " \
+                "WHERE partysvc.business.party_uuid=partysvc.business_attributes.business_id)"
+
+    conn.execute(sql_query)
+
+    op.drop_table(
+        'business_attributes',
+        schema='partysvc'
+    )
