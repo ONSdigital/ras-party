@@ -10,5 +10,10 @@ alembic upgrade head
 ## Downgrade
 Downgrade to a particular version
 ```
-alembic upgrade {version}
+alembic downgrade {version}
+```
+
+Or to undo all migrations
+```
+alembic downgrade base
 ```
