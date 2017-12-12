@@ -1,1 +1,14 @@
 Generic single-database configuration.
+
+## Upgrade
+Upgrade to the most recent version
+```
+alembic upgrade head
+```
+
+
+## Downgrade
+Downgrade to a particular version
+```
+alembic upgrade {version}
+```
