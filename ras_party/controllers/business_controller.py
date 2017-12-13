@@ -86,20 +86,20 @@ def businesses_post(business_data, session):
 
 
 @with_db_session
-def businesses_sample_ce_link(sample, link_data, session):
+def businesses_sample_ce_link(sample, ce_data, session):
     """
     Update business versions to have the correct collection exercise and sample link.
 
     :param sample: the sample summary id to update.
-    :param link_data: dictionary containing the collectionExerciseId to link with sample.
+    :param ce_data: dictionary containing the collectionExerciseId to link with sample.
     :param session: database session.
     """
 
     v = Validator(Exists('collectionExerciseId'))
-    if not v.validate(link_data):
+    if not v.validate(ce_data):
         raise RasError(v.errors, 400)
 
-    collection_exercise_id = link_data['collectionExerciseId']
+    collection_exercise_id = ce_data['collectionExerciseId']
 
     session.query(BusinessAttributes).filter(BusinessAttributes.sample_summary_id == sample)\
         .update({'collection_exercise': collection_exercise_id})

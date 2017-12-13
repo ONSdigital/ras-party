@@ -57,6 +57,6 @@ def get_business_by_ref(ref):
 def put_business_attributes_ce(sample):
     payload = request.get_json() or {}
     ras_party.controllers.business_controller.businesses_sample_ce_link(sample, payload)
-    response = payload
-    response['sampleSummaryId'] = sample
+
+    response = {**payload, "sampleSummaryId": sample}
     return make_response(jsonify(response), 200)
