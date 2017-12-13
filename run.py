@@ -2,7 +2,7 @@ import logging
 from json import loads
 
 import structlog
-from flask import Flask, _app_ctx_stack
+from flask import _app_ctx_stack
 from flask_cors import CORS
 from ras_common_utils.ras_config.flask_extended import Flask
 from ras_common_utils.ras_config import ras_config
@@ -68,6 +68,7 @@ def retry_if_database_error(exception):
     return isinstance(exception, DatabaseError)
 
 
+@retry(retry_on_exception=retry_if_database_error, wait_fixed=2000, stop_max_delay=30000, wrap_exception=True)
 def initialise_db(app):
     # TODO: this isn't entirely safe, use a get_db() lazy initializer instead...
     app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'])
