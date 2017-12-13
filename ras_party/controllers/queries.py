@@ -1,10 +1,11 @@
+import logging
 
 from sqlalchemy import func
-from structlog import get_logger
+import structlog
 
 from ras_party.models.models import Business, Respondent
 
-log = get_logger()
+log = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def query_business_by_party_uuid(party_uuid, session):

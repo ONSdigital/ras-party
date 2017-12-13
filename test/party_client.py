@@ -5,8 +5,8 @@ import yaml
 from flask import current_app
 from flask_testing import TestCase
 from ras_common_utils.ras_config import ras_config
-from ras_common_utils.ras_logger.ras_logger import configure_logger
 
+from logger_config import logger_initial_config
 from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
 from run import create_app, initialise_db
 from test.fixtures import party_schema
@@ -37,7 +37,7 @@ class PartyTestClient(TestCase):
 
     def create_app(self):
         app = create_app(self.config)
-        configure_logger(app.config)
+        logger_initial_config(service_name='ras-party', log_level=app.config['LOG_LEVEL'])
         app.config['PARTY_SCHEMA'] = party_schema.schema
         initialise_db(app)
         return app

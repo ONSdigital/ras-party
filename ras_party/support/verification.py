@@ -1,8 +1,12 @@
-from itsdangerous import URLSafeTimedSerializer
-from ras_common_utils.ras_error.ras_error import RasError
-from structlog import get_logger
+import logging
 
-log = get_logger()
+from itsdangerous import URLSafeTimedSerializer
+import structlog
+
+from ras_party.exceptions import RasError
+
+
+log = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def generate_email_token(email, config):

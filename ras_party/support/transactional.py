@@ -1,8 +1,9 @@
 from functools import wraps
+import logging
 
 import structlog
 
-log = structlog.get_logger()
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 class Transaction:
@@ -28,19 +29,19 @@ class Transaction:
 
     def rollback(self):
         if self._compensating_actions:
-            log.info("Attempting to rollback any modifications.")
+            logger.info("Attempting to rollback any modifications.")
         else:
-            log.info("No rollback actions are required.")
+            logger.info("No rollback actions are required.")
         for i, action in enumerate(self._compensating_actions):
-            log.info("Applying compensating action #{}".format(i+1))
+            logger.info("Applying compensating action #{}".format(i+1))
             self._apply(action)
 
     def _apply(self, f):
         try:
             f()
         except Exception as e:
-            log.error("Fatal: error while attempting to compensate a distributed transaction.")
-            log.error("Details: {}".format(e))
+            logger.error("Fatal: error while attempting to compensate a distributed transaction.")
+            logger.error("Details: {}".format(e))
             raise
 
 

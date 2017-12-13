@@ -1,12 +1,13 @@
+import logging
 
-from ras_common_utils.ras_error.ras_error import RasError
-from structlog import get_logger
+import structlog
 
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_respondent_by_email
 from ras_party.controllers.validate import Validator, IsUuid
+from ras_party.exceptions import RasError
 from ras_party.support.session_decorator import with_db_session
 
-log = get_logger()
+log = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 @with_db_session

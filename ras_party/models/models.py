@@ -3,14 +3,17 @@ import enum
 import uuid
 
 from jsonschema import Draft4Validator
-from ras_common_utils.ras_database.base import Base
-from ras_common_utils.ras_database.guid import GUID
-from ras_common_utils.ras_database.json_column import JsonColumn
+
 from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
+from sqlalchemy.ext.declarative import declarative_base
 
+from ras_party.models import GUID, JsonColumn
 from ras_party.support.util import filter_falsey_values, partition_dict
+
+
+Base = declarative_base()
 
 
 class Business(Base):

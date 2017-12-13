@@ -5,7 +5,7 @@ service:
     SCHEME: http
     HOST: 0.0.0.0
     PORT: 8000
-    LOG_LEVEL: error
+    LOG_LEVEL: ERROR
     SECRET_KEY: aardvark
     EMAIL_TOKEN_SALT: bulbous
     PARTY_SCHEMA: ras_party/schemas/party_schema.json
@@ -13,6 +13,8 @@ service:
     SECURITY_USER_PASSWORD: password
     REQUESTS_GET_TIMEOUT: 99
     REQUESTS_POST_TIMEOUT: 99
+    DATABASE_SCHEMA: ras-party
+    DATABASE_URI: "sqlite:///:memory:"
 
 dependencies:
     ras-party-db:

@@ -1,10 +1,13 @@
 from functools import wraps
+import logging
 
 from flask import current_app
-from ras_common_utils.ras_error.ras_error import RasError, RasDatabaseError
-from structlog import get_logger
+import structlog
 
-log = get_logger()
+from ras_party.exceptions import RasError, RasDatabaseError
+
+
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def with_db_session(f):
@@ -16,22 +19,22 @@ def with_db_session(f):
     """
     @wraps(f)
     def wrapper(*args, **kwargs):
-        log.info("Acquiring database session.")
+        logger.info("Acquiring database session.")
         session = current_app.db.session()
         try:
             result = f(*args, session=session, **kwargs)
-            log.info("Committing database session.")
+            logger.info("Committing database session.")
             session.commit()
             return result
         except RasError:
-            log.info("Rolling-back database session.")
+            logger.info("Rolling-back database session.")
             session.rollback()
             raise
         except Exception as e:
-            log.info("Rolling-back database session.")
+            logger.info("Rolling-back database session.")
             session.rollback()
             raise RasDatabaseError("There was an error committing the changes to the database. Details: {}".format(e))
         finally:
-            log.info("Removing database session.")
+            logger.info("Removing database session.")
             current_app.db.session.remove()
     return wrapper

@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 
-from ras_common_utils.ras_error.ras_error import RasError
 from ras_party.controllers import account_controller
+from ras_party.exceptions import RasPartyError
 from ras_party.models.models import RespondentStatus, Respondent
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
@@ -522,6 +522,6 @@ class TestRespondents(PartyTestClient):
                 'enrolmentCode': 'abc'
             }
             query('test@example.test', db.session()).return_value = None
-            with self.assertRaises(RasError):
+            with self.assertRaises(RasPartyError):
                 account_controller.post_respondent(payload)
             query.assert_called_once_with('test@example.test', db.session())

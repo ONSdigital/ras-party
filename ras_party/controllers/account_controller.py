@@ -1,10 +1,10 @@
+import logging
 import uuid
 
 from flask import current_app
 from itsdangerous import SignatureExpired, BadSignature, BadData
-from ras_common_utils.ras_error.ras_error import RasError
 from sqlalchemy import orm
-from structlog import get_logger
+import structlog
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.notify_gateway import NotifyGateway
@@ -14,6 +14,7 @@ from ras_party.controllers.queries import query_respondent_by_party_uuid
 from ras_party.controllers.validate import Validator
 from ras_party.controllers.validate import IsUuid
 from ras_party.controllers.validate import Exists
+from ras_party.exceptions import RasError, RasNotifyError
 from ras_party.models.models import Respondent
 from ras_party.models.models import RespondentStatus
 from ras_party.models.models import BusinessRespondent
@@ -21,14 +22,13 @@ from ras_party.models.models import PendingEnrolment
 from ras_party.models.models import Enrolment
 from ras_party.models.models import EnrolmentStatus
 from ras_party.support.public_website import PublicWebsite
-from ras_party.support.ras_error import RasNotifyError
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.transactional import transactional
 from ras_party.support.util import build_url
 from ras_party.support.verification import decode_email_token
 
-log = get_logger()
+log = structlog.wrap_logger(logging.getLogger(__name__))
 
 NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
 EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'

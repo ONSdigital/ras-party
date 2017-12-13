@@ -1,10 +1,12 @@
-from structlog import get_logger
+import logging
 
-from ras_party.support.ras_error import RasNotifyError
+import structlog
+
+from ras_party.exceptions import RasNotifyError
 from ras_party.support.requests_wrapper import Requests
 from urllib import parse as urlparse
 
-log = get_logger()
+log = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 class NotifyGateway:

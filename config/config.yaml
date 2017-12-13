@@ -26,7 +26,7 @@ service:
     HOST: 0.0.0.0
     PORT: 8081
     DEBUG: False
-    LOG_LEVEL: debug
+    LOG_LEVEL: DEBUG
     SECRET_KEY: aardvark
     EMAIL_TOKEN_SALT: aardvark
     PARTY_SCHEMA: ras_party/schemas/party_schema.json
@@ -35,6 +35,8 @@ service:
     SECURITY_REALM: sdc
     REQUESTS_GET_TIMEOUT: 20
     REQUESTS_POST_TIMEOUT: 20
+    DATABASE_SCHEMA: ras-party
+    DATABASE_URI: "sqlite:///:memory:"
 
 dependencies:
     ras-party-db:

@@ -1,7 +1,7 @@
 from flask import current_app
 
 from ras_party.controllers.notify_gateway import NotifyGateway
-from ras_party.support.ras_error import RasNotifyError
+from ras_party.exceptions import RasNotifyError
 from test.party_client import PartyTestClient
 from test.mocks import MockRequests
 from ras_party.support.requests_wrapper import Requests
