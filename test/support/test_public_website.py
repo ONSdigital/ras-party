@@ -7,7 +7,8 @@ from run import create_app
 
 class TestPublicWebsite(TestCase):
 
-    def create_app(self):
+    @staticmethod
+    def create_app():
         return create_app('TestingConfig')
 
     def test_reset_password_url_includes_standard_port_for_http(self):
