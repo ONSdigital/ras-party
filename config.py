@@ -1,0 +1,146 @@
+import os
+
+
+class Config(object):
+    
+    NAME = os.getenv('RAS-PARTY', 'ras-party')
+    VERSION = os.getenv('VERSION', '1.0.0')
+    SCHEME = os.getenv('http')
+    HOST = os.getenv('HOST', '0.0.0.0')
+    PORT = os.getenv('PORT', 8081)
+    DEBUG = os.getenv('DEBUG', False)
+    LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'INFO')
+    SECRET_KEY = os.getenv('SECRET_KEY', 'aardvark')
+    EMAIL_TOKEN_SALT = os.getenv('EMAIL_TOKEN_SALT', 'aardvark')
+    DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'ras-party')
+    DATABASE_URI = os.getenv('DATABASE_URI', "sqlite:///:memory:")
+    REQUESTS_GET_TIMEOUT = os.getenv('REQUESTS_GET_TIMEOUT', 20)
+    REQUESTS_POST_TIMEOUT = os.getenv('REQUESTS_POST_TIMEOUT', 20)
+    SECURITY_USER_NAME = os.getenv('SECURITY_USER_NAME', 'dummy_user')
+    SECURITY_USER_PASSWORD = os.getenv('SECURITY_USER_PASSWORD', 'dummy_password')
+    SECURITY_REALM = os.getenv('SECURITY_REALM', 'sdc')
+
+    # dependencies
+
+    RAS_PARTY_DATABASE_SCHEMA = os.getenv('RAS_PARTY_DATABASE_SCHEMA', 'partysvc')
+    RAS_PARTY_DATABASE_URI = os.getenv('RAS_PARTY_DATABASE_URI', 'postgres://postgres:postgres@localhost:5432/postgres')
+
+    RAS_PUBLIC_WEBSITE_PROTOCOL = os.getenv('RAS_OAUTH_SERVICE_PROTOCOL', 'http')
+    RAS_PUBLIC_WEBSITE_HOST = os.getenv('RAS_OAUTH_SERVICE_HOST', 'dummy.ons.gov.uk')
+    RAS_PUBLIC_WEBSITE_PORT = os.getenv('RAS_OAUTH_SERVICE_PORT', 80)
+    RAS_PUBLIC_WEBSITE_URL = f'{RAS_PUBLIC_WEBSITE_PROTOCOL}://{RAS_PUBLIC_WEBSITE_HOST}:{RAS_PUBLIC_WEBSITE_PORT}'
+
+    RAS_CASE_SERVICE_PROTOCOL = os.getenv('RAS_CASE_SERVICE_PROTOCOL', 'http')
+    RAS_CASE_SERVICE_HOST = os.getenv('RAS_CASE_SERVICE_HOST', 'localhost')
+    RAS_CASE_SERVICE_PORT = os.getenv('RAS_CASE_SERVICE_PORT', 8171)
+    RAS_CASE_SERVICE = f'{RAS_CASE_SERVICE_PROTOCOL}://{RAS_CASE_SERVICE_HOST}:{RAS_CASE_SERVICE_PORT}'
+
+    RAS_COLLEX_SERVICE_PROTOCOL = os.getenv('RAS_COLLEX_SERVICE_PROTOCOL', 'http')
+    RAS_COLLEX_SERVICE_HOST = os.getenv('RAS_COLLEX_SERVICE_HOST', 'localhost')
+    RAS_COLLEX_SERVICE_PORT = os.getenv('RAS_COLLEX_SERVICE_PORT', 8145)
+    RAS_COLLEX_SERVICE = f'{RAS_COLLEX_SERVICE_PROTOCOL}://{RAS_COLLEX_SERVICE_HOST}:{RAS_COLLEX_SERVICE_PORT}'
+
+    RAS_SURVEY_SERVICE_PROTOCOL = os.getenv('RAS_SURVEY_SERVICE_PROTOCOL', 'http')
+    RAS_SURVEY_SERVICE_HOST = os.getenv('RAS_SURVEY_SERVICE_HOST', 'localhost')
+    RAS_SURVEY_SERVICE_PORT = os.getenv('RAS_SURVEY_SERVICE_PORT', 8080)
+    RAS_SURVEY_SERVICE = f'{RAS_SURVEY_SERVICE_PROTOCOL}://{RAS_SURVEY_SERVICE_HOST}:{RAS_SURVEY_SERVICE_PORT}'
+
+    RAS_NOTIFY_SERVICE_URL = os.getenv('RAS_NOTIFY_SERVICE_URL', 'http://notify-gateway-service/emails/')
+    RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE = os.getenv('RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE', 'email_verification_id')
+    RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = os.getenv('RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE', 'request_password_change_id')
+    RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = os.getenv('RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE', 'confirm_password_change_id')
+
+    RAS_API_GATEWAY_PROTOCOL = os.getenv('RAS_API_GATEWAY_PROTOCOL', 'http')
+    RAS_API_GATEWAY_HOST = os.getenv('RAS_API_GATEWAY_HOST', 'localhost')
+    RAS_API_GATEWAY_PORT = os.getenv('RAS_API_GATEWAY_PORT', 8083)
+    RAS_API_GATEWAY = f'{RAS_API_GATEWAY_PROTOCOL}://{RAS_API_GATEWAY_HOST}:{RAS_API_GATEWAY_PORT}'
+
+    RAS_IAC_SERVICE_PROTOCOL = os.getenv('RAS_IAC_SERVICE_PROTOCOL', 'http')
+    RAS_IAC_SERVICE_HOST = os.getenv('RAS_IAC_SERVICE_HOST', 'localhost')
+    RAS_IAC_SERVICE_PORT = os.getenv('RAS_IAC_SERVICE_PORT', 8121)
+    RAS_IAC_SERVICE = f'{RAS_IAC_SERVICE_PROTOCOL}://{RAS_IAC_SERVICE_HOST}:{RAS_IAC_SERVICE_PORT}'
+
+    RAS_OAUTH_SERVICE_PROTOCOL = os.getenv('RAS_OAUTH_SERVICE_PROTOCOL', 'http')
+    RAS_OAUTH_SERVICE_HOST = os.getenv('RAS_OAUTH_SERVICE_HOST', 'localhost')
+    RAS_OAUTH_SERVICE_PORT = os.getenv('RAS_OAUTH_SERVICE_PORT', 8040)
+    RAS_OAUTH_SERVICE = f'{RAS_OAUTH_SERVICE_PROTOCOL}://{RAS_OAUTH_SERVICE_HOST}:{RAS_OAUTH_SERVICE_PORT}'
+    RAS_OAUTH_CLIENT_ID = os.getenv('RAS_OAUTH_CLIENT_ID', 'ons@ons.gov')
+    RAS_OAUTH_CLIENT_SECRET = os.getenv('RAS_OAUTH_CLIENT_SECRET', 'password')
+
+    DEPENDENCIES = [
+        'ras-party-db',
+        'public-website',
+        'case-service',
+        'collectionexercise-service',
+        'survey-service',
+        'notify-service',
+        'api-gateway',
+        'iac-service',
+        'oauth2-service',
+    ]
+
+    # features
+
+    REPORT_DEPENDENCIES = os.getenv('REPORT_DEPENDENCIES', False)
+    SEND_EMAIL_TO_GOV_NOTIFY = os.getenv('SEND_EMAIL_TO_GOV_NOTIFY', False)
+
+
+class DevelopmentConfig(Config):
+
+    DEBUG = os.getenv('DEBUG', True)
+    LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'DEBUG')
+
+
+class TestingConfig(DevelopmentConfig):
+
+    DEBUG = True
+    LOGGING_LEVEL = 'ERROR'
+    SECRET_KEY = 'aardvark'
+    EMAIL_TOKEN_SALT = 'bulbous'
+    PARTY_SCHEMA = 'ras_party/schemas/party_schema.json'
+    SECURITY_USER_NAME = 'username'
+    SECURITY_USER_PASSWORD = 'password'
+    REQUESTS_GET_TIMEOUT = 99
+    REQUESTS_POST_TIMEOUT = 99
+    DATABASE_SCHEMA = 'ras-party'
+    DATABASE_URI = "sqlite:///:memory:"
+
+    RAS_PUBLIC_WEBSITE_PROTOCOL = 'http'
+    RAS_PUBLIC_WEBSITE_HOST = 'dummy.ons.gov.uk'
+    RAS_PUBLIC_WEBSITE_PORT = 80
+    RAS_PUBLIC_WEBSITE_URL = f'{RAS_PUBLIC_WEBSITE_PROTOCOL}://{RAS_PUBLIC_WEBSITE_HOST}:{RAS_PUBLIC_WEBSITE_PORT}'
+
+    RAS_CASE_SERVICE_PROTOCOL = 'http'
+    RAS_CASE_SERVICE_HOST = 'mockhost'
+    RAS_CASE_SERVICE_PORT = 1111
+    RAS_CASE_SERVICE = f'{RAS_CASE_SERVICE_PROTOCOL}://{RAS_CASE_SERVICE_HOST}:{RAS_CASE_SERVICE_PORT}'
+
+    RAS_COLLEX_SERVICE_PROTOCOL = 'http'
+    RAS_COLLEX_SERVICE_HOST = 'mockhost'
+    RAS_COLLEX_SERVICE_PORT = 2222
+    RAS_COLLEX_SERVICE = f'{RAS_COLLEX_SERVICE_PROTOCOL}://{RAS_COLLEX_SERVICE_HOST}:{RAS_COLLEX_SERVICE_PORT}'
+
+    RAS_SURVEY_SERVICE_PROTOCOL = 'http'
+    RAS_SURVEY_SERVICE_HOST = 'mockhost'
+    RAS_SURVEY_SERVICE_PORT = 3333
+    RAS_SURVEY_SERVICE = f'{RAS_SURVEY_SERVICE_PROTOCOL}://{RAS_SURVEY_SERVICE_HOST}:{RAS_SURVEY_SERVICE_PORT}'
+
+    RAS_OAUTH_SERVICE_PROTOCOL = 'http'
+    RAS_OAUTH_SERVICE_HOST = 'mockhost'
+    RAS_OAUTH_SERVICE_PORT = 4444
+    RAS_OAUTH_SERVICE = f'{RAS_CASE_SERVICE_PROTOCOL}://{RAS_CASE_SERVICE_HOST}:{RAS_CASE_SERVICE_PORT}'
+    RAS_OAUTH_CLIENT_ID = 'ons@ons.gov'
+    RAS_OAUTH_CLIENT_SECRET = 'password'
+
+    RAS_NOTIFY_SERVICE_URL = 'http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/'
+    RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE = 'email_verification_id'
+    RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = 'request_password_change_id'
+    RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = 'confirm_password_change_id'
+
+    RAS_IAC_SERVICE_PROTOCOL = 'http'
+    RAS_IAC_SERVICE_HOST = 'mockhost'
+    RAS_IAC_SERVICE_PORT = 6666
+    RAS_IAC_SERVICE = f'{RAS_IAC_SERVICE_PROTOCOL}://{RAS_IAC_SERVICE_HOST}:{RAS_IAC_SERVICE_PORT}'
+
+    SEND_EMAIL_TO_GOV_NOTIFY = True
+

@@ -128,7 +128,7 @@ class MockRequests:
                         MockResponse(get_iac.response)
                 }[uri]
             except KeyError:
-                raise Exception("MockRequests doesn't know about route {}".format(uri))
+                raise Exception(f"MockRequests doesn't know about route {uri}")
 
         def assert_called_once_with(self, arg):
             assert(self._calls.get(arg, 0) == 1)

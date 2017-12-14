@@ -419,57 +419,57 @@ def register_user(party, tran):
 def request_iac(enrolment_code):
     # TODO: factor out commonality from these request_* functions
     # TODO: Comments and expladummy_compensating_actionnation
-    iac_svc = current_app.config.dependency['iac-service']
-    iac_url = build_url('{}://{}:{}/iacs/{}', iac_svc, enrolment_code)
-    log.info("GET URL {}".format(iac_url))
+    iac_svc = current_app.config['RAS_IAC_SERVICE']
+    iac_url = f'{iac_svc}/iacs/{enrolment_code}'
+    log.info(f'GET URL {iac_url}')
     response = Requests.get(iac_url)
-    log.info("IAC service responded with {}".format(response.status_code))
+    log.info(f'IAC service responded with {response.status_code}')
     response.raise_for_status()
     return response.json()
 
 
 def request_case(enrolment_code):
-    case_svc = current_app.config.dependency['case-service']
-    case_url = build_url('{}://{}:{}/cases/iac/{}', case_svc, enrolment_code)
-    log.info("GET URL {}".format(case_url))
+    case_svc = current_app.config['RAS_CASE_SERVICE']
+    case_url = f'{case_svc}/cases/iac/{enrolment_code}'
+    log.info(f'GET URL {case_url}')
     response = Requests.get(case_url)
-    log.info("Case service responded with {}".format(response.status_code))
+    log.info(f'Case service responded with {response.status_code}')
     response.raise_for_status()
     return response.json()
 
 
 def request_collection_exercise(collection_exercise_id):
-    ce_svc = current_app.config.dependency['collectionexercise-service']
-    ce_url = build_url('{}://{}:{}/collectionexercises/{}', ce_svc, collection_exercise_id)
-    log.info("GET {}".format(ce_url))
+    ce_svc = current_app.config['RAS_COLLEX_SERVICE']
+    ce_url = f'{ce_svc}/collectionexercises/{collection_exercise_id}'
+    log.info(f'GET {ce_url}')
     response = Requests.get(ce_url)
-    log.info("Collection exercise service responded with {}".format(response.status_code))
+    log.info(f'Collection exercise service responded with {response.status_code}')
     response.raise_for_status()
     return response.json()
 
 
 def request_survey(survey_id):
-    survey_svc = current_app.config.dependency['survey-service']
-    survey_url = build_url('{}://{}:{}/surveys/{}', survey_svc, survey_id)
-    log.info("GET {}".format(survey_url))
+    survey_svc = current_app.config['RAS_SURVEY_SERVICE']
+    survey_url = f'{survey_svc}/surveys/{survey_id}'
+    log.info(f'GET {survey_url}')
     response = Requests.get(survey_url)
-    log.info("Survey service responded with {}".format(response.status_code))
+    log.info(f'Survey service responded with {response.status_code}')
     response.raise_for_status()
     return response.json()
 
 
-def post_case_event(case_id, party_id, category="Default category message", desc="Default description message"):
-    case_svc = current_app.config.dependency['case-service']
-    case_url = build_url('{}://{}:{}/cases/{}/events', case_svc, case_id)
+def post_case_event(case_id, party_id, category='Default category message', desc='Default description message'):
+    case_svc = current_app.config['RAS_CASE_SERVICE']
+    case_url = f'{case_svc}/cases/{case_id}/events'
     payload = {
         'description': desc,
         'category': category,
         'partyId': party_id,
-        'createdBy': "Party Service"
+        'createdBy': 'Party Service'
     }
 
-    log.info("POST {} payload={}".format(case_url, payload))
+    log.info(f'POST {case_url} payload={payload}')
     response = Requests.post(case_url, json=payload)
-    log.info("Case service responded with {}".format(response.status_code))
+    log.info(f'Case service responded with {response.status_code}')
     response.raise_for_status()
     return response.json()

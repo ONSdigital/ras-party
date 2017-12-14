@@ -14,7 +14,10 @@ class NotifyGateway:
 
     def __init__(self, config):
         self.config = config
-        self.notify_config = config.dependency['notify-service']
+        self.notify_url = config['RAS_NOTIFY_SERVICE_URL']
+        self.email_verification_template = config['RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE']
+        self.request_password_change_template = config['RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE']
+        self.confirm_password_change_template = config['RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE']
 
     def _send_message(self, email, template_id, personalisation=None, reference=None):
         """
@@ -26,7 +29,7 @@ class NotifyGateway:
         :rtype: 201 if success
         """
 
-        if not self.config.feature.send_email_to_gov_notify:
+        if not self.config['SEND_EMAIL_TO_GOV_NOTIFY']:
             log.info("Notification not sent. Notify is disabled.")
             return
 
@@ -39,25 +42,24 @@ class NotifyGateway:
             if reference:
                 notification.update({"reference": reference})
 
-            url = urlparse.urljoin(self.notify_config['url'], str(template_id))
+            url = urlparse.urljoin(self.notify_url, str(template_id))
 
             response = Requests.post(url, json=notification)
 
-            log.info('Notification id {} sent via Notify-Gateway to GOV.UK Notify.'
-                     .format(response.json()["id"]))
+            log.info(f'Notification id {response.json()["id"]} sent via Notify-Gateway to GOV.UK Notify.')
 
         except Exception as e:
             msg = 'There was a problem sending a notification via Notify-Gateway to GOV.UK Notify  ' + str(e)
             raise RasNotifyError(msg, status_code=500)
 
     def verify_email(self, email, personalisation=None, reference=None):
-        template_id = self.notify_config['email_verification_template']
+        template_id = self.email_verification_template
         self._send_message(email, template_id, personalisation, reference)
 
     def request_password_change(self, email, personalisation=None, reference=None):
-        template_id = self.notify_config['request_password_change_template']
+        template_id = self.request_password_change_template
         self._send_message(email, template_id, personalisation, reference)
 
     def confirm_password_change(self, email, personalisation=None, reference=None):
-        template_id = self.notify_config['confirm_password_change_template']
+        template_id = self.confirm_password_change_template
         self._send_message(email, template_id, personalisation, reference)

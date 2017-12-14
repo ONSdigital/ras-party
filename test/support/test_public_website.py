@@ -6,18 +6,18 @@ from ras_party.support.public_website import PublicWebsite
 class MockConfig:
 
     def __init__(self, scheme=None, host=None, port=None):
-        self.dependency = {
-            'public-website': {
-                'scheme': scheme or 'http',
-                'host': host or 'mockhost',
-                'port': port or '1234'
-            }
-        }
+        self.scheme = scheme or 'http'
+        self.host = host or 'mockhost'
+        self.port = port or '1234'
 
     def __getitem__(self, item):
         return {
             'SECRET_KEY': 'secret',
-            'EMAIL_TOKEN_SALT': 'salt'
+            'EMAIL_TOKEN_SALT': 'salt',
+            'RAS_PUBLIC_WEBSITE_PROTOCOL': self.scheme,
+            'RAS_PUBLIC_WEBSITE_HOST': self.host,
+            'RAS_PUBLIC_WEBSITE_PORT': self.port,
+            'RAS_PUBLIC_WEBSITE_URL': f'{self.scheme}://{self.host}:{self.port}',
         }[item]
 
 

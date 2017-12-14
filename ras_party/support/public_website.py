@@ -5,19 +5,19 @@ class PublicWebsite:
 
     def __init__(self, config):
         self.config = config
-        self.website_config = config.dependency['public-website']
+        self.website_url = config['RAS_PUBLIC_WEBSITE_URL']
 
     @property
     def scheme(self):
-        return self.website_config['scheme']
+        return self.config['RAS_PUBLIC_WEBSITE_PROTOCOL']
 
     @property
     def host(self):
-        return self.website_config['host']
+        return self.config['RAS_PUBLIC_WEBSITE_HOST']
 
     @property
     def port(self):
-        return int(self.website_config['port'])
+        return int(self.config['RAS_PUBLIC_WEBSITE_PORT'])
 
     @property
     def host_port(self):
@@ -26,14 +26,14 @@ class PublicWebsite:
         elif self.scheme == 'http' and self.port == 80:
             result = self.host
         else:
-            result = "{}:{}".format(self.host, self.port)
+            result = f'{self.host}:{self.port}'
         return result
 
     def reset_password_url(self, email):
-        return '{}://{}/passwords/reset-password/{}'.format(self.scheme, self.host_port, self._generate_token(email))
+        return f'{self.scheme}://{self.host_port}/passwords/reset-password/{self._generate_token(email)}'
 
     def activate_account_url(self, email):
-        return '{}://{}/register/activate-account/{}'.format(self.scheme, self.host_port, self._generate_token(email))
+        return f'{self.scheme}://{self.host_port}/register/activate-account/{self._generate_token(email)}'
 
     def _generate_token(self, email):
         return generate_email_token(email, self.config)

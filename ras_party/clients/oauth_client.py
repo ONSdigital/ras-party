@@ -3,14 +3,13 @@ from ras_party.support.requests_wrapper import Requests
 
 class OauthClient:
     def __init__(self, config):
-        self.service_config = config.dependency['oauth2-service']
-        self.client_id = self.service_config['client_id']
-        self.client_secret = self.service_config['client_secret']
+        self.service = config['RAS_OAUTH_SERVICE']
+        self.client_id = config['RAS_OAUTH_CLIENT_ID']
+        self.client_secret = config['RAS_OAUTH_CLIENT_SECRET']
 
     @property
     def admin_url(self):
-        sc = self.service_config
-        return '{}://{}:{}/api/account/create'.format(sc['scheme'], sc['host'], sc['port'])
+        return f'{self.service}/api/account/create'
 
     def create_account(self, username, password):
         payload = {

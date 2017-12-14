@@ -2,7 +2,6 @@ from json import loads
 import logging
 
 import structlog
-from ras_common_utils.ras_config import ras_config
 from retrying import RetryError
 
 from logger_config import logger_initial_config
@@ -14,11 +13,7 @@ This is a duplicate of run.py, with minor modifications to support gunicorn exec
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
-
-config_path = 'config/config.yaml'
-config = ras_config.from_yaml_file(config_path)
-
-app = create_app(config)
+app = create_app()
 with open(app.config['PARTY_SCHEMA']) as io:
     app.config['PARTY_SCHEMA'] = loads(io.read())
 

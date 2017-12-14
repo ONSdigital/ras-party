@@ -2,10 +2,8 @@ import logging
 from json import loads
 
 import structlog
-from flask import _app_ctx_stack
+from flask import Flask, _app_ctx_stack
 from flask_cors import CORS
-from ras_common_utils.ras_config.flask_extended import Flask
-from ras_common_utils.ras_config import ras_config
 from retrying import retry, RetryError
 from sqlalchemy import create_engine
 from sqlalchemy.exc import DatabaseError
@@ -17,10 +15,11 @@ from logger_config import logger_initial_config
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
-def create_app(config):
+def create_app(config=None):
     # create and configure the Flask app
     app = Flask(__name__)
-    app.config.from_ras_config(config)
+    app_config = f"config.{config or os.environ.get('APP_SETTINGS', 'Config')}"
+    app.config.from_object(app_config)
 
     # register view blueprints
     from ras_party.views.party_view import party_view
@@ -75,15 +74,11 @@ def initialise_db(app):
 
 
 if __name__ == '__main__':
-    config_path = 'config/config.yaml'
-
-    config = ras_config.from_yaml_file(config_path)
-
-    app = create_app(config)
+    app = create_app()
     with open(app.config['PARTY_SCHEMA']) as io:
         app.config['PARTY_SCHEMA'] = loads(io.read())
 
-    logger_initial_config(service_name='ras-party', log_level=app.config['LOG_LEVEL'])
+    logger_initial_config(service_name='ras-party', log_level=app.config['LOGGING_LEVEL'])
 
     try:
         initialise_db(app)

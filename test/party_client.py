@@ -1,10 +1,8 @@
 import base64
 import json
 
-import yaml
 from flask import current_app
 from flask_testing import TestCase
-from ras_common_utils.ras_config import ras_config
 
 from logger_config import logger_initial_config
 from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
@@ -31,13 +29,10 @@ def enrolments():
 
 
 class PartyTestClient(TestCase):
-    config_data = yaml.load(test_config)    # ToDo use actual config.yml to minimise changes to both files just support
-    # the one file.
-    config = ras_config.make(config_data)
 
     def create_app(self):
-        app = create_app(self.config)
-        logger_initial_config(service_name='ras-party', log_level=app.config['LOG_LEVEL'])
+        app = create_app('TestingConfig')
+        logger_initial_config(service_name='ras-party', log_level=app.config['LOGGING_LEVEL'])
         app.config['PARTY_SCHEMA'] = party_schema.schema
         initialise_db(app)
         return app
