@@ -1,11 +1,13 @@
+from flask import current_app
+
 from ras_party.support.requests_wrapper import Requests
 
 
 class OauthClient:
-    def __init__(self, config):
-        self.service = config['RAS_OAUTH_SERVICE']
-        self.client_id = config['RAS_OAUTH_CLIENT_ID']
-        self.client_secret = config['RAS_OAUTH_CLIENT_SECRET']
+    def __init__(self):
+        self.service = current_app.config['RAS_OAUTH_SERVICE']
+        self.client_id = current_app.config['RAS_OAUTH_CLIENT_ID']
+        self.client_secret = current_app.config['RAS_OAUTH_CLIENT_SECRET']
 
     @property
     def admin_url(self):

@@ -6,7 +6,7 @@ from ras_party.exceptions import RasNotifyError
 from ras_party.support.requests_wrapper import Requests
 from urllib import parse as urlparse
 
-log = structlog.wrap_logger(logging.getLogger(__name__))
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 class NotifyGateway:
@@ -30,7 +30,7 @@ class NotifyGateway:
         """
 
         if not self.config['SEND_EMAIL_TO_GOV_NOTIFY']:
-            log.info("Notification not sent. Notify is disabled.")
+            logger.info("Notification not sent. Notify is disabled.")
             return
 
         try:
@@ -46,7 +46,7 @@ class NotifyGateway:
 
             response = Requests.post(url, json=notification)
 
-            log.info(f'Notification id {response.json()["id"]} sent via Notify-Gateway to GOV.UK Notify.')
+            logger.info(f'Notification id {response.json()["id"]} sent via Notify-Gateway to GOV.UK Notify.')
 
         except Exception as e:
             msg = 'There was a problem sending a notification via Notify-Gateway to GOV.UK Notify  ' + str(e)

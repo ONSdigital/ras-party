@@ -10,8 +10,6 @@ from ras_party.models.models import Business
 from ras_party.support.session_decorator import with_db_session
 
 
-log = structlog.wrap_logger(logging.getLogger(__name__))
-
 
 @with_db_session
 def get_business_by_ref(ref, session, verbose=False):

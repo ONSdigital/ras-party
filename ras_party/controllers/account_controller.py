@@ -27,7 +27,7 @@ from ras_party.support.session_decorator import with_db_session
 from ras_party.support.transactional import transactional
 from ras_party.support.verification import decode_email_token
 
-log = structlog.wrap_logger(logging.getLogger(__name__))
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
 EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
@@ -59,7 +59,7 @@ def post_respondent(party, tran, session):
     if 'id' in party:
         # Note: there's not strictly a requirement to be able to pass in a UUID, this is currently supported to
         # aid with testing.
-        log.debug("'id' in respondent post message. Adding validation rule IsUuid")
+        logger.debug("'id' in respondent post message. Adding validation rule IsUuid")
         v.add_rule(IsUuid('id'))
 
     if not v.validate(party):
@@ -167,7 +167,7 @@ def change_respondent(payload, tran, session):
 
     respondent.email_address = new_email_address
 
-    oauth_response = OauthClient(current_app.config).update_account(username=email_address,
+    oauth_response = OauthClient().update_account(username=email_address,
                                                                     new_username=new_email_address,
                                                                     account_verified='false')
 
@@ -175,7 +175,7 @@ def change_respondent(payload, tran, session):
         raise RasError("Failed to change respondent email")
 
     def compensate_oauth_change():
-        rollback_response = OauthClient(current_app.config).update_account(username=new_email_address,
+        rollback_response = OauthClient().update_account(username=new_email_address,
                                                                            new_username=email_address,
                                                                            account_verified='true')
         if rollback_response.status_code != 201:
@@ -187,7 +187,7 @@ def change_respondent(payload, tran, session):
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(
-        lambda: log.info('Respondent with id {} has changed their email address'.format(respondent.party_uuid)))
+        lambda: logger.info('Respondent with id {} has changed their email address'.format(respondent.party_uuid)))
 
     return respondent.to_respondent_dict()
 
@@ -196,7 +196,7 @@ def change_respondent(payload, tran, session):
 def verify_token(token, session):
     try:
         duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
-        email_address = decode_email_token(token, duration, current_app.config)
+        email_address = decode_email_token(token, duration)
     except SignatureExpired:
         msg = "Expired email verification token {}".format(token)
         raise RasError(msg, 409)
@@ -220,7 +220,7 @@ def change_respondent_password(token, payload, tran, session):
 
     try:
         duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
-        email_address = decode_email_token(token, duration, current_app.config)
+        email_address = decode_email_token(token, duration)
     except SignatureExpired:
         msg = "Expired email verification token {}".format(token)
         raise RasError(msg, 409)
@@ -234,7 +234,7 @@ def change_respondent_password(token, payload, tran, session):
 
     new_password = payload['new_password']
 
-    oauth_response = OauthClient(current_app.config).update_account(username=email_address,
+    oauth_response = OauthClient().update_account(username=email_address,
                                                                     password=new_password,
                                                                     account_verified='true')
 
@@ -251,10 +251,10 @@ def change_respondent_password(token, payload, tran, session):
         NotifyGateway(current_app.config).confirm_password_change(
             email_address, personalisation, str(party_id))
     except RasNotifyError:
-        log.error("Error sending notification email for party_id {}".format(party_id))
+        logger.error("Error sending notification email for party_id {}".format(party_id))
 
     # This ensures the log message is only written once the DB transaction is committed
-    tran.on_success(lambda: log.info(
+    tran.on_success(lambda: logger.info(
         'Respondent with id {} has changed their password'.format(party_id)))
 
     return {'response': "Ok"}
@@ -273,14 +273,14 @@ def request_password_change(payload, session):
         raise RasError("Respondent does not exist.", status_code=404)
 
     email_address = respondent.email_address
-    verification_url = PublicWebsite(current_app.config).reset_password_url(email_address)
+    verification_url = PublicWebsite().reset_password_url(email_address)
 
     personalisation = {
         'RESET_PASSWORD_URL': verification_url,
         'FIRST_NAME': respondent.first_name
     }
 
-    log.info('Reset password url: {}'.format(verification_url))
+    logger.info('Reset password url: {}'.format(verification_url))
 
     party_id = respondent.party_uuid
     try:
@@ -288,7 +288,7 @@ def request_password_change(payload, session):
             email_address, personalisation, str(party_id))
     except RasNotifyError:
         # Note: intentionally suppresses exception
-        log.error("Error sending notification email for party_id {}".format(party_id))
+        logger.error("Error sending notification email for party_id {}".format(party_id))
 
     return {'response': "Ok"}
 
@@ -297,7 +297,7 @@ def request_password_change(payload, session):
 def put_email_verification(token, session):
     try:
         duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
-        email_address = decode_email_token(token, duration, current_app.config)
+        email_address = decode_email_token(token, duration)
     except SignatureExpired:
         msg = "Expired email verification token {}".format(token)
         raise RasError(msg, 409)
@@ -318,7 +318,7 @@ def put_email_verification(token, session):
         if r.pending_enrolment:
             enrol_respondent_for_survey(r, session)
         else:
-            log.info("No pending enrolment for respondent {} while checking email verification token"
+            logger.info("No pending enrolment for respondent {} while checking email verification token"
                      .format(str(r.party_uuid)))
 
     # We set the user as verified on the OAuth2 server.
@@ -333,7 +333,7 @@ def resend_verification_email(party_uuid, session):
     :param party_uuid: the party uuid
     :return: make_response
     """
-    log.debug('Attempting to resend verification_email with party_uuid {}'.format(party_uuid))
+    logger.debug('Attempting to resend verification_email with party_uuid {}'.format(party_uuid))
 
     respondent = query_respondent_by_party_uuid(party_uuid, session)
     if not respondent:
@@ -348,8 +348,8 @@ def _send_email_verification(party_id, email):
     """
     Send an email verification to the respondent
     """
-    verification_url = PublicWebsite(current_app.config).activate_account_url(email)
-    log.info("Verification URL for party_id: {} {}".format(party_id, verification_url))
+    verification_url = PublicWebsite().activate_account_url(email)
+    logger.info("Verification URL for party_id: {} {}".format(party_id, verification_url))
 
     personalisation = {
         'ACCOUNT_VERIFICATION_URL': verification_url
@@ -357,21 +357,21 @@ def _send_email_verification(party_id, email):
 
     try:
         NotifyGateway(current_app.config).verify_email(email, personalisation, str(party_id))
-        log.info("Verification email sent", party_id=party_id)
+        logger.info("Verification email sent", party_id=party_id)
     except RasNotifyError:
         # Note: intentionally suppresses exception
-        log.error("Error sending verification email for party_id {}".format(party_id))
+        logger.error("Error sending verification email for party_id {}".format(party_id))
 
 
 def set_user_verified(email_address):
     """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
         If it fails a raise_for_status is executed
     """
-    log.info("Setting user active on OAuth2 server")
-    oauth_response = OauthClient(current_app.config).update_account(
+    logger.info("Setting user active on OAuth2 server")
+    oauth_response = OauthClient().update_account(
         username=email_address, account_verified='true')
     if oauth_response.status_code != 201:
-        log.error("Unable to set the user active on the OAuth2 server")
+        logger.error("Unable to set the user active on the OAuth2 server")
         oauth_response.raise_for_status()
 
 
@@ -385,22 +385,22 @@ def enrol_respondent_for_survey(r, sess):
         .filter(Enrolment.respondent_id == r.id).one()
     enrolment.status = EnrolmentStatus.ENABLED
     sess.add(enrolment)
-    log.info("Enabling pending enrolment for respondent {} to survey_id {} for business_id {}"
+    logger.info("Enabling pending enrolment for respondent {} to survey_id {} for business_id {}"
              .format(str(r.party_uuid),
                      str(pending_enrolment.survey_id),
                      str(pending_enrolment.business_id)))
     # Send an enrolment event to the case service
     case_id = pending_enrolment.case_id
-    log.info("Pending enrolment for case_id :: " + str(case_id))
+    logger.info("Pending enrolment for case_id :: " + str(case_id))
     post_case_event(str(case_id), str(r.party_uuid), "RESPONDENT_ENROLED", "Respondent enrolled")
     sess.delete(pending_enrolment)
 
 
 def register_user(party, tran):
-    oauth_response = OauthClient(current_app.config).create_account(
+    oauth_response = OauthClient().create_account(
         party['emailAddress'], party['password'])
     if not oauth_response.status_code == 201:
-        log.info("Registering respondent OAuth2 server responded with {} {}"
+        logger.info("Registering respondent OAuth2 server responded with {} {}"
                  .format(oauth_response.status_code, oauth_response.content))
         oauth_response.raise_for_status()
 
@@ -408,11 +408,11 @@ def register_user(party, tran):
         """
         TODO: Undo the user registration.
         """
-        log.info("Placeholder for deleting the user from oauth server")
+        logger.info("Placeholder for deleting the user from oauth server")
 
     # Add a compensating action to try and avoid an exception leaving the user in an invalid state.
     tran.compensate(dummy_compensating_action)
-    log.info("New user has been registered via the oauth2-service")
+    logger.info("New user has been registered via the oauth2-service")
 
 
 def request_iac(enrolment_code):
@@ -420,9 +420,9 @@ def request_iac(enrolment_code):
     # TODO: Comments and expladummy_compensating_actionnation
     iac_svc = current_app.config['RAS_IAC_SERVICE']
     iac_url = f'{iac_svc}/iacs/{enrolment_code}'
-    log.info(f'GET URL {iac_url}')
+    logger.info(f'GET URL {iac_url}')
     response = Requests.get(iac_url)
-    log.info(f'IAC service responded with {response.status_code}')
+    logger.info(f'IAC service responded with {response.status_code}')
     response.raise_for_status()
     return response.json()
 
@@ -430,9 +430,9 @@ def request_iac(enrolment_code):
 def request_case(enrolment_code):
     case_svc = current_app.config['RAS_CASE_SERVICE']
     case_url = f'{case_svc}/cases/iac/{enrolment_code}'
-    log.info(f'GET URL {case_url}')
+    logger.info(f'GET URL {case_url}')
     response = Requests.get(case_url)
-    log.info(f'Case service responded with {response.status_code}')
+    logger.info(f'Case service responded with {response.status_code}')
     response.raise_for_status()
     return response.json()
 
@@ -440,9 +440,9 @@ def request_case(enrolment_code):
 def request_collection_exercise(collection_exercise_id):
     ce_svc = current_app.config['RAS_COLLEX_SERVICE']
     ce_url = f'{ce_svc}/collectionexercises/{collection_exercise_id}'
-    log.info(f'GET {ce_url}')
+    logger.info(f'GET {ce_url}')
     response = Requests.get(ce_url)
-    log.info(f'Collection exercise service responded with {response.status_code}')
+    logger.info(f'Collection exercise service responded with {response.status_code}')
     response.raise_for_status()
     return response.json()
 
@@ -450,9 +450,9 @@ def request_collection_exercise(collection_exercise_id):
 def request_survey(survey_id):
     survey_svc = current_app.config['RAS_SURVEY_SERVICE']
     survey_url = f'{survey_svc}/surveys/{survey_id}'
-    log.info(f'GET {survey_url}')
+    logger.info(f'GET {survey_url}')
     response = Requests.get(survey_url)
-    log.info(f'Survey service responded with {response.status_code}')
+    logger.info(f'Survey service responded with {response.status_code}')
     response.raise_for_status()
     return response.json()
 
@@ -467,8 +467,8 @@ def post_case_event(case_id, party_id, category='Default category message', desc
         'createdBy': 'Party Service'
     }
 
-    log.info(f'POST {case_url} payload={payload}')
+    logger.info(f'POST {case_url} payload={payload}')
     response = Requests.post(case_url, json=payload)
-    log.info(f'Case service responded with {response.status_code}')
+    logger.info(f'Case service responded with {response.status_code}')
     response.raise_for_status()
     return response.json()

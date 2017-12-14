@@ -7,8 +7,6 @@ from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.exceptions import RasError
 from ras_party.support.session_decorator import with_db_session
 
-log = structlog.wrap_logger(logging.getLogger(__name__))
-
 
 @with_db_session
 def get_respondent_by_id(id, session):

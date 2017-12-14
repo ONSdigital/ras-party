@@ -1,29 +1,20 @@
-from unittest import TestCase
+from flask import current_app
+from flask_testing import TestCase
 
 from ras_party.support.public_website import PublicWebsite
-
-
-class MockConfig:
-
-    def __init__(self, scheme=None, host=None, port=None):
-        self.scheme = scheme or 'http'
-        self.host = host or 'mockhost'
-        self.port = port or '1234'
-
-    def __getitem__(self, item):
-        return {
-            'SECRET_KEY': 'secret',
-            'EMAIL_TOKEN_SALT': 'salt',
-            'RAS_PUBLIC_WEBSITE_URL': f'{self.scheme}://{self.host}:{self.port}',
-        }[item]
+from run import create_app
 
 
 class TestPublicWebsite(TestCase):
 
+
+    def create_app(self):
+        return create_app('TestingConfig')
+
     def test_reset_password_url_includes_standard_port_for_http(self):
-        # Given config contains SCHEME 'http and PORT 1234
-        config = MockConfig(scheme='http', port=80)
-        unit = PublicWebsite(config)
+        current_app.config['RAS_PUBLIC_WEBSITE_URL'] = 'http://mockhost:80'
+
+        unit = PublicWebsite()
 
         # When the reset password url is constructed
         actual_url = unit.reset_password_url('test@email.com')
@@ -34,9 +25,9 @@ class TestPublicWebsite(TestCase):
         self.assertIn(expected_url_substring, actual_url)
 
     def test_reset_password_url_includes_nonstandard_port_for_http(self):
-        # Given config contains SCHEME 'http and PORT 1234
-        config = MockConfig(scheme='http', port=1234)
-        unit = PublicWebsite(config)
+        current_app.config['RAS_PUBLIC_WEBSITE_URL'] = 'http://mockhost:1234'
+
+        unit = PublicWebsite()
 
         # When the reset password url is constructed
         actual_url = unit.reset_password_url('test@email.com')
@@ -47,9 +38,9 @@ class TestPublicWebsite(TestCase):
         self.assertIn(expected_url_substring, actual_url)
 
     def test_reset_password_url_includes_standard_port_for_https(self):
-        # Given config contains SCHEME 'http and PORT 1234
-        config = MockConfig(scheme='https', port=443)
-        unit = PublicWebsite(config)
+        current_app.config['RAS_PUBLIC_WEBSITE_URL'] = 'https://mockhost:443'
+
+        unit = PublicWebsite()
 
         # When the reset password url is constructed
         actual_url = unit.reset_password_url('test@email.com')
@@ -60,9 +51,9 @@ class TestPublicWebsite(TestCase):
         self.assertIn(expected_url_substring, actual_url)
 
     def test_reset_password_url_includes_port_80_when_scheme_is_https(self):
-        # Given config contains SCHEME 'https' and PORT 80
-        config = MockConfig(scheme='https', port=80)
-        unit = PublicWebsite(config)
+        current_app.config['RAS_PUBLIC_WEBSITE_URL'] = 'https://mockhost:80'
+
+        unit = PublicWebsite()
 
         # When the reset password url is constructed
         actual_url = unit.reset_password_url('test@email.com')
@@ -72,9 +63,9 @@ class TestPublicWebsite(TestCase):
         self.assertIn(expected_url_substring, actual_url)
 
     def test_activate_account_url_includes_nonstandard_port_for_http(self):
-        # Given config contains SCHEME 'http' and PORT 1234
-        config = MockConfig(scheme='http', port=1234)
-        unit = PublicWebsite(config)
+        current_app.config['RAS_PUBLIC_WEBSITE_URL'] = 'http://mockhost:1234'
+
+        unit = PublicWebsite()
 
         # When the activate account url is constructed
         actual_url = unit.activate_account_url('test@email.com')
@@ -84,9 +75,9 @@ class TestPublicWebsite(TestCase):
         self.assertIn(expected_url_substring, actual_url)
 
     def test_activate_account_url_includes_port_80_when_scheme_is_https(self):
-        # Given config contains SCHEME 'https' and PORT 80
-        config = MockConfig(scheme='https', port=80)
-        unit = PublicWebsite(config)
+        current_app.config['RAS_PUBLIC_WEBSITE_URL'] = 'https://mockhost:80'
+
+        unit = PublicWebsite()
 
         actual_url = unit.activate_account_url('test@email.com')
 
