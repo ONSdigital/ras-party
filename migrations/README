@@ -24,3 +24,9 @@ When using SQLAlchemy create_all() to bring up the database models you will need
 ```
 alembic stamp head
 ```
+
+## Create new version
+When another change has been made to the database and you require another version script
+```
+alembic revision -m "create account table"
+```
