@@ -1,8 +1,9 @@
+# flake8: noqa
 import os
 
 
 class Config(object):
-    
+
     NAME = os.getenv('RAS-PARTY', 'ras-party')
     VERSION = os.getenv('VERSION', '1.0.0')
     SCHEME = os.getenv('http')
@@ -143,4 +144,3 @@ class TestingConfig(DevelopmentConfig):
     RAS_IAC_SERVICE = f'{RAS_IAC_SERVICE_PROTOCOL}://{RAS_IAC_SERVICE_HOST}:{RAS_IAC_SERVICE_PORT}'
 
     SEND_EMAIL_TO_GOV_NOTIFY = True
-

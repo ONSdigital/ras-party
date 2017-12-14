@@ -8,7 +8,6 @@ from logger_config import logger_initial_config
 from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
 from run import create_app, initialise_db
 from test.fixtures import party_schema
-from test.fixtures.config import test_config
 from test.mocks import MockBusiness
 
 

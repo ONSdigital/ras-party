@@ -25,7 +25,6 @@ from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.transactional import transactional
-from ras_party.support.util import build_url
 from ras_party.support.verification import decode_email_token
 
 log = structlog.wrap_logger(logging.getLogger(__name__))
