@@ -7,7 +7,6 @@ from run import create_app
 
 class TestPublicWebsite(TestCase):
 
-
     def create_app(self):
         return create_app('TestingConfig')
 

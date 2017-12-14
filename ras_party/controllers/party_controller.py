@@ -1,7 +1,4 @@
-import logging
-
 from flask import current_app
-import structlog
 
 from ras_party.controllers.queries import query_business_by_party_uuid, query_business_by_ref
 from ras_party.controllers.queries import query_respondent_by_party_uuid

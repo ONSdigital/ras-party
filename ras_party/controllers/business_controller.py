@@ -1,14 +1,10 @@
-import logging
-
 from flask import current_app
-import structlog
 
 from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid
 from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.exceptions import RasError
 from ras_party.models.models import Business
 from ras_party.support.session_decorator import with_db_session
-
 
 
 @with_db_session
@@ -25,7 +21,7 @@ def get_business_by_ref(ref, session, verbose=False):
     """
     business = query_business_by_ref(ref, session)
     if not business:
-        raise RasError("Business with reference '{}' does not exist.".format(ref), status_code=404)
+        raise RasError(f"Business with reference '{ref}' does not exist.", status_code=404)
 
     if verbose:
         return business.to_business_dict()
@@ -51,7 +47,7 @@ def get_business_by_id(party_uuid, session, verbose=False):
 
     business = query_business_by_party_uuid(party_uuid, session)
     if not business:
-        raise RasError("Business with party id '{}' does not exist.".format(party_uuid), status_code=404)
+        raise RasError(f"Business with party id '{party_uuid}' does not exist.", status_code=404)
 
     if verbose:
         return business.to_business_dict()
