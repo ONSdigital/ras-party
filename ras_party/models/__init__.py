@@ -20,13 +20,15 @@ class GUID(TypeDecorator):
     """
     impl = CHAR
 
-    def load_dialect_impl(self, dialect):
+    @staticmethod
+    def load_dialect_impl(dialect):
         if dialect.name == 'postgresql':
             return dialect.type_descriptor(UUID())
         else:
             return dialect.type_descriptor(CHAR(32))
 
-    def process_bind_param(self, value, dialect):
+    @staticmethod
+    def process_bind_param(value, dialect):
         if value is None:
             return value
         elif dialect.name == 'postgresql':
@@ -38,7 +40,8 @@ class GUID(TypeDecorator):
                 # hexstring
                 return "%.32x" % value.int
 
-    def process_result_value(self, value, dialect):
+    @staticmethod
+    def process_result_value(value, dialect):
         if value is None:
             return value
         else:
@@ -49,24 +52,28 @@ class GUID(TypeDecorator):
 class JsonColumn(TypeDecorator):
     impl = Unicode
 
-    def load_dialect_impl(self, dialect):
+    @staticmethod
+    def load_dialect_impl(dialect):
         if dialect.name == 'postgresql':
             from sqlalchemy.dialects import postgresql
             return dialect.type_descriptor(postgresql.JSONB())
         else:
             return dialect.type_descriptor(String())
 
-    def process_bind_param(self, value, dialect):
+    @staticmethod
+    def process_bind_param(value, dialect):
         if value is json_null:
             value = None
         return json.dumps(value)
 
-    def process_result_value(self, value, dialect):
+    @staticmethod
+    def process_result_value(value, dialect):
         if value is None:
             return None
         return json.loads(value)
 
-    def copy_value(self, value):
+    @staticmethod
+    def copy_value(value):
         return copy.deepcopy(value)
 
 

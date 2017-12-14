@@ -29,7 +29,8 @@ def enrolments():
 
 class PartyTestClient(TestCase):
 
-    def create_app(self):
+    @staticmethod
+    def create_app():
         app = create_app('TestingConfig')
         logger_initial_config(service_name='ras-party', log_level=app.config['LOGGING_LEVEL'])
         app.config['PARTY_SCHEMA'] = party_schema.schema

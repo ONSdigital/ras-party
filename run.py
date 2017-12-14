@@ -43,8 +43,11 @@ def create_app(config=None):
 def create_database(db_connection, db_schema):
     from ras_party.models import models
 
+    def current_request():
+        return _app_ctx_stack.__ident_func__()
+
     engine = create_engine(db_connection, convert_unicode=True)
-    session = scoped_session(sessionmaker(), scopefunc=lambda: _app_ctx_stack.__ident_func__())
+    session = scoped_session(sessionmaker(), scopefunc=current_request)
     session.configure(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
     # TODO: change this
     engine.session = session
