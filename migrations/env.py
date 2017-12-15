@@ -1,25 +1,22 @@
-import yaml
-from alembic import context
-from sqlalchemy import engine_from_config, pool
+import os
+import sys
 from logging.config import fileConfig
 
-# import os
-# import sys
-#
-# sys.path.append(os.getcwd())
-#
-# from ras_party.models.models import Base
+from alembic import context
+from sqlalchemy import engine_from_config, pool
 
+# hack to allow for imports from project directory
+sys.path.append(os.path.abspath(os.getcwd()))
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
 # override sqlalchemy.url
-config_path = 'config/config.yaml'
-with open(config_path, 'r') as f:
-    config_data = yaml.load(f)
-config.set_main_option("sqlalchemy.url", config_data['dependencies']['ras-party-db']['uri'])
+from config import Config
+db_uri = Config.RAS_PARTY_DATABASE_URI
+if db_uri:
+    config.set_main_option("sqlalchemy.url", db_uri)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
