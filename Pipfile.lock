@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d493bc588f777d03824cf1789560f11ea2b68897d2b68e45ad4b4897a737719c"
+            "sha256": "0a82ddfbce59404e54174e471e00aefc48fe02ee30303eb9f106a884ea7701bd"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -200,8 +200,10 @@
             "version": "==3.12"
         },
         "ras-common-utils": {
-            "git": "https://github.com/ONSdigital/ras-common-utils.git",
-            "ref": "0.0.7"
+            "hashes": [
+                "sha256:96b1741717afe0f213aafcb89c9caba7085f99dec50e616143d28a14e9056168"
+            ],
+            "version": "==1.0.2"
         },
         "requests": {
             "hashes": [
