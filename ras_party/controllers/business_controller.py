@@ -4,8 +4,8 @@ from ras_common_utils.ras_error.ras_error import RasError
 from structlog import get_logger
 
 from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid
-from ras_party.controllers.validate import Validator, IsUuid
-from ras_party.models.models import Business
+from ras_party.controllers.validate import Validator, IsUuid, Exists
+from ras_party.models.models import Business, BusinessAttributes
 from ras_party.support.session_decorator import with_db_session
 
 
@@ -83,3 +83,23 @@ def businesses_post(business_data, session):
     b = Business.from_party_dict(party_data)
     session.merge(b)
     return b.to_business_dict()
+
+
+@with_db_session
+def businesses_sample_ce_link(sample, ce_data, session):
+    """
+    Update business versions to have the correct collection exercise and sample link.
+
+    :param sample: the sample summary id to update.
+    :param ce_data: dictionary containing the collectionExerciseId to link with sample.
+    :param session: database session.
+    """
+
+    v = Validator(Exists('collectionExerciseId'))
+    if not v.validate(ce_data):
+        raise RasError(v.errors, 400)
+
+    collection_exercise_id = ce_data['collectionExerciseId']
+
+    session.query(BusinessAttributes).filter(BusinessAttributes.sample_summary_id == sample)\
+        .update({'collection_exercise': collection_exercise_id})

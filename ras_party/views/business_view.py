@@ -51,3 +51,12 @@ def get_business_by_ref(ref):
 
     response = ras_party.controllers.business_controller.get_business_by_ref(ref, verbose=verbose)
     return make_response(jsonify(response), 200)
+
+
+@business_view.route('/businesses/sample/link/<sample>', methods=['PUT'])
+def put_business_attributes_ce(sample):
+    payload = request.get_json() or {}
+    ras_party.controllers.business_controller.businesses_sample_ce_link(sample, payload)
+
+    response = {**payload, "sampleSummaryId": sample}
+    return make_response(jsonify(response), 200)

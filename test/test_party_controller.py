@@ -30,8 +30,9 @@ class TestParties(PartyTestClient):
         party_id = self.post_to_businesses(mock_business, 200)['id']
 
         response = self.get_business_by_id(party_id)
-        self.assertEqual(len(response.items()), 5)
+        self.assertEqual(len(response.items()), 6)
         self.assertEqual(response.get('id'), party_id)
+        self.assertEqual(response.get('sampleSummaryId'), mock_business['sampleSummaryId'])
         self.assertEqual(response.get('name'), mock_business.get('name'))
 
     def test_get_business_by_id_returns_correct_representation_verbose(self):
@@ -43,16 +44,22 @@ class TestParties(PartyTestClient):
         response = self.get_business_by_id(party_id, query_string={"verbose": "true"})
         self.assertTrue(len(response.items()) >= len(mock_business.items()))
 
-    def test_get_business_by_ref_returns_correct_representation(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_ref_returns_correct_representation') \
-            .as_business()
+    def test_put_business_sample_link_200(self):
+        mock_business = MockBusiness().attributes(source='test_put_business_sample_link_200').as_business()
         self.post_to_businesses(mock_business, 200)
 
-        response = self.get_business_by_ref(mock_business['sampleUnitRef'])
-        self.assertEqual(len(response.items()), 5)
-        self.assertEqual(response.get('sampleUnitRef'), mock_business['sampleUnitRef'])
-        self.assertEqual(response.get('name'), mock_business.get('name'))
+        self.assertEqual(len(businesses()), 1)
+
+        sample_id = mock_business['sampleSummaryId']
+        put_data = {'collectionExerciseId': 'somecollectionexcid'}
+
+        self.put_to_businesses_sample_link(sample_id, put_data, 200)
+
+    def test_put_business_sample_link_returns_400_when_no_ce(self):
+        mock_business = MockBusiness()\
+            .attributes(source='test_put_business_sample_link_returns_400_when_no_ce').as_business()
+        sample_id = mock_business['sampleSummaryId']
+        self.put_to_businesses_sample_link(sample_id, {}, 400)
 
     def test_get_business_by_ref_returns_correct_representation_verbose(self):
         mock_business = MockBusiness() \

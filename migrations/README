@@ -1,0 +1,32 @@
+Generic single-database configuration.
+
+## Upgrade
+Upgrade to the most recent version
+```
+alembic upgrade head
+```
+
+
+## Downgrade
+Downgrade to a particular version
+```
+alembic downgrade {version}
+```
+
+Or to undo all migrations
+```
+alembic downgrade base
+```
+
+
+## Stamp migration head
+When using SQLAlchemy create_all() to bring up the database models you will need to manually stamp the current head
+```
+alembic stamp head
+```
+
+## Create new version
+When another change has been made to the database and you require another version script
+```
+alembic revision -m "create account table"
+```

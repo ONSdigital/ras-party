@@ -230,3 +230,20 @@ This page documents the Party service API endpoints. All endpoints return an `HT
    "telephone": "07846608000"
 }
 ```
+
+* `PUT /businesses/sample/link/<sampleSummaryId>`
+### Example JSON DATA for the put
+```json
+{
+   "collectionExerciseId": "aCollectionExerciseId"
+}
+```
+&mdash; This endpoint will update all businesses' attributes associated collection exercise id for given sample.
+
+### Example JSON Response
+```json
+{
+    "collectionExerciseId": "aCollectionExerciseId",
+    "sampleSummaryId": "aSampleSummaryId"
+}
+```
