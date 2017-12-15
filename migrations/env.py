@@ -13,7 +13,7 @@ sys.path.append(os.path.abspath(os.getcwd()))
 config = context.config
 
 # override sqlalchemy.url
-from config import Config
+from config import Config # NOQA
 db_uri = Config.RAS_PARTY_DATABASE_URI
 if db_uri:
     config.set_main_option("sqlalchemy.url", db_uri)
