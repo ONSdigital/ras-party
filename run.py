@@ -57,10 +57,10 @@ def create_database(db_connection, db_schema):
         for t in models.Base.metadata.sorted_tables:
             t.schema = db_schema
 
-    logger.info("Creating database with uri '{db_connection}'")
+    logger.info(f"Creating database with uri '{db_connection}'")
     if db_connection.startswith('postgres'):
-        logger.info("Creating schema {db_schema}.")
-        engine.execute("CREATE SCHEMA IF NOT EXISTS {db_schema}")
+        logger.info(f"Creating schema {db_schema}.")
+        engine.execute(f"CREATE SCHEMA IF NOT EXISTS {db_schema}")
     logger.info("Creating database tables.")
     models.Base.metadata.create_all(engine)
     logger.info("Ok, database tables have been created.")

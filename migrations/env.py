@@ -14,7 +14,7 @@ config = context.config
 
 # override sqlalchemy.url
 from config import Config # NOQA
-db_uri = Config.RAS_PARTY_DATABASE_URI
+db_uri = Config.DATABASE_URI
 if db_uri:
     config.set_main_option("sqlalchemy.url", db_uri)
 

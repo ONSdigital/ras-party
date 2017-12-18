@@ -1,6 +1,11 @@
 # flake8: noqa
 import os
 
+from ras_party.cloud.cloudfoundry import ONSCloudFoundry
+
+
+cf = ONSCloudFoundry()
+
 
 class Config(object):
 
@@ -13,8 +18,15 @@ class Config(object):
     LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'INFO')
     SECRET_KEY = os.getenv('SECRET_KEY', 'aardvark')
     EMAIL_TOKEN_SALT = os.getenv('EMAIL_TOKEN_SALT', 'aardvark')
-    DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'ras-party')
-    DATABASE_URI = os.getenv('DATABASE_URI', "sqlite:///:memory:")
+    PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
+
+    if cf.detected:
+        DATABASE_SCHEMA = cf.db.name
+        DATABASE_URI = cf.db.credentials['uri']
+    else:
+        DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'ras-party')
+        DATABASE_URI = os.getenv('DATABASE_URI', "sqlite:///:memory:")
+
     REQUESTS_GET_TIMEOUT = os.getenv('REQUESTS_GET_TIMEOUT', 20)
     REQUESTS_POST_TIMEOUT = os.getenv('REQUESTS_POST_TIMEOUT', 20)
     SECURITY_USER_NAME = os.getenv('SECURITY_USER_NAME', 'dummy_user')
