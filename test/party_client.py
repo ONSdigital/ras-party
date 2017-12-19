@@ -6,7 +6,7 @@ from flask_testing import TestCase
 
 from logger_config import logger_initial_config
 from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
-from run import create_app, initialise_db
+from run import create_app, create_database
 from test.fixtures import party_schema
 from test.mocks import MockBusiness
 
@@ -34,7 +34,7 @@ class PartyTestClient(TestCase):
         app = create_app('TestingConfig')
         logger_initial_config(service_name='ras-party', log_level=app.config['LOGGING_LEVEL'])
         app.config['PARTY_SCHEMA'] = party_schema.schema
-        initialise_db(app)
+        app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'])
         return app
 
     def populate_with_business(self):
