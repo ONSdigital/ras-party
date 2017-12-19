@@ -1,9 +1,9 @@
 import datetime
 
 from alembic import op
-from ras_common_utils.ras_database.guid import GUID
-from ras_common_utils.ras_database.json_column import JsonColumn
 import sqlalchemy as sa
+
+from ras_party.models import GUID, JsonColumn
 
 # revision identifiers, used by Alembic.
 

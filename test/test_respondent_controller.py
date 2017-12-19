@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 
-from ras_common_utils.ras_error.ras_error import RasError
 from ras_party.controllers import account_controller
+from ras_party.exceptions import RasError
 from ras_party.models.models import RespondentStatus, Respondent
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
@@ -48,7 +48,7 @@ class TestRespondents(PartyTestClient):
 
     @staticmethod
     def generate_valid_token_from_email(email):
-        frontstage_url = PublicWebsite(current_app.config).activate_account_url(email)
+        frontstage_url = PublicWebsite().activate_account_url(email)
         return frontstage_url.split('/')[-1]
 
     def test_get_respondent_with_invalid_id(self):
@@ -135,7 +135,7 @@ class TestRespondents(PartyTestClient):
         self.request_password_change(payload)
         # Then a notification message is sent to the notify gateway
         personalisation = {
-            'RESET_PASSWORD_URL': PublicWebsite(current_app.config).reset_password_url(respondent.email_address),
+            'RESET_PASSWORD_URL': PublicWebsite().reset_password_url(respondent.email_address),
             'FIRST_NAME': respondent.first_name
         }
         self.mock_notify.request_password_change.assert_called_once_with(
@@ -167,7 +167,7 @@ class TestRespondents(PartyTestClient):
         payload = {'email_address': respondent.email_address.upper()}
         self.request_password_change(payload)
         personalisation = {
-            'RESET_PASSWORD_URL': PublicWebsite(current_app.config).reset_password_url(respondent.email_address),
+            'RESET_PASSWORD_URL': PublicWebsite().reset_password_url(respondent.email_address),
             'FIRST_NAME': respondent.first_name
         }
         self.mock_notify.request_password_change.assert_called_once_with(
@@ -257,7 +257,7 @@ class TestRespondents(PartyTestClient):
                 patch('ras_party.support.session_decorator.current_app.db') as db,\
                 patch('ras_party.controllers.account_controller.OauthClient') as client,\
                 patch('ras_party.controllers.account_controller.NotifyGateway'):
-            token = generate_email_token('test@example.test', current_app.config)
+            token = generate_email_token('test@example.test')
             client().update_account().status_code = 201
             account_controller.change_respondent_password(token, {'new_password': 'abc'})
             query.assert_called_once_with('test@example.test', db.session())
@@ -293,7 +293,7 @@ class TestRespondents(PartyTestClient):
     def test_verify_token_uses_case_insensitive_email_query():
         with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
                 patch('ras_party.support.session_decorator.current_app.db') as db:
-            token = generate_email_token('test@example.test', current_app.config)
+            token = generate_email_token('test@example.test')
             account_controller.verify_token(token)
             query.assert_called_once_with('test@example.test', db.session())
 
@@ -349,7 +349,7 @@ class TestRespondents(PartyTestClient):
         }
         self.put_email_to_respondents(put_data)
         personalisation = {
-            'ACCOUNT_VERIFICATION_URL': PublicWebsite(current_app.config).activate_account_url('test@example.test'),
+            'ACCOUNT_VERIFICATION_URL': PublicWebsite().activate_account_url('test@example.test'),
         }
         self.mock_notify.verify_email.assert_called_once_with(
             'test@example.test',
@@ -498,7 +498,7 @@ class TestRespondents(PartyTestClient):
         # When a new respondent is posted
         self.post_to_respondents(self.mock_respondent, 200)
         # Then the (mock) notify service is called
-        v_url = PublicWebsite(current_app.config).activate_account_url(self.mock_respondent['emailAddress'])
+        v_url = PublicWebsite().activate_account_url(self.mock_respondent['emailAddress'])
         personalisation = {
             'ACCOUNT_VERIFICATION_URL': v_url,
         }

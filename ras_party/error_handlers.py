@@ -1,12 +1,13 @@
+import logging
 
 import flask
 import structlog
 from flask import jsonify
-from ras_common_utils.ras_error.ras_error import RasError
 from requests import HTTPError
 
+from ras_party.exceptions import RasError
 
-log = structlog.get_logger()
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 blueprint = flask.Blueprint('error_handlers', __name__)
 
@@ -28,7 +29,7 @@ def http_error(error):
 
 @blueprint.app_errorhandler(RasError)
 def ras_error(error):
-    log.error(error.to_dict())
+    logger.error(error.to_dict())
     response = jsonify(error.to_dict())
     response.status_code = error.status_code
     return response

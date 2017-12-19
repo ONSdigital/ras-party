@@ -1,10 +1,11 @@
+import logging
 
 from sqlalchemy import func
-from structlog import get_logger
+import structlog
 
 from ras_party.models.models import Business, Respondent
 
-log = get_logger()
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def query_business_by_party_uuid(party_uuid, session):
@@ -13,7 +14,7 @@ def query_business_by_party_uuid(party_uuid, session):
     :param party_uuid: the party uuid
     :return: business or none
     """
-    log.debug('Querying businesses with party_uuid {}'.format(party_uuid))
+    logger.debug('Querying businesses with party_uuid {}'.format(party_uuid))
 
     return session.query(Business).filter(Business.party_uuid == party_uuid).first()
 
@@ -24,7 +25,7 @@ def query_business_by_ref(business_ref, session):
     :param business_ref: the business ref
     :return: business or none
     """
-    log.debug('Querying businesses with business_ref {}'.format(business_ref))
+    logger.debug('Querying businesses with business_ref {}'.format(business_ref))
 
     return session.query(Business).filter(Business.business_ref == business_ref).first()
 
@@ -35,7 +36,7 @@ def query_respondent_by_party_uuid(party_uuid, session):
     :param party_uuid: the party uuid
     :return: respondent or none
     """
-    log.debug('Querying respondents with party_uuid {}'.format(party_uuid))
+    logger.debug('Querying respondents with party_uuid {}'.format(party_uuid))
 
     return session.query(Respondent).filter(Respondent.party_uuid == party_uuid).first()
 
@@ -46,6 +47,6 @@ def query_respondent_by_email(email, session):
     :param email: the party uuid
     :return: respondent or none
     """
-    log.debug('Querying respondents with email {}'.format(email))
+    logger.debug('Querying respondents with email {}'.format(email))
 
     return session.query(Respondent).filter(func.lower(Respondent.email_address) == email.lower()).first()

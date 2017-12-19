@@ -1,8 +1,9 @@
+import logging
 from functools import wraps
 
 import structlog
 
-logger = structlog.get_logger()
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def log_route(f):

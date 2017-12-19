@@ -1,16 +1,17 @@
+from flask import current_app
+
 from ras_party.support.requests_wrapper import Requests
 
 
 class OauthClient:
-    def __init__(self, config):
-        self.service_config = config.dependency['oauth2-service']
-        self.client_id = self.service_config['client_id']
-        self.client_secret = self.service_config['client_secret']
+    def __init__(self):
+        self.service = current_app.config['RAS_OAUTH_SERVICE']
+        self.client_id = current_app.config['RAS_OAUTH_CLIENT_ID']
+        self.client_secret = current_app.config['RAS_OAUTH_CLIENT_SECRET']
 
     @property
     def admin_url(self):
-        sc = self.service_config
-        return '{}://{}:{}/api/account/create'.format(sc['scheme'], sc['host'], sc['port'])
+        return f'{self.service}/api/account/create'
 
     def create_account(self, username, password):
         payload = {
