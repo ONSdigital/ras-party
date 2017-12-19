@@ -35,9 +35,6 @@ class Config(object):
 
     # dependencies
 
-    RAS_PARTY_DATABASE_SCHEMA = os.getenv('RAS_PARTY_DATABASE_SCHEMA', 'partysvc')
-    RAS_PARTY_DATABASE_URI = os.getenv('RAS_PARTY_DATABASE_URI', 'postgres://postgres:postgres@localhost:5432/postgres')
-
     RAS_PUBLIC_WEBSITE_PROTOCOL = os.getenv('RAS_PUBLIC_WEBSITE_PROTOCOL', 'http')
     RAS_PUBLIC_WEBSITE_HOST = os.getenv('RAS_PUBLIC_WEBSITE_HOST', 'dummy.ons.gov.uk')
     RAS_PUBLIC_WEBSITE_PORT = os.getenv('RAS_PUBLIC_WEBSITE_PORT', 80)
