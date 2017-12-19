@@ -7,7 +7,7 @@ from flask import Flask, _app_ctx_stack
 from flask_cors import CORS
 from retrying import retry, RetryError
 from sqlalchemy import create_engine
-from sqlalchemy.exc import DatabaseError
+from sqlalchemy.exc import DatabaseError, ProgrammingError
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from logger_config import logger_initial_config
@@ -68,7 +68,8 @@ def create_database(db_connection, db_schema):
 
 
 def retry_if_database_error(exception):
-    return isinstance(exception, DatabaseError)
+    logger.error(f'{exception}')
+    return isinstance(exception, DatabaseError) and not isinstance(exception, ProgrammingError)
 
 
 @retry(retry_on_exception=retry_if_database_error, wait_fixed=2000, stop_max_delay=30000, wrap_exception=True)

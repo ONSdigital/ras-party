@@ -21,10 +21,10 @@ class Config(object):
     PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
 
     if cf.detected:
-        DATABASE_SCHEMA = cf.db.name
+        DATABASE_SCHEMA = 'partysvc'
         DATABASE_URI = cf.db.credentials['uri']
     else:
-        DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'ras-party')
+        DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'partysvc')
         DATABASE_URI = os.getenv('DATABASE_URI', "sqlite:///:memory:")
 
     REQUESTS_GET_TIMEOUT = os.getenv('REQUESTS_GET_TIMEOUT', 20)
@@ -115,7 +115,7 @@ class TestingConfig(DevelopmentConfig):
     SECURITY_USER_PASSWORD = 'password'
     REQUESTS_GET_TIMEOUT = 99
     REQUESTS_POST_TIMEOUT = 99
-    DATABASE_SCHEMA = 'ras-party'
+    DATABASE_SCHEMA = 'partysvc'
     DATABASE_URI = "sqlite:///:memory:"
 
     RAS_PUBLIC_WEBSITE_URL = 'http://dummy.ons.gov.uk'
