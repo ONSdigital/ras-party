@@ -3,19 +3,21 @@ version: '2'
 services:
   db:
     container_name: postgres
-    image: postgres:9.6
     environment:
       POSTGRES_PASSWORD: postgres
+    image: postgres:9.6
     ports:
       - "5432:5432"
 
   party-service:
     container_name: party-service
     build: ./
-    restart: always
     depends_on:
       - db
+    environment:
+      DATABASE_URI: "postgres://postgres:postgres@db:5432/postgres"
     links:
       - db
     ports:
       - "8081:8081"
+    restart: always
