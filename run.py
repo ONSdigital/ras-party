@@ -59,7 +59,7 @@ def create_database(db_connection, db_schema):
     alembic_cfg = Config("alembic.ini")
     alembic_cfg.attributes['configure_logger'] = False
 
-    logger.info(f"Creating database with uri '{db_connection}'")
+    logger.info("Creating database")
 
     if db_connection.startswith('postgres'):
         # fix-up the postgres schema:
@@ -70,7 +70,7 @@ def create_database(db_connection, db_schema):
                    .where(text(f"schema_name = '{db_schema}'")))
 
         if not session().query(q).scalar():
-            logger.info(f"Creating schema {db_schema}.")
+            logger.info("Creating schema", schema=db_schema)
             engine.execute(f"CREATE SCHEMA {db_schema}")
 
             logger.info("Creating database tables.")
@@ -79,7 +79,7 @@ def create_database(db_connection, db_schema):
             logger.info("Alembic table stamped")
             command.stamp(alembic_cfg, "head")
         else:
-            logger.info(f"Schema {db_schema} exists.")
+            logger.info("Schema exists.", schema=db_schema)
 
             logger.info("Running Alembic database upgrade")
             command.upgrade(alembic_cfg, "head")
