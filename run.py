@@ -59,14 +59,12 @@ def create_database(db_connection, db_schema):
     alembic_cfg = Config("alembic.ini")
     alembic_cfg.attributes['configure_logger'] = False
 
-    # fix-up the postgres schema:
-    if db_connection.startswith('postgres'):
-        for t in models.Base.metadata.sorted_tables:
-            t.schema = db_schema
-
     logger.info(f"Creating database with uri '{db_connection}'")
 
     if db_connection.startswith('postgres'):
+        # fix-up the postgres schema:
+        for t in models.Base.metadata.sorted_tables:
+            t.schema = db_schema
 
         q = exists(select([column('schema_name')]).select_from("information_schema.schemata")
                    .where(text(f"schema_name = '{db_schema}'")))
