@@ -28,8 +28,8 @@ def upgrade():
 
     conn = op.get_bind()
 
-    sql_query = "INSERT INTO partysvc.business_attributes (business_id, attributes) " \
-                "SELECT party_uuid, attributes FROM partysvc.business"
+    sql_query = "INSERT INTO partysvc.business_attributes (business_id, attributes, created_on) " \
+                "SELECT party_uuid, attributes, created_on FROM partysvc.business"
     conn.execute(sql_query)
 
     op.drop_column('business', 'attributes', schema='partysvc')
