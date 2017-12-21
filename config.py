@@ -7,6 +7,13 @@ from ras_party.cloud.cloudfoundry import ONSCloudFoundry
 cf = ONSCloudFoundry()
 
 
+def _is_true(value):
+    try:
+        return value.lower() in ('true', 't', 'yes', 'y', '1')
+    except AttributeError:
+        return value is True
+
+
 class Config(object):
 
     NAME = os.getenv('RAS-PARTY', 'ras-party')
@@ -14,7 +21,7 @@ class Config(object):
     SCHEME = os.getenv('http')
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = os.getenv('PORT', 8081)
-    DEBUG = os.getenv('DEBUG', False)
+    DEBUG = _is_true(os.getenv('DEBUG', False))
     LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'INFO')
     SECRET_KEY = os.getenv('SECRET_KEY', 'aardvark')
     EMAIL_TOKEN_SALT = os.getenv('EMAIL_TOKEN_SALT', 'aardvark')
@@ -91,14 +98,14 @@ class Config(object):
 
     # features
 
-    REPORT_DEPENDENCIES = os.getenv('REPORT_DEPENDENCIES', False)
-    SEND_EMAIL_TO_GOV_NOTIFY = os.getenv('SEND_EMAIL_TO_GOV_NOTIFY', False)
+    REPORT_DEPENDENCIES = _is_true(os.getenv('REPORT_DEPENDENCIES', False))
+    SEND_EMAIL_TO_GOV_NOTIFY = _is_true(os.getenv('SEND_EMAIL_TO_GOV_NOTIFY', False))
 
 
 class DevelopmentConfig(Config):
 
-    DEBUG = os.getenv('DEBUG', True)
-    LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'DEBUG')
+    DEBUG = True
+    LOGGING_LEVEL = 'DEBUG'
 
 
 class TestingConfig(DevelopmentConfig):
