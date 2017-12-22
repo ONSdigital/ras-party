@@ -71,13 +71,15 @@ def businesses_post(business_data, session):
     if errors:
         raise RasError([e.split('\n')[0] for e in errors], status_code=400)
 
-    existing_business = query_business_by_ref(party_data['sampleUnitRef'], session)
-    if existing_business:
-        party_data['id'] = str(existing_business.party_uuid)
-
-    b = Business.from_party_dict(party_data)
-    session.merge(b)
-    return b.to_business_dict()
+    business = query_business_by_ref(party_data['sampleUnitRef'], session)
+    if business:
+        party_data['id'] = str(business.party_uuid)
+        business.add_versioned_attributes(party_data)
+        session.merge(business)
+    else:
+        business = Business.from_party_dict(party_data)
+        session.add(business)
+    return business.to_business_dict()
 
 
 @with_db_session
