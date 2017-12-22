@@ -66,7 +66,7 @@ def create_database(db_connection, db_schema):
         for t in models.Base.metadata.sorted_tables:
             t.schema = db_schema
 
-        q = exists(select([column('schema_name')]).select_from("information_schema.schemata")
+        q = exists(select([column('schema_name')]).select_from(text("information_schema.schemata"))
                    .where(text(f"schema_name = '{db_schema}'")))
 
         if not session().query(q).scalar():
