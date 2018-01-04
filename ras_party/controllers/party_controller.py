@@ -23,13 +23,15 @@ def parties_post(party_data, session):
     if party_data['sampleUnitType'] != Business.UNIT_TYPE:
         raise RasError([{'message': 'sampleUnitType must be of type ({})'.format(Business.UNIT_TYPE)}], status_code=400)
 
-    existing_business = query_business_by_ref(party_data['sampleUnitRef'], session)
-    if existing_business:
-        party_data['id'] = str(existing_business.party_uuid)
-
-    b = Business.from_party_dict(party_data)
-    session.merge(b)
-    return b.to_party_dict()
+    business = query_business_by_ref(party_data['sampleUnitRef'], session)
+    if business:
+        party_data['id'] = str(business.party_uuid)
+        business.add_versioned_attributes(party_data)
+        session.merge(business)
+    else:
+        business = Business.from_party_dict(party_data)
+        session.add(business)
+    return business.to_party_dict()
 
 
 @with_db_session

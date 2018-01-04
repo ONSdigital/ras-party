@@ -26,8 +26,7 @@ class Business(Base):
     business_ref = Column(Text, unique=True)
     respondents = relationship('BusinessRespondent', back_populates='business')
     attributes = relationship('BusinessAttributes', backref='business',
-                              order_by='BusinessAttributes.created_on',
-                              lazy="dynamic")
+                              order_by='BusinessAttributes.id', lazy='joined')
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
     @staticmethod
@@ -90,18 +89,25 @@ class Business(Base):
             associations.append(respondent_dict)
         return associations
 
+    def add_versioned_attributes(self, party):
+        ba = BusinessAttributes(business_id=self.party_uuid, sample_summary_id=party['sampleSummaryId'])
+        ba.attributes = party.get('attributes')
+        name = '{runame1} {runame2} {runame3}'.format(**ba.attributes)
+        ba.attributes['name'] = ' '.join(name.split())
+        self.attributes.append(ba)
+
     def to_business_dict(self):
         d = self.to_business_summary_dict()
 
-        return dict(d, **self.attributes[0].attributes)
+        return dict(d, **self.attributes[-1].attributes)
 
     def to_business_summary_dict(self):
         d = {
             'id': self.party_uuid,
             'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
-            'sampleSummaryId': self.attributes[0].sample_summary_id,
-            'name': self.attributes[0].attributes.get('name'),
+            'sampleSummaryId': self.attributes[-1].sample_summary_id,
+            'name': self.attributes[-1].attributes.get('name'),
             'associations': self._get_respondents_associations(self.respondents)
         }
 
@@ -112,9 +118,9 @@ class Business(Base):
             'id': self.party_uuid,
             'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
-            'sampleSummaryId': self.attributes[0].sample_summary_id,
-            'attributes': self.attributes[0].attributes,
-            'name': self.attributes[0].attributes.get('name'),
+            'sampleSummaryId': self.attributes[-1].sample_summary_id,
+            'attributes': self.attributes[-1].attributes,
+            'name': self.attributes[-1].attributes.get('name'),
             'associations': self._get_respondents_associations(self.respondents)
         }
 
