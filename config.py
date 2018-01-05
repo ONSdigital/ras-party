@@ -32,7 +32,7 @@ class Config(object):
         DATABASE_URI = cf.db.credentials['uri']
     else:
         DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'partysvc')
-        DATABASE_URI = os.getenv('DATABASE_URI', "postgres://postgres:postgres@localhost:5432/postgres")
+        DATABASE_URI = os.getenv('DATABASE_URI', "postgres://postgres:postgres@localhost:6432/postgres")
 
     REQUESTS_GET_TIMEOUT = os.getenv('REQUESTS_GET_TIMEOUT', 20)
     REQUESTS_POST_TIMEOUT = os.getenv('REQUESTS_POST_TIMEOUT', 20)
@@ -44,7 +44,7 @@ class Config(object):
 
     RAS_PUBLIC_WEBSITE_PROTOCOL = os.getenv('RAS_PUBLIC_WEBSITE_PROTOCOL', 'http')
     RAS_PUBLIC_WEBSITE_HOST = os.getenv('RAS_PUBLIC_WEBSITE_HOST', 'localhost')
-    RAS_PUBLIC_WEBSITE_PORT = os.getenv('RAS_PUBLIC_WEBSITE_PORT', 5001)
+    RAS_PUBLIC_WEBSITE_PORT = os.getenv('RAS_PUBLIC_WEBSITE_PORT', 8082)
     RAS_PUBLIC_WEBSITE_URL = f'{RAS_PUBLIC_WEBSITE_PROTOCOL}://{RAS_PUBLIC_WEBSITE_HOST}:{RAS_PUBLIC_WEBSITE_PORT}'
 
     RAS_CASE_SERVICE_PROTOCOL = os.getenv('RAS_CASE_SERVICE_PROTOCOL', 'http')
