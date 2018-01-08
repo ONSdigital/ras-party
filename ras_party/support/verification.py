@@ -16,7 +16,9 @@ def generate_email_token(email):
 
     # TODO: eventually implement a service startup check for all required config values
     if secret_key is None or email_token_salt is None:
-        raise RasError("SECRET_KEY or EMAIL_TOKEN_SALT are not configured.")
+        msg = "SECRET_KEY or EMAIL_TOKEN_SALT are not configured."
+        logger.error(msg)
+        raise RasError(msg)
 
     timed_serializer = URLSafeTimedSerializer(secret_key)
     return timed_serializer.dumps(email, salt=email_token_salt)
