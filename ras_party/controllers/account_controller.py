@@ -372,7 +372,7 @@ def add_new_survey_for_respondent(party, tran, session):
     except KeyError:
         raise RasError(f"There is no survey bound for this user with email address: {party['emailAddress']}")
 
-    if query_business_respondent_by_respondent_id_and_business_id(respondent.id, business_id, session) is None:
+    if query_business_respondent_by_respondent_id_and_business_id(business_id, respondent.id, session) is None:
         """
         Associate respondent with new business
         """

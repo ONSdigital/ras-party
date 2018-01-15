@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import func
+from sqlalchemy import func, and_
 import structlog
 
 from ras_party.models.models import Business, BusinessRespondent, Respondent
@@ -61,5 +61,5 @@ def query_business_respondent_by_respondent_id_and_business_id(business_id, resp
     """
     logger.debug('Querying business respondent with respondent id {}'.format(respondent_id))
 
-    result = session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent_id, BusinessRespondent.business_id == business_id).first()
-    return result
+    respondent_id = str(respondent_id)
+    return session.query(BusinessRespondent).filter(and_(str(BusinessRespondent.respondent_id) == respondent_id, BusinessRespondent.business_id == business_id)).first()
