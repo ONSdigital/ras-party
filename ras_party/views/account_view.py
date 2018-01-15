@@ -73,3 +73,10 @@ def put_email_verification(token):
 def resend_verification_email(party_uuid):
     response = ras_party.controllers.account_controller.resend_verification_email(party_uuid)
     return make_response(jsonify(response), 200)
+
+
+@account_view.route('/respondents/add_survey', methods=['POST'])
+def respondent_add_survey():
+    payload = request.get_json() or {}
+    ras_party.controllers.account_controller.add_new_survey_for_respondent(payload)
+    return make_response(200)

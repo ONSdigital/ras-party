@@ -525,3 +525,9 @@ class TestRespondents(PartyTestClient):
             with self.assertRaises(RasError):
                 account_controller.post_respondent(payload)
             query.assert_called_once_with('test@example.test', db.session())
+
+    def test_post_add_new_survey(self):
+        self.populate_with_respondent(respondent=self.mock_respondent)
+        self.populate_with_business()
+        response = self.add_survey(self.mock_respondent, 200)
+        self.assertEqual(response.status_code, 200)

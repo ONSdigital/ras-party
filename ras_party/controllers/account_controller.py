@@ -11,6 +11,7 @@ from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import query_business_by_party_uuid
 from ras_party.controllers.queries import query_respondent_by_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid
+from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
 from ras_party.controllers.validate import Validator
 from ras_party.controllers.validate import IsUuid
 from ras_party.controllers.validate import Exists
@@ -342,6 +343,61 @@ def resend_verification_email(party_uuid, session):
     return {'message': EMAIL_VERIFICATION_SENT}
 
 
+@transactional
+@with_db_session
+def add_new_survey_for_respondent(party, tran, session):
+    """
+    Add a survey for an existing respondent
+    :param party: 
+    :param session: 
+    :return: 
+    """
+    logger.info("Enrolling existing respondent in survey")
+    iac = request_iac(party['enrolmentCode'])
+    if not iac.get('active'):
+        raise RasError("Enrolment code is not active.", status_code=400)
+
+    respondent = query_respondent_by_email(party['emailAddress'], session)
+
+    case_context = request_case(party['enrolmentCode'])
+    case_id = case_context['id']
+    business_id = case_context['partyId']
+    collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
+    collection_exercise = request_collection_exercise(collection_exercise_id)
+
+    try:
+        survey_id = collection_exercise['surveyId']
+        survey = request_survey(survey_id)
+        survey_name = survey['longName']
+    except KeyError:
+        raise RasError(f"There is no survey bound for this user with email address: {party['emailAddress']}")
+
+    if query_business_respondent_by_respondent_id_and_business_id(respondent.id, business_id, session) is None:
+        """
+        Associate respondent with new business
+        """
+        business = query_business_by_party_uuid(business_id, session)
+        if not business:
+            msg = f"Could not locate business with id '{business_id}' when creating business association."
+            raise RasError(msg, status_code=404)
+        br = BusinessRespondent(business=business, respondent=respondent)
+    else:
+        br = query_business_respondent_by_respondent_id_and_business_id(respondent.id, business_id, session)
+    pending_enrolement = PendingEnrolment(case_id=case_id,
+                                          respondent=respondent,
+                                          business_id=business_id,
+                                          survey_id=survey_id)
+    Enrolment(business_respondent=br,
+              survey_id=survey_id,
+              survey_name=survey_name,
+              status=EnrolmentStatus.PENDING)
+    session.add(pending_enrolement)
+    enrol_respondent_for_survey(respondent, session)
+
+    # This ensures the log message is only written once the DB transaction is committed
+    tran.on_success(lambda: logger.info(f'Respondent with id {party_id} has changed their password'))
+
+
 def _send_email_verification(party_id, email):
     """
     Send an email verification to the respondent
@@ -362,8 +418,9 @@ def _send_email_verification(party_id, email):
 
 
 def set_user_verified(email_address):
-    """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
-        If it fails a raise_for_status is executed
+    """ 
+    Helper function to set the 'verified' flag on the OAuth2 server for a user.
+    If it fails a raise_for_status is executed
     """
     logger.info("Setting user active on OAuth2 server")
     oauth_response = OauthClient().update_account(
@@ -399,9 +456,8 @@ def register_user(party, tran):
         oauth_response.raise_for_status()
 
     def dummy_compensating_action():
-        """
-        TODO: Undo the user registration.
-        """
+        # TODO: Undo the user registration.
+
         logger.info("Placeholder for deleting the user from oauth server")
 
     # Add a compensating action to try and avoid an exception leaving the user in an invalid state.
