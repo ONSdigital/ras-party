@@ -529,5 +529,8 @@ class TestRespondents(PartyTestClient):
     def test_post_add_new_survey(self):
         self.populate_with_respondent(respondent=self.mock_respondent)
         self.populate_with_business()
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
         response = self.add_survey(self.mock_respondent, 200)
         self.assertEqual(response.status_code, 200)

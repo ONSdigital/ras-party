@@ -392,10 +392,13 @@ def add_new_survey_for_respondent(party, tran, session):
               survey_name=survey_name,
               status=EnrolmentStatus.PENDING)
     session.add(pending_enrolement)
-    enrol_respondent_for_survey(respondent, session)
+
+    session.commit()
+    r = query_respondent_by_email(email=party['emailAddress'], session=session)
+    enrol_respondent_for_survey(r, session)
 
     # This ensures the log message is only written once the DB transaction is committed
-    tran.on_success(lambda: logger.info(f'Respondent with id {party_id} has changed their password'))
+    tran.on_success(lambda: logger.info(f'Respondent with id {party_id} has enroled to {survey_name} for business {business_id}'))
 
 
 def _send_email_verification(party_id, email):
