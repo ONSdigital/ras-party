@@ -166,4 +166,4 @@ class PartyTestClient(TestCase):
                                     headers=self.auth_headers,
                                     data=json.dumps(payload),
                                     content_type='application/vnd.ons.business+json')
-        self.assertStatus(response)
+        self.assertStatus(response, expected_status)

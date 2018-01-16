@@ -348,9 +348,8 @@ def resend_verification_email(party_uuid, session):
 def add_new_survey_for_respondent(party, tran, session):
     """
     Add a survey for an existing respondent
-    :param party: 
-    :param session: 
-    :return: 
+    :param party: party details
+    :param session: database session
     """
     logger.info("Enrolling existing respondent in survey")
     iac = request_iac(party['enrolmentCode'])
@@ -398,7 +397,7 @@ def add_new_survey_for_respondent(party, tran, session):
     enrol_respondent_for_survey(r, session)
 
     # This ensures the log message is only written once the DB transaction is committed
-    tran.on_success(lambda: logger.info(f'Respondent with id {party_id} has enroled to {survey_name} for business {business_id}'))
+    tran.on_success(lambda: logger.info(f'Respondent has enroled to {survey_name} for business {business_id}'))
 
 
 def _send_email_verification(party_id, email):

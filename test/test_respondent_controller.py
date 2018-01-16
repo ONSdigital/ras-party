@@ -533,4 +533,3 @@ class TestRespondents(PartyTestClient):
         token = self.generate_valid_token_from_email(db_respondent.email_address)
         self.put_email_verification(token, 200)
         response = self.add_survey(self.mock_respondent, 200)
-        self.assertEqual(response.status_code, 200)
