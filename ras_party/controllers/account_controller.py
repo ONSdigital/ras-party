@@ -345,20 +345,27 @@ def resend_verification_email(party_uuid, session):
 
 @transactional
 @with_db_session
-def add_new_survey_for_respondent(party, tran, session):
+def add_new_survey_for_respondent(payload, tran, session):
     """
     Add a survey for an existing respondent
     :param party: party details
     :param session: database session
     """
     logger.info("Enrolling existing respondent in survey")
-    iac = request_iac(party['enrolmentCode'])
+    v = Validator(Exists('party_id')) & Validator(Exists('enrolment_code'))
+    if not v.validate(payload):
+        raise RasError(v.errors, 400)
+
+    respondent_party_id = payload['party_id']
+    enrolment_code = payload['enrolment_code']
+
+    iac = request_iac(enrolment_code)
     if not iac.get('active'):
         raise RasError("Enrolment code is not active.", status_code=400)
 
-    respondent = query_respondent_by_email(party['emailAddress'], session)
+    respondent = query_respondent_by_party_uuid(respondent_party_id, session)
 
-    case_context = request_case(party['enrolmentCode'])
+    case_context = request_case(enrolment_code)
     case_id = case_context['id']
     business_id = case_context['partyId']
     collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
@@ -393,7 +400,7 @@ def add_new_survey_for_respondent(party, tran, session):
     session.add(pending_enrolement)
 
     session.commit()
-    r = query_respondent_by_email(email=party['emailAddress'], session=session)
+    r = query_respondent_by_party_uuid(respondent_party_id, session)
     enrol_respondent_for_survey(r, session)
 
     # This ensures the log message is only written once the DB transaction is committed
