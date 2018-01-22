@@ -356,6 +356,10 @@ def add_new_survey_for_respondent(payload, tran, session):
     if not v.validate(payload):
         raise RasError(v.errors, 400)
 
+    v1 = Validator(Exists('enrolment_code'))
+    if not v1.validate(payload):
+        raise RasError(v1.errors, 400)
+
     respondent_party_id = payload['party_id']
     enrolment_code = payload['enrolment_code']
 
