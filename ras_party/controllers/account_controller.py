@@ -352,7 +352,7 @@ def add_new_survey_for_respondent(payload, tran, session):
     :param session: database session
     """
     logger.info("Enrolling existing respondent in survey")
-    v = Validator(Exists('party_id')) & Validator(Exists('enrolment_code'))
+    v = Validator(Exists('party_id'))
     if not v.validate(payload):
         raise RasError(v.errors, 400)
 
