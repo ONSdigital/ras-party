@@ -67,11 +67,11 @@ def post_respondent(party, tran, session):
 
     iac = request_iac(party['enrolmentCode'])
     if not iac.get('active'):
-        raise RasError("Enrolment code is not active.", status_code=400)
+        raise RasError("Enrolment code is not active.", status=400)
 
     existing = query_respondent_by_email(party['emailAddress'], session)
     if existing:
-        raise RasError(f"User with email address {party['emailAddress']} already exists.", status_code=400)
+        raise RasError("Email address already exists.", party_uuid=party['party_uuid'], status=400)
 
     case_context = request_case(party['enrolmentCode'])
     case_id = case_context['id']
@@ -84,12 +84,12 @@ def post_respondent(party, tran, session):
         survey = request_survey(survey_id)
         survey_name = survey['longName']
     except KeyError:
-        raise RasError(f"There is no survey bound for this user with email address: {party['emailAddress']}")
+        raise RasError("There is no survey bound for this user", party_uuid=party['party_uuid'])
 
     business = query_business_by_party_uuid(business_id, session)
     if not business:
         msg = f"Could not locate business with id '{business_id}' when creating business association."
-        raise RasError(msg, status_code=404)
+        raise RasError(msg, status=404)
 
     # Chain of enrolment processes
     translated_party = {

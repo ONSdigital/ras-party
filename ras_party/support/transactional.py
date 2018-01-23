@@ -41,7 +41,7 @@ class Transaction:
             f()
         except Exception as e:
             logger.error("Fatal: error while attempting to compensate a distributed transaction.")
-            logger.error("Details: {}".format(e))
+            # logger.error("Details: {}".format(e))
             raise
 
 
