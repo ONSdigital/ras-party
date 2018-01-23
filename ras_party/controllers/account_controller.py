@@ -380,7 +380,7 @@ def add_new_survey_for_respondent(payload, tran, session):
         survey = request_survey(survey_id)
         survey_name = survey['longName']
     except KeyError:
-        raise RasError(f"There is no survey bound for this user with email address: {party['emailAddress']}")
+        raise RasError("There is no survey bound for this user with id: ".format(email_address=respondent.id))
 
     if query_business_respondent_by_respondent_id_and_business_id(business_id, respondent.id, session) is None:
         """
@@ -409,6 +409,7 @@ def add_new_survey_for_respondent(payload, tran, session):
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info(f'Respondent has enroled to {survey_name} for business {business_id}'))
+    return case_id
 
 
 def _send_email_verification(party_id, email):
