@@ -88,7 +88,8 @@ def post_respondent(party, tran, session):
 
     business = query_business_by_party_uuid(business_id, session)
     if not business:
-        raise RasError("Could not locate business when creating business association", business_id=business_id, status=404)
+        raise RasError("Could not locate business when creating business association", business_id=business_id,
+                       status=404)
 
     # Chain of enrolment processes
     translated_party = {
@@ -311,7 +312,8 @@ def put_email_verification(token, session):
         if r.pending_enrolment:
             enrol_respondent_for_survey(r, session)
         else:
-            logger.info('No pending enrolment for respondent while checking email verification token', party_uuid=r.party_uuid)
+            logger.info('No pending enrolment for respondent while checking email verification token',
+                        party_uuid=r.party_uuid)
 
     # We set the user as verified on the OAuth2 server.
     set_user_verified(email_address)
