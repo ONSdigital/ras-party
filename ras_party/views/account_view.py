@@ -79,4 +79,4 @@ def resend_verification_email(party_uuid):
 def respondent_add_survey():
     payload = request.get_json() or {}
     response = ras_party.controllers.account_controller.add_new_survey_for_respondent(payload)
-    return make_response(jsonify({'case_id': response}), 200)
+    return make_response(jsonify(response), 200)

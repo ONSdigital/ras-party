@@ -409,7 +409,7 @@ def add_new_survey_for_respondent(payload, tran, session):
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info(f'Respondent has enroled to {survey_name} for business {business_id}'))
-    return case_id
+    return {'case_id': case_id}
 
 
 def _send_email_verification(party_id, email):
