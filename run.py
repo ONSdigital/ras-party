@@ -92,7 +92,7 @@ def create_database(db_connection, db_schema):
 
 
 def retry_if_database_error(exception):
-    logger.error(f'{exception}')
+    logger.error('Database error has occurred', error=exception)
     return isinstance(exception, DatabaseError) and not isinstance(exception, ProgrammingError)
 
 

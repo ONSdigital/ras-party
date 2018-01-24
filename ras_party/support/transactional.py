@@ -33,15 +33,14 @@ class Transaction:
         else:
             logger.info("No rollback actions are required.")
         for i, action in enumerate(self._compensating_actions):
-            logger.info("Applying compensating action #{}".format(i+1))
+            logger.info("Applying compensating action", number=i+1)
             self._apply(action)
 
     def _apply(self, f):
         try:
             f()
-        except Exception as e:
-            logger.error("Fatal: error while attempting to compensate a distributed transaction.")
-            # logger.error("Details: {}".format(e))
+        except Exception:
+            logger.exception("Fatal: error while attempting to compensate a distributed transaction.")
             raise
 
 
