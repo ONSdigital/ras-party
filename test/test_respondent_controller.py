@@ -422,7 +422,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_business()
         self.post_to_respondents(self.mock_respondent, 200)
         response = self.post_to_respondents(self.mock_respondent, 400)
-        self.assertIn(self.mock_respondent['emailAddress'], response['errors'][0])
+        self.assertIn('Email address already exists', response['errors'][0])
 
     def test_post_respondent_twice_different_email(self):
         self.populate_with_business()

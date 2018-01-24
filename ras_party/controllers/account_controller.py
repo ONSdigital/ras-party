@@ -71,7 +71,7 @@ def post_respondent(party, tran, session):
 
     existing = query_respondent_by_email(party['emailAddress'], session)
     if existing:
-        raise RasError("Email address already exists.", party_uuid=party['party_uuid'], status=400)
+        raise RasError("Email address already exists.", status=400, party_uuid=party.get('party_uuid', None))
 
     case_context = request_case(party['enrolmentCode'])
     case_id = case_context['id']
@@ -125,7 +125,7 @@ def post_respondent(party, tran, session):
         _send_email_verification(respondent.party_uuid, party['emailAddress'])
     except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError):
         logger.error('Error updating database for user', party_id=party['id'])
-        raise RasError("Error updating database for user", party_id=party['id'], status=500)
+        raise RasError("Error updating database for user", status=500, party_id=party['id'])
     except KeyError:
         logger.error('Missing config keys during enrolment')
         raise RasError('Missing config keys during enrolment', status=500)
@@ -199,9 +199,9 @@ def verify_token(token, session):
         duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
-        raise RasError('Expired email verification token', token=token, status=409)
+        raise RasError('Expired email verification token', status=409, token=token)
     except (BadSignature, BadData) as e:
-        raise RasError('Unknown email verification token', token=token, error=e, status=404)
+        raise RasError('Unknown email verification token', status=404, token=token, error=e)
 
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
@@ -221,9 +221,9 @@ def change_respondent_password(token, payload, tran, session):
         duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
-        raise RasError('Expired email verification token', token=token, status=409)
+        raise RasError('Expired email verification token', status=409, token=token)
     except (BadSignature, BadData) as e:
-        raise RasError('Unknown email verification token', token=token, error=e, status=404)
+        raise RasError('Unknown email verification token', status=404, token=token, error=e)
 
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
@@ -296,9 +296,9 @@ def put_email_verification(token, session):
         duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
-        raise RasError('Expired email verification token', token=token, status=409)
+        raise RasError('Expired email verification token', status=409, token=token)
     except (BadSignature, BadData) as e:
-        raise RasError('Bad email verification token', token=token, error=e, status=404)
+        raise RasError('Bad email verification token', status=404, token=token, error=e)
 
     r = query_respondent_by_email(email_address, session)
     if not r:

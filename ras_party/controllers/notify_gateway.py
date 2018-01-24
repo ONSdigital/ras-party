@@ -46,11 +46,11 @@ class NotifyGateway:
 
             response = Requests.post(url, json=notification)
 
-            logger.info('Notification id sent via Notify-Gateway to GOV.UK Notify.', id=response.json(["id"]))
+            logger.info('Notification id sent via Notify-Gateway to GOV.UK Notify.', id=response.json()["id"])
 
         except Exception as e:
             raise RasNotifyError("There was a problem sending a notification via Notify-Gateway to GOV.UK Notify",
-                                 error=e, status=500)
+                                 error=e)
 
     def verify_email(self, email, personalisation=None, reference=None):
         template_id = self.email_verification_template
