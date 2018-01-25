@@ -21,7 +21,7 @@ def get_business_by_ref(ref, session, verbose=False):
     """
     business = query_business_by_ref(ref, session)
     if not business:
-        raise RasError(f"Business with reference '{ref}' does not exist.", status_code=404)
+        raise RasError("Business with reference does not exist.", reference=ref, status=404)
 
     if verbose:
         return business.to_business_dict()
@@ -43,11 +43,11 @@ def get_business_by_id(party_uuid, session, verbose=False):
     """
     v = Validator(IsUuid('id'))
     if not v.validate({'id': party_uuid}):
-        raise RasError(v.errors, status_code=400)
+        raise RasError(v.errors, status=400)
 
     business = query_business_by_party_uuid(party_uuid, session)
     if not business:
-        raise RasError(f"Business with party id '{party_uuid}' does not exist.", status_code=404)
+        raise RasError("Business with party id does not exist.", party_uuid=party_uuid, status=404)
 
     if verbose:
         return business.to_business_dict()
@@ -69,7 +69,7 @@ def businesses_post(business_data, session):
     # FIXME: this is incorrect, it doesn't make sense to require sampleUnitType for the concrete endpoints
     errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
     if errors:
-        raise RasError([e.split('\n')[0] for e in errors], status_code=400)
+        raise RasError([e.split('\n')[0] for e in errors], status=400)
 
     business = query_business_by_ref(party_data['sampleUnitRef'], session)
     if business:

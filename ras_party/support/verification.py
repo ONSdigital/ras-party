@@ -25,7 +25,7 @@ def generate_email_token(email):
 
 
 def decode_email_token(token, duration):
-    logger.info(f'Checking email verification token: {token}')
+    logger.info('Checking email verification token', token=token)
 
     timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
     email_token_salt = current_app.config["EMAIL_TOKEN_SALT"]
