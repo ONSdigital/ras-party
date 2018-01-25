@@ -55,11 +55,13 @@ def query_respondent_by_email(email, session):
 def query_business_respondent_by_respondent_id_and_business_id(business_id, respondent_id, session):
     """
     Query to return respondent business associations based on respondent id
-    :param business_id, respondent_id: 
-    :param session: 
+    :param business_id,
+    :param respondent_id,
+    :param session
     :return: business associations for respondent
     """
     logger.debug('Querying business respondent with respondent id {}'.format(respondent_id))
 
-    response = session.query(BusinessRespondent).filter(and_(BusinessRespondent.business_id == business_id, BusinessRespondent.respondent_id == respondent_id)).first()
+    response = session.query(BusinessRespondent).filter(and_(BusinessRespondent.business_id == business_id,
+                                                             BusinessRespondent.respondent_id == respondent_id)).first()
     return response

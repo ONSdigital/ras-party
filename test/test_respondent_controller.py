@@ -553,7 +553,8 @@ class TestRespondents(PartyTestClient):
     def test_post_add_new_survey_respondent_business_association(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
-        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972', respondent_id=self.mock_respondent_with_id['id'])
+        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+                                               respondent_id=self.mock_respondent_with_id['id'])
         db_respondent = respondents()[0]
         token = self.generate_valid_token_from_email(db_respondent.email_address)
         self.put_email_verification(token, 200)
@@ -578,7 +579,8 @@ class TestRespondents(PartyTestClient):
     def test_post_add_new_survey_missing_enrolment_code_returns_error(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
-        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972', respondent_id=self.mock_respondent_with_id['id'])
+        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+                                               respondent_id=self.mock_respondent_with_id['id'])
         db_respondent = respondents()[0]
         token = self.generate_valid_token_from_email(db_respondent.email_address)
         self.put_email_verification(token, 200)

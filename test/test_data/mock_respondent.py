@@ -50,4 +50,3 @@ class MockRespondentWithId:
         props, attrs = partition_dict(self._attributes, ['id', 'sampleUnitType'])
         props['attributes'] = attrs
         return props
-

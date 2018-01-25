@@ -1,8 +1,6 @@
 import json
-import random
 from collections import defaultdict
 
-from ras_party.support.util import partition_dict
 from test.fixtures import get_case_by_iac, get_ce_by_id, get_survey_by_id, get_iac
 
 

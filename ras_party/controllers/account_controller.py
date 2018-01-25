@@ -353,7 +353,7 @@ def resend_verification_email(party_uuid, session):
 def add_new_survey_for_respondent(payload, tran, session):
     """
     Add a survey for an existing respondent
-    :param party: party details
+    :param payload: json containing party_id and enrolment_code
     :param session: database session
     """
     logger.info("Enrolling existing respondent in survey")
