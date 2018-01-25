@@ -125,13 +125,16 @@ def post_respondent(party, tran, session):
 
         _send_email_verification(respondent.party_uuid, party['emailAddress'])
     except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError):
+        logger.error('Error updating database for user', party_id=party['id'])
         msg = f"Error updating database for user id: {party['id']} "
         raise RasError(msg, status_code=500)
     except KeyError:
+        logger.error('Missing config keys during enrolment')
         msg = 'Missing config keys during enrolment'
         raise RasError(msg, status_code=500)
     except Exception as e:
-        msg = f'Error during enrolment process {e}'
+        logger.error(f'Error during enrolment process {e}')
+        msg = 'Error during enrolment process'
         raise RasError(msg, status_code=500)
 
     register_user(party, tran)
@@ -179,7 +182,9 @@ def change_respondent(payload, tran, session):
                                                         new_username=email_address,
                                                         account_verified='true')
         if rollback_response.status_code != 201:
-            raise RasError("Failed to rollback change to repsondent email. Please investigate.")
+            logger.error("Failed to rollback change to respondent email. Please investigate.",
+                         party_id=respondent.party_uuid)
+            raise RasError("Failed to rollback change to respondent email.")
 
     tran.compensate(compensate_oauth_change)
 
