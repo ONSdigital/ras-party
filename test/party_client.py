@@ -8,7 +8,7 @@ from logger_config import logger_initial_config
 from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
 from run import create_app, create_database
 from test.fixtures import party_schema
-from test.mocks import MockBusiness
+from test.test_data.mock_business import MockBusiness
 
 
 def businesses():
@@ -167,3 +167,4 @@ class PartyTestClient(TestCase):
                                     data=json.dumps(payload),
                                     content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status)
+        return json.loads(response.get_data(as_text=True))

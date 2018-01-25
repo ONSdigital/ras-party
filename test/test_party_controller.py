@@ -1,8 +1,10 @@
 import uuid
 
 from ras_party.support.requests_wrapper import Requests
-from test.mocks import MockBusiness, MockRequests
+
+from test.mocks import MockRequests
 from test.party_client import PartyTestClient, businesses
+from test.test_data.mock_business import MockBusiness
 
 
 class TestParties(PartyTestClient):
