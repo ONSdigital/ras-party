@@ -606,3 +606,14 @@ class TestRespondents(PartyTestClient):
             'enrolment_code': self.mock_respondent_with_id['enrolment_code']
         }
         self.add_survey(request_json, 400)
+
+    def test_post_add_survey_no_business_raise_ras_error(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'party_id': self.mock_respondent_with_id['id'],
+            'enrolment_code': self.mock_respondent_with_id['enrolment_code']
+        }
+        self.add_survey(request_json, 404)

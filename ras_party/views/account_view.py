@@ -5,6 +5,8 @@ import ras_party.controllers.account_controller
 import ras_party.controllers.business_controller
 import ras_party.controllers.party_controller
 import ras_party.controllers.respondent_controller
+from ras_party.controllers.validate import Exists, Validator
+from ras_party.exceptions import RasError
 from ras_party.support.log_decorator import log_route
 
 account_view = Blueprint('account_view', __name__)
@@ -78,5 +80,9 @@ def resend_verification_email(party_uuid):
 @account_view.route('/respondents/add_survey', methods=['POST'])
 def respondent_add_survey():
     payload = request.get_json() or {}
+    v = Validator(Exists('party_id', 'enrolment_code'))
+    if not v.validate(payload):
+        raise RasError(v.errors, 400)
+
     response = ras_party.controllers.account_controller.add_new_survey_for_respondent(payload)
     return make_response(jsonify(response), 200)

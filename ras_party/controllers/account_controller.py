@@ -357,13 +357,6 @@ def add_new_survey_for_respondent(payload, tran, session):
     :param session: database session
     """
     logger.info("Enrolling existing respondent in survey")
-    v = Validator(Exists('party_id'))
-    if not v.validate(payload):
-        raise RasError(v.errors, 400)
-
-    v1 = Validator(Exists('enrolment_code'))
-    if not v1.validate(payload):
-        raise RasError(v1.errors, 400)
 
     respondent_party_id = payload['party_id']
     enrolment_code = payload['enrolment_code']
@@ -385,9 +378,11 @@ def add_new_survey_for_respondent(payload, tran, session):
         survey = request_survey(survey_id)
         survey_name = survey['longName']
     except KeyError:
-        raise RasError("There is no survey bound for this user with id: ".format(email_address=respondent.id))
+        raise RasError("There is no survey bound for this user with id: ".format(respondent_id=respondent.id))
 
-    if query_business_respondent_by_respondent_id_and_business_id(business_id, respondent.id, session) is None:
+    br = query_business_respondent_by_respondent_id_and_business_id(business_id, respondent.id, session)
+
+    if not br:
         """
         Associate respondent with new business
         """
@@ -396,17 +391,16 @@ def add_new_survey_for_respondent(payload, tran, session):
             msg = f"Could not locate business with id '{business_id}' when creating business association."
             raise RasError(msg, status_code=404)
         br = BusinessRespondent(business=business, respondent=respondent)
-    else:
-        br = query_business_respondent_by_respondent_id_and_business_id(business_id, respondent.id, session)
-    pending_enrolement = PendingEnrolment(case_id=case_id,
-                                          respondent=respondent,
-                                          business_id=business_id,
-                                          survey_id=survey_id)
+
+    pending_enrolment = PendingEnrolment(case_id=case_id,
+                                         respondent=respondent,
+                                         business_id=business_id,
+                                         survey_id=survey_id)
     Enrolment(business_respondent=br,
               survey_id=survey_id,
               survey_name=survey_name,
               status=EnrolmentStatus.PENDING)
-    session.add(pending_enrolement)
+    session.add(pending_enrolment)
 
     session.commit()
     r = query_respondent_by_party_uuid(respondent_party_id, session)
