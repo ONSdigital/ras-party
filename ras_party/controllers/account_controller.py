@@ -436,7 +436,7 @@ def _send_email_verification(party_id, email):
 
 
 def set_user_verified(email_address):
-    """ 
+    """
     Helper function to set the 'verified' flag on the OAuth2 server for a user.
     If it fails a raise_for_status is executed
     """
