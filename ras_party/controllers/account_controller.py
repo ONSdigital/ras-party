@@ -392,19 +392,15 @@ def add_new_survey_for_respondent(payload, tran, session):
             raise RasError(msg, status_code=404)
         br = BusinessRespondent(business=business, respondent=respondent)
 
-    pending_enrolment = PendingEnrolment(case_id=case_id,
-                                         respondent=respondent,
-                                         business_id=business_id,
-                                         survey_id=survey_id)
-    Enrolment(business_respondent=br,
-              survey_id=survey_id,
-              survey_name=survey_name,
-              status=EnrolmentStatus.PENDING)
-    session.add(pending_enrolment)
+    enrolment = Enrolment(business_respondent=br,
+                          survey_id=survey_id,
+                          survey_name=survey_name,
+                          status=EnrolmentStatus.ENABLED)
+    session.add(enrolment)
 
     session.commit()
-    r = query_respondent_by_party_uuid(respondent_party_id, session)
-    enrol_respondent_for_survey(r, session)
+
+    post_case_event(str(case_id), str(respondent_party_id), "RESPONDENT_ENROLED", "Respondent enrolled")
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info(f'Respondent has enroled to {survey_name} for business {business_id}'))
