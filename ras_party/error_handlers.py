@@ -29,7 +29,7 @@ def http_error(error):
 
 @blueprint.app_errorhandler(RasError)
 def ras_error(error):
-    logger.exception(error.to_dict(), status=error.status_code, **error.kwargs)
+    logger.exception('App error handler called', status=error.status_code, **error.kwargs)
     response = jsonify(error.to_dict())
     response.status_code = error.status_code
     return response
