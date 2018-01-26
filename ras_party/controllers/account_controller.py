@@ -354,7 +354,7 @@ def add_new_survey_for_respondent(payload, tran, session):
 
     iac = request_iac(enrolment_code)
     if not iac.get('active'):
-        raise RasError("Enrolment code is not active.", status_code=400)
+        raise RasError("Enrolment code is not active.", status=400)
 
     respondent = query_respondent_by_party_uuid(respondent_party_id, session)
 
@@ -380,7 +380,7 @@ def add_new_survey_for_respondent(payload, tran, session):
         business = query_business_by_party_uuid(business_id, session)
         if not business:
             msg = f"Could not locate business with id '{business_id}' when creating business association."
-            raise RasError(msg, status_code=404)
+            raise RasError(msg, status=404)
         br = BusinessRespondent(business=business, respondent=respondent)
 
     enrolment = Enrolment(business_respondent=br,

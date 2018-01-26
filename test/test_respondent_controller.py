@@ -605,6 +605,7 @@ class TestRespondents(PartyTestClient):
             'party_id': self.mock_respondent_with_id['id'],
             'enrolment_code': self.mock_respondent_with_id['enrolment_code']
         }
+
         self.add_survey(request_json, 400)
 
     def test_post_add_survey_no_business_raise_ras_error(self):
