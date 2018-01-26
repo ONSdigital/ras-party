@@ -354,7 +354,7 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(respondents()[0].email_address, 'test@example.test')
 
     def test_put_respondent_email_calls_the_notify_service(self):
-        respondent = self.populate_with_respondent()
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent)
         put_data = {
             'email_address': self.mock_respondent['emailAddress'],
             'new_email_address': 'test@example.test'

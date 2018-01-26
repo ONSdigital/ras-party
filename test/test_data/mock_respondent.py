@@ -33,7 +33,7 @@ class MockRespondentWithId:
             'sampleUnitType': 'BI',
             'firstName': 'A',
             'lastName': 'Z',
-            'emailAddress': 'a@z.com',
+            'emailAddress': 'a@b.com',
             'telephone': '123',
             'enrolment_code': 'fb747cq725lj',
             'password': 'banana'

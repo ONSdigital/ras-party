@@ -398,8 +398,6 @@ def add_new_survey_for_respondent(payload, tran, session):
                           status=EnrolmentStatus.ENABLED)
     session.add(enrolment)
 
-    session.commit()
-
     post_case_event(str(case_id), str(respondent_party_id), "RESPONDENT_ENROLED", "Respondent enrolled")
 
     # This ensures the log message is only written once the DB transaction is committed
