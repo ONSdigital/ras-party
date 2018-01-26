@@ -16,11 +16,11 @@ def get_respondent_by_id(id, session):
     """
     v = Validator(IsUuid('id'))
     if not v.validate({'id': id}):
-        raise RasError(v.errors, status_code=400)
+        raise RasError(v.errors, status=400)
 
     respondent = query_respondent_by_party_uuid(id, session)
     if not respondent:
-        raise RasError("Respondent with party id '{}' does not exist.".format(id), status_code=404)
+        raise RasError("Respondent with party id does not exist.", id=id, status=404)
 
     return respondent.to_respondent_dict()
 
@@ -37,6 +37,6 @@ def get_respondent_by_email(email, session):
     """
     respondent = query_respondent_by_email(email, session)
     if not respondent:
-        raise RasError("Respondent does not exist.", status_code=404)
+        raise RasError("Respondent does not exist.", status=404)
 
     return respondent.to_respondent_dict()

@@ -18,10 +18,10 @@ def parties_post(party_data, session):
     """
     errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
     if errors:
-        raise RasError([e.split('\n')[0] for e in errors], status_code=400)
+        raise RasError([e.split('\n')[0] for e in errors], status=400)
 
     if party_data['sampleUnitType'] != Business.UNIT_TYPE:
-        raise RasError([{'message': 'sampleUnitType must be of type ({})'.format(Business.UNIT_TYPE)}], status_code=400)
+        raise RasError('sampleUnitType must be of type', type=Business.UNIT_TYPE, status=400)
 
     business = query_business_by_ref(party_data['sampleUnitRef'], session)
     if business:
@@ -46,11 +46,11 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
     """
     v = Validator(IsIn('sampleUnitType', 'B'))
     if not v.validate({'sampleUnitType': sample_unit_type}):
-        raise RasError(v.errors, status_code=400)
+        raise RasError(v.errors, status=400)
 
     business = query_business_by_ref(sample_unit_ref, session)
     if not business:
-        raise RasError("Business with reference '{}' does not exist.".format(sample_unit_ref), status_code=404)
+        raise RasError("Business with reference does not exist.", refernce=sample_unit_ref, status=404)
 
     return business.to_party_dict()
 
@@ -59,18 +59,18 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
 def get_party_by_id(sample_unit_type, id, session):
     v = Validator(IsIn('sampleUnitType', 'B', 'BI'))
     if not v.validate({'sampleUnitType': sample_unit_type}):
-        raise RasError(v.errors, status_code=400)
+        raise RasError(v.errors, status=400)
 
     if sample_unit_type == Business.UNIT_TYPE:
         business = query_business_by_party_uuid(id, session)
         if not business:
-            raise RasError("Business with id '{}' does not exist.".format(id), status_code=404)
+            raise RasError("Business with id does not exist.", business_id=id, status=404)
 
         return business.to_party_dict()
 
     elif sample_unit_type == Respondent.UNIT_TYPE:
         respondent = query_respondent_by_party_uuid(id, session)
         if not respondent:
-            return RasError("Respondent with id '{}' does not exist.".format(id), status_code=404)
+            return RasError("Respondent with id does not exist.", respondent_id=id, status=404)
 
         return respondent.to_party_dict()
