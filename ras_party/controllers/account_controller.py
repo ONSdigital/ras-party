@@ -369,7 +369,7 @@ def add_new_survey_for_respondent(payload, tran, session):
         survey = request_survey(survey_id)
         survey_name = survey['longName']
     except KeyError:
-        raise RasError("There is no survey bound for this user with id: ".format(respondent_id=respondent.id))
+        raise RasError("There is no survey bound for this user with id: ", respondent_id=respondent.id)
 
     br = query_business_respondent_by_respondent_id_and_business_id(business_id, respondent.id, session)
 
@@ -379,8 +379,8 @@ def add_new_survey_for_respondent(payload, tran, session):
         """
         business = query_business_by_party_uuid(business_id, session)
         if not business:
-            msg = f"Could not locate business with id '{business_id}' when creating business association."
-            raise RasError(msg, status=404)
+            msg = "Could not locate business with id '{business_id}' when creating business association."
+            raise RasError("Could not locate business when creating business association.", business_id=business_id, status=404)
         br = BusinessRespondent(business=business, respondent=respondent)
 
     enrolment = Enrolment(business_respondent=br,
