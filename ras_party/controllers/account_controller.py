@@ -389,10 +389,10 @@ def add_new_survey_for_respondent(payload, tran, session):
                           status=EnrolmentStatus.ENABLED)
     session.add(enrolment)
 
-    post_case_event(str(case_id), str(respondent_party_id), "RESPONDENT_ENROLED", "Respondent enrolled")
+    post_case_event(str(case_id), str(respondent_party_id), "RESPONDENT_ENROLED", "Respondent enroled")
 
     # This ensures the log message is only written once the DB transaction is committed
-    tran.on_success(lambda: logger.info(f'Respondent has enroled to {survey_name} for business {business_id}'))
+    tran.on_success(lambda: logger.info('Respondent has enroled to survey for business', survey_name=survey_name, business=business_id))
 
 
 def _send_email_verification(party_id, email):

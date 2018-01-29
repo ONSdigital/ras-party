@@ -84,5 +84,5 @@ def respondent_add_survey():
     if not v.validate(payload):
         raise RasError(v.errors, 400)
 
-    response = ras_party.controllers.account_controller.add_new_survey_for_respondent(payload)
-    return make_response(jsonify(response), 200)
+    ras_party.controllers.account_controller.add_new_survey_for_respondent(payload)
+    return make_response(jsonify('OK'), 200)

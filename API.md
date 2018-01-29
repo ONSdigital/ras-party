@@ -247,3 +247,14 @@ This page documents the Party service API endpoints. All endpoints return an `HT
     "sampleSummaryId": "aSampleSummaryId"
 }
 ```
+
+* `POST /respondents/add-survey`
+
+### Example JSON data for post
+```json
+{
+    "party_id": "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
+    "enrolment_code": "fb747cq725lj"
+}
+```
+&mdash; This endpoint will enrole a respondent in a survey and associate with business if not already associated.
