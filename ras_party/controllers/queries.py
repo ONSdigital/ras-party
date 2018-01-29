@@ -1,9 +1,9 @@
 import logging
 
-from sqlalchemy import func
+from sqlalchemy import func, and_
 import structlog
 
-from ras_party.models.models import Business, Respondent
+from ras_party.models.models import Business, BusinessRespondent, Respondent
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -50,3 +50,18 @@ def query_respondent_by_email(email, session):
     logger.debug('Querying respondents by email', email=email)
 
     return session.query(Respondent).filter(func.lower(Respondent.email_address) == email.lower()).first()
+
+
+def query_business_respondent_by_respondent_id_and_business_id(business_id, respondent_id, session):
+    """
+    Query to return respondent business associations based on respondent id
+    :param business_id,
+    :param respondent_id,
+    :param session
+    :return: business associations for respondent
+    """
+    logger.debug('Querying business respondent', respondent_id=respondent_id)
+
+    response = session.query(BusinessRespondent).filter(and_(BusinessRespondent.business_id == business_id,
+                                                             BusinessRespondent.respondent_id == respondent_id)).first()
+    return response

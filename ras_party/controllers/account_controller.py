@@ -11,6 +11,7 @@ from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import query_business_by_party_uuid
 from ras_party.controllers.queries import query_respondent_by_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid
+from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
 from ras_party.controllers.validate import Validator
 from ras_party.controllers.validate import IsUuid
 from ras_party.controllers.validate import Exists
@@ -338,6 +339,62 @@ def resend_verification_email(party_uuid, session):
     return {'message': EMAIL_VERIFICATION_SENT}
 
 
+@transactional
+@with_db_session
+def add_new_survey_for_respondent(payload, tran, session):
+    """
+    Add a survey for an existing respondent
+    :param payload: json containing party_id and enrolment_code
+    :param session: database session
+    """
+    logger.info("Enrolling existing respondent in survey")
+
+    respondent_party_id = payload['party_id']
+    enrolment_code = payload['enrolment_code']
+
+    iac = request_iac(enrolment_code)
+    if not iac.get('active'):
+        raise RasError("Enrolment code is not active.", status=400)
+
+    respondent = query_respondent_by_party_uuid(respondent_party_id, session)
+
+    case_context = request_case(enrolment_code)
+    case_id = case_context['id']
+    business_id = case_context['partyId']
+    collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
+    collection_exercise = request_collection_exercise(collection_exercise_id)
+
+    survey_id = collection_exercise['surveyId']
+    survey = request_survey(survey_id)
+    survey_name = survey['longName']
+
+    br = query_business_respondent_by_respondent_id_and_business_id(business_id, respondent.id, session)
+
+    if not br:
+        """
+        Associate respondent with new business
+        """
+        business = query_business_by_party_uuid(business_id, session)
+        if not business:
+            raise RasError("Could not locate business when creating business association.",
+                           business_id=business_id,
+                           status=404)
+        br = BusinessRespondent(business=business, respondent=respondent)
+
+    enrolment = Enrolment(business_respondent=br,
+                          survey_id=survey_id,
+                          survey_name=survey_name,
+                          status=EnrolmentStatus.ENABLED)
+    session.add(enrolment)
+
+    post_case_event(str(case_id), str(respondent_party_id), "RESPONDENT_ENROLED", "Respondent enroled")
+
+    # This ensures the log message is only written once the DB transaction is committed
+    tran.on_success(lambda: logger.info('Respondent has enroled to survey for business',
+                                        survey_name=survey_name,
+                                        business=business_id))
+
+
 def _send_email_verification(party_id, email):
     """
     Send an email verification to the respondent
@@ -358,8 +415,9 @@ def _send_email_verification(party_id, email):
 
 
 def set_user_verified(email_address):
-    """ Helper function to set the 'verified' flag on the OAuth2 server for a user.
-        If it fails a raise_for_status is executed
+    """
+    Helper function to set the 'verified' flag on the OAuth2 server for a user.
+    If it fails a raise_for_status is executed
     """
     logger.info("Setting user active on OAuth2 server")
     oauth_response = OauthClient().update_account(
@@ -397,9 +455,8 @@ def register_user(party, tran):
         oauth_response.raise_for_status()
 
     def dummy_compensating_action():
-        """
-        TODO: Undo the user registration.
-        """
+        # TODO: Undo the user registration.
+
         logger.info("Placeholder for deleting the user from oauth server")
 
     # Add a compensating action to try and avoid an exception leaving the user in an invalid state.

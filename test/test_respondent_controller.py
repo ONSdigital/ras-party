@@ -7,15 +7,17 @@ from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 
 from ras_party.controllers import account_controller
+from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
 from ras_party.exceptions import RasError
-from ras_party.models.models import RespondentStatus, Respondent
+from ras_party.models.models import BusinessRespondent, RespondentStatus, Respondent
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.transactional import transactional
 from ras_party.support.verification import generate_email_token
-from test.mocks import MockRespondent, MockRequests, MockResponse
+from test.mocks import MockRequests, MockResponse
 from test.party_client import PartyTestClient, respondents, businesses, business_respondent_associations, enrolments
+from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId
 
 
 class TestRespondents(PartyTestClient):
@@ -26,6 +28,7 @@ class TestRespondents(PartyTestClient):
         self.mock_notify = MagicMock()
         account_controller.NotifyGateway = MagicMock(return_value=self.mock_notify)
         self.mock_respondent = MockRespondent().attributes().as_respondent()
+        self.mock_respondent_with_id = MockRespondentWithId().attributes().as_respondent()
         self.respondent = None
 
     @transactional
@@ -45,6 +48,15 @@ class TestRespondents(PartyTestClient):
         session.add(self.respondent)
         account_controller.register_user(respondent, tran)
         return self.respondent
+
+    @with_db_session
+    def associate_business_and_respondent(self, business_id, respondent_id, session):
+        business = query_business_by_party_uuid(business_id, session)
+        respondent = query_respondent_by_party_uuid(respondent_id, session)
+
+        br = BusinessRespondent(business=business, respondent=respondent)
+
+        session.add(br)
 
     @staticmethod
     def generate_valid_token_from_email(email):
@@ -342,7 +354,7 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(respondents()[0].email_address, 'test@example.test')
 
     def test_put_respondent_email_calls_the_notify_service(self):
-        respondent = self.populate_with_respondent()
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent)
         put_data = {
             'email_address': self.mock_respondent['emailAddress'],
             'new_email_address': 'test@example.test'
@@ -525,3 +537,84 @@ class TestRespondents(PartyTestClient):
             with self.assertRaises(RasError):
                 account_controller.post_respondent(payload)
             query.assert_called_once_with('test@example.test', db.session())
+
+    def test_post_add_new_survey_no_respondent_business_association(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'party_id': self.mock_respondent_with_id['id'],
+            'enrolment_code': self.mock_respondent_with_id['enrolment_code']
+        }
+        self.add_survey(request_json, 200)
+
+    def test_post_add_new_survey_respondent_business_association(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+                                               respondent_id=self.mock_respondent_with_id['id'])
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'party_id': self.mock_respondent_with_id['id'],
+            'enrolment_code': self.mock_respondent_with_id['enrolment_code']
+        }
+        self.add_survey(request_json, 200)
+
+    def test_post_add_new_survey_missing_party_id_returns_error(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'enrolment_code': self.mock_respondent_with_id['enrolment_code']
+        }
+        response = self.add_survey(request_json, 400)
+        self.assertTrue(response['errors'] == ["Required key 'party_id' is missing."])
+
+    def test_post_add_new_survey_missing_enrolment_code_returns_error(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+                                               respondent_id=self.mock_respondent_with_id['id'])
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'party_id': self.mock_respondent_with_id['id'],
+        }
+
+        response = self.add_survey(request_json, 400)
+        self.assertTrue(response['errors'] == ["Required key 'enrolment_code' is missing."])
+
+    def test_post_add_survey_inactive_enrolment_code(self):
+        # Set IAC code to be inactive
+        def mock_get_iac(*args, **kwargs):
+            return MockResponse('{"active": false}')
+        self.mock_requests.get = mock_get_iac
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'party_id': self.mock_respondent_with_id['id'],
+            'enrolment_code': self.mock_respondent_with_id['enrolment_code']
+        }
+
+        self.add_survey(request_json, 400)
+
+    def test_post_add_survey_no_business_raise_ras_error(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'party_id': self.mock_respondent_with_id['id'],
+            'enrolment_code': self.mock_respondent_with_id['enrolment_code']
+        }
+        self.add_survey(request_json, 404)
