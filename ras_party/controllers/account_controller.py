@@ -379,8 +379,9 @@ def add_new_survey_for_respondent(payload, tran, session):
         """
         business = query_business_by_party_uuid(business_id, session)
         if not business:
-            msg = "Could not locate business with id '{business_id}' when creating business association."
-            raise RasError("Could not locate business when creating business association.", business_id=business_id, status=404)
+            raise RasError("Could not locate business when creating business association.",
+                           business_id=business_id,
+                           status=404)
         br = BusinessRespondent(business=business, respondent=respondent)
 
     enrolment = Enrolment(business_respondent=br,
@@ -392,7 +393,9 @@ def add_new_survey_for_respondent(payload, tran, session):
     post_case_event(str(case_id), str(respondent_party_id), "RESPONDENT_ENROLED", "Respondent enroled")
 
     # This ensures the log message is only written once the DB transaction is committed
-    tran.on_success(lambda: logger.info('Respondent has enroled to survey for business', survey_name=survey_name, business=business_id))
+    tran.on_success(lambda: logger.info('Respondent has enroled to survey for business',
+                                        survey_name=survey_name,
+                                        business=business_id))
 
 
 def _send_email_verification(party_id, email):
