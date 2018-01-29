@@ -257,4 +257,4 @@ This page documents the Party service API endpoints. All endpoints return an `HT
     "enrolment_code": "fb747cq725lj"
 }
 ```
-&mdash; This endpoint will enrole a respondent in a survey and associate with business if not already associated.
+&mdash; This endpoint will enrol a respondent in a survey and associate with business if not already associated.
