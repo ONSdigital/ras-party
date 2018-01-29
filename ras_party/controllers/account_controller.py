@@ -364,12 +364,9 @@ def add_new_survey_for_respondent(payload, tran, session):
     collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
     collection_exercise = request_collection_exercise(collection_exercise_id)
 
-    try:
-        survey_id = collection_exercise['surveyId']
-        survey = request_survey(survey_id)
-        survey_name = survey['longName']
-    except KeyError:
-        raise RasError("There is no survey bound for this user with id: ", respondent_id=respondent.id)
+    survey_id = collection_exercise['surveyId']
+    survey = request_survey(survey_id)
+    survey_name = survey['longName']
 
     br = query_business_respondent_by_respondent_id_and_business_id(business_id, respondent.id, session)
 
