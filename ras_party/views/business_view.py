@@ -35,12 +35,13 @@ def post_business():
     return make_response(jsonify(response), 200)
 
 
-@business_view.route('/businesses/id/<id>', methods=['GET'])
-def get_business_by_id(id):
+@business_view.route('/businesses/id/<business_id>', methods=['GET'])
+def get_business_by_id(business_id):
     verbose = request.args.get('verbose', '')
     verbose = True if verbose and verbose.lower() == 'true' else False
 
-    response = ras_party.controllers.business_controller.get_business_by_id(id, verbose=verbose)
+    response = ras_party.controllers.business_controller.get_business_by_id(business_id, verbose=verbose,
+                                                                            collection_exercise_id=request.args.get('collection_exercise_id'))
     return make_response(jsonify(response), 200)
 
 

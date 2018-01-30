@@ -30,7 +30,7 @@ def get_business_by_ref(ref, session, verbose=False):
 
 
 @with_db_session
-def get_business_by_id(party_uuid, session, verbose=False):
+def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_id=None):
     """
     Get a Business by its Party ID
     Returns a single Party
@@ -38,6 +38,9 @@ def get_business_by_id(party_uuid, session, verbose=False):
     :type party_uuid: str
 
     :param verbose: Verbosity of business details
+
+    :param collection_exercise_id: ID of Collection Exercise version of party
+    :type collection_exercise_id: str
 
     :rtype: Business
     """
@@ -52,7 +55,7 @@ def get_business_by_id(party_uuid, session, verbose=False):
     if verbose:
         return business.to_business_dict()
     else:
-        return business.to_business_summary_dict()
+        return business.to_business_summary_dict(collection_exercise_id=collection_exercise_id)
 
 
 @with_db_session
