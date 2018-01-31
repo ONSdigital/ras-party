@@ -38,15 +38,33 @@ class TestParties(PartyTestClient):
         self.assertEqual(response.get('name'), mock_business.get('name'))
 
     def test_get_business_by_id_and_collection_exercise_returns_correct_representation(self):
+        # Post business and link to sample/collection exercise
         mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_id_returns_correct_representation') \
+            .attributes(source='test_get_business_by_id_and_collection_exercise_returns_correct_representation') \
             .as_business()
-        party_id = self.post_to_businesses(mock_business, 200)['id']
+        self.post_to_businesses(mock_business, 200)
+        sample_id = mock_business['sampleSummaryId']
+        put_data = {'collectionExerciseId': 'test_id'}
+        self.put_to_businesses_sample_link(sample_id, put_data, 200)
 
+        # Repost business and link to different sample/collection exercise
+        mock_business['sampleSummaryId'] = '100000001'
+        party_id = self.post_to_businesses(mock_business, 200)['id']
+        put_data = {'collectionExerciseId': 'other_test_id'}
+        self.put_to_businesses_sample_link('100000001', put_data, 200)
+
+        # Retrieve data for first collection exercise
         response = self.get_business_by_id(party_id, query_string={"collection_exercise_id": "test_id"})
         self.assertEqual(len(response.items()), 6)
         self.assertEqual(response.get('id'), party_id)
-        self.assertEqual(response.get('sampleSummaryId'), mock_business['sampleSummaryId'])
+        self.assertEqual(response.get('sampleSummaryId'), sample_id)
+        self.assertEqual(response.get('name'), mock_business.get('name'))
+
+        # Retrieve data for 2nd collection exercise
+        response = self.get_business_by_id(party_id, query_string={"collection_exercise_id": "other_test_id"})
+        self.assertEqual(len(response.items()), 6)
+        self.assertEqual(response.get('id'), party_id)
+        self.assertEqual(response.get('sampleSummaryId'), '100000001')
         self.assertEqual(response.get('name'), mock_business.get('name'))
 
     def test_get_business_by_id_returns_correct_representation_verbose(self):
