@@ -129,8 +129,8 @@ class Business(Base):
             for attributes in self.attributes:
                 if attributes.collection_exercise == collection_exercise_id:
                     return attributes
-        else:
-            return self.attributes[-1]
+
+        return self.attributes[-1]
 
 
 class BusinessAttributes(Base):
