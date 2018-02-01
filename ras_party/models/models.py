@@ -101,16 +101,16 @@ class Business(Base):
 
         return dict(d, **self.attributes[-1].attributes)
 
-    def to_business_summary_dict(self):
+    def to_business_summary_dict(self, collection_exercise_id=None):
+        attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
         d = {
             'id': self.party_uuid,
             'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
-            'sampleSummaryId': self.attributes[-1].sample_summary_id,
-            'name': self.attributes[-1].attributes.get('name'),
+            'sampleSummaryId': attributes.sample_summary_id,
+            'name': attributes.attributes.get('name'),
             'associations': self._get_respondents_associations(self.respondents)
         }
-
         return d
 
     def to_party_dict(self):
@@ -123,6 +123,14 @@ class Business(Base):
             'name': self.attributes[-1].attributes.get('name'),
             'associations': self._get_respondents_associations(self.respondents)
         }
+
+    def _get_attributes_for_collection_exercise(self, collection_exercise_id=None):
+        if collection_exercise_id:
+            for attributes in self.attributes:
+                if attributes.collection_exercise == collection_exercise_id:
+                    return attributes
+        else:
+            return self.attributes[-1]
 
 
 class BusinessAttributes(Base):

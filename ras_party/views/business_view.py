@@ -1,11 +1,9 @@
 from flask import Blueprint, request, make_response, current_app, jsonify
 from flask_httpauth import HTTPBasicAuth
 
-import ras_party.controllers.account_controller
-import ras_party.controllers.business_controller
-import ras_party.controllers.party_controller
-import ras_party.controllers.respondent_controller
+from ras_party.controllers import business_controller
 from ras_party.support.log_decorator import log_route
+
 
 business_view = Blueprint('business_view', __name__)
 
@@ -31,16 +29,17 @@ def get_pw(username):
 @business_view.route('/businesses', methods=['POST'])
 def post_business():
     payload = request.get_json() or {}
-    response = ras_party.controllers.business_controller.businesses_post(payload)
+    response = business_controller.businesses_post(payload)
     return make_response(jsonify(response), 200)
 
 
-@business_view.route('/businesses/id/<id>', methods=['GET'])
-def get_business_by_id(id):
+@business_view.route('/businesses/id/<business_id>', methods=['GET'])
+def get_business_by_id(business_id):
     verbose = request.args.get('verbose', '')
     verbose = True if verbose and verbose.lower() == 'true' else False
 
-    response = ras_party.controllers.business_controller.get_business_by_id(id, verbose=verbose)
+    response = business_controller.get_business_by_id(business_id, verbose=verbose,
+                                                      collection_exercise_id=request.args.get('collection_exercise_id'))
     return make_response(jsonify(response), 200)
 
 
@@ -49,14 +48,14 @@ def get_business_by_ref(ref):
     verbose = request.args.get('verbose', '')
     verbose = True if verbose and verbose.lower() == 'true' else False
 
-    response = ras_party.controllers.business_controller.get_business_by_ref(ref, verbose=verbose)
+    response = business_controller.get_business_by_ref(ref, verbose=verbose)
     return make_response(jsonify(response), 200)
 
 
 @business_view.route('/businesses/sample/link/<sample>', methods=['PUT'])
 def put_business_attributes_ce(sample):
     payload = request.get_json() or {}
-    ras_party.controllers.business_controller.businesses_sample_ce_link(sample, payload)
+    business_controller.businesses_sample_ce_link(sample, payload)
 
     response = {**payload, "sampleSummaryId": sample}
     return make_response(jsonify(response), 200)

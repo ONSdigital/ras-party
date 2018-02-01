@@ -72,6 +72,8 @@ target/
 config/local.yaml
 ras-party
 
+# dotenv
+*.env
 
 .build/
 .idea/
