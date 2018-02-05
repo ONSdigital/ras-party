@@ -121,7 +121,7 @@ pipeline {
 
                 sh "cf set-env ras-party-ci RAS_OAUTH_SERVICE_HOST ras-django-ci.${env.CF_DOMAIN}"
                 sh "cf set-env ras-party-ci RAS_OAUTH_SERVICE_PORT 80"
-                sh 'cf start ras-party-ci'
+                sh 'cf start ras-party-ci-jenkins'
             }
         }
 
