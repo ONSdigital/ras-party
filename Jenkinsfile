@@ -97,30 +97,30 @@ pipeline {
             }
             steps {
                 sh "cf login -a https://${env.CLOUDFOUNDRY_API} --skip-ssl-validation -u ${CF_USER_USR} -p ${CF_USER_PSW} -o rmras -s ci"
-                sh 'cf push --no-start ras-party-ci'
-                sh 'cf set-env ras-party-ci ONS_ENV ci'
-                sh 'cf set-env ras-party-ci RABBITMQ_AMQP CHANGEME'
-                sh "cf set-env ras-party-ci SECURITY_USER_NAME ${env.CI_SECURITY_USR}"
-                sh "cf set-env ras-party-ci SECURITY_USER_PASSWORD ${env.CI_SECURITY_PSW}"
+                sh 'cf push --no-start ras-party-ci-jenkins'
+                sh 'cf set-env ras-party-ci-jenkins ONS_ENV ci'
+                sh 'cf set-env ras-party-ci-jenkins RABBITMQ_AMQP CHANGEME'
+                sh "cf set-env ras-party-ci-jenkins SECURITY_USER_NAME ${env.CI_SECURITY_USR}"
+                sh "cf set-env ras-party-ci-jenkins SECURITY_USER_PASSWORD ${env.CI_SECURITY_PSW}"
 
-                sh "cf set-env ras-party-ci RAS_CASE_SERVICE_HOST casesvc-ci.${env.CF_DOMAIN}"
-                sh "cf set-env ras-party-ci RAS_CASE_SERVICE_PORT 80"
+                sh "cf set-env ras-party-ci-jenkins RAS_CASE_SERVICE_HOST casesvc-ci.${env.CF_DOMAIN}"
+                sh "cf set-env ras-party-ci-jenkins RAS_CASE_SERVICE_PORT 80"
 
-                sh "cf set-env ras-party-ci RAS_COLLEX_SERVICE_HOST collectionexercisesvc-ci.${env.CF_DOMAIN}"
-                sh "cf set-env ras-party-ci RAS_COLLEX_SERVICE_PORT 80"
+                sh "cf set-env ras-party-ci-jenkins RAS_COLLEX_SERVICE_HOST collectionexercisesvc-ci.${env.CF_DOMAIN}"
+                sh "cf set-env ras-party-ci-jenkins RAS_COLLEX_SERVICE_PORT 80"
 
-                sh "cf set-env ras-party-ci RAS_SURVEY_SERVICE_HOST surveysvc-ci.${env.CF_DOMAIN}"
-                sh "cf set-env ras-party-ci RAS_SURVEY_SERVICE_PORT 80"
+                sh "cf set-env ras-party-ci-jenkins RAS_SURVEY_SERVICE_HOST surveysvc-ci.${env.CF_DOMAIN}"
+                sh "cf set-env ras-party-ci-jenkins RAS_SURVEY_SERVICE_PORT 80"
 
-                sh "cf set-env ras-party-ci RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE ${env.RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE}"
-                sh "cf set-env ras-party-ci RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE ${env.RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE}"
-                sh "cf set-env ras-party-ci RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE ${env.RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE}"
+                sh "cf set-env ras-party-ci-jenkins RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE ${env.RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE}"
+                sh "cf set-env ras-party-ci-jenkins RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE ${env.RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE}"
+                sh "cf set-env ras-party-ci-jenkins RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE ${env.RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE}"
 
-                sh "cf set-env ras-party-ci RAS_IAC_SERVICE_HOST iacsvc-ci.${env.CF_DOMAIN}"
-                sh "cf set-env ras-party-ci RAS_IAC_SERVICE_PORT 80"
+                sh "cf set-env ras-party-ci-jenkins RAS_IAC_SERVICE_HOST iacsvc-ci.${env.CF_DOMAIN}"
+                sh "cf set-env ras-party-ci-jenkins RAS_IAC_SERVICE_PORT 80"
 
-                sh "cf set-env ras-party-ci RAS_OAUTH_SERVICE_HOST ras-django-ci.${env.CF_DOMAIN}"
-                sh "cf set-env ras-party-ci RAS_OAUTH_SERVICE_PORT 80"
+                sh "cf set-env ras-party-ci-jenkins RAS_OAUTH_SERVICE_HOST ras-django-ci.${env.CF_DOMAIN}"
+                sh "cf set-env ras-party-ci-jenkins RAS_OAUTH_SERVICE_PORT 80"
                 sh 'cf start ras-party-ci-jenkins'
             }
         }
