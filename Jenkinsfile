@@ -167,7 +167,7 @@ pipeline {
             steps {
                 sh "cf login -a https://${env.CLOUDFOUNDRY_API} --skip-ssl-validation -u ${CF_USER_USR} -p ${CF_USER_PSW} -o rmras -s test"
                 sh 'cf push --no-start ras-party-test'
-                sh 'cf set-env ras-party-test ONS_ENV ci'
+                sh 'cf set-env ras-party-test ONS_ENV test'
                 sh 'cf set-env ras-party-test RABBITMQ_AMQP CHANGEME'
                 sh "cf set-env ras-party-test SECURITY_USER_NAME ${env.TEST_SECURITY_USR}"
                 sh "cf set-env ras-party-test SECURITY_USER_PASSWORD ${env.TEST_SECURITY_PSW}"
