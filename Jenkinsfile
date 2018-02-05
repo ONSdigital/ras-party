@@ -165,7 +165,7 @@ pipeline {
                 RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = credentials('RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE')
             }
             steps {
-                sh "cf login -a https://${env.CLOUDFOUNDRY_API} --skip-ssl-validation -u ${CF_USER_USR} -p ${CF_USER_PSW} -o rmras -s ci"
+                sh "cf login -a https://${env.CLOUDFOUNDRY_API} --skip-ssl-validation -u ${CF_USER_USR} -p ${CF_USER_PSW} -o rmras -s test"
                 sh 'cf push --no-start ras-party-test'
                 sh 'cf set-env ras-party-test ONS_ENV ci'
                 sh 'cf set-env ras-party-test RABBITMQ_AMQP CHANGEME'
