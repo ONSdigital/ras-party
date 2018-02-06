@@ -9,7 +9,7 @@ import sqlalchemy as sa
 # hack to allow for imports from project directory
 sys.path.append(os.path.abspath(os.getcwd()))
 
-from ras_party.models import GUID
+from ras_party.models import GUID   # NOQA # pylint: disable=wrong-import-position
 
 # revision identifiers, used by Alembic.
 

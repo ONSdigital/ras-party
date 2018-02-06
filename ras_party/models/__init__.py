@@ -1,11 +1,7 @@
 import uuid
-import copy
-import json
 
-from sqlalchemy import String
-from sqlalchemy.types import TypeDecorator, CHAR, Unicode
+from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext import mutable
 
 
 json_null = object()
