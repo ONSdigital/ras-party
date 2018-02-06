@@ -6,25 +6,30 @@ from flask_testing import TestCase
 
 from logger_config import logger_initial_config
 from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
+from ras_party.support.session_decorator import with_db_session
 from run import create_app, create_database
 from test.fixtures import party_schema
 from test.test_data.mock_business import MockBusiness
 
 
-def businesses():
-    return current_app.db.session.query(Business).all()
+@with_db_session
+def businesses(session):
+    return session.query(Business).all()
 
 
-def respondents():
-    return current_app.db.session.query(Respondent).all()
+@with_db_session
+def respondents(session):
+    return session.query(Respondent).all()
 
 
-def business_respondent_associations():
-    return current_app.db.session.query(BusinessRespondent).all()
+@with_db_session
+def business_respondent_associations(session):
+    return session.query(BusinessRespondent).all()
 
 
-def enrolments():
-    return current_app.db.session.query(Enrolment).all()
+@with_db_session
+def enrolments(session):
+    return session.query(Enrolment).all()
 
 
 class PartyTestClient(TestCase):
@@ -36,6 +41,11 @@ class PartyTestClient(TestCase):
         app.config['PARTY_SCHEMA'] = party_schema.schema
         app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'])
         return app
+
+    def tearDown(self):
+        connection = current_app.db.connect()
+        connection.execute(f"drop schema {current_app.config['DATABASE_SCHEMA']} cascade;")
+        connection.close()
 
     def populate_with_business(self):
         mock_business = MockBusiness().as_business()

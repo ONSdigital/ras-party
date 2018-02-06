@@ -32,7 +32,7 @@ class Config(object):
         DATABASE_URI = cf.db.credentials['uri']
     else:
         DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'partysvc')
-        DATABASE_URI = os.getenv('DATABASE_URI', "postgres://postgres:postgres@localhost:6432/postgres")
+        DATABASE_URI = os.getenv('DATABASE_URI', "postgres://postgres:postgres@localhost:5432/postgres")
 
     REQUESTS_GET_TIMEOUT = os.getenv('REQUESTS_GET_TIMEOUT', 20)
     REQUESTS_POST_TIMEOUT = os.getenv('REQUESTS_POST_TIMEOUT', 20)
@@ -120,7 +120,6 @@ class TestingConfig(DevelopmentConfig):
     REQUESTS_GET_TIMEOUT = 99
     REQUESTS_POST_TIMEOUT = 99
     DATABASE_SCHEMA = 'partysvc'
-    DATABASE_URI = "sqlite:///:memory:"
 
     RAS_PUBLIC_WEBSITE_URL = 'http://dummy.ons.gov.uk'
     RAS_CASE_SERVICE = 'http://mockhost:1111'

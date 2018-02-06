@@ -1,9 +1,15 @@
 import datetime
+import os
+import sys
 
 from alembic import op
+from sqlalchemy.dialects.postgresql import JSONB
 import sqlalchemy as sa
 
-from ras_party.models import GUID, JsonColumn
+# hack to allow for imports from project directory
+sys.path.append(os.path.abspath(os.getcwd()))
+
+from ras_party.models import GUID
 
 # revision identifiers, used by Alembic.
 
@@ -20,7 +26,7 @@ def upgrade():
         sa.Column('business_id', GUID),
         sa.Column('sample_summary_id', sa.Text),
         sa.Column('collection_exercise', sa.Text),
-        sa.Column('attributes', JsonColumn()),
+        sa.Column('attributes', JSONB),
         sa.Column('created_on', sa.DateTime, default=datetime.datetime.utcnow),
         sa.ForeignKeyConstraint(['business_id'], ['partysvc.business.party_uuid']),
         schema='partysvc'
@@ -37,7 +43,7 @@ def upgrade():
 
 def downgrade():
     op.add_column('business',
-                  sa.Column('attributes', JsonColumn()),
+                  sa.Column('attributes', JSONB),
                   schema='partysvc'
                   )
 

@@ -6,6 +6,8 @@ install:
     - pipenv install --dev
 script:
     - pipenv run tox
+services:
+    - postgresql
 after_success:
     - bash <(curl -s https://codecov.io/bash)
 notifications:

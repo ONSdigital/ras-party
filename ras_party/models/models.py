@@ -5,11 +5,12 @@ import uuid
 from jsonschema import Draft4Validator
 
 from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
 from sqlalchemy.ext.declarative import declarative_base
 
-from ras_party.models import GUID, JsonColumn
+from ras_party.models import GUID
 from ras_party.support.util import filter_falsey_values, partition_dict
 
 
@@ -140,7 +141,7 @@ class BusinessAttributes(Base):
     business_id = Column(GUID, ForeignKey('business.party_uuid'))
     sample_summary_id = Column(Text)
     collection_exercise = Column(Text)
-    attributes = Column(JsonColumn())
+    attributes = Column(JSONB)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
 
@@ -161,8 +162,8 @@ class BusinessRespondent(Base):
     effective_to = Column(DateTime)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    business = relationship('Business', back_populates='respondents')
-    respondent = relationship('Respondent', back_populates='businesses')
+    business = relationship('Business', back_populates='respondents', lazy='joined')
+    respondent = relationship('Respondent', back_populates='businesses', lazy='joined')
     enrolment = relationship('Enrolment', back_populates='business_respondent')
 
 
@@ -273,7 +274,7 @@ class Enrolment(Base):
     status = Column('status', Enum(EnrolmentStatus), default=EnrolmentStatus.PENDING)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
-    business_respondent = relationship('BusinessRespondent', back_populates='enrolment')
+    business_respondent = relationship('BusinessRespondent', back_populates='enrolment', lazy='joined')
 
     __table_args__ = (
         ForeignKeyConstraint(['business_id', 'respondent_id'],
