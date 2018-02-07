@@ -1,6 +1,6 @@
 from flask import current_app
 
-from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid
+from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid, search_businesses
 from ras_party.controllers.validate import Validator, IsUuid, Exists
 from ras_party.exceptions import RasError
 from ras_party.models.models import Business, BusinessAttributes
@@ -103,3 +103,10 @@ def businesses_sample_ce_link(sample, ce_data, session):
 
     session.query(BusinessAttributes).filter(BusinessAttributes.sample_summary_id == sample)\
         .update({'collection_exercise': collection_exercise_id})
+
+
+@with_db_session
+def get_businesses_by_search_query(search_query, session):
+    businesses = search_businesses(search_query, session)
+    businesses = [{"ruref": business[1], "name": business[0]} for business in businesses]
+    return businesses

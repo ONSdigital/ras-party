@@ -1,9 +1,9 @@
 import logging
 
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_
 import structlog
 
-from ras_party.models.models import Business, BusinessRespondent, Respondent
+from ras_party.models.models import Business, BusinessRespondent, Respondent, BusinessAttributes
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -65,3 +65,20 @@ def query_business_respondent_by_respondent_id_and_business_id(business_id, resp
     response = session.query(BusinessRespondent).filter(and_(BusinessRespondent.business_id == business_id,
                                                              BusinessRespondent.respondent_id == respondent_id)).first()
     return response
+
+
+def search_businesses(search_query, session):
+    """
+    Query to return list of businesses based on search query
+    :param search_query: the search query
+    :return: list of businesses
+    """
+    logger.debug('Searching businesses by name with search query', search_query=search_query)
+    filters = list()
+    ru = search_query[2:] if len(search_query) > 1 and search_query[:2].lower() == 'ru' else search_query
+    filters.append(BusinessAttributes.attributes['name'].astext.ilike(f'%{search_query}%'))
+    filters.append(Business.business_ref.ilike(f'%{ru}%'))
+
+    return session.query(BusinessAttributes.attributes['name'], Business.business_ref).join(Business)\
+        .filter(or_(*filters)).distinct().all()
+

@@ -178,3 +178,10 @@ class PartyTestClient(TestCase):
                                     content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status)
         return json.loads(response.get_data(as_text=True))
+
+    def get_businesses_search(self, expected_status=200, query_string=None):
+        response = self.client.get(f'/party-api/v1/businesses/search',
+                                   query_string=query_string,
+                                   headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))

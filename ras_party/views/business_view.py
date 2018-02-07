@@ -2,6 +2,7 @@ from flask import Blueprint, request, make_response, current_app, jsonify
 from flask_httpauth import HTTPBasicAuth
 
 from ras_party.controllers import business_controller
+from ras_party.exceptions import RasError
 from ras_party.support.log_decorator import log_route
 
 
@@ -58,4 +59,15 @@ def put_business_attributes_ce(sample):
     business_controller.businesses_sample_ce_link(sample, payload)
 
     response = {**payload, "sampleSummaryId": sample}
+    return make_response(jsonify(response), 200)
+
+
+@business_view.route('/businesses/search', methods=['GET'])
+def get_party_by_search():
+    query = request.args.get('query', '')
+
+    if not query:
+        raise RasError('Invalid search query', status=400)
+
+    response = business_controller.get_businesses_by_search_query(query)
     return make_response(jsonify(response), 200)
