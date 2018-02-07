@@ -75,9 +75,8 @@ def search_businesses(search_query, session):
     """
     logger.debug('Searching businesses by name with search query', search_query=search_query)
     filters = list()
-    ru = search_query[2:] if len(search_query) > 1 and search_query[:2].lower() == 'ru' else search_query
     filters.append(BusinessAttributes.attributes['name'].astext.ilike(f'%{search_query}%'))
-    filters.append(Business.business_ref.ilike(f'%{ru}%'))
+    filters.append(Business.business_ref.ilike(f'%{search_query}%'))
 
     return session.query(BusinessAttributes.attributes['name'], Business.business_ref).join(Business)\
         .filter(or_(*filters)).distinct().all()
