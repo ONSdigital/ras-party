@@ -90,7 +90,8 @@ class TestBusinessesSearch(PartyTestClient):
         response = self.get_businesses_search(query_string={"query": mock_business['runame1']})
 
         # then distinct variations of the correct business is returned
+        names = [business['name'] for business in response]
         self.assertEqual(len(response), 3)
-        self.assertEqual(name_1, response[0]['name'])
-        self.assertEqual(name_2, response[1]['name'])
-        self.assertEqual(name_3, response[2]['name'])
+        self.assertIn(name_1, names)
+        self.assertIn(name_2, names)
+        self.assertIn(name_3, names)
