@@ -81,4 +81,3 @@ def search_businesses(search_query, session):
 
     return session.query(BusinessAttributes.attributes['name'], Business.business_ref).join(Business)\
         .filter(or_(*filters)).distinct().all()
-

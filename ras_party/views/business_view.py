@@ -66,8 +66,5 @@ def put_business_attributes_ce(sample):
 def get_party_by_search():
     query = request.args.get('query', '')
 
-    if not query:
-        raise RasError('Invalid search query', status=400)
-
     response = business_controller.get_businesses_by_search_query(query)
     return make_response(jsonify(response), 200)
