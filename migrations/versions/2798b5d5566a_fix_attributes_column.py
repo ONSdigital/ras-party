@@ -27,8 +27,9 @@ def upgrade():
     sql_query = "SELECT * FROM partysvc.business_attributes"
     result = conn.execute(sql_query)
     for row in result:
+        attributes = json.loads(json.dumps(row['attributes'])).replace("'", "''")   # Escape single quote & format json
         insert_sql = f"UPDATE partysvc.business_attributes " \
-                     f"SET attributes = '{json.loads(json.dumps(row['attributes']))}' WHERE id={row['id']}"
+                     f"SET attributes = '{attributes}' WHERE id={row['id']}"
         conn.execute(insert_sql)
 
 
