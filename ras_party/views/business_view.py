@@ -59,3 +59,11 @@ def put_business_attributes_ce(sample):
 
     response = {**payload, "sampleSummaryId": sample}
     return make_response(jsonify(response), 200)
+
+
+@business_view.route('/businesses/search', methods=['GET'])
+def get_party_by_search():
+    query = request.args.get('query', '')
+
+    response = business_controller.get_businesses_by_search_query(query)
+    return make_response(jsonify(response), 200)
