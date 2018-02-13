@@ -73,6 +73,22 @@ class TestBusinessesSearch(PartyTestClient):
         self.assertEqual(response[0]['ruref'], business['ruref'])
         self.assertEqual(response[0]['name'], business['name'])
 
+    def test_get_business_by_search_key_words_in_name(self):
+        mock_business = MockBusiness() \
+            .attributes(source='test_get_business_by_search_key_words_in_name') \
+            .as_business()
+
+        # given there is a business to search
+        business = self.post_to_businesses(mock_business, 200)
+
+        # when user searches by multiple key words in name
+        response = self.get_businesses_search(query_string={"query": f"{business['runame1']} {business['runame3']}"})
+
+        # then th correct business is returned
+        self.assertEqual(len(response), 1)
+        self.assertEqual(response[0]['ruref'], business['ruref'])
+        self.assertEqual(response[0]['name'], business['name'])
+
     def test_get_business_by_search_distinct_multi_names(self):
         mock_business = MockBusiness() \
             .attributes(source='test_get_business_by_search_partial_ru') \
