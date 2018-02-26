@@ -1,5 +1,5 @@
-from ras_party.controllers.queries import query_respondent_by_party_uuid, query_respondent_by_email
-from ras_party.controllers.validate import Validator, IsUuid
+from ras_party.controllers.queries import query_respondent_by_party_uuid, query_respondent_by_email, query_change_respondent_details
+from ras_party.controllers.validate import Validator, IsUuid, Exists
 from ras_party.exceptions import RasError
 from ras_party.support.session_decorator import with_db_session
 
@@ -40,3 +40,28 @@ def get_respondent_by_email(email, session):
         raise RasError("Respondent does not exist.", status=404)
 
     return respondent.to_respondent_dict()
+
+
+@with_db_session
+def change_respondent_details(respondent_first_name, respondent_last_name, respondent_tel_number, session):
+    """
+    :param respondent_first_name:
+    :param respondent_last_name:
+    :param respondent_tel_number:
+    :param session:
+    :return:
+    """
+    v = Validator(Exists('respondent_first_name', 'respondent_last_name', 'respondent_tel_number'))
+    if not v.validate(respondent_first_name):
+        raise RasError(v.errors, status=400)
+    if not v.validate(respondent_last_name):
+        raise RasError(v.errors, status=400)
+    if not v.validate(respondent_tel_number):
+        raise RasError(v.errors, status=400)
+
+    respondent = query_change_respondent_details(respondent_first_name,
+                                                 respondent_last_name,
+                                                 respondent_tel_number,
+                                                 session)
+    if not respondent:
+        raise RasError("Respondent does not exist.", status=404)
