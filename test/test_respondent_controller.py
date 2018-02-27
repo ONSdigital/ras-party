@@ -101,6 +101,13 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['sampleUnitType'], self.mock_respondent['sampleUnitType'])
         self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
 
+    def test_change_respondent_details(self):
+        respondent = self.populate_with_respondent()
+        payload = {'first_name': respondent.first_name,
+                   'last_name': respondent.last_name,
+                   'telephone': respondent.telephone}
+        self.change_respondent_details(payload)
+
     def test_resend_verification_email(self):
         # Given there is a respondent
         respondent = self.populate_with_respondent()

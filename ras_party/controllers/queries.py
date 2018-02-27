@@ -67,9 +67,10 @@ def query_business_respondent_by_respondent_id_and_business_id(business_id, resp
     return response
 
 
-def query_change_respondent_details(respondent_first_name, respondent_last_name, respondent_tel_number, session):
+def query_change_respondent_details(id, respondent_first_name, respondent_last_name, respondent_tel_number, session):
     """
     Query to return respondent
+    :param id:
     :param respondent_first_name:
     :param respondent_last_name:
     :param respondent_tel_number:
@@ -80,9 +81,10 @@ def query_change_respondent_details(respondent_first_name, respondent_last_name,
                  respondent_last_name=respondent_last_name,
                  respondent_tel_number=respondent_tel_number)
 
-    return session.query(Respondent).update(Respondent.first_name == respondent_first_name,
-                                            Respondent.last_name == respondent_last_name,
-                                            Respondent.telephone == respondent_tel_number)
+    return session.query(Respondent).filter(Respondent.id == id).update({
+                                            Respondent.first_name: respondent_first_name,
+                                            Respondent.last_name: respondent_last_name,
+                                            Respondent.telephone: respondent_tel_number})
 
 
 def search_businesses(search_query, session):

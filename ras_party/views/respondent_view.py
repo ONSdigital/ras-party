@@ -41,8 +41,9 @@ def get_respondent_by_email(email):
 
 
 @respondent_view.route('/respondents/change_respondent_details', methods=['PUT'])
-def change_respondent_details(first_name, last_name, telephone):
-    response = ras_party.controllers.respondent_controller.query_change_respondent_details(first_name,
+def change_respondent_details(id, first_name, last_name, telephone):
+    response = ras_party.controllers.respondent_controller.query_change_respondent_details(id,
+                                                                                           first_name,
                                                                                            last_name,
                                                                                            telephone)
     return make_response(jsonify(response), 200)
