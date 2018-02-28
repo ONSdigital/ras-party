@@ -101,12 +101,19 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['sampleUnitType'], self.mock_respondent['sampleUnitType'])
         self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
 
-    def test_change_respondent_details(self):
+    def test_change_respondent_details_success(self):
         respondent = self.populate_with_respondent()
-        payload = {'first_name': respondent.first_name,
-                   'last_name': respondent.last_name,
+        payload = {'firstName': respondent.first_name,
+                   'lastName': respondent.last_name,
                    'telephone': respondent.telephone}
-        self.change_respondent_details(payload)
+        self.change_respondent_details(payload, expected_status=200)
+
+    def test_change_respondent_details_failed(self):
+        respondent = self.populate_with_respondent()
+        payload = {'firstName': '',
+                   'lastName': '',
+                   'telephone': ''}
+        self.change_respondent_details(payload, expected_status=400)
 
     def test_resend_verification_email(self):
         # Given there is a respondent

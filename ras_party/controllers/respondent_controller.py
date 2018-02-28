@@ -54,10 +54,7 @@ def change_respondent_details(id, respondent_first_name, respondent_last_name, r
     :return:
     """
     v = Validator(Exists('respondent_first_name', 'respondent_last_name', 'respondent_tel_number'))
-    v_id = Validator(IsUuid('id'))
 
-    if not v_id.validate({'id': id}):
-        raise RasError(v.errors, status=400)
     if not v.validate(respondent_first_name):
         raise RasError(v.errors, status=400)
     if not v.validate(respondent_last_name):
@@ -70,10 +67,5 @@ def change_respondent_details(id, respondent_first_name, respondent_last_name, r
                                                  respondent_last_name,
                                                  respondent_tel_number,
                                                  session)
-    if respondent:
-        session.merge(respondent)
-
-    else:
-        raise RasError("Respondent does not exist.", status=404)
 
     return respondent.to_respondent_dict()

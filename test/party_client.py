@@ -186,7 +186,7 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def change_respondent_details(self, id, first_name, last_name, telephone, expected_status=200):
+    def change_respondent_details(self, payload, expected_status=200):
         response = self.client.put(f'/party-api/v1/respondents/change_respondent_details',
                                    headers=self.auth_headers,
                                    data=json.dumps(payload))
