@@ -67,24 +67,22 @@ def query_business_respondent_by_respondent_id_and_business_id(business_id, resp
     return response
 
 
-def query_change_respondent_details(id, respondent_first_name, respondent_last_name, respondent_tel_number, session):
+def query_change_respondent_details(respondent_data, session):
     """
-    Query to return respondent
-    :param id:
-    :param respondent_first_name:
-    :param respondent_last_name:
-    :param respondent_tel_number:
-    :param session:
-    :return: respondent or none
+    Query to return respondent, respondent_data consists of the following parameters
+    :param respondent_id:
+    :param first_name:
+    :param last_name:
+    :param telephone:
+    :return: updated respondent details
     """
-    logger.debug('Changing respondent details', respondent_first_name=respondent_first_name,
-                 respondent_last_name=respondent_last_name,
-                 respondent_tel_number=respondent_tel_number)
 
-    return session.query(Respondent).filter(Respondent.id == id).update({
-                                            Respondent.first_name: respondent_first_name,
-                                            Respondent.last_name: respondent_last_name,
-                                            Respondent.telephone: respondent_tel_number})
+    logger.debug('Changing respondent details', respondent_data=respondent_data)
+
+    return session.query(Respondent).filter(Respondent.id == respondent_data['respondent_id']).update({
+                                            Respondent.first_name: respondent_data['firstName'],
+                                            Respondent.last_name: respondent_data['lastName'],
+                                            Respondent.telephone: respondent_data['telephone']})
 
 
 def search_businesses(search_query, session):

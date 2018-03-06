@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, make_response, jsonify
+from flask import Blueprint, current_app, make_response, jsonify, request
 from flask_httpauth import HTTPBasicAuth
 
 import ras_party.controllers.account_controller
@@ -41,9 +41,7 @@ def get_respondent_by_email(email):
 
 
 @respondent_view.route('/respondents/change_respondent_details', methods=['PUT'])
-def change_respondent_details(id, first_name, last_name, telephone):
-    response = ras_party.controllers.respondent_controller.query_change_respondent_details(id,
-                                                                                           first_name,
-                                                                                           last_name,
-                                                                                           telephone)
+def change_respondent_details():
+    payload = request.get_json()
+    response = ras_party.controllers.respondent_controller.change_respondent_details(payload)
     return make_response(jsonify(response), 200)
