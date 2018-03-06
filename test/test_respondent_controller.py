@@ -109,7 +109,6 @@ class TestRespondents(PartyTestClient):
         self.change_respondent_details(payload, expected_status=200)
 
     def test_change_respondent_details_failed(self):
-        respondent = self.populate_with_respondent()
         payload = {'firstName': '',
                    'lastName': '',
                    'telephone': ''}

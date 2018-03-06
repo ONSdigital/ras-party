@@ -70,16 +70,18 @@ def query_business_respondent_by_respondent_id_and_business_id(business_id, resp
 def query_change_respondent_details(respondent_data, session):
     """
     Query to return respondent, respondent_data consists of the following parameters
-    :param respondent_id:
-    :param first_name:
-    :param last_name:
-    :param telephone:
+    :param respondent_data:
+        respondent_id: id of the respondent
+        first_name:
+        last_name:
+        telephone:
+    :param session
     :return: updated respondent details
     """
 
     logger.debug('Changing respondent details', respondent_data=respondent_data)
 
-    return session.query(Respondent).filter(Respondent.id == respondent_data['respondent_id']).update({
+    return session.query(Respondent).filter(Respondent.party_uuid == respondent_data['respondent_id']).update({
                                             Respondent.first_name: respondent_data['firstName'],
                                             Respondent.last_name: respondent_data['lastName'],
                                             Respondent.telephone: respondent_data['telephone']})
