@@ -50,4 +50,8 @@ def change_respondent_details(respondent_data, session):
     :param session:
     :return:
     """
+    v = Validator(IsUuid('respondent_id'))
+    if not v.validate({'respondent_id': respondent_data['respondent_id']}):
+        raise RasError(v.errors, status=404)
+
     query_change_respondent_details(respondent_data, session)

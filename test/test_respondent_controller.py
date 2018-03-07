@@ -102,17 +102,24 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
 
     def test_change_respondent_details_success(self):
-        respondent = self.populate_with_respondent()
-        payload = {'firstName': respondent.first_name,
-                   'lastName': respondent.last_name,
-                   'telephone': respondent.telephone}
-        self.change_respondent_details(payload, expected_status=200)
+        self.populate_with_respondent()
+        payload = {
+            "respondent_id": "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
+            "firstName": "John",
+            "lastName": "Snow",
+            "telephone": "07837230942"
+        }
+        self.change_respondent_details(payload, 200)
 
-    def test_change_respondent_details_failed(self):
-        payload = {'firstName': '',
-                   'lastName': '',
-                   'telephone': ''}
-        self.change_respondent_details(payload, expected_status=400)
+    def test_change_respondent_details_respondent_does_not_exist(self):
+        self.populate_with_respondent()
+        payload = {
+            "respondent_id": "",
+            "firstName": "John",
+            "lastName": "Bloggs",
+            "telephone": "07837230942"
+        }
+        self.change_respondent_details(payload, 404)
 
     def test_resend_verification_email(self):
         # Given there is a respondent
