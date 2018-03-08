@@ -67,7 +67,7 @@ def query_business_respondent_by_respondent_id_and_business_id(business_id, resp
     return response
 
 
-def query_change_respondent_details(respondent_data, session):
+def update_respondent_details(respondent_data, session):
     """
     Query to return respondent, respondent_data consists of the following parameters
     :param respondent_data:
@@ -79,7 +79,7 @@ def query_change_respondent_details(respondent_data, session):
     :return: updated respondent details
     """
 
-    logger.debug('Changing respondent details', respondent_id=respondent_data['respondent_id'])
+    logger.debug('Updating respondent details', respondent_id=respondent_data['respondent_id'])
 
     return session.query(Respondent).filter(Respondent.party_uuid == respondent_data['respondent_id']).update({
                                             Respondent.first_name: respondent_data['firstName'],

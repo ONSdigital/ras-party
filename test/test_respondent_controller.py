@@ -98,10 +98,10 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['emailAddress'], self.mock_respondent['emailAddress'])
         self.assertEqual(response['firstName'], self.mock_respondent['firstName'])
         self.assertEqual(response['lastName'], self.mock_respondent['lastName'])
-        self.assertEqual(response['sampleUnitType'], self.mock_respondent['sampleUnitType'])
+        self.assertEqual(response['sampleUnitType'], self.mock_respondent ['sampleUnitType'])
         self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
 
-    def test_change_respondent_details_success(self):
+    def test_update_respondent_details_success(self):
         self.populate_with_respondent()
         payload = {
             "respondent_id": "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
@@ -111,7 +111,7 @@ class TestRespondents(PartyTestClient):
         }
         self.change_respondent_details(payload, 200)
 
-    def test_change_respondent_details_respondent_does_not_exist(self):
+    def test_update_respondent_details_respondent_does_not_exist_error(self):
         self.populate_with_respondent()
         payload = {
             "respondent_id": "",
@@ -119,7 +119,7 @@ class TestRespondents(PartyTestClient):
             "lastName": "Bloggs",
             "telephone": "07837230942"
         }
-        self.change_respondent_details(payload, 404)
+        self.change_respondent_details(payload, 400)
 
     def test_resend_verification_email(self):
         # Given there is a respondent

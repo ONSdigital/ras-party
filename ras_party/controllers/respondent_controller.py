@@ -1,5 +1,5 @@
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_respondent_by_email,\
-    query_change_respondent_details
+    update_respondent_details
 from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.exceptions import RasError
 from ras_party.support.session_decorator import with_db_session
@@ -52,6 +52,6 @@ def change_respondent_details(respondent_data, session):
     """
     v = Validator(IsUuid('respondent_id'))
     if not v.validate({'respondent_id': respondent_data['respondent_id']}):
-        raise RasError(v.errors, status=404)
+        raise RasError(v.errors, status=400)
 
-    query_change_respondent_details(respondent_data, session)
+    update_respondent_details(respondent_data, session)
