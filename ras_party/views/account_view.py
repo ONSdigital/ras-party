@@ -1,3 +1,6 @@
+import logging
+import structlog
+
 from flask import Blueprint, request, current_app, make_response, jsonify
 from flask_httpauth import HTTPBasicAuth
 
@@ -11,7 +14,7 @@ from ras_party.support.log_decorator import log_route
 
 account_view = Blueprint('account_view', __name__)
 
-
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 auth = HTTPBasicAuth()
 
 
@@ -85,4 +88,14 @@ def respondent_add_survey():
         raise RasError(v.errors, 400)
 
     ras_party.controllers.account_controller.add_new_survey_for_respondent(payload)
+    return make_response(jsonify('OK'), 200)
+
+
+@account_view.route('/respondents/change_enrolment_status', methods=['PUT'])
+def change_respondent_enrolment_status():
+    payload = request.get_json() or {}
+    v = Validator(Exists('respondent_party_id', 'business_id', 'survey_id', 'change_flag'))
+    if not v.validate(payload):
+        raise RasError(v.errors, 400)
+    ras_party.controllers.account_controller.change_respondent_enrolment_status(payload)
     return make_response(jsonify('OK'), 200)

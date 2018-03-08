@@ -9,7 +9,7 @@ from itsdangerous import URLSafeTimedSerializer
 from ras_party.controllers import account_controller
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
 from ras_party.exceptions import RasError
-from ras_party.models.models import BusinessRespondent, RespondentStatus, Respondent
+from ras_party.models.models import BusinessRespondent, Enrolment, RespondentStatus, Respondent
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
@@ -17,6 +17,7 @@ from ras_party.support.transactional import transactional
 from ras_party.support.verification import generate_email_token
 from test.mocks import MockRequests, MockResponse
 from test.party_client import PartyTestClient, respondents, businesses, business_respondent_associations, enrolments
+from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDisabled
 from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId
 
 
@@ -30,6 +31,8 @@ class TestRespondents(PartyTestClient):
         self.mock_respondent = MockRespondent().attributes().as_respondent()
         self.mock_respondent_with_id = MockRespondentWithId().attributes().as_respondent()
         self.respondent = None
+        self.mock_enrolment_enabled = MockEnrolmentEnabled().attributes().as_enrolment()
+        self.mock_enrolment_disabled = MockEnrolmentDisabled().attributes().as_enrolment()
 
     @transactional
     @with_db_session
@@ -48,6 +51,22 @@ class TestRespondents(PartyTestClient):
         session.add(self.respondent)
         account_controller.register_user(respondent, tran)
         return self.respondent
+
+    @with_db_session
+    def populate_with_enrolment(self, session, enrolment=None):
+        if not enrolment:
+            enrolment = self.mock_enrolment_enabled
+        translated_enrolment = {
+            'business_id': enrolment['business_id'],
+            'respondent_id': enrolment['respondent_id'],
+            'survey_id': enrolment['survey_id'],
+            'survey_name': enrolment['survey_name'],
+            'status': enrolment['status'],
+            'created_on': enrolment['created_on']
+        }
+        self.enrolment = Enrolment(**translated_enrolment)
+        session.add(self.enrolment)
+
 
     @with_db_session
     def associate_business_and_respondent(self, business_id, respondent_id, session):
@@ -658,3 +677,64 @@ class TestRespondents(PartyTestClient):
             'enrolment_code': self.mock_respondent_with_id['enrolment_code']
         }
         self.add_survey(request_json, 404)
+
+    def test_put_change_respondent_enrolment_status_disabled_success(self):
+        def mock_put_iac(*args, **kwargs):
+            return MockResponse('{"active": false}')
+        self.mock_requests.put = mock_put_iac
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+                                               respondent_id=self.mock_respondent_with_id['id'])
+        self.populate_with_enrolment()
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'respondent_party_id': self.mock_respondent_with_id['id'],
+            'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
+            'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
+            'change_flag': 'DISABLED'
+        }
+        self.put_enrolment_status(request_json, 200)
+
+    def test_put_change_respondent_enrolment_status_enabled_success(self):
+        def mock_put_iac(*args, **kwargs):
+            return MockResponse('{"active": false}')
+        self.mock_requests.put = mock_put_iac
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+                                               respondent_id=self.mock_respondent_with_id['id'])
+        enrolment = self.mock_enrolment_disabled
+        self.populate_with_enrolment(enrolment=enrolment)
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'respondent_party_id': self.mock_respondent_with_id['id'],
+            'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
+            'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
+            'change_flag': 'ENABLED'
+        }
+        self.put_enrolment_status(request_json, 200)
+
+    def test_put_change_respondent_enrolment_status_random_string_fail(self):
+        def mock_put_iac(*args, **kwargs):
+            return MockResponse('{"active": false}')
+        self.mock_requests.put = mock_put_iac
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+                                               respondent_id=self.mock_respondent_with_id['id'])
+        self.populate_with_enrolment()
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'respondent_party_id': self.mock_respondent_with_id['id'],
+            'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
+            'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
+            'change_flag': 'woafouewbhouGFHEPIW0'
+        }
+        self.put_enrolment_status(request_json, 500)
