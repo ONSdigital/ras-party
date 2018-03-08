@@ -98,7 +98,7 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['emailAddress'], self.mock_respondent['emailAddress'])
         self.assertEqual(response['firstName'], self.mock_respondent['firstName'])
         self.assertEqual(response['lastName'], self.mock_respondent['lastName'])
-        self.assertEqual(response['sampleUnitType'], self.mock_respondent ['sampleUnitType'])
+        self.assertEqual(response['sampleUnitType'], self.mock_respondent['sampleUnitType'])
         self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
 
     def test_update_respondent_details_success(self):
