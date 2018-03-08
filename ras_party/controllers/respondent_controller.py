@@ -44,14 +44,11 @@ def get_respondent_by_email(email, session):
 
 
 @with_db_session
-def change_respondent_details(respondent_data, session):
+def change_respondent_details(respondent_data, respondent_id, session):
     """
     :param respondent_data:
     :param session:
     :return:
     """
-    v = Validator(IsUuid('respondent_id'))
-    if not v.validate({'respondent_id': respondent_data['respondent_id']}):
-        raise RasError(v.errors, status=400)
 
-    update_respondent_details(respondent_data, session)
+    update_respondent_details(respondent_data, respondent_id, session)
