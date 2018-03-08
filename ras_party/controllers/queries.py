@@ -79,7 +79,7 @@ def query_change_respondent_details(respondent_data, session):
     :return: updated respondent details
     """
 
-    logger.debug('Changing respondent details', respondent_data=respondent_data)
+    logger.debug('Changing respondent details', respondent_id=respondent_data['respondent_id'])
 
     return session.query(Respondent).filter(Respondent.party_uuid == respondent_data['respondent_id']).update({
                                             Respondent.first_name: respondent_data['firstName'],
