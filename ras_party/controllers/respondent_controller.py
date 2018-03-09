@@ -47,6 +47,7 @@ def get_respondent_by_email(email, session):
 def change_respondent_details(respondent_data, respondent_id, session):
     """
     :param respondent_data:
+    :param respondent_id
     :param session:
     :return:
     """
@@ -56,4 +57,3 @@ def change_respondent_details(respondent_data, respondent_id, session):
         raise RasError("Respondent id does not exist.", id=respondent_id, status=404)
 
     update_respondent_details(respondent_data, respondent_id, session)
-
