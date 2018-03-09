@@ -51,4 +51,9 @@ def change_respondent_details(respondent_data, respondent_id, session):
     :return:
     """
 
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
+    if not respondent:
+        raise RasError("Respondent id does not exist.", id=respondent_id, status=404)
+
     update_respondent_details(respondent_data, respondent_id, session)
+
