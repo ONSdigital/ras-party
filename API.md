@@ -258,3 +258,16 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 }
 ```
 &mdash; This endpoint will enrol a respondent in a survey and associate with business if not already associated.
+
+* `PUT /respondents/change_respondent_details/<respondent_id>`
+
+### Example JSON data for put
+```json
+{
+     " party_id": "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
+     "firstName": "John",
+     "lastName": "Snow",
+     "telephone": "07837230942"
+}
+```
+&mdash; This endpoint will update the respondent details for an existing respondent.
