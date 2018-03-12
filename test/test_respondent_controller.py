@@ -17,7 +17,7 @@ from ras_party.support.transactional import transactional
 from ras_party.support.verification import generate_email_token
 from test.mocks import MockRequests, MockResponse
 from test.party_client import PartyTestClient, respondents, businesses, business_respondent_associations, enrolments
-from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId
+from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, MockRespondentWithIdSuspended
 
 
 class TestRespondents(PartyTestClient):
@@ -29,6 +29,7 @@ class TestRespondents(PartyTestClient):
         account_controller.NotifyGateway = MagicMock(return_value=self.mock_notify)
         self.mock_respondent = MockRespondent().attributes().as_respondent()
         self.mock_respondent_with_id = MockRespondentWithId().attributes().as_respondent()
+        self.mock_respondent_with_id_suspended = MockRespondentWithIdSuspended().attributes().as_respondent()
         self.respondent = None
 
     @transactional
@@ -42,7 +43,7 @@ class TestRespondents(PartyTestClient):
             'first_name': respondent['firstName'],
             'last_name': respondent['lastName'],
             'telephone': respondent['telephone'],
-            'status': RespondentStatus.CREATED
+            'status': respondent.get('status') or RespondentStatus.CREATED
         }
         self.respondent = Respondent(**translated_party)
         session.add(self.respondent)
@@ -658,3 +659,45 @@ class TestRespondents(PartyTestClient):
             'enrolment_code': self.mock_respondent_with_id['enrolment_code']
         }
         self.add_survey(request_json, 404)
+
+    def test_put_change_respondent_account_status_suspend(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'party_id': self.mock_respondent_with_id['id'],
+            'status_change': 'SUSPENDED'
+        }
+        self.put_respondent_account_status(request_json, 200)
+
+    def test_put_change_respondent_account_status_active(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'party_id': self.mock_respondent_with_id['id'],
+            'status_change': 'ACTIVE'
+        }
+        self.put_respondent_account_status(request_json, 200)
+
+    def test_put_change_respondent_account_status_minus_party_id(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'status_change': 'SUSPENDED'
+        }
+        self.put_respondent_account_status(request_json, 400)
+
+    def test_put_change_respondent_account_status_minus_status_change(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        request_json = {
+            'party_id': self.mock_respondent_with_id['id'],
+        }
+        self.put_respondent_account_status(request_json, 400)

@@ -185,3 +185,11 @@ class PartyTestClient(TestCase):
                                    headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
+
+    def put_respondent_account_status(self, payload, expected_status=200):
+        response = self.client.put('/party-api/v1/respondents/edit-account-status',
+                                   headers=self.auth_headers,
+                                   data=json.dumps(payload),
+                                   content_type='application/vnd.ons.business+json')
+        self.assertStatus(response, expected_status)
+        return json.loads(response.get_data(as_text=True))

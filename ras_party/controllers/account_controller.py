@@ -292,6 +292,16 @@ def request_password_change(payload, session):
 
 
 @with_db_session
+def change_respondent_account_status(payload, session):
+
+    respondent_id = payload['party_id']
+    status = payload['status_change']
+
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
+    respondent.status = status
+
+
+@with_db_session
 def put_email_verification(token, session):
     try:
         duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
