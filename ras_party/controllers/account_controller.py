@@ -144,9 +144,9 @@ def post_respondent(party, tran, session):
 def change_respondent_enrolment_status(payload, session):
     """
     Change respondent enrolment status for business and survey
-    :param payload: 
-    :param session: 
-    :return: 
+    :param payload:
+    :param session:
+    :return:
     """
     change_flag = payload['change_flag']
     business_id = payload['business_id']

@@ -92,9 +92,9 @@ def search_businesses(search_query, session):
 def query_enrolment_by_survey_business_respondent(respondent_party_id, business_id, survey_id, session):
     """
     Query to return enrolment based on respondent id, business id and survey
-    :param respondent_party_id, 
-    :param business_id, 
-    :param survey_id 
+    :param respondent_party_id,
+    :param business_id,
+    :param survey_id
     :return: enrolment for survey and business for respondent
     """
 

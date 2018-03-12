@@ -67,7 +67,6 @@ class TestRespondents(PartyTestClient):
         self.enrolment = Enrolment(**translated_enrolment)
         session.add(self.enrolment)
 
-
     @with_db_session
     def associate_business_and_respondent(self, business_id, respondent_id, session):
         business = query_business_by_party_uuid(business_id, session)
