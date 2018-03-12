@@ -40,7 +40,7 @@ def get_respondent_by_email(email):
     return make_response(jsonify(response), 200)
 
 
-@respondent_view.route('/respondents/change_respondent_details/<respondent_id>', methods=['PUT'])
+@respondent_view.route('/respondents/id/<respondent_id>', methods=['PUT'])
 def change_respondent_details(respondent_id):
     payload = request.get_json()
     ras_party.controllers.respondent_controller.change_respondent_details(payload, respondent_id)

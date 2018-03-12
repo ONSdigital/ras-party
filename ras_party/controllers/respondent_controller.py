@@ -21,7 +21,7 @@ def get_respondent_by_id(id, session):
 
     respondent = query_respondent_by_party_uuid(id, session)
     if not respondent:
-        raise RasError("Respondent with party id does not exist.", id=id, status=404)
+        raise RasError("Respondent with party id does not exist.", respondent_id=id, status=404)
 
     return respondent.to_respondent_dict()
 
@@ -54,6 +54,6 @@ def change_respondent_details(respondent_data, respondent_id, session):
 
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
-        raise RasError("Respondent id does not exist.", id=respondent_id, status=404)
+        raise RasError("Respondent id does not exist.", respondent_id=respondent_id, status=404)
 
     update_respondent_details(respondent_data, respondent_id, session)

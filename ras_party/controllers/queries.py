@@ -76,7 +76,6 @@ def update_respondent_details(respondent_data, respondent_id, session):
         last_name:
         telephone:
     :param session
-    :return: updated respondent details
     """
 
     logger.debug('Updating respondent details', respondent_id=respondent_id)
