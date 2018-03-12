@@ -187,7 +187,7 @@ class PartyTestClient(TestCase):
         return json.loads(response.get_data(as_text=True))
 
     def change_respondent_details(self, respondent_id, payload, expected_status=200):
-        response = self.client.put(f'/party-api/v1/respondents/change_respondent_details/{respondent_id}',
+        response = self.client.put(f'/party-api/v1/respondents/id/{respondent_id}',
                                    headers=self.auth_headers,
                                    data=json.dumps(payload),
                                    content_type='application/vnd.ons.business+json')
