@@ -74,3 +74,30 @@ def get_party_by_id(sample_unit_type, id, session):
             return RasError("Respondent with id does not exist.", respondent_id=id, status=404)
 
         return respondent.to_party_dict()
+
+
+def get_business_with_respondents_filtered_by_survey(sample_unit_type, id, survey_id):
+    business = get_party_by_id(sample_unit_type, id)
+
+    filtered_associations = []
+    for association in business['associations']:
+
+        filtered_association = {'partyId': association['partyId']}
+
+        filtered_enrolments = filter_enrolments(association['enrolments'], survey_id)
+
+        if filtered_enrolments:
+            filtered_association['enrolments'] = filtered_enrolments
+            filtered_associations.append(filtered_association)
+
+    business['associations'] = filtered_associations
+
+    return business
+
+
+def filter_enrolments(existing_enrolments, survey_id):
+    filtered_enrolments = []
+    for enrolment in existing_enrolments:
+        if enrolment['surveyId'] == survey_id:
+            filtered_enrolments.append(enrolment)
+    return filtered_enrolments

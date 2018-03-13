@@ -41,7 +41,8 @@ class MockBusiness:
             "seltype": "seltype",
             "tradstyle1": "tradstyle1",
             "cell_no": 1,
-            "name": 'Runame-1 Runame-2 Runame-3'
+            "name": 'Runame-1 Runame-2 Runame-3',
+            "enrolments": {}
         }
 
     def attributes(self, **kwargs):
