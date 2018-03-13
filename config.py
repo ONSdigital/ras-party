@@ -25,6 +25,7 @@ class Config(object):
     LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'INFO')
     SECRET_KEY = os.getenv('SECRET_KEY', 'aardvark')
     EMAIL_TOKEN_SALT = os.getenv('EMAIL_TOKEN_SALT', 'aardvark')
+    EMAIL_TOKEN_EXPIRY = int(os.getenv('EMAIL_TOKEN_EXPIRY', 288000))
     PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
 
     if cf.detected:
