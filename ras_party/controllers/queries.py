@@ -67,6 +67,25 @@ def query_business_respondent_by_respondent_id_and_business_id(business_id, resp
     return response
 
 
+def update_respondent_details(respondent_data, respondent_id, session):
+    """
+    Query to return respondent, respondent_data consists of the following parameters
+    :param respondent_data:
+        respondent_id: id of the respondent
+        first_name:
+        last_name:
+        telephone:
+    :param session
+    """
+
+    logger.debug('Updating respondent details', respondent_id=respondent_id)
+
+    session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update({
+                                     Respondent.first_name: respondent_data['firstName'],
+                                     Respondent.last_name: respondent_data['lastName'],
+                                     Respondent.telephone: respondent_data['telephone']})
+
+
 def search_businesses(search_query, session):
     """
     Query to return list of businesses based on search query
