@@ -273,6 +273,8 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 
 
 * `PUT /respondents/change_respondent_details/<respondent_id>`
+
+### Example JSON data for put
 ```json
 {
      " party_id": "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
