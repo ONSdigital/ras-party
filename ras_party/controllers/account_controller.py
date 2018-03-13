@@ -197,7 +197,7 @@ def change_respondent(payload, tran, session):
 @with_db_session
 def verify_token(token, session):
     try:
-        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+        duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
         raise RasError('Expired email verification token', status=409, token=token)
@@ -219,7 +219,7 @@ def change_respondent_password(token, payload, tran, session):
         raise RasError(v.errors, 400)
 
     try:
-        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+        duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
         raise RasError('Expired email verification token', status=409, token=token)
@@ -304,7 +304,7 @@ def change_respondent_account_status(payload, session):
 @with_db_session
 def put_email_verification(token, session):
     try:
-        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+        duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
         raise RasError('Expired email verification token', status=409, token=token)
