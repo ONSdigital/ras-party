@@ -1,4 +1,4 @@
-.PHONY: build lint start
+.PHONY: build lint start test
 
 build:
 	pipenv install --dev
