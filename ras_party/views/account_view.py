@@ -88,12 +88,12 @@ def respondent_add_survey():
     return make_response(jsonify('OK'), 200)
 
 
-@account_view.route('/respondents/edit-account-status', methods=['PUT'])
-def put_respondent_account_status():
+@account_view.route('/respondents/edit-account-status/<party_id>', methods=['PUT'])
+def put_respondent_account_status(party_id):
     payload = request.get_json() or {}
-    v = Validator(Exists('party_id', 'status_change'))
+    v = Validator(Exists('status_change'))
     if not v.validate(payload):
         raise RasError(v.errors, 400)
 
-    ras_party.controllers.account_controller.change_respondent_account_status(payload)
+    ras_party.controllers.account_controller.change_respondent_account_status(payload, party_id)
     return make_response(jsonify('OK'), 200)

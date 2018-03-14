@@ -685,39 +685,30 @@ class TestRespondents(PartyTestClient):
         db_respondent = respondents()[0]
         token = self.generate_valid_token_from_email(db_respondent.email_address)
         self.put_email_verification(token, 200)
+        party_id = self.mock_respondent_with_id['id']
         request_json = {
-            'party_id': self.mock_respondent_with_id['id'],
             'status_change': 'SUSPENDED'
         }
-        self.put_respondent_account_status(request_json, 200)
+        self.put_respondent_account_status(request_json, party_id, 200)
 
     def test_put_change_respondent_account_status_active(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
         db_respondent = respondents()[0]
         token = self.generate_valid_token_from_email(db_respondent.email_address)
         self.put_email_verification(token, 200)
+        party_id = self.mock_respondent_with_id_suspended['id']
         request_json = {
-            'party_id': self.mock_respondent_with_id['id'],
             'status_change': 'ACTIVE'
         }
-        self.put_respondent_account_status(request_json, 200)
-
-    def test_put_change_respondent_account_status_minus_party_id(self):
-        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
-        db_respondent = respondents()[0]
-        token = self.generate_valid_token_from_email(db_respondent.email_address)
-        self.put_email_verification(token, 200)
-        request_json = {
-            'status_change': 'SUSPENDED'
-        }
-        self.put_respondent_account_status(request_json, 400)
+        self.put_respondent_account_status(request_json, party_id, 200)
 
     def test_put_change_respondent_account_status_minus_status_change(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         db_respondent = respondents()[0]
         token = self.generate_valid_token_from_email(db_respondent.email_address)
         self.put_email_verification(token, 200)
+        party_id = self.mock_respondent_with_id_suspended['id']
         request_json = {
-            'party_id': self.mock_respondent_with_id['id'],
+
         }
-        self.put_respondent_account_status(request_json, 400)
+        self.put_respondent_account_status(request_json, party_id, 400)
