@@ -3,6 +3,7 @@ from ras_party.controllers.queries import query_respondent_by_party_uuid, query_
 from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.exceptions import RasError
 from ras_party.support.session_decorator import with_db_session
+from ras_party.controllers.account_controller import change_respondent
 
 
 @with_db_session
@@ -57,3 +58,4 @@ def change_respondent_details(respondent_data, respondent_id, session):
         raise RasError("Respondent id does not exist.", respondent_id=respondent_id, status=404)
 
     update_respondent_details(respondent_data, respondent_id, session)
+    change_respondent(respondent_data)
