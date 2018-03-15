@@ -20,6 +20,10 @@ Use pipenv to create a virtualenv and install dependencies
 ```bash
 pipenv install
 ```
+you can also use the makefile to do this
+```bash
+make install
+```
 
 ## Running
 
@@ -28,10 +32,16 @@ pipenv install
 docker-compose up
 ```
 
+or use the makefile to run
+```bash
+make start
+```
+
 or run locally (this requires postgres running locally on port 5432):
 ```bash
 pipenv run python3 run.py
 ```
+
 
 
 
