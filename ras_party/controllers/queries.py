@@ -80,10 +80,16 @@ def update_respondent_details(respondent_data, respondent_id, session):
 
     logger.debug('Updating respondent details', respondent_id=respondent_id)
 
-    session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update({
-                                     Respondent.first_name: respondent_data['firstName'],
-                                     Respondent.last_name: respondent_data['lastName'],
-                                     Respondent.telephone: respondent_data['telephone']})
+    if str(Respondent.first_name) != str(respondent_data['firstName']) or str(Respondent.last_name) != str(respondent_data['lastName']) or str(Respondent.telephone) != str(respondent_data['telephone']):
+
+        session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update({
+                                         Respondent.first_name: respondent_data['firstName'],
+                                         Respondent.last_name: respondent_data['lastName'],
+                                         Respondent.telephone: respondent_data['telephone']})
+
+        return True
+    else:
+        return False
 
 
 def search_businesses(search_query, session):

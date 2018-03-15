@@ -57,5 +57,9 @@ def change_respondent_details(respondent_data, respondent_id, session):
     if not respondent:
         raise RasError("Respondent id does not exist.", respondent_id=respondent_id, status=404)
 
+    # This function updates the name and number of a respondent
     update_respondent_details(respondent_data, respondent_id, session)
-    change_respondent(respondent_data)
+
+    if respondent_data['email_address'] != respondent_data['new_email_address']:
+        # This function only changes the respondents email address
+        change_respondent(respondent_data)
