@@ -38,12 +38,12 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref):
 
 @party_view.route('/parties/type/<sample_unit_type>/id/<id>', methods=['GET'])
 def get_party_by_id(sample_unit_type, id):
-survey_id = request.args.get('survey_id')
+    survey_id = request.args.get('survey_id')
 
     if survey_id:
         response = party_controller.get_business_with_respondents_filtered_by_survey(
             sample_unit_type, id, survey_id)
     else:
         response = party_controller.get_party_by_id(sample_unit_type, id)
-        
+
     return make_response(jsonify(response), 200)
