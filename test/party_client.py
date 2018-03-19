@@ -115,6 +115,12 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
+    def get_party_by_id_filtered_by_survey(self, party_type, id, survey_id, expected_status=200):
+        response = self.client.get(f'/party-api/v1/parties/type/{party_type}/id/{id}', data={"survey_id": survey_id},
+                                   headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
     def get_business_by_id(self, id, expected_status=200, query_string=None):
         response = self.client.get(f'/party-api/v1/businesses/id/{id}',
                                    query_string=query_string,
