@@ -153,6 +153,7 @@ def change_respondent(payload, tran, session):
     new_email_address = payload['new_email_address']
 
     respondent = query_respondent_by_email(email_address, session)
+
     if not respondent:
         raise RasError("Respondent does not exist.", status=404)
 

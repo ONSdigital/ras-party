@@ -107,17 +107,32 @@ class TestRespondents(PartyTestClient):
         payload = {
             "firstName": "John",
             "lastName": "Snow",
-            "telephone": "07837230942"
+            "telephone": "07837230942",
+            "email_address": "a@b.com",
+            "new_email_address": "a@b.com"
+            }
+        self.change_respondent_details(respondent_id, payload, 200)
+
+    def test_update_respondent_details_check_email(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        respondent_id = self.mock_respondent_with_id['id']
+        payload = {
+            "firstName": "John",
+            "lastName": "Snow",
+            "telephone": "07837230942",
+            "email_address": "a@b.com",
+            "new_email_address": "john.snow@thisemail.com"
             }
         self.change_respondent_details(respondent_id, payload, 200)
 
     def test_update_respondent_details_respondent_does_not_exist_error(self):
-        self.populate_with_respondent()
-        respondent_id = ''
+        respondent_id = '548df969-7c9c-4cd4-a89b-ac88cf0bfdf6'
         payload = {
             "firstName": "John",
             "lastName": "Bloggs",
-            "telephone": "07837230942"
+            "telephone": "07837230942",
+            "email_address": "a@b.com",
+            "new_email_address": "a@b.com"
             }
         self.change_respondent_details(respondent_id, payload, 404)
 
