@@ -90,5 +90,5 @@ def put_respondent_account_status(party_id):
     if not v.validate(payload):
         raise RasError(v.errors, 400)
 
-    response = account_controller.change_respondent_account_status(payload, party_id)
-    return make_response(jsonify(response), 200)
+    account_controller.change_respondent_account_status(payload, party_id)
+    return make_response(jsonify('OK'), 200)
