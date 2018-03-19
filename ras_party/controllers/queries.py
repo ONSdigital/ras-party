@@ -89,8 +89,7 @@ def update_respondent_details(respondent_data, respondent_id, session):
                                          Respondent.telephone: respondent_data['telephone']})
 
         return True
-    else:
-        return False
+    return False
 
 
 def search_businesses(search_query, session):

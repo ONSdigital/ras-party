@@ -126,7 +126,6 @@ class TestRespondents(PartyTestClient):
         self.change_respondent_details(respondent_id, payload, 200)
 
     def test_update_respondent_details_respondent_does_not_exist_error(self):
-        # self.populate_with_respondent()
         respondent_id = '548df969-7c9c-4cd4-a89b-ac88cf0bfdf6'
         payload = {
             "firstName": "John",
