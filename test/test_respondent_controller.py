@@ -712,3 +712,10 @@ class TestRespondents(PartyTestClient):
 
         }
         self.put_respondent_account_status(request_json, party_id, 400)
+
+    def test_put_change_respondent_account_status_no_respondent(self):
+        party_id = self.mock_respondent_with_id['id']
+        request_json = {
+            'status_change': 'ACTIVE'
+        }
+        self.put_respondent_account_status(request_json, party_id, 404)
