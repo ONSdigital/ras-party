@@ -17,7 +17,7 @@ def _is_true(value):
 class Config(object):
 
     NAME = os.getenv('RAS-PARTY', 'ras-party')
-    VERSION = os.getenv('VERSION', '1.0.4')
+    VERSION = os.getenv('VERSION', '1.0.5')
     SCHEME = os.getenv('http')
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = os.getenv('PORT', 8081)
