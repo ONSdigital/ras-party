@@ -60,6 +60,5 @@ def change_respondent_details(respondent_data, respondent_id, session):
     # This function updates the name and number of a respondent
     update_respondent_details(respondent_data, respondent_id, session)
 
-    if respondent_data['email_address'] != respondent_data['new_email_address']:
-        # This function only changes the respondents email address
-        change_respondent(respondent_data)
+    # This function only changes the respondents email address
+    change_respondent(respondent_data)
