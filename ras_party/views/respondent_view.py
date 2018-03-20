@@ -26,13 +26,13 @@ def get_pw(username):
 @respondent_view.route('/respondents/id/<id>', methods=['GET'])
 def get_respondent_by_id(id):
     response = respondent_controller.get_respondent_by_id(id)
-    return make_response(jsonify(response), 200)
+    return jsonify(response)
 
 
 @respondent_view.route('/respondents/email/<string:email>', methods=['GET'])
 def get_respondent_by_email(email):
     response = respondent_controller.get_respondent_by_email(email)
-    return make_response(jsonify(response), 200)
+    return jsonify(response)
 
 
 @respondent_view.route('/respondents/id/<respondent_id>', methods=['PUT'])
