@@ -76,7 +76,8 @@ class Business(Base):
         associations = []
         for business_respondent in respondents:
             respondent_dict = {
-                "partyId": business_respondent.respondent.party_uuid
+                "partyId": business_respondent.respondent.party_uuid,
+                "businessRespondentStatus": business_respondent.respondent.status.name
             }
             enrolments = business_respondent.enrolment
             respondent_dict['enrolments'] = []
@@ -213,7 +214,8 @@ class Respondent(Base):
         for business_respondent in businesses:
             business_dict = {
                 "partyId": business_respondent.business.party_uuid,
-                "sampleUnitRef": business_respondent.business.business_ref
+                "sampleUnitRef": business_respondent.business.business_ref,
+                "businessRespondentStatus": business_respondent.respondent.status.name
             }
             enrolments = business_respondent.enrolment
             business_dict['enrolments'] = []

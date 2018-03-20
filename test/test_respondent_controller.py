@@ -540,6 +540,19 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(str(enrolment.business_respondent.business.party_uuid),
                          '3b136c4b-7a14-4904-9e01-13364dd7b972')
 
+    def test_associations_populated_when_respondent_created(self):
+        # Given there is a respondent associated with a business
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+                                               respondent_id=self.mock_respondent_with_id['id'])
+
+        # When we GET the respondent
+        respondent = self.get_respondent_by_id(self.mock_respondent_with_id['id'])
+
+        # Then the respondent has the correct details
+        self.assertEqual(respondent['associations'][0]['businessRespondentStatus'], "CREATED")
+
     def test_post_respondent_calls_the_notify_service(self):
         # Given there is a business
         self.populate_with_business()
