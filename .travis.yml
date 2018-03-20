@@ -10,7 +10,7 @@ install:
     - pip install pipenv
     - pipenv install --dev
 script:
-    - pipenv run tox
+    - make test
 after_success:
     - bash <(curl -s https://codecov.io/bash)
 notifications:
