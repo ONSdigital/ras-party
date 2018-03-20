@@ -1,4 +1,4 @@
-from flask import Blueprint, request, current_app, make_response, jsonify
+from flask import Blueprint, request, current_app, jsonify
 from flask_httpauth import HTTPBasicAuth
 
 from ras_party.controllers import party_controller
@@ -27,13 +27,13 @@ def get_pw(username):
 def post_party():
     payload = request.get_json() or {}
     response = party_controller.parties_post(payload)
-    return make_response(jsonify(response), 200)
+    return jsonify(response)
 
 
 @party_view.route('/parties/type/<sample_unit_type>/ref/<sample_unit_ref>', methods=['GET'])
 def get_party_by_ref(sample_unit_type, sample_unit_ref):
     response = party_controller.get_party_by_ref(sample_unit_type, sample_unit_ref)
-    return make_response(jsonify(response), 200)
+    return jsonify(response)
 
 
 @party_view.route('/parties/type/<sample_unit_type>/id/<id>', methods=['GET'])
@@ -46,4 +46,4 @@ def get_party_by_id(sample_unit_type, id):
     else:
         response = party_controller.get_party_by_id(sample_unit_type, id)
 
-    return make_response(jsonify(response), 200)
+    return jsonify(response)
