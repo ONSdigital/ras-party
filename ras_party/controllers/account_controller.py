@@ -293,6 +293,17 @@ def request_password_change(payload, session):
 
 
 @with_db_session
+def change_respondent_account_status(payload, party_id, session):
+
+    status = payload['status_change']
+
+    respondent = query_respondent_by_party_uuid(party_id, session)
+    if not respondent:
+        raise RasError("Unable to find respondent account", status=404)
+    respondent.status = status
+
+
+@with_db_session
 def put_email_verification(token, session):
     try:
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]

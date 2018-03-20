@@ -259,6 +259,18 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 ```
 &mdash; This endpoint will enrol a respondent in a survey and associate with business if not already associated.
 
+
+* `PUT /respondents/edit-account-status/<respondent_party_id>`
+
+### Example JSON data for put
+```json
+{
+    "status_change": "SUSPENDED"
+}
+```
+&mdash; This endpoint will change a respondent's account status based on status_change variable.
+
+
 * `PUT /respondents/change_respondent_details/<respondent_id>`
 
 ### Example JSON data for put
@@ -271,3 +283,4 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 }
 ```
 &mdash; This endpoint will update the respondent details for an existing respondent.
+
