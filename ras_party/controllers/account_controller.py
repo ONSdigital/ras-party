@@ -8,20 +8,13 @@ import structlog
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.notify_gateway import NotifyGateway
-from ras_party.controllers.queries import query_business_by_party_uuid
-from ras_party.controllers.queries import query_respondent_by_email
+from ras_party.controllers.queries import query_business_by_party_uuid, query_respondent_by_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid
 from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
-from ras_party.controllers.validate import Validator
-from ras_party.controllers.validate import IsUuid
-from ras_party.controllers.validate import Exists
+from ras_party.controllers.validate import Exists, IsUuid, Validator
 from ras_party.exceptions import RasError, RasNotifyError
-from ras_party.models.models import Respondent
-from ras_party.models.models import RespondentStatus
-from ras_party.models.models import BusinessRespondent
-from ras_party.models.models import PendingEnrolment
-from ras_party.models.models import Enrolment
-from ras_party.models.models import EnrolmentStatus
+from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
+from ras_party.models.models import PendingEnrolment, Respondent, RespondentStatus
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
