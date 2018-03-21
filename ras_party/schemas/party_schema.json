@@ -1,5 +1,6 @@
 {
     "type": "object",
+    "collectionExerciseId": "string",
     "properties": {
         "sampleUnitRef": { "type": "string" },
         "sampleUnitType": { "enum": ["B", "BI"]},
