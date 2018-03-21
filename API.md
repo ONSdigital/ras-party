@@ -25,7 +25,8 @@ This page documents the Party service API endpoints. All endpoints return an `HT
                 "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
             }
         ],
-        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233"
+        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233",
+        "businessRespondentStatus": "ACTIVE"
         }
     ],
     "attributes": {
@@ -81,7 +82,8 @@ This page documents the Party service API endpoints. All endpoints return an `HT
                 "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
             }
         ],
-        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233"
+        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233",
+        "businessRespondentStatus": "ACTIVE"
         }
     ],
     "name": "Bolts and Ratchets Ltd",
@@ -108,6 +110,7 @@ This page documents the Party service API endpoints. All endpoints return an `HT
                 "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
             }
         ],
+        "businessRespondentStatus": "ACTIVE",
         "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233"
         }
     ],
@@ -163,6 +166,7 @@ This page documents the Party service API endpoints. All endpoints return an `HT
                 }
             ],
             "partyId": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
+            "businessRespondentStatus": "ACTIVE",
             "sampleUnitRef": "50012345678"
         }
     ],
@@ -195,6 +199,7 @@ This page documents the Party service API endpoints. All endpoints return an `HT
                 }
             ],
             "partyId": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
+            "businessRespondentStatus": "ACTIVE",
             "sampleUnitRef": "50012345678"
         }
     ],
