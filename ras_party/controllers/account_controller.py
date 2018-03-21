@@ -8,21 +8,14 @@ import structlog
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.notify_gateway import NotifyGateway
-from ras_party.controllers.queries import query_business_by_party_uuid
-from ras_party.controllers.queries import query_respondent_by_email
+from ras_party.controllers.queries import query_business_by_party_uuid, query_respondent_by_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid
 from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
 from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
-from ras_party.controllers.validate import Validator
-from ras_party.controllers.validate import IsUuid
-from ras_party.controllers.validate import Exists
+from ras_party.controllers.validate import Exists, IsUuid, Validator
 from ras_party.exceptions import RasError, RasNotifyError
-from ras_party.models.models import Respondent
-from ras_party.models.models import RespondentStatus
-from ras_party.models.models import BusinessRespondent
-from ras_party.models.models import PendingEnrolment
-from ras_party.models.models import Enrolment
-from ras_party.models.models import EnrolmentStatus
+from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
+from ras_party.models.models import PendingEnrolment, Respondent, RespondentStatus
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
@@ -181,6 +174,7 @@ def change_respondent(payload, tran, session):
     new_email_address = payload['new_email_address']
 
     respondent = query_respondent_by_email(email_address, session)
+
     if not respondent:
         raise RasError("Respondent does not exist.", status=404)
 
@@ -225,7 +219,7 @@ def change_respondent(payload, tran, session):
 @with_db_session
 def verify_token(token, session):
     try:
-        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+        duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
         raise RasError('Expired email verification token', status=409, token=token)
@@ -247,7 +241,7 @@ def change_respondent_password(token, payload, tran, session):
         raise RasError(v.errors, 400)
 
     try:
-        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+        duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
         raise RasError('Expired email verification token', status=409, token=token)
@@ -320,9 +314,20 @@ def request_password_change(payload, session):
 
 
 @with_db_session
+def change_respondent_account_status(payload, party_id, session):
+
+    status = payload['status_change']
+
+    respondent = query_respondent_by_party_uuid(party_id, session)
+    if not respondent:
+        raise RasError("Unable to find respondent account", status=404)
+    respondent.status = status
+
+
+@with_db_session
 def put_email_verification(token, session):
     try:
-        duration = int(current_app.config.get("EMAIL_TOKEN_EXPIRY", '86400'))
+        duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
         raise RasError('Expired email verification token', status=409, token=token)

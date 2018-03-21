@@ -17,7 +17,7 @@ def _is_true(value):
 class Config(object):
 
     NAME = os.getenv('RAS-PARTY', 'ras-party')
-    VERSION = os.getenv('VERSION', '1.0.2')
+    VERSION = os.getenv('VERSION', '1.0.4')
     SCHEME = os.getenv('http')
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = os.getenv('PORT', 8081)
@@ -25,6 +25,7 @@ class Config(object):
     LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'INFO')
     SECRET_KEY = os.getenv('SECRET_KEY', 'aardvark')
     EMAIL_TOKEN_SALT = os.getenv('EMAIL_TOKEN_SALT', 'aardvark')
+    EMAIL_TOKEN_EXPIRY = int(os.getenv('EMAIL_TOKEN_EXPIRY', 306000))
     PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
 
     if cf.detected:

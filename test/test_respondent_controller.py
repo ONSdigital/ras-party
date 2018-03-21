@@ -18,7 +18,7 @@ from ras_party.support.verification import generate_email_token
 from test.mocks import MockRequests, MockResponse
 from test.party_client import PartyTestClient, respondents, businesses, business_respondent_associations, enrolments
 from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDisabled
-from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId
+from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, MockRespondentWithIdSuspended
 
 
 class TestRespondents(PartyTestClient):
@@ -30,6 +30,7 @@ class TestRespondents(PartyTestClient):
         account_controller.NotifyGateway = MagicMock(return_value=self.mock_notify)
         self.mock_respondent = MockRespondent().attributes().as_respondent()
         self.mock_respondent_with_id = MockRespondentWithId().attributes().as_respondent()
+        self.mock_respondent_with_id_suspended = MockRespondentWithIdSuspended().attributes().as_respondent()
         self.respondent = None
         self.mock_enrolment_enabled = MockEnrolmentEnabled().attributes().as_enrolment()
         self.mock_enrolment_disabled = MockEnrolmentDisabled().attributes().as_enrolment()
@@ -45,7 +46,7 @@ class TestRespondents(PartyTestClient):
             'first_name': respondent['firstName'],
             'last_name': respondent['lastName'],
             'telephone': respondent['telephone'],
-            'status': RespondentStatus.CREATED
+            'status': respondent.get('status') or RespondentStatus.CREATED
         }
         self.respondent = Respondent(**translated_party)
         session.add(self.respondent)
@@ -118,6 +119,41 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['lastName'], self.mock_respondent['lastName'])
         self.assertEqual(response['sampleUnitType'], self.mock_respondent['sampleUnitType'])
         self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
+
+    def test_update_respondent_details_success(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        respondent_id = self.mock_respondent_with_id['id']
+        payload = {
+            "firstName": "John",
+            "lastName": "Snow",
+            "telephone": "07837230942",
+            "email_address": "a@b.com",
+            "new_email_address": "a@b.com"
+            }
+        self.change_respondent_details(respondent_id, payload, 200)
+
+    def test_update_respondent_details_check_email(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        respondent_id = self.mock_respondent_with_id['id']
+        payload = {
+            "firstName": "John",
+            "lastName": "Snow",
+            "telephone": "07837230942",
+            "email_address": "a@b.com",
+            "new_email_address": "john.snow@thisemail.com"
+            }
+        self.change_respondent_details(respondent_id, payload, 200)
+
+    def test_update_respondent_details_respondent_does_not_exist_error(self):
+        respondent_id = '548df969-7c9c-4cd4-a89b-ac88cf0bfdf6'
+        payload = {
+            "firstName": "John",
+            "lastName": "Bloggs",
+            "telephone": "07837230942",
+            "email_address": "a@b.com",
+            "new_email_address": "a@b.com"
+            }
+        self.change_respondent_details(respondent_id, payload, 404)
 
     def test_resend_verification_email(self):
         # Given there is a respondent
@@ -737,3 +773,43 @@ class TestRespondents(PartyTestClient):
             'change_flag': 'woafouewbhouGFHEPIW0'
         }
         self.put_enrolment_status(request_json, 500)
+
+    def test_put_change_respondent_account_status_suspend(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        party_id = self.mock_respondent_with_id['id']
+        request_json = {
+            'status_change': 'SUSPENDED'
+        }
+        self.put_respondent_account_status(request_json, party_id, 200)
+
+    def test_put_change_respondent_account_status_active(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        party_id = self.mock_respondent_with_id_suspended['id']
+        request_json = {
+            'status_change': 'ACTIVE'
+        }
+        self.put_respondent_account_status(request_json, party_id, 200)
+
+    def test_put_change_respondent_account_status_minus_status_change(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        party_id = self.mock_respondent_with_id_suspended['id']
+        request_json = {
+
+        }
+        self.put_respondent_account_status(request_json, party_id, 400)
+
+    def test_put_change_respondent_account_status_no_respondent(self):
+        party_id = self.mock_respondent_with_id['id']
+        request_json = {
+            'status_change': 'ACTIVE'
+        }
+        self.put_respondent_account_status(request_json, party_id, 404)

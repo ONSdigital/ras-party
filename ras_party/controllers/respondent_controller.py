@@ -1,7 +1,9 @@
-from ras_party.controllers.queries import query_respondent_by_party_uuid, query_respondent_by_email
+from ras_party.controllers.queries import query_respondent_by_party_uuid, query_respondent_by_email,\
+    update_respondent_details
 from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.exceptions import RasError
 from ras_party.support.session_decorator import with_db_session
+from ras_party.controllers.account_controller import change_respondent
 
 
 @with_db_session
@@ -20,7 +22,7 @@ def get_respondent_by_id(id, session):
 
     respondent = query_respondent_by_party_uuid(id, session)
     if not respondent:
-        raise RasError("Respondent with party id does not exist.", id=id, status=404)
+        raise RasError("Respondent with party id does not exist.", respondent_id=id, status=404)
 
     return respondent.to_respondent_dict()
 
@@ -40,3 +42,23 @@ def get_respondent_by_email(email, session):
         raise RasError("Respondent does not exist.", status=404)
 
     return respondent.to_respondent_dict()
+
+
+@with_db_session
+def change_respondent_details(respondent_data, respondent_id, session):
+    """
+    :param respondent_data:
+    :param respondent_id
+    :param session:
+    :return:
+    """
+
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
+    if not respondent:
+        raise RasError("Respondent id does not exist.", respondent_id=respondent_id, status=404)
+
+    # This function updates the name and number of a respondent
+    update_respondent_details(respondent_data, respondent_id, session)
+
+    # This function only changes the respondents email address
+    change_respondent(respondent_data)
