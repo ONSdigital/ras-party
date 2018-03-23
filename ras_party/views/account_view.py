@@ -106,5 +106,5 @@ def change_respondent_enrolment_status():
     v = Validator(Exists('respondent_party_id', 'business_id', 'survey_id', 'change_flag'))
     if not v.validate(payload):
         raise RasError(v.errors, 400)
-    ras_party.controllers.account_controller.change_respondent_enrolment_status(payload)
+    account_controller.change_respondent_enrolment_status(payload)
     return make_response(jsonify('OK'), 200)

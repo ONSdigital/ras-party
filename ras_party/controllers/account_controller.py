@@ -11,6 +11,7 @@ from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import query_business_by_party_uuid, query_respondent_by_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid
 from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
+from ras_party.controllers.queries import query_change_all_respondent_enrolments_to_disabled
 from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.validate import Exists, IsUuid, Validator
 from ras_party.exceptions import RasError, RasNotifyError
@@ -322,6 +323,9 @@ def change_respondent_account_status(payload, party_id, session):
     if not respondent:
         raise RasError("Unable to find respondent account", status=404)
     respondent.status = status
+
+    if status == 'SUSPENDED':
+        query_change_all_respondent_enrolments_to_disabled(party_id, session)
 
 
 @with_db_session
