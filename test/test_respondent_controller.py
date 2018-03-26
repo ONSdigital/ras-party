@@ -105,6 +105,13 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['sampleUnitType'], self.mock_respondent['sampleUnitType'])
         self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
 
+    def test_get_respondent_by_email_returns_404_for_no_respondent(self):
+        # And we get the new respondent
+        request_json = {
+            'email': 'h@6.com'
+        }
+        response = self.get_respondent_by_email(request_json, 404)
+
     def test_update_respondent_details_success(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         respondent_id = self.mock_respondent_with_id['id']
