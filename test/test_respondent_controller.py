@@ -594,10 +594,6 @@ class TestRespondents(PartyTestClient):
             query.assert_called_once_with('test@example.test', db.session())
 
     def test_post_add_new_survey_no_respondent_business_association(self):
-
-        def mock_put_iac(*args, **kwargs):
-            return MockResponse('{"active": false}')
-        self.mock_requests.put = mock_put_iac
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
         db_respondent = respondents()[0]
@@ -609,43 +605,7 @@ class TestRespondents(PartyTestClient):
         }
         self.add_survey(request_json, 200)
 
-    def test_post_add_new_survey_missing_status_from_iac(self):
-        def mock_put_iac(*args, **kwargs):
-            return MockResponse('{}')
-
-        self.mock_requests.put = mock_put_iac
-        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
-        self.populate_with_business()
-        db_respondent = respondents()[0]
-        token = self.generate_valid_token_from_email(db_respondent.email_address)
-        self.put_email_verification(token, 200)
-        request_json = {
-            'party_id': self.mock_respondent_with_id['id'],
-            'enrolment_code': self.mock_respondent_with_id['enrolment_code']
-        }
-        self.add_survey(request_json, 400)
-
-    def test_post_add_new_survey_iac_not_disabled(self):
-        def mock_put_iac(*args, **kwargs):
-            return MockResponse('{"active": true}')
-
-        self.mock_requests.put = mock_put_iac
-        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
-        self.populate_with_business()
-        db_respondent = respondents()[0]
-        token = self.generate_valid_token_from_email(db_respondent.email_address)
-        self.put_email_verification(token, 200)
-        request_json = {
-            'party_id': self.mock_respondent_with_id['id'],
-            'enrolment_code': self.mock_respondent_with_id['enrolment_code']
-        }
-        self.add_survey(request_json, 400)
-
     def test_post_add_new_survey_respondent_business_association(self):
-
-        def mock_put_iac(*args, **kwargs):
-            return MockResponse('{"active": false}')
-        self.mock_requests.put = mock_put_iac
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
         self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
