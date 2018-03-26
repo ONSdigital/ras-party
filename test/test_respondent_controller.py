@@ -84,10 +84,16 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
 
     def test_get_respondent_with_invalid_email(self):
-        self.get_respondent_by_email('123', 404)
+        payload = {
+            "email": "123"
+        }
+        self.get_respondent_by_email(payload, 404)
 
     def test_get_respondent_with_valid_email(self):
-        self.get_respondent_by_email('test@example.test', 404)
+        payload = {
+            "email": "test@example.com"
+        }
+        self.get_respondent_by_email(payload, 200)
 
     def test_get_respondent_by_email_returns_correct_representation(self):
         # Given there is a respondent in the db
