@@ -89,17 +89,14 @@ class TestRespondents(PartyTestClient):
         }
         self.get_respondent_by_email(payload, 404)
 
-    def test_get_respondent_with_valid_email(self):
-        payload = {
-            "email": "test@example.com"
-        }
-        self.get_respondent_by_email(payload, 200)
-
     def test_get_respondent_by_email_returns_correct_representation(self):
         # Given there is a respondent in the db
         respondent = self.populate_with_respondent()
         # And we get the new respondent
-        response = self.get_respondent_by_email(respondent.email_address)
+        request_json = {
+            'email': respondent.email_address
+        }
+        response = self.get_respondent_by_email(request_json)
         # Then the response matches the posted respondent
         self.assertTrue('id' in response)
         self.assertEqual(response['emailAddress'], self.mock_respondent['emailAddress'])

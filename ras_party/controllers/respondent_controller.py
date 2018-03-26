@@ -30,7 +30,7 @@ def get_respondent_by_id(id, session):
 @with_db_session
 def get_respondent_by_email(email, session):
     """
-    Get a respondent by its email address.
+    Get a verified respondent by its email address.
     Returns either the unique respondent identified by the supplied email address, or otherwise raises
     a RasError to indicate the email address doesn't exist.
 

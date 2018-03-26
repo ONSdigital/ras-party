@@ -141,7 +141,10 @@ class PartyTestClient(TestCase):
         return json.loads(response.get_data(as_text=True))
 
     def get_respondent_by_email(self, payload, expected_status=200):
-        response = self.client.get(f'/party-api/v1/respondents/email', data=json.dumps(payload), headers=self.auth_headers)
+        response = self.client.get('/party-api/v1/respondents/email',
+                                   data=json.dumps(payload),
+                                   headers=self.auth_headers,
+                                   content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
