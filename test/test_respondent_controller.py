@@ -111,7 +111,7 @@ class TestRespondents(PartyTestClient):
         request_json = {
             'email': 'h@6.com'
         }
-        response = self.get_respondent_by_email(request_json, 404)
+        self.get_respondent_by_email(request_json, 404)
 
     def test_update_respondent_details_success(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
