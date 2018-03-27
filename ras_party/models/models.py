@@ -92,16 +92,17 @@ class Business(Base):
         return associations
 
     def add_versioned_attributes(self, party):
-        ba = BusinessAttributes(business_id=self.party_uuid, sample_summary_id=party['sampleSummaryId'])
+        ba = BusinessAttributes(business_id=self.party_uuid,
+                                sample_summary_id=party['sampleSummaryId'])
         ba.attributes = party.get('attributes')
         name = '{runame1} {runame2} {runame3}'.format(**ba.attributes)
         ba.attributes['name'] = ' '.join(name.split())
         self.attributes.append(ba)
 
-    def to_business_dict(self):
+    def to_business_dict(self, collection_exercise_id=None):
         d = self.to_business_summary_dict()
-
-        return dict(d, **self.attributes[-1].attributes)
+        attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
+        return dict(d, **attributes.attributes)
 
     def to_business_summary_dict(self, collection_exercise_id=None):
         attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
