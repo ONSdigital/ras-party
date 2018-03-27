@@ -17,7 +17,8 @@ from ras_party.support.transactional import transactional
 from ras_party.support.verification import generate_email_token
 from test.mocks import MockRequests, MockResponse
 from test.party_client import PartyTestClient, respondents, businesses, business_respondent_associations, enrolments
-from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, MockRespondentWithIdActive, MockRespondentWithIdSuspended
+from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, \
+    MockRespondentWithIdActive, MockRespondentWithIdSuspended
 
 
 class TestRespondents(PartyTestClient):

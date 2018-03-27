@@ -1,4 +1,4 @@
-from ras_party.controllers.queries import query_respondent_by_party_uuid, query_respondent_by_email,\
+from ras_party.controllers.queries import query_respondent_by_party_uuid, \
     query_respondent_by_email_filter_out_created, update_respondent_details
 from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.exceptions import RasError
