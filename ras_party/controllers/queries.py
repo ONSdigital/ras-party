@@ -47,7 +47,7 @@ def query_respondent_by_email(email, session):
     :param email: the party uuid
     :return: respondent or none
     """
-    logger.debug('Querying respondents by email', email=email)
+    logger.debug('Querying respondents by email')
 
     return session.query(Respondent).filter(func.lower(Respondent.email_address) == email.lower()).first()
 
@@ -58,7 +58,7 @@ def query_respondent_by_email_filter_out_created(email, session):
     :param email: the party uuid
     :return: respondent or none
     """
-    logger.debug('Querying respondents by email', email=email)
+    logger.debug('Querying respondents by email')
 
     return session.query(Respondent).filter(and_(func.lower(Respondent.email_address) == email.lower(),
                                                  Respondent.status != 'CREATED')).first()
