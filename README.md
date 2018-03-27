@@ -61,8 +61,7 @@ pipenv run tox
 
 ## Database
 
-The database will automatically be created when starting the application.
-
+The database will automatically be created when starting the application
 Alembic is used for database migrations
 See [README.md](https://github.com/ONSdigital/ras-party/blob/master/migrations/README.md) for alembic documentation.
 
