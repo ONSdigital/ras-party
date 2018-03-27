@@ -53,7 +53,7 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
         raise RasError("Business with party id does not exist.", party_uuid=party_uuid, status=404)
 
     if verbose:
-        return business.to_business_dict()
+        return business.to_business_dict(collection_exercise_id=collection_exercise_id)
     else:
         return business.to_business_summary_dict(collection_exercise_id=collection_exercise_id)
 
