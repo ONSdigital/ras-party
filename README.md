@@ -42,9 +42,6 @@ or run locally (this requires postgres running locally on port 5432):
 pipenv run python3 run.py
 ```
 
-
-
-
 To test the service is up:
 
 ```
