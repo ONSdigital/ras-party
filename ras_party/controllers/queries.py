@@ -52,6 +52,18 @@ def query_respondent_by_email(email, session):
     return session.query(Respondent).filter(func.lower(Respondent.email_address) == email.lower()).first()
 
 
+def query_respondent_by_email_filter_out_created(email, session):
+    """
+    Query to return respondent based on email
+    :param email: the party uuid
+    :return: respondent or none
+    """
+    logger.debug('Querying respondents by email', email=email)
+
+    return session.query(Respondent).filter(and_(func.lower(Respondent.email_address) == email.lower(),
+                                                 Respondent.status != 'CREATED')).first()
+
+
 def query_business_respondent_by_respondent_id_and_business_id(business_id, respondent_id, session):
     """
     Query to return respondent business associations based on respondent id

@@ -1,5 +1,5 @@
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_respondent_by_email,\
-    update_respondent_details
+    query_respondent_by_email_filter_out_created, update_respondent_details
 from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.exceptions import RasError
 from ras_party.support.session_decorator import with_db_session
@@ -37,7 +37,7 @@ def get_respondent_by_email(email, session):
     :param email: Email of respondent to lookup
     :rtype: Respondent
     """
-    respondent = query_respondent_by_email(email, session)
+    respondent = query_respondent_by_email_filter_out_created(email, session)
     if not respondent:
         raise RasError("Respondent does not exist.", status=404)
 
