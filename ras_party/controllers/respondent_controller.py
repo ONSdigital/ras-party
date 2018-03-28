@@ -1,5 +1,5 @@
-from ras_party.controllers.queries import query_respondent_by_party_uuid, query_respondent_by_email,\
-    update_respondent_details
+from ras_party.controllers.queries import query_respondent_by_party_uuid, \
+    query_respondent_by_email_filter_out_created, update_respondent_details
 from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.exceptions import RasError
 from ras_party.support.session_decorator import with_db_session
@@ -30,14 +30,14 @@ def get_respondent_by_id(id, session):
 @with_db_session
 def get_respondent_by_email(email, session):
     """
-    Get a respondent by its email address.
+    Get a verified respondent by its email address.
     Returns either the unique respondent identified by the supplied email address, or otherwise raises
     a RasError to indicate the email address doesn't exist.
 
     :param email: Email of respondent to lookup
     :rtype: Respondent
     """
-    respondent = query_respondent_by_email(email, session)
+    respondent = query_respondent_by_email_filter_out_created(email, session)
     if not respondent:
         raise RasError("Respondent does not exist.", status=404)
 

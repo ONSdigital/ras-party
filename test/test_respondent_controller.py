@@ -17,7 +17,8 @@ from ras_party.support.transactional import transactional
 from ras_party.support.verification import generate_email_token
 from test.mocks import MockRequests, MockResponse
 from test.party_client import PartyTestClient, respondents, businesses, business_respondent_associations, enrolments
-from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, MockRespondentWithIdSuspended
+from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, \
+    MockRespondentWithIdActive, MockRespondentWithIdSuspended
 
 
 class TestRespondents(PartyTestClient):
@@ -30,6 +31,7 @@ class TestRespondents(PartyTestClient):
         self.mock_respondent = MockRespondent().attributes().as_respondent()
         self.mock_respondent_with_id = MockRespondentWithId().attributes().as_respondent()
         self.mock_respondent_with_id_suspended = MockRespondentWithIdSuspended().attributes().as_respondent()
+        self.mock_respondent_with_id_active = MockRespondentWithIdActive().attributes().as_respondent()
         self.respondent = None
 
     @transactional
@@ -84,23 +86,33 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
 
     def test_get_respondent_with_invalid_email(self):
-        self.get_respondent_by_email('123', 404)
-
-    def test_get_respondent_with_valid_email(self):
-        self.get_respondent_by_email('test@example.test', 404)
+        payload = {
+            "email": "123"
+        }
+        self.get_respondent_by_email(payload, 404)
 
     def test_get_respondent_by_email_returns_correct_representation(self):
         # Given there is a respondent in the db
-        respondent = self.populate_with_respondent()
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
         # And we get the new respondent
-        response = self.get_respondent_by_email(respondent.email_address)
+        request_json = {
+            'email': respondent.email_address
+        }
+        response = self.get_respondent_by_email(request_json)
         # Then the response matches the posted respondent
         self.assertTrue('id' in response)
-        self.assertEqual(response['emailAddress'], self.mock_respondent['emailAddress'])
-        self.assertEqual(response['firstName'], self.mock_respondent['firstName'])
-        self.assertEqual(response['lastName'], self.mock_respondent['lastName'])
-        self.assertEqual(response['sampleUnitType'], self.mock_respondent['sampleUnitType'])
-        self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
+        self.assertEqual(response['emailAddress'], self.mock_respondent_with_id_active['emailAddress'])
+        self.assertEqual(response['firstName'], self.mock_respondent_with_id_active['firstName'])
+        self.assertEqual(response['lastName'], self.mock_respondent_with_id_active['lastName'])
+        self.assertEqual(response['sampleUnitType'], self.mock_respondent_with_id_active['sampleUnitType'])
+        self.assertEqual(response['telephone'], self.mock_respondent_with_id_active['telephone'])
+
+    def test_get_respondent_by_email_returns_404_for_no_respondent(self):
+        # And we get the new respondent
+        request_json = {
+            'email': 'h@6.com'
+        }
+        self.get_respondent_by_email(request_json, 404)
 
     def test_update_respondent_details_success(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
