@@ -128,18 +128,18 @@ def search_businesses(search_query, session):
         .filter(or_(*filters)).distinct().all()
 
 
-def query_enrolment_by_survey_business_respondent(respondent_party_id, business_id, survey_id, session):
+def query_enrolment_by_survey_business_respondent(respondent_id, business_id, survey_id, session):
     """
     Query to return enrolment based on respondent id, business id and survey
-    :param respondent_party_id,
+    :param respondent_id,
     :param business_id,
     :param survey_id
     :return: enrolment for survey and business for respondent
     """
 
-    logger.debug('Querying enrolment', respondent_id=respondent_party_id, business_id=business_id, survey_id=survey_id)
+    logger.debug('Querying enrolment', respondent_id=respondent_id, business_id=business_id, survey_id=survey_id)
 
-    response = session.query(Enrolment).filter(and_(Enrolment.respondent_id == respondent_party_id,
+    response = session.query(Enrolment).filter(and_(Enrolment.respondent_id == respondent_id,
                                                     Enrolment.business_id == business_id,
                                                     Enrolment.survey_id == survey_id)).first()
     return response

@@ -145,19 +145,17 @@ def change_respondent_enrolment_status(payload, session):
     change_flag = payload['change_flag']
     business_id = payload['business_id']
     survey_id = payload['survey_id']
-    respondent_party_id = payload['respondent_party_id']
+    respondent_id = payload['respondent_id']
     logger.info("Attempting to change respondent enrolment",
-                respondent_id=respondent_party_id,
+                respondent_id=respondent_id,
                 survey_id=survey_id,
                 business_id=business_id,
                 status=change_flag)
-    respondent = query_respondent_by_party_uuid(respondent_party_id, session)
-    enrolment = query_enrolment_by_survey_business_respondent(
-                                                            respondent_party_id=respondent.id,
-                                                            business_id=business_id,
-                                                            survey_id=survey_id,
-                                                            session=session)
-
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
+    enrolment = query_enrolment_by_survey_business_respondent(respondent_id=respondent.id,
+                                                              business_id=business_id,
+                                                              survey_id=survey_id,
+                                                              session=session)
     enrolment.status = change_flag
 
 

@@ -103,7 +103,7 @@ def put_respondent_account_status(party_id):
 @account_view.route('/respondents/change_enrolment_status', methods=['PUT'])
 def change_respondent_enrolment_status():
     payload = request.get_json() or {}
-    v = Validator(Exists('respondent_party_id', 'business_id', 'survey_id', 'change_flag'))
+    v = Validator(Exists('respondent_id', 'business_id', 'survey_id', 'change_flag'))
     if not v.validate(payload):
         raise RasError(v.errors, 400)
     account_controller.change_respondent_enrolment_status(payload)
