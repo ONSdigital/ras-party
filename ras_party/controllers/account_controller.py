@@ -426,12 +426,6 @@ def add_new_survey_for_respondent(payload, tran, session):
 
     post_case_event(str(case_id), str(respondent_party_id), "RESPONDENT_ENROLED", "Respondent enroled")
 
-    # TODO This is not the correct way to do this and should be done in the case service.
-    # TODO This is very much temporary and should only be for release 15
-    iac_code = disable_iac_code(enrolment_code)
-    if iac_code.get('active', True):
-        raise RasError("Enrolment code has not been disabled", status=400)
-
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has enroled to survey for business',
                                         survey_name=survey_name,
@@ -515,15 +509,6 @@ def request_iac(enrolment_code):
     logger.info('GET URL', url=iac_url)
     response = Requests.get(iac_url)
     logger.info('IAC service responded with', code=response.status_code)
-    response.raise_for_status()
-    return response.json()
-
-
-def disable_iac_code(iac_code):
-    logger.info('Disabling iac_code', iac_code=iac_code)
-    iac_svc = current_app.config['RAS_IAC_SERVICE']
-    iac_url = f'{iac_svc}/iacs/{iac_code}'
-    response = Requests.put(iac_url, json={"updatedBy": "SYSTEM"})
     response.raise_for_status()
     return response.json()
 

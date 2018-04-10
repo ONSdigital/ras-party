@@ -18,7 +18,8 @@ from ras_party.support.verification import generate_email_token
 from test.mocks import MockRequests, MockResponse
 from test.party_client import PartyTestClient, respondents, businesses, business_respondent_associations, enrolments
 from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDisabled
-from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, MockRespondentWithIdSuspended
+from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, \
+    MockRespondentWithIdActive, MockRespondentWithIdSuspended
 
 
 class TestRespondents(PartyTestClient):
@@ -31,6 +32,7 @@ class TestRespondents(PartyTestClient):
         self.mock_respondent = MockRespondent().attributes().as_respondent()
         self.mock_respondent_with_id = MockRespondentWithId().attributes().as_respondent()
         self.mock_respondent_with_id_suspended = MockRespondentWithIdSuspended().attributes().as_respondent()
+        self.mock_respondent_with_id_active = MockRespondentWithIdActive().attributes().as_respondent()
         self.respondent = None
         self.mock_enrolment_enabled = MockEnrolmentEnabled().attributes().as_enrolment()
         self.mock_enrolment_disabled = MockEnrolmentDisabled().attributes().as_enrolment()
@@ -102,23 +104,33 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
 
     def test_get_respondent_with_invalid_email(self):
-        self.get_respondent_by_email('123', 404)
-
-    def test_get_respondent_with_valid_email(self):
-        self.get_respondent_by_email('test@example.test', 404)
+        payload = {
+            "email": "123"
+        }
+        self.get_respondent_by_email(payload, 404)
 
     def test_get_respondent_by_email_returns_correct_representation(self):
         # Given there is a respondent in the db
-        respondent = self.populate_with_respondent()
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
         # And we get the new respondent
-        response = self.get_respondent_by_email(respondent.email_address)
+        request_json = {
+            'email': respondent.email_address
+        }
+        response = self.get_respondent_by_email(request_json)
         # Then the response matches the posted respondent
         self.assertTrue('id' in response)
-        self.assertEqual(response['emailAddress'], self.mock_respondent['emailAddress'])
-        self.assertEqual(response['firstName'], self.mock_respondent['firstName'])
-        self.assertEqual(response['lastName'], self.mock_respondent['lastName'])
-        self.assertEqual(response['sampleUnitType'], self.mock_respondent['sampleUnitType'])
-        self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
+        self.assertEqual(response['emailAddress'], self.mock_respondent_with_id_active['emailAddress'])
+        self.assertEqual(response['firstName'], self.mock_respondent_with_id_active['firstName'])
+        self.assertEqual(response['lastName'], self.mock_respondent_with_id_active['lastName'])
+        self.assertEqual(response['sampleUnitType'], self.mock_respondent_with_id_active['sampleUnitType'])
+        self.assertEqual(response['telephone'], self.mock_respondent_with_id_active['telephone'])
+
+    def test_get_respondent_by_email_returns_404_for_no_respondent(self):
+        # And we get the new respondent
+        request_json = {
+            'email': 'h@6.com'
+        }
+        self.get_respondent_by_email(request_json, 404)
 
     def test_update_respondent_details_success(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
@@ -558,6 +570,19 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(str(enrolment.business_respondent.business.party_uuid),
                          '3b136c4b-7a14-4904-9e01-13364dd7b972')
 
+    def test_associations_populated_when_respondent_created(self):
+        # Given there is a respondent associated with a business
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+                                               respondent_id=self.mock_respondent_with_id['id'])
+
+        # When we GET the respondent
+        respondent = self.get_respondent_by_id(self.mock_respondent_with_id['id'])
+
+        # Then the respondent has the correct details
+        self.assertEqual(respondent['associations'][0]['businessRespondentStatus'], "CREATED")
+
     def test_post_respondent_calls_the_notify_service(self):
         # Given there is a business
         self.populate_with_business()
@@ -593,10 +618,6 @@ class TestRespondents(PartyTestClient):
             query.assert_called_once_with('test@example.test', db.session())
 
     def test_post_add_new_survey_no_respondent_business_association(self):
-
-        def mock_put_iac(*args, **kwargs):
-            return MockResponse('{"active": false}')
-        self.mock_requests.put = mock_put_iac
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
         db_respondent = respondents()[0]
@@ -608,43 +629,7 @@ class TestRespondents(PartyTestClient):
         }
         self.add_survey(request_json, 200)
 
-    def test_post_add_new_survey_missing_status_from_iac(self):
-        def mock_put_iac(*args, **kwargs):
-            return MockResponse('{}')
-
-        self.mock_requests.put = mock_put_iac
-        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
-        self.populate_with_business()
-        db_respondent = respondents()[0]
-        token = self.generate_valid_token_from_email(db_respondent.email_address)
-        self.put_email_verification(token, 200)
-        request_json = {
-            'party_id': self.mock_respondent_with_id['id'],
-            'enrolment_code': self.mock_respondent_with_id['enrolment_code']
-        }
-        self.add_survey(request_json, 400)
-
-    def test_post_add_new_survey_iac_not_disabled(self):
-        def mock_put_iac(*args, **kwargs):
-            return MockResponse('{"active": true}')
-
-        self.mock_requests.put = mock_put_iac
-        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
-        self.populate_with_business()
-        db_respondent = respondents()[0]
-        token = self.generate_valid_token_from_email(db_respondent.email_address)
-        self.put_email_verification(token, 200)
-        request_json = {
-            'party_id': self.mock_respondent_with_id['id'],
-            'enrolment_code': self.mock_respondent_with_id['enrolment_code']
-        }
-        self.add_survey(request_json, 400)
-
     def test_post_add_new_survey_respondent_business_association(self):
-
-        def mock_put_iac(*args, **kwargs):
-            return MockResponse('{"active": false}')
-        self.mock_requests.put = mock_put_iac
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
         self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
