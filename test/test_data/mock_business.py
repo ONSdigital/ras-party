@@ -36,10 +36,12 @@ class MockBusiness:
             "runame1": "Runame-1",
             "runame2": "Runame-2",
             "runame3": "Runame-3",
+            "tradstyle1": "Tradstyle-1",
+            "tradstyle2": "Tradstyle-2",
+            "tradstyle3": "Tradstyle-3",
             "rusic2007": "rusic2007",
             "rusic92": "rusic92",
             "seltype": "seltype",
-            "tradstyle1": "tradstyle1",
             "cell_no": 1,
             "name": 'Runame-1 Runame-2 Runame-3'
         }
