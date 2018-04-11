@@ -158,6 +158,21 @@ def change_respondent_enrolment_status(payload, session):
                                                               session=session)
     enrolment.status = change_flag
 
+    collection_exercises = get_collection_exercises_for_survey(survey_id)
+    casegroups = get_casegroups_for_business(business_id)
+    cases = get_cases_for_respondent(respondent_id)
+
+    ce_casegroups = [casegroup for casegroup in casegroups
+                     if casegroup['collectionExerciseId'] in
+                     [collection_exercise['id'] for collection_exercise in collection_exercises]]
+
+    matching_cases = [case for case in cases
+                      if case['caseGroup']['id'] in
+                      [casegroup['id'] for casegroup in ce_casegroups]]
+
+    for case in matching_cases:
+        post_case_event(case['id'], respondent_id, category='DISABLE_RESPONDENT_ENROLMENT')
+
 
 @transactional
 @with_db_session
@@ -554,5 +569,32 @@ def post_case_event(case_id, party_id, category='Default category message', desc
     logger.info('POST', url=case_url, payload=payload)
     response = Requests.post(case_url, json=payload)
     logger.info('Case service responded with', status=response.status_code)
+    response.raise_for_status()
+    return response.json()
+
+
+def get_cases_for_respondent(respondent_id):
+    case_url = f'{current_app.config["RAS_CASE_SERVICE"]}/cases/partyid/{respondent_id}'
+    logger.info('GET', url=case_url)
+    response = Requests.get(case_url)
+    logger.info('Case service responded with', status=response.status_code)
+    response.raise_for_status()
+    return response.json()
+
+
+def get_casegroups_for_business(business_id):
+    case_url = f'{current_app.config["RAS_CASE_SERVICE"]}/casegroups/partyid/{business_id}'
+    logger.info('GET', url=case_url)
+    response = Requests.get(case_url)
+    logger.info('Case service responded with', status=response.status_code)
+    response.raise_for_status()
+    return response.json()
+
+
+def get_collection_exercises_for_survey(survey_id):
+    case_url = f'{current_app.config["RAS_COLLEX_SERVICE"]}/collectionexercises/survey/{survey_id}'
+    logger.info('GET', url=case_url)
+    response = Requests.get(case_url)
+    logger.info('Survey service responded with', status=response.status_code)
     response.raise_for_status()
     return response.json()

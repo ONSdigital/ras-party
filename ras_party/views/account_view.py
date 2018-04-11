@@ -107,4 +107,5 @@ def change_respondent_enrolment_status():
     if not v.validate(payload):
         raise RasError(v.errors, 400)
     account_controller.change_respondent_enrolment_status(payload)
+
     return make_response(jsonify('OK'), 200)
