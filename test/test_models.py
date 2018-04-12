@@ -17,7 +17,7 @@ class TestModels(TestCase):
                                      'runame1': 'Runame-1', 'runame2': 'Runame-2', 'runame3': 'Runame-3',
                                      'rusic2007': 'rusic2007', 'rusic92': 'rusic92', 'seltype': 'seltype',
                                      'tradstyle1': 'tradstyle1', 'tradstyle2': 'tradstyle2', 'tradstyle3': 'tradstyle3',
-                                      'cell_no': 1, 'name': 'Runame-1 Runame-2 Runame-3',
+                                     'cell_no': 1, 'name': 'Runame-1 Runame-2 Runame-3',
                                      'source': 'test_existing_business_can_be_updated', 'version': 2},
                       'id': '99b6553e-025a-481c-a8f6-5f2e6505d751'}
         business = Business.from_party_dict(party_data)
