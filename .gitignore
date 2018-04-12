@@ -80,3 +80,5 @@ ras-party
 .idea/
 onsdb
 
+# db
+*.rdb
