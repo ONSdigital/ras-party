@@ -293,6 +293,9 @@ def change_respondent_account_status(payload, party_id, session):
     respondent = query_respondent_by_party_uuid(party_id, session)
     if not respondent:
         raise RasError("Unable to find respondent account", status=404)
+
+    if status.lower() == 'suspended':
+        set_bi_cases_for_party_to_inactionable(party_id)
     respondent.status = status
 
 
@@ -526,3 +529,26 @@ def post_case_event(case_id, party_id, category='Default category message', desc
     logger.info('Case service responded with', status=response.status_code)
     response.raise_for_status()
     return response.json()
+
+
+def get_bi_cases_for_party(party_id):
+    logger.debug("Get all respondents BI cases from case service", party_id=party_id)
+
+    url = f'{current_app.config["RAS_CASE_SERVICE"]}/cases/partyId/{party_id}?state=ACTIONABLE'
+
+    logger.debug('GET', url=url)
+    response = Requests.get(url)
+    logger.debug('Case service respondent with', status=response.status_code)
+    response.raise_for_status()
+    return response.json()
+
+
+def set_bi_cases_for_party_to_inactionable(party_id):
+    logger.debug("Set respondent BI cases to inactionable", party_id)
+
+    cases = get_bi_cases_for_party(party_id)
+
+    for case in cases:
+        post_case_event(case['id'], party_id, category='DEACTIVATED')
+
+
