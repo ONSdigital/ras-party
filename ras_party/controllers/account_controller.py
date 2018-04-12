@@ -158,20 +158,9 @@ def change_respondent_enrolment_status(payload, session):
                                                               session=session)
     enrolment.status = change_flag
 
-    collection_exercises = get_collection_exercises_for_survey(survey_id)
-    casegroups = get_casegroups_for_business(business_id)
-    cases = get_cases_for_respondent(respondent_id)
-
-    ce_casegroups = [casegroup for casegroup in casegroups
-                     if casegroup['collectionExerciseId'] in
-                     [collection_exercise['id'] for collection_exercise in collection_exercises]]
-
-    matching_cases = [case for case in cases
-                      if case['caseGroup']['id'] in
-                      [casegroup['id'] for casegroup in ce_casegroups]]
-
-    for case in matching_cases:
-        post_case_event(case['id'], respondent_id, category='DISABLE_RESPONDENT_ENROLMENT')
+    category = 'DISABLE_RESPONDENT_ENROLMENT' if change_flag == 'DISABLED' else 'ENABLE_RESPONDENT_ENROLMENT'
+    for case in get_matching_cases(survey_id, business_id, respondent_id):
+        post_case_event(case['id'], respondent_id, category=category)
 
 
 @transactional
@@ -573,7 +562,7 @@ def post_case_event(case_id, party_id, category='Default category message', desc
     return response.json()
 
 
-def get_cases_for_respondent(respondent_id):
+def request_cases_for_respondent(respondent_id):
     case_url = f'{current_app.config["RAS_CASE_SERVICE"]}/cases/partyid/{respondent_id}'
     logger.info('GET', url=case_url)
     response = Requests.get(case_url)
@@ -582,7 +571,7 @@ def get_cases_for_respondent(respondent_id):
     return response.json()
 
 
-def get_casegroups_for_business(business_id):
+def request_casegroups_for_business(business_id):
     case_url = f'{current_app.config["RAS_CASE_SERVICE"]}/casegroups/partyid/{business_id}'
     logger.info('GET', url=case_url)
     response = Requests.get(case_url)
@@ -591,10 +580,25 @@ def get_casegroups_for_business(business_id):
     return response.json()
 
 
-def get_collection_exercises_for_survey(survey_id):
+def request_collection_exercises_for_survey(survey_id):
     case_url = f'{current_app.config["RAS_COLLEX_SERVICE"]}/collectionexercises/survey/{survey_id}'
     logger.info('GET', url=case_url)
     response = Requests.get(case_url)
     logger.info('Survey service responded with', status=response.status_code)
     response.raise_for_status()
     return response.json()
+
+
+def get_matching_cases(survey_id, business_id, respondent_id):
+    collection_exercises = request_collection_exercises_for_survey(survey_id)
+    casegroups = request_casegroups_for_business(business_id)
+    cases = request_cases_for_respondent(respondent_id)
+
+    ce_casegroups = [casegroup for casegroup in casegroups
+                     if casegroup['collectionExerciseId'] in
+                     [collection_exercise['id'] for collection_exercise in collection_exercises]]
+
+    matching_cases = [case for case in cases
+                      if case['caseGroup']['id'] in
+                      [casegroup['id'] for casegroup in ce_casegroups]]
+    return matching_cases
