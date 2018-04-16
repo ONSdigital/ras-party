@@ -148,9 +148,8 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
 def query_change_all_respondent_enrolments_to_disabled(respondent_party_id, session):
     """
     Query to update all respondent enrolments to disabled upon account suspension
-    :param respondent_party_id, 
-    :param session, 
-    :return: 
+    :param respondent_party_id,
+    :param session
     """
 
     logger.debug('Disabling respondent enrolments', party_id=respondent_party_id)
