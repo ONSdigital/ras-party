@@ -143,18 +143,3 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
                                                     Enrolment.business_id == business_id,
                                                     Enrolment.survey_id == survey_id)).first()
     return response
-
-
-def query_change_all_respondent_enrolments_to_disabled(respondent_party_id, session):
-    """
-    Query to update all respondent enrolments to disabled upon account suspension
-    :param respondent_party_id,
-    :param session
-    """
-
-    logger.debug('Disabling respondent enrolments', party_id=respondent_party_id)
-
-    respondent_db_id = session.query(Respondent).filter(Respondent.party_uuid == respondent_party_id).first()
-
-    session.query(Enrolment).filter(Enrolment.respondent_id == respondent_db_id).update({
-                                    Enrolment.status: 'DISABLED'})
