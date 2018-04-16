@@ -711,7 +711,7 @@ class TestRespondents(PartyTestClient):
         token = self.generate_valid_token_from_email(db_respondent.email_address)
         self.put_email_verification(token, 200)
         request_json = {
-            'respondent_party_id': self.mock_respondent_with_id['id'],
+            'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
             'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
             'change_flag': 'DISABLED'
@@ -732,7 +732,7 @@ class TestRespondents(PartyTestClient):
         token = self.generate_valid_token_from_email(db_respondent.email_address)
         self.put_email_verification(token, 200)
         request_json = {
-            'respondent_party_id': self.mock_respondent_with_id['id'],
+            'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
             'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
             'change_flag': 'ENABLED'
@@ -752,7 +752,7 @@ class TestRespondents(PartyTestClient):
         token = self.generate_valid_token_from_email(db_respondent.email_address)
         self.put_email_verification(token, 200)
         request_json = {
-            'respondent_party_id': self.mock_respondent_with_id['id'],
+            'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
             'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
             'change_flag': 'woafouewbhouGFHEPIW0'
