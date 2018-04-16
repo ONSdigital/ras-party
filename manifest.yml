@@ -1,5 +1,6 @@
 applications:
 - name: ras-party-service
+  buildpack: https://github.com/cloudfoundry/python-buildpack
   disk_quota: 1G
   health-check-http-endpoint: /info
   instances: 1
