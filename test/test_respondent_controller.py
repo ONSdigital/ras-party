@@ -739,6 +739,21 @@ class TestRespondents(PartyTestClient):
         }
         self.put_enrolment_status(request_json, 200)
 
+    def test_put_change_respondent_enrolment_status_no_respondent(self):
+        request_json = {
+            'respondent_id': self.mock_respondent_with_id['id'],
+            'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
+            'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
+            'change_flag': 'ENABLED'
+        }
+        self.put_enrolment_status(request_json, 404)
+
+    def test_put_change_respondent_enrolment_status_bad_request(self):
+        request_json = {
+            'wrong_json': 'wrong_json',
+        }
+        self.put_enrolment_status(request_json, 400)
+
     def test_put_change_respondent_enrolment_status_random_string_fail(self):
         def mock_put_iac(*args, **kwargs):
             return MockResponse('{"active": false}')

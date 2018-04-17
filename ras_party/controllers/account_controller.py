@@ -151,6 +151,9 @@ def change_respondent_enrolment_status(payload, session):
                 business_id=business_id,
                 status=change_flag)
     respondent = query_respondent_by_party_uuid(respondent_id, session)
+    if not respondent:
+        raise RasError("Respondent does not exist.", status=404)
+
     enrolment = query_enrolment_by_survey_business_respondent(respondent_id=respondent.id,
                                                               business_id=business_id,
                                                               survey_id=survey_id,
