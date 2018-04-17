@@ -563,7 +563,7 @@ def request_cases_for_respondent(respondent_id):
     url = f'{current_app.config["RAS_CASE_SERVICE"]}/cases/partyid/{respondent_id}'
     response = Requests.get(url)
     response.raise_for_status()
-    logger.debug('Successfully retrieved cases for respondent', status=response.status_code)
+    logger.debug('Successfully retrieved cases for respondent', respondent_id=respondent_id)
     return response.json()
 
 
@@ -581,7 +581,7 @@ def request_collection_exercises_for_survey(survey_id):
     url = f'{current_app.config["RAS_COLLEX_SERVICE"]}/collectionexercises/survey/{survey_id}'
     response = Requests.get(url)
     response.raise_for_status()
-    logger.info('Successfully retrieved collection exercises for survey', survey_id=survey_id.status_code)
+    logger.debug('Successfully retrieved collection exercises for survey', survey_id=survey_id)
     return response.json()
 
 
