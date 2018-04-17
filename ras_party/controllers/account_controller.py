@@ -542,6 +542,7 @@ def request_survey(survey_id):
 
 
 def post_case_event(case_id, party_id, category='Default category message', desc='Default description message'):
+    logger.debug('Posting case event', case_id=case_id, party_id=party_id)
     case_svc = current_app.config['RAS_CASE_SERVICE']
     case_url = f'{case_svc}/cases/{case_id}/events'
     payload = {
@@ -551,10 +552,9 @@ def post_case_event(case_id, party_id, category='Default category message', desc
         'createdBy': 'Party Service'
     }
 
-    logger.info('POST', url=case_url, payload=payload)
     response = Requests.post(case_url, json=payload)
-    logger.info('Case service responded with', status=response.status_code)
     response.raise_for_status()
+    logger.debug('Successfully posted case event')
     return response.json()
 
 
