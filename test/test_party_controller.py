@@ -32,10 +32,11 @@ class TestParties(PartyTestClient):
         party_id = self.post_to_businesses(mock_business, 200)['id']
 
         response = self.get_business_by_id(party_id)
-        self.assertEqual(len(response.items()), 6)
+        self.assertEqual(len(response.items()), 7)
         self.assertEqual(response.get('id'), party_id)
         self.assertEqual(response.get('sampleSummaryId'), mock_business['sampleSummaryId'])
         self.assertEqual(response.get('name'), mock_business.get('name'))
+        self.assertEqual(response.get('trading_as'), 'Tradstyle-1 Tradstyle-2 Tradstyle-3')
 
     def test_get_business_by_id_and_collection_exercise_returns_correct_representation(self):
         # Post business and link to sample/collection exercise
@@ -55,17 +56,19 @@ class TestParties(PartyTestClient):
 
         # Retrieve data for first collection exercise
         response = self.get_business_by_id(party_id, query_string={"collection_exercise_id": "test_id"})
-        self.assertEqual(len(response.items()), 6)
+        self.assertEqual(len(response.items()), 7)
         self.assertEqual(response.get('id'), party_id)
         self.assertEqual(response.get('sampleSummaryId'), sample_id)
         self.assertEqual(response.get('name'), mock_business.get('name'))
+        self.assertEqual(response.get('trading_as'), 'Tradstyle-1 Tradstyle-2 Tradstyle-3')
 
         # Retrieve data for 2nd collection exercise
         response = self.get_business_by_id(party_id, query_string={"collection_exercise_id": "other_test_id"})
-        self.assertEqual(len(response.items()), 6)
+        self.assertEqual(len(response.items()), 7)
         self.assertEqual(response.get('id'), party_id)
         self.assertEqual(response.get('sampleSummaryId'), '100000001')
         self.assertEqual(response.get('name'), mock_business.get('name'))
+        self.assertEqual(response.get('trading_as'), 'Tradstyle-1 Tradstyle-2 Tradstyle-3')
 
     def test_get_business_by_id_returns_correct_representation_verbose(self):
         mock_business = MockBusiness() \
