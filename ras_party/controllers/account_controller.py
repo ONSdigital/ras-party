@@ -191,7 +191,41 @@ def change_respondent(payload, tran, session):
     if respondent_with_new_email:
         raise RasError("New email address already taken.", status=409)
 
-    respondent.email_address = new_email_address
+    respondent.pending_email_address = new_email_address
+
+    _send_email_verification(respondent.party_uuid, respondent.email_address)
+
+    # This ensures the log message is only written once the DB transaction is committed
+    tran.on_success(
+        lambda: logger.info('Verification email sent for changing respondents email', party_uuid=respondent.party_uuid))
+
+    return respondent.to_respondent_dict()
+
+
+@transactional
+@with_db_session
+def verify_token(token, tran, session):
+    try:
+        duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
+        email_address = decode_email_token(token, duration)
+    except SignatureExpired:
+        raise RasError('Expired email verification token', status=409, token=token)
+    except (BadSignature, BadData) as e:
+        raise RasError('Unknown email verification token', status=404, token=token, error=e)
+
+    respondent = query_respondent_by_email(email_address, session)
+    if not respondent:
+        raise RasError("Respondent does not exist.", status=404)
+
+
+    #TODO: if this is a verification for a new email then need to update the email address via the oauth client
+
+    return {'response': "Ok"}
+
+
+@transactional
+@with_db_session
+def update_email_address(respondent, email_address, new_email_address, tran, session):
 
     oauth_response = OauthClient().update_account(
                                                 username=email_address,
@@ -213,30 +247,10 @@ def change_respondent(payload, tran, session):
 
     tran.compensate(compensate_oauth_change)
 
-    _send_email_verification(respondent.party_uuid, respondent.email_address)
+    # TODO: Does this commit the pending email address, with the transaction
+    respondent.pending_email_address = None
 
-    # This ensures the log message is only written once the DB transaction is committed
-    tran.on_success(
-        lambda: logger.info('Respondent has changed their email address', party_uuid=respondent.party_uuid))
-
-    return respondent.to_respondent_dict()
-
-
-@with_db_session
-def verify_token(token, session):
-    try:
-        duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
-        email_address = decode_email_token(token, duration)
-    except SignatureExpired:
-        raise RasError('Expired email verification token', status=409, token=token)
-    except (BadSignature, BadData) as e:
-        raise RasError('Unknown email verification token', status=404, token=token, error=e)
-
-    respondent = query_respondent_by_email(email_address, session)
-    if not respondent:
-        raise RasError("Respondent does not exist.", status=404)
-
-    return {'response': "Ok"}
+    tran.on_success(lambda: logger.info('Updated email address'))  # TODO: don't want to log email address
 
 
 @transactional
