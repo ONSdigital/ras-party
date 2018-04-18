@@ -19,9 +19,10 @@ depends_on = None
 def upgrade():
     op.add_column(
         'respondent',
-        sa.Column('pending_email_address', sa.Text, nullable=True)
+        sa.Column('pending_email_address', sa.Text, nullable=True),
+        schema='partysvc'
     )
 
 
 def downgrade():
-    op.drop_column('respondent', 'pending_email_address', nullable=True)
+    op.drop_column('respondent', 'pending_email_address', schema='partysvc')
