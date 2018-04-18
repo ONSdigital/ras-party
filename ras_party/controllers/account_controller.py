@@ -8,8 +8,8 @@ import structlog
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.notify_gateway import NotifyGateway
-from ras_party.controllers.queries import query_business_by_party_uuid, query_respondent_by_email
-from ras_party.controllers.queries import query_respondent_by_party_uuid
+from ras_party.controllers.queries import query_respondent_by_email, query_respondent_by_pending_email
+from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
 from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
 from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.validate import Exists, IsUuid, Validator
@@ -213,25 +213,29 @@ def verify_token(token, session):
         raise RasError('Unknown email verification token', status=404, token=token, error=e)
 
     respondent = query_respondent_by_email(email_address, session)
+
     if not respondent:
+        # When changing contact details, unverified new email is in pending_email_address
+        respondent = query_respondent_by_pending_email(email_address, session)
+
+    if respondent:
+        update_verified_email_address(respondent)
+    else:
         raise RasError("Respondent does not exist.", status=404)
 
     return {'response': "Ok"}
 
 
 @transactional
-@with_db_session
-def update_email_address(email_address, new_email_address, token, tran, session):
-    #verify the token
-    verify_token(token, session)
+def update_verified_email_address(respondent, tran):
 
-    respondent = query_respondent_by_email(email_address, session)
-
+    new_email_address = respondent.pending_email_address
+    email_address = respondent.email_address
 
     oauth_response = OauthClient().update_account(
                                                 username=email_address,
                                                 new_username=new_email_address,
-                                                account_verified='false')
+                                                account_verified='true')
 
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent email")
@@ -250,7 +254,7 @@ def update_email_address(email_address, new_email_address, token, tran, session)
 
     respondent.pending_email_address = None
 
-    tran.on_success(lambda: logger.info('Updated email address'))  # TODO: don't want to log email address
+    tran.on_success(lambda: logger.info('Updated verified email address'))
 
 
 @transactional
