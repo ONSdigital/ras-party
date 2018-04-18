@@ -202,9 +202,8 @@ def change_respondent(payload, tran, session):
     return respondent.to_respondent_dict()
 
 
-@transactional
 @with_db_session
-def verify_token(token, tran, session):
+def verify_token(token, session):
     try:
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
@@ -217,15 +216,17 @@ def verify_token(token, tran, session):
     if not respondent:
         raise RasError("Respondent does not exist.", status=404)
 
-
-    #TODO: if this is a verification for a new email then need to update the email address via the oauth client
-
     return {'response': "Ok"}
 
 
 @transactional
 @with_db_session
-def update_email_address(respondent, email_address, new_email_address, tran, session):
+def update_email_address(email_address, new_email_address, token, tran, session):
+    #verify the token
+    verify_token(token, session)
+
+    respondent = query_respondent_by_email(email_address, session)
+
 
     oauth_response = OauthClient().update_account(
                                                 username=email_address,
@@ -247,7 +248,6 @@ def update_email_address(respondent, email_address, new_email_address, tran, ses
 
     tran.compensate(compensate_oauth_change)
 
-    # TODO: Does this commit the pending email address, with the transaction
     respondent.pending_email_address = None
 
     tran.on_success(lambda: logger.info('Updated email address'))  # TODO: don't want to log email address
