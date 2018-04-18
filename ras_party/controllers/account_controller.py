@@ -161,8 +161,9 @@ def change_respondent_enrolment_status(payload, session):
     enrolment.status = change_flag
 
     category = 'DISABLE_RESPONDENT_ENROLMENT' if change_flag == 'DISABLED' else 'ENABLE_RESPONDENT_ENROLMENT'
+    description = "Disable respondent enrolment" if change_flag == 'DISABLED' else 'Enable respondent enrolment'
     for case in get_cases_for_collection_exercise(survey_id, business_id, respondent_id):
-        post_case_event(case['id'], business_id, category=category)
+        post_case_event(case['id'], business_id, category=category, desc=description)
 
 
 @transactional
