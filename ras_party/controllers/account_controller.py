@@ -168,7 +168,7 @@ def change_respondent_enrolment_status(payload, session):
 
 @transactional
 @with_db_session
-def change_respondent(payload, tran, session):
+def change_respondent(payload, session):
     """
     Modify an existing respondent's email address, identified by their current email address.
     """
@@ -195,9 +195,7 @@ def change_respondent(payload, tran, session):
 
     _send_email_verification(respondent.party_uuid, respondent.email_address)
 
-    # This ensures the log message is only written once the DB transaction is committed, TODO: remove the transaction and just update the email with the db session?
-    tran.on_success(
-        lambda: logger.info('Verification email sent for changing respondents email', party_uuid=respondent.party_uuid))
+    logger.info('Verification email sent for changing respondents email', party_uuid=respondent.party_uuid)
 
     return respondent.to_respondent_dict()
 
@@ -215,6 +213,7 @@ def verify_token(token, session):
     respondent = query_respondent_by_email(email_address, session)
 
     if not respondent:
+        logger.info("Attempting to find respondent by pending email address")
         # When changing contact details, unverified new email is in pending_email_address
         respondent = query_respondent_by_pending_email(email_address, session)
 
@@ -229,6 +228,8 @@ def verify_token(token, session):
 @transactional
 @with_db_session
 def update_verified_email_address(respondent, tran, session):
+
+    logger.info('Attempting to update verified email address')
 
     new_email_address = respondent.pending_email_address
     email_address = respondent.email_address
