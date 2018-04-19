@@ -193,7 +193,7 @@ def change_respondent(payload, session):
 
     respondent.pending_email_address = new_email_address
 
-    _send_email_verification(respondent.party_uuid, respondent.email_address)
+    _send_email_verification(respondent.party_uuid, new_email_address)
 
     logger.info('Verification email sent for changing respondents email', party_uuid=respondent.party_uuid)
 
@@ -213,14 +213,7 @@ def verify_token(token, session):
     respondent = query_respondent_by_email(email_address, session)
 
     if not respondent:
-        logger.info("Attempting to find respondent by pending email address")
-        # When changing contact details, unverified new email is in pending_email_address
-        respondent = query_respondent_by_pending_email(email_address, session)
-
-        if respondent:
-            update_verified_email_address(respondent)
-        else:
-            raise RasError("Respondent does not exist.", status=404)
+        raise RasError("Respondent does not exist.", status=404)
 
     return {'response': "Ok"}
 
@@ -237,7 +230,7 @@ def update_verified_email_address(respondent, tran, session):
     oauth_response = OauthClient().update_account(
                                                 username=email_address,
                                                 new_username=new_email_address,
-                                                account_verified='true')
+                                                account_verified='true') #TODO: the
 
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent email")
@@ -354,6 +347,7 @@ def change_respondent_account_status(payload, party_id, session):
 
 @with_db_session
 def put_email_verification(token, session):
+    logger.info('Attempting to verify email', token=token)
     try:
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
@@ -362,24 +356,33 @@ def put_email_verification(token, session):
     except (BadSignature, BadData) as e:
         raise RasError('Bad email verification token', status=404, token=token, error=e)
 
-    r = query_respondent_by_email(email_address, session)
-    if not r:
-        raise RasError("Unable to find user while checking email verification token", status=404)
+    respondent = query_respondent_by_email(email_address, session)
 
-    if r.status != RespondentStatus.ACTIVE:
+    if not respondent:
+        logger.info("Attempting to find respondent by pending email address")
+        # When changing contact details, unverified new email is in pending_email_address
+        respondent = query_respondent_by_pending_email(email_address, session)
+
+        if respondent:
+            update_verified_email_address(respondent)
+        else:
+            raise RasError("Unable to find user while checking email verification token", status=404)
+
+    if respondent.status != RespondentStatus.ACTIVE:
         # We set the party as ACTIVE in this service
-        r.status = RespondentStatus.ACTIVE
+        respondent.status = RespondentStatus.ACTIVE
 
         # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
-        if r.pending_enrolment:
-            enrol_respondent_for_survey(r, session)
+        if respondent.pending_enrolment:
+            enrol_respondent_for_survey(respondent, session)
         else:
             logger.info('No pending enrolment for respondent while checking email verification token',
-                        party_uuid=r.party_uuid)
+                        party_uuid=respondent.party_uuid)
 
-    # We set the user as verified on the OAuth2 server.
-    set_user_verified(email_address)
-    return r.to_respondent_dict()
+        # We set the user as verified on the OAuth2 server.
+        set_user_verified(email_address) #Only needs to be done for non active respondents, this is set in the update_verified_email
+
+    return respondent.to_respondent_dict()
 
 
 @with_db_session
