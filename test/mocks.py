@@ -1,7 +1,8 @@
 import json
 from collections import defaultdict
 
-from test.fixtures import get_case_by_iac, get_ce_by_id, get_survey_by_id, get_iac
+from test.fixtures import get_case_by_iac, get_cases_by_party, get_casegroups_by_party, get_ce_by_id, \
+    get_ces_by_survey, get_survey_by_id, get_iac
 
 
 class MockResponse:
@@ -33,8 +34,14 @@ class MockRequests:
                 return {
                     'http://mockhost:1111/cases/iac/fb747cq725lj':
                         MockResponse(get_case_by_iac.response),
+                    'http://mockhost:1111/cases/partyid/438df969-7c9c-4cd4-a89b-ac88cf0bfdf3':
+                        MockResponse(get_cases_by_party.response),
+                    'http://mockhost:1111/casegroups/partyid/3b136c4b-7a14-4904-9e01-13364dd7b972':
+                        MockResponse(get_casegroups_by_party.response),
                     'http://mockhost:2222/collectionexercises/dab9db7f-3aa0-4866-be20-54d72ee185fb':
                         MockResponse(get_ce_by_id.response),
+                    'http://mockhost:2222/collectionexercises/survey/02b9c366-7397-42f7-942a-76dc5876d86d':
+                        MockResponse(get_ces_by_survey.response),
                     'http://mockhost:3333/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87':
                         MockResponse(get_survey_by_id.response),
                     'http://mockhost:6666/iacs/fb747cq725lj':

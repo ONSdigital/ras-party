@@ -11,6 +11,7 @@ from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import query_business_by_party_uuid, query_respondent_by_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid
 from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
+from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.validate import Exists, IsUuid, Validator
 from ras_party.exceptions import RasError, RasNotifyError
 from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
@@ -130,6 +131,39 @@ def post_respondent(party, tran, session):
     register_user(party, tran)
 
     return respondent.to_respondent_dict()
+
+
+@with_db_session
+def change_respondent_enrolment_status(payload, session):
+    """
+    Change respondent enrolment status for business and survey
+    :param payload:
+    :param session:
+    :return:
+    """
+    change_flag = payload['change_flag']
+    business_id = payload['business_id']
+    survey_id = payload['survey_id']
+    respondent_id = payload['respondent_id']
+    logger.info("Attempting to change respondent enrolment",
+                respondent_id=respondent_id,
+                survey_id=survey_id,
+                business_id=business_id,
+                status=change_flag)
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
+    if not respondent:
+        raise RasError("Respondent does not exist.", status=404)
+
+    enrolment = query_enrolment_by_survey_business_respondent(respondent_id=respondent.id,
+                                                              business_id=business_id,
+                                                              survey_id=survey_id,
+                                                              session=session)
+    enrolment.status = change_flag
+
+    category = 'DISABLE_RESPONDENT_ENROLMENT' if change_flag == 'DISABLED' else 'ENABLE_RESPONDENT_ENROLMENT'
+    description = "Disable respondent enrolment" if change_flag == 'DISABLED' else 'Enable respondent enrolment'
+    for case in get_cases_for_collection_exercise(survey_id, business_id, respondent_id):
+        post_case_event(case['id'], business_id, category=category, desc=description)
 
 
 @transactional
@@ -512,6 +546,7 @@ def request_survey(survey_id):
 
 
 def post_case_event(case_id, party_id, category='Default category message', desc='Default description message'):
+    logger.debug('Posting case event', case_id=case_id, party_id=party_id)
     case_svc = current_app.config['RAS_CASE_SERVICE']
     case_url = f'{case_svc}/cases/{case_id}/events'
     payload = {
@@ -521,8 +556,53 @@ def post_case_event(case_id, party_id, category='Default category message', desc
         'createdBy': 'Party Service'
     }
 
-    logger.info('POST', url=case_url, payload=payload)
     response = Requests.post(case_url, json=payload)
-    logger.info('Case service responded with', status=response.status_code)
     response.raise_for_status()
+    logger.debug('Successfully posted case event')
     return response.json()
+
+
+def request_cases_for_respondent(respondent_id):
+    logger.debug('Retrieving cases for respondent', respondent_id=respondent_id)
+    url = f'{current_app.config["RAS_CASE_SERVICE"]}/cases/partyid/{respondent_id}'
+    response = Requests.get(url)
+    response.raise_for_status()
+    logger.debug('Successfully retrieved cases for respondent', respondent_id=respondent_id)
+    return response.json()
+
+
+def request_casegroups_for_business(business_id):
+    logger.debug('Retrieving casegroups for business', business_id=business_id)
+    url = f'{current_app.config["RAS_CASE_SERVICE"]}/casegroups/partyid/{business_id}'
+    response = Requests.get(url)
+    response.raise_for_status()
+    logger.debug('Successfully retrieved casegroups for business', business_id=business_id)
+    return response.json()
+
+
+def request_collection_exercises_for_survey(survey_id):
+    logger.debug('Retrieving collection exercises for survey', survey_id=survey_id)
+    url = f'{current_app.config["RAS_COLLEX_SERVICE"]}/collectionexercises/survey/{survey_id}'
+    response = Requests.get(url)
+    response.raise_for_status()
+    logger.debug('Successfully retrieved collection exercises for survey', survey_id=survey_id)
+    return response.json()
+
+
+def get_cases_for_collection_exercise(survey_id, business_id, respondent_id):
+    logger.debug('Retrieving cases for collection exercises',
+                 survey_id=survey_id, business_id=business_id, respondent_id=respondent_id)
+    collection_exercises = request_collection_exercises_for_survey(survey_id)
+    casegroups = request_casegroups_for_business(business_id)
+    cases = request_cases_for_respondent(respondent_id)
+
+    ce_casegroups = [casegroup for casegroup in casegroups
+                     if casegroup['collectionExerciseId'] in
+                     [collection_exercise['id'] for collection_exercise in collection_exercises]]
+
+    matching_cases = [case for case in cases
+                      if case['caseGroup']['id'] in
+                      [casegroup['id'] for casegroup in ce_casegroups]]
+    logger.debug('Successfully retrieved cases for collection exercises',
+                 survey_id=survey_id, business_id=business_id, respondent_id=respondent_id)
+    return matching_cases
