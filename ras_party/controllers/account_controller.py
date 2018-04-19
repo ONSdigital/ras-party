@@ -195,7 +195,7 @@ def change_respondent(payload, tran, session):
 
     _send_email_verification(respondent.party_uuid, respondent.email_address)
 
-    # This ensures the log message is only written once the DB transaction is committed
+    # This ensures the log message is only written once the DB transaction is committed, TODO: remove the transaction and just update the email with the db session?
     tran.on_success(
         lambda: logger.info('Verification email sent for changing respondents email', party_uuid=respondent.party_uuid))
 
@@ -218,16 +218,17 @@ def verify_token(token, session):
         # When changing contact details, unverified new email is in pending_email_address
         respondent = query_respondent_by_pending_email(email_address, session)
 
-    if respondent:
-        update_verified_email_address(respondent)
-    else:
-        raise RasError("Respondent does not exist.", status=404)
+        if respondent:
+            update_verified_email_address(respondent)
+        else:
+            raise RasError("Respondent does not exist.", status=404)
 
     return {'response': "Ok"}
 
 
 @transactional
-def update_verified_email_address(respondent, tran):
+@with_db_session
+def update_verified_email_address(respondent, tran, session):
 
     new_email_address = respondent.pending_email_address
     email_address = respondent.email_address
@@ -245,6 +246,8 @@ def update_verified_email_address(respondent, tran):
                                                         username=new_email_address,
                                                         new_username=email_address,
                                                         account_verified='true')
+        respondent.pending_email_address = new_email_address
+
         if rollback_response.status_code != 201:
             logger.error("Failed to rollback change to respondent email. Please investigate.",
                          party_id=respondent.party_uuid)
