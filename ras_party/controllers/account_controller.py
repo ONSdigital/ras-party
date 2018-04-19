@@ -590,6 +590,8 @@ def request_collection_exercises_for_survey(survey_id):
 
 
 def get_cases_for_collection_exercise(survey_id, business_id, respondent_id):
+    logger.debug('Retrieving cases for collection exercises',
+                 survey_id=survey_id, business_id=business_id, respondent_id=respondent_id)
     collection_exercises = request_collection_exercises_for_survey(survey_id)
     casegroups = request_casegroups_for_business(business_id)
     cases = request_cases_for_respondent(respondent_id)
@@ -601,4 +603,6 @@ def get_cases_for_collection_exercise(survey_id, business_id, respondent_id):
     matching_cases = [case for case in cases
                       if case['caseGroup']['id'] in
                       [casegroup['id'] for casegroup in ce_casegroups]]
+    logger.debug('Successfully retrieved cases for collection exercises',
+                 survey_id=survey_id, business_id=business_id, respondent_id=respondent_id)
     return matching_cases
