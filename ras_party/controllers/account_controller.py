@@ -550,5 +550,3 @@ def set_bi_cases_for_party_to_inactionable(party_id):
 
     for case in cases:
         post_case_event(case['id'], party_id, category='DEACTIVATED')
-
-
