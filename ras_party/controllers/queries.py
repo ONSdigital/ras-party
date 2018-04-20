@@ -3,7 +3,7 @@ import logging
 from sqlalchemy import func, and_, or_
 import structlog
 
-from ras_party.models.models import Business, BusinessRespondent, Respondent, BusinessAttributes
+from ras_party.models.models import Business, BusinessRespondent, Enrolment, Respondent, BusinessAttributes
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -126,3 +126,20 @@ def search_businesses(search_query, session):
 
     return session.query(BusinessAttributes.attributes['name'], Business.business_ref).join(Business)\
         .filter(or_(*filters)).distinct().all()
+
+
+def query_enrolment_by_survey_business_respondent(respondent_id, business_id, survey_id, session):
+    """
+    Query to return enrolment based on respondent id, business id and survey
+    :param respondent_id,
+    :param business_id,
+    :param survey_id
+    :return: enrolment for survey and business for respondent
+    """
+
+    logger.debug('Querying enrolment', respondent_id=respondent_id, business_id=business_id, survey_id=survey_id)
+
+    response = session.query(Enrolment).filter(and_(Enrolment.respondent_id == respondent_id,
+                                                    Enrolment.business_id == business_id,
+                                                    Enrolment.survey_id == survey_id)).first()
+    return response

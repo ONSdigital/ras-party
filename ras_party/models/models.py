@@ -66,7 +66,9 @@ class Business(Base):
         ba = BusinessAttributes(business_id=b.party_uuid, sample_summary_id=party['sampleSummaryId'])
         ba.attributes = party.get('attributes')
         name = '{runame1} {runame2} {runame3}'.format(**ba.attributes)
+        trading_as = '{tradstyle1} {tradstyle2} {tradstyle3}'.format(**ba.attributes)
         ba.attributes['name'] = ' '.join(name.split())
+        ba.attributes['trading_as'] = ' '.join(trading_as.split())
         b.attributes.append(ba)
         b.valid = True
         return b
@@ -97,6 +99,8 @@ class Business(Base):
         ba.attributes = party.get('attributes')
         name = '{runame1} {runame2} {runame3}'.format(**ba.attributes)
         ba.attributes['name'] = ' '.join(name.split())
+        trading_as = '{tradstyle1} {tradstyle2} {tradstyle3}'.format(**ba.attributes)
+        ba.attributes['trading_as'] = ' '.join(trading_as.split())
         self.attributes.append(ba)
 
     def to_business_dict(self, collection_exercise_id=None):
@@ -112,6 +116,7 @@ class Business(Base):
             'sampleUnitType': self.UNIT_TYPE,
             'sampleSummaryId': attributes.sample_summary_id,
             'name': attributes.attributes.get('name'),
+            'trading_as': self.attributes[-1].attributes.get('trading_as'),
             'associations': self._get_respondents_associations(self.respondents)
         }
         return d
@@ -124,6 +129,7 @@ class Business(Base):
             'sampleSummaryId': self.attributes[-1].sample_summary_id,
             'attributes': self.attributes[-1].attributes,
             'name': self.attributes[-1].attributes.get('name'),
+            'trading_as': self.attributes[-1].attributes.get('trading_as'),
             'associations': self._get_respondents_associations(self.respondents)
         }
 
