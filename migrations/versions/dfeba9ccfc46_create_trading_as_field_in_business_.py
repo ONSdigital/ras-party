@@ -24,10 +24,11 @@ def upgrade():
     for row in result:
         attributes = json.loads(json.dumps(row['attributes']))
         trading_as = '{tradstyle1} {tradstyle2} {tradstyle3}'.format(**attributes)
-        attributes['trading_as'] = ' '.join(trading_as.split())
-        json_attributes = json.dumps(attributes)
+        formatted_trading_as = ' '.join(trading_as.split()).replace("'", "''")
+        json_trading_as = json.dumps(formatted_trading_as)
         insert_sql = f"UPDATE partysvc.business_attributes " \
-                     f"SET attributes = '{json_attributes}' WHERE id={row['id']}"
+                     f"SET attributes = jsonb_set(attributes, '{{trading_as}}', '{json_trading_as}', True) " \
+                     f"WHERE id={row['id']}"
         conn.execute(insert_sql)
 
 
