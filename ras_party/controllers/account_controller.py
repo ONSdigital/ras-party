@@ -211,47 +211,10 @@ def verify_token(token, session):
         raise RasError('Unknown email verification token', status=404, token=token, error=e)
 
     respondent = query_respondent_by_email(email_address, session)
-
     if not respondent:
         raise RasError("Respondent does not exist.", status=404)
 
     return {'response': "Ok"}
-
-
-@transactional
-@with_db_session
-def update_verified_email_address(respondent, tran, session):
-
-    logger.info('Attempting to update verified email address')
-
-    new_email_address = respondent.pending_email_address
-    email_address = respondent.email_address
-
-    oauth_response = OauthClient().update_account(
-                                                username=email_address,
-                                                new_username=new_email_address,
-                                                account_verified='true') #TODO: the
-
-    if oauth_response.status_code != 201:
-        raise RasError("Failed to change respondent email")
-
-    def compensate_oauth_change():
-        rollback_response = OauthClient().update_account(
-                                                        username=new_email_address,
-                                                        new_username=email_address,
-                                                        account_verified='true')
-        respondent.pending_email_address = new_email_address
-
-        if rollback_response.status_code != 201:
-            logger.error("Failed to rollback change to respondent email. Please investigate.",
-                         party_id=respondent.party_uuid)
-            raise RasError("Failed to rollback change to respondent email.")
-
-    tran.compensate(compensate_oauth_change)
-
-    respondent.pending_email_address = None
-
-    tran.on_success(lambda: logger.info('Updated verified email address'))
 
 
 @transactional
@@ -344,9 +307,15 @@ def change_respondent_account_status(payload, party_id, session):
         raise RasError("Unable to find respondent account", status=404)
     respondent.status = status
 
-
+@transactional
 @with_db_session
-def put_email_verification(token, session):
+def put_email_verification(token, tran, session):
+    """
+    Verify email address, this method can be reached when registering, adding a new survey or updating email address
+    :param token:
+    :param session:
+    :return:
+    """
     logger.info('Attempting to verify email', token=token)
     try:
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
@@ -364,7 +333,7 @@ def put_email_verification(token, session):
         respondent = query_respondent_by_pending_email(email_address, session)
 
         if respondent:
-            update_verified_email_address(respondent)
+            update_verified_email_address(respondent, tran, session)
         else:
             raise RasError("Unable to find user while checking email verification token", status=404)
 
@@ -379,10 +348,45 @@ def put_email_verification(token, session):
             logger.info('No pending enrolment for respondent while checking email verification token',
                         party_uuid=respondent.party_uuid)
 
-        # We set the user as verified on the OAuth2 server.
-        set_user_verified(email_address) #Only needs to be done for non active respondents, this is set in the update_verified_email
+    # We set the user as verified on the OAuth2 server.
+    set_user_verified(email_address) #Only needs to be done for non active respondents, this is set in the update_verified_email
+    # TODO: this shouldn't be needed for the updating verified email as we update is as verified
 
     return respondent.to_respondent_dict()
+
+
+def update_verified_email_address(respondent, tran, session):
+
+    logger.info('Attempting to update verified email address')
+
+    new_email_address = respondent.pending_email_address
+    email_address = respondent.email_address
+
+    oauth_response = OauthClient().update_account(
+                                                username=email_address,
+                                                new_username=new_email_address,
+                                                account_verified='false') #TODO: could set as false and use the overriding set to true in put_verify_token
+
+    if oauth_response.status_code != 201:
+        raise RasError("Failed to change respondent email")
+
+    def compensate_oauth_change():
+        rollback_response = OauthClient().update_account(
+                                                        username=new_email_address,
+                                                        new_username=email_address,
+                                                        account_verified='true')
+        respondent.pending_email_address = new_email_address
+
+        if rollback_response.status_code != 201:
+            logger.error("Failed to rollback change to respondent email. Please investigate.",
+                         party_id=respondent.party_uuid)
+            raise RasError("Failed to rollback change to respondent email.")
+
+    tran.compensate(compensate_oauth_change)
+
+    respondent.pending_email_address = None
+
+    tran.on_success(lambda: logger.info('Updated verified email address'))
 
 
 @with_db_session
