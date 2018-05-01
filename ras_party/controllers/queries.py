@@ -51,6 +51,7 @@ def query_respondent_by_email(email, session):
 
     return session.query(Respondent).filter(func.lower(Respondent.email_address) == email.lower()).first()
 
+
 def query_respondent_by_pending_email(email, session):
     """
     Query to return respondent based on pending_email_address

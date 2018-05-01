@@ -306,6 +306,7 @@ def change_respondent_account_status(payload, party_id, session):
         raise RasError("Unable to find respondent account", status=404)
     respondent.status = status
 
+
 @transactional
 @with_db_session
 def put_email_verification(token, tran, session):
@@ -348,8 +349,7 @@ def put_email_verification(token, tran, session):
                         party_uuid=respondent.party_uuid)
 
     # We set the user as verified on the OAuth2 server.
-    set_user_verified(email_address) #Only needs to be done for non active respondents, this is set in the update_verified_email
-    # TODO: this shouldn't be needed for the updating verified email as we update is as verified
+    set_user_verified(email_address)
 
     return respondent.to_respondent_dict()
 
@@ -364,7 +364,7 @@ def update_verified_email_address(respondent, tran, session):
     oauth_response = OauthClient().update_account(
                                                 username=email_address,
                                                 new_username=new_email_address,
-                                                account_verified='false') #TODO: could set as false and use the overriding set to true in put_verify_token
+                                                account_verified='false')
 
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent email")
@@ -383,6 +383,7 @@ def update_verified_email_address(respondent, tran, session):
 
     tran.compensate(compensate_oauth_change)
 
+    respondent.email_address = new_email_address
     respondent.pending_email_address = None
 
     tran.on_success(lambda: logger.info('Updated verified email address'))
