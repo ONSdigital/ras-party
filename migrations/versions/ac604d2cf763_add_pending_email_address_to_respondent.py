@@ -1,8 +1,8 @@
-"""add pending email address column to respondent
+"""add pending email address to respondent
 
-Revision ID: db3621006060
-Revises: 2798b5d5566a
-Create Date: 2018-04-18 15:01:17.864801
+Revision ID: ac604d2cf763
+Revises: dfeba9ccfc46
+Create Date: 2018-05-01 09:39:19.452818
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'db3621006060'
-down_revision = '2798b5d5566a'
+revision = 'ac604d2cf763'
+down_revision = 'dfeba9ccfc46'
 branch_labels = None
 depends_on = None
 
