@@ -166,7 +166,6 @@ def change_respondent_enrolment_status(payload, session):
         post_case_event(case['id'], business_id, category=category, desc=description)
 
 
-@transactional
 @with_db_session
 def change_respondent(payload, session):
     """
