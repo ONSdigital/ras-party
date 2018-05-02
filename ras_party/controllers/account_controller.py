@@ -8,8 +8,8 @@ import structlog
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.notify_gateway import NotifyGateway
-from ras_party.controllers.queries import query_business_by_party_uuid, query_respondent_by_email
-from ras_party.controllers.queries import query_respondent_by_party_uuid
+from ras_party.controllers.queries import query_respondent_by_email, query_respondent_by_pending_email
+from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
 from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
 from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.validate import Exists, IsUuid, Validator
@@ -166,9 +166,8 @@ def change_respondent_enrolment_status(payload, session):
         post_case_event(case['id'], business_id, category=category, desc=description)
 
 
-@transactional
 @with_db_session
-def change_respondent(payload, tran, session):
+def change_respondent(payload, session):
     """
     Modify an existing respondent's email address, identified by their current email address.
     """
@@ -191,33 +190,11 @@ def change_respondent(payload, tran, session):
     if respondent_with_new_email:
         raise RasError("New email address already taken.", status=409)
 
-    respondent.email_address = new_email_address
+    respondent.pending_email_address = new_email_address
 
-    oauth_response = OauthClient().update_account(
-                                                username=email_address,
-                                                new_username=new_email_address,
-                                                account_verified='false')
+    _send_email_verification(respondent.party_uuid, new_email_address)
 
-    if oauth_response.status_code != 201:
-        raise RasError("Failed to change respondent email")
-
-    def compensate_oauth_change():
-        rollback_response = OauthClient().update_account(
-                                                        username=new_email_address,
-                                                        new_username=email_address,
-                                                        account_verified='true')
-        if rollback_response.status_code != 201:
-            logger.error("Failed to rollback change to respondent email. Please investigate.",
-                         party_id=respondent.party_uuid)
-            raise RasError("Failed to rollback change to respondent email.")
-
-    tran.compensate(compensate_oauth_change)
-
-    _send_email_verification(respondent.party_uuid, respondent.email_address)
-
-    # This ensures the log message is only written once the DB transaction is committed
-    tran.on_success(
-        lambda: logger.info('Respondent has changed their email address', party_uuid=respondent.party_uuid))
+    logger.info('Verification email sent for changing respondents email', party_uuid=respondent.party_uuid)
 
     return respondent.to_respondent_dict()
 
@@ -330,8 +307,16 @@ def change_respondent_account_status(payload, party_id, session):
     respondent.status = status
 
 
+@transactional
 @with_db_session
-def put_email_verification(token, session):
+def put_email_verification(token, tran, session):
+    """
+    Verify email address, this method can be reached when registering, adding a new survey or updating email address
+    :param token:
+    :param session:
+    :return:
+    """
+    logger.info('Attempting to verify email', token=token)
     try:
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
@@ -340,24 +325,68 @@ def put_email_verification(token, session):
     except (BadSignature, BadData) as e:
         raise RasError('Bad email verification token', status=404, token=token, error=e)
 
-    r = query_respondent_by_email(email_address, session)
-    if not r:
-        raise RasError("Unable to find user while checking email verification token", status=404)
+    respondent = query_respondent_by_email(email_address, session)
 
-    if r.status != RespondentStatus.ACTIVE:
+    if not respondent:
+        logger.info("Attempting to find respondent by pending email address")
+        # When changing contact details, unverified new email is in pending_email_address
+        respondent = query_respondent_by_pending_email(email_address, session)
+
+        if respondent:
+            update_verified_email_address(respondent, tran, session)
+        else:
+            raise RasError("Unable to find user while checking email verification token", status=404)
+
+    if respondent.status != RespondentStatus.ACTIVE:
         # We set the party as ACTIVE in this service
-        r.status = RespondentStatus.ACTIVE
+        respondent.status = RespondentStatus.ACTIVE
 
         # Next we check if this respondent has a pending enrolment (there WILL be only one, set during registration)
-        if r.pending_enrolment:
-            enrol_respondent_for_survey(r, session)
+        if respondent.pending_enrolment:
+            enrol_respondent_for_survey(respondent, session)
         else:
             logger.info('No pending enrolment for respondent while checking email verification token',
-                        party_uuid=r.party_uuid)
+                        party_uuid=respondent.party_uuid)
 
     # We set the user as verified on the OAuth2 server.
     set_user_verified(email_address)
-    return r.to_respondent_dict()
+
+    return respondent.to_respondent_dict()
+
+
+def update_verified_email_address(respondent, tran, session):
+
+    logger.info('Attempting to update verified email address')
+
+    new_email_address = respondent.pending_email_address
+    email_address = respondent.email_address
+
+    oauth_response = OauthClient().update_account(
+                                                username=email_address,
+                                                new_username=new_email_address,
+                                                account_verified='false')
+
+    if oauth_response.status_code != 201:
+        raise RasError("Failed to change respondent email")
+
+    def compensate_oauth_change():
+        rollback_response = OauthClient().update_account(
+                                                        username=new_email_address,
+                                                        new_username=email_address,
+                                                        account_verified='true')
+        respondent.pending_email_address = new_email_address
+
+        if rollback_response.status_code != 201:
+            logger.error("Failed to rollback change to respondent email. Please investigate.",
+                         party_id=respondent.party_uuid)
+            raise RasError("Failed to rollback change to respondent email.")
+
+    tran.compensate(compensate_oauth_change)
+
+    respondent.email_address = new_email_address
+    respondent.pending_email_address = None
+
+    tran.on_success(lambda: logger.info('Updated verified email address'))
 
 
 @with_db_session
