@@ -609,9 +609,8 @@ def set_bi_cases_for_party_to_inactionable(party_id):
     logger.debug("Set respondent BI cases to inactionable", party_id=party_id)
 
     cases = request_cases_for_respondent(party_id, state='ACTIONABLE')
-    if cases:
-        for case in cases:
-            post_case_event(case['id'], party_id, category='DEACTIVATED')
+    for case in cases:
+        post_case_event(case['id'], party_id, category='DEACTIVATED')
 
 
 def request_casegroups_for_business(business_id):
@@ -620,7 +619,7 @@ def request_casegroups_for_business(business_id):
     response = Requests.get(url)
     response.raise_for_status()
     logger.debug('Successfully retrieved casegroups for business', business_id=business_id)
-    return response.json()
+    return response.json() if response.json() else []
 
 
 def request_collection_exercises_for_survey(survey_id):
