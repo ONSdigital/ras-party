@@ -52,6 +52,17 @@ def query_respondent_by_email(email, session):
     return session.query(Respondent).filter(func.lower(Respondent.email_address) == email.lower()).first()
 
 
+def query_respondent_by_pending_email(email, session):
+    """
+    Query to return respondent based on pending_email_address
+    :param email: the party uuid
+    :return: respondent or none
+    """
+    logger.debug('Querying respondents by pending email address')
+
+    return session.query(Respondent).filter(func.lower(Respondent.pending_email_address) == email.lower()).first()
+
+
 def query_respondent_by_email_filter_out_created(email, session):
     """
     Query to return respondent based on email

@@ -171,6 +171,7 @@ This page documents the Party service API endpoints. All endpoints return an `HT
         }
     ],
     "attributes": {
+        "pendingEmailAddress": "J.Turner@email.com",
         "emailAddress": "Jacky.Turner@email.com",
         "firstName": "Jacky",
         "lastName": "Turner",
@@ -181,6 +182,8 @@ This page documents the Party service API endpoints. All endpoints return an `HT
     "status": "ACTIVE"
 }
 ```
+
+The pendingEmailAddress field holds the unverified email address when it is being updated.
 
 * `GET /respondents/id/3b136c4b-7a14-4904-9e01-13364dd7b972`
 

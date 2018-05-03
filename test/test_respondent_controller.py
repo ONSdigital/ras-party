@@ -417,7 +417,8 @@ class TestRespondents(PartyTestClient):
             'new_email_address': 'test@example.test',
         }
         self.put_email_to_respondents(put_data)
-        self.assertEqual(respondents()[0].email_address, 'test@example.test')
+        self.assertEqual(respondents()[0].pending_email_address, 'test@example.test')
+        self.assertEqual(respondents()[0].email_address, 'a@z.com')
 
     def test_put_respondent_email_calls_the_notify_service(self):
         respondent = self.populate_with_respondent(respondent=self.mock_respondent)

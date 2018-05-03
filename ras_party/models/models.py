@@ -209,6 +209,7 @@ class Respondent(Base):
     party_uuid = Column(GUID, unique=True)
     status = Column('status', Enum(RespondentStatus), default=RespondentStatus.CREATED)
     email_address = Column(Text, unique=True)
+    pending_email_address = Column(Text, unique=True)
     first_name = Column(Text)
     last_name = Column(Text)
     telephone = Column(Text)
@@ -240,6 +241,7 @@ class Respondent(Base):
         d = {
             'id': self.party_uuid,
             'sampleUnitType': self.UNIT_TYPE,
+            'pendingEmailAddress': self.pending_email_address,
             'emailAddress': self.email_address,
             'firstName': self.first_name,
             'lastName': self.last_name,
