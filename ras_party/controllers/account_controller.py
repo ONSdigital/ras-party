@@ -577,12 +577,12 @@ def request_cases_for_respondent(respondent_id, state=None):
 
 
 def set_bi_cases_for_party_to_inactionable(party_id):
-    logger.debug("Set respondent BI cases to inactionable", party_id)
+    logger.debug("Set respondent BI cases to inactionable", party_id=party_id)
 
     cases = request_cases_for_respondent(party_id, state='ACTIONABLE')
-
-    for case in cases:
-        post_case_event(case['id'], party_id, category='DEACTIVATED')
+    if cases:
+        for case in cases:
+            post_case_event(case['id'], party_id, category='DEACTIVATED')
 
 
 def request_casegroups_for_business(business_id):

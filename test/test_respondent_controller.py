@@ -775,6 +775,9 @@ class TestRespondents(PartyTestClient):
         self.put_enrolment_status(request_json, 500)
 
     def test_put_change_respondent_account_status_suspend(self):
+        def mock_put_iac(*args, **kwargs):
+            return MockResponse('{"active": false}')
+        self.mock_requests.put = mock_put_iac
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         db_respondent = respondents()[0]
         token = self.generate_valid_token_from_email(db_respondent.email_address)

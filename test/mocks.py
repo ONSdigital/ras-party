@@ -38,6 +38,8 @@ class MockRequests:
                         MockResponse(get_cases_by_party.response),
                     'http://mockhost:1111/casegroups/partyid/3b136c4b-7a14-4904-9e01-13364dd7b972':
                         MockResponse(get_casegroups_by_party.response),
+                    'http://mockhost:1111/cases/partyid/438df969-7c9c-4cd4-a89b-ac88cf0bfdf3?state=ACTIONABLE':
+                        MockResponse(get_casegroups_by_party.response),
                     'http://mockhost:2222/collectionexercises/dab9db7f-3aa0-4866-be20-54d72ee185fb':
                         MockResponse(get_ce_by_id.response),
                     'http://mockhost:2222/collectionexercises/survey/02b9c366-7397-42f7-942a-76dc5876d86d':
