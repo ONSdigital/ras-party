@@ -125,7 +125,7 @@ def post_respondent(party, tran, session):
         logger.error('Missing config keys during enrolment')
         raise RasError('Missing config keys during enrolment', status=500)
     except Exception:
-        logger.exeption('Error during enrolment process')
+        logger.exception('Error during enrolment process')
         raise RasError("Error during enrolment process", status=500)
 
     register_user(party, tran)
