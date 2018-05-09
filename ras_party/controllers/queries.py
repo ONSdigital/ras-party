@@ -142,3 +142,17 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
                                                     Enrolment.business_id == business_id,
                                                     Enrolment.survey_id == survey_id)).first()
     return response
+
+
+def update_respondent_enrolments_to_disabled(respondent_id, session):
+    """
+    Update respondent enrolments to disabled state when account suspended
+    :param respondent_id
+    :param session 
+    :return 
+    """
+
+    logger.debug('Updating respondent enrolments')
+
+    session.query(Enrolment).filter(Enrolment.respondent_id == respondent_id).update({
+                                            Enrolment.status: 'DISABLED'})

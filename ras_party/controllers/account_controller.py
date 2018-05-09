@@ -12,6 +12,7 @@ from ras_party.controllers.queries import query_respondent_by_email, query_respo
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
 from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
 from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
+from ras_party.controllers.queries import update_respondent_enrolments_to_disabled
 from ras_party.controllers.validate import Exists, IsUuid, Validator
 from ras_party.exceptions import RasError, RasNotifyError
 from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
@@ -304,6 +305,10 @@ def change_respondent_account_status(payload, party_id, session):
     respondent = query_respondent_by_party_uuid(party_id, session)
     if not respondent:
         raise RasError("Unable to find respondent account", status=404)
+
+    if status.lower() == 'suspended':
+        update_respondent_enrolments_to_disabled(respondent.id, session)
+        set_bi_cases_for_party_to_inactionable(party_id)
     respondent.status = status
 
 
@@ -591,13 +596,23 @@ def post_case_event(case_id, party_id, category='Default category message', desc
     return response.json()
 
 
-def request_cases_for_respondent(respondent_id):
+def request_cases_for_respondent(respondent_id, state=None):
     logger.debug('Retrieving cases for respondent', respondent_id=respondent_id)
     url = f'{current_app.config["RAS_CASE_SERVICE"]}/cases/partyid/{respondent_id}'
+    if state:
+        url = url + '?state=' + state
     response = Requests.get(url)
     response.raise_for_status()
     logger.debug('Successfully retrieved cases for respondent', respondent_id=respondent_id)
     return response.json()
+
+
+def set_bi_cases_for_party_to_inactionable(party_id):
+    logger.debug("Set respondent BI cases to inactionable", party_id=party_id)
+
+    cases = request_cases_for_respondent(party_id, state='ACTIONABLE')
+    for case in cases:
+        post_case_event(case['id'], party_id, category='DEACTIVATED')
 
 
 def request_casegroups_for_business(business_id):
@@ -606,7 +621,7 @@ def request_casegroups_for_business(business_id):
     response = Requests.get(url)
     response.raise_for_status()
     logger.debug('Successfully retrieved casegroups for business', business_id=business_id)
-    return response.json()
+    return response.json() if response.json() else []
 
 
 def request_collection_exercises_for_survey(survey_id):
