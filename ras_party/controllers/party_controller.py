@@ -44,10 +44,8 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
 
     :rtype: Party
     """
-    v = Validator(IsIn('sampleUnitType', 'B'))
-    if not v.validate({'sampleUnitType': sample_unit_type}):
-        raise RasError(v.errors, status=400)
-
+    if sample_unit_type != Business.UNIT_TYPE:
+        raise RasError(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B']", status=400)
     business = query_business_by_ref(sample_unit_ref, session)
     if not business:
         raise RasError("Business with reference does not exist.", refernce=sample_unit_ref, status=404)
@@ -57,23 +55,20 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
 
 @with_db_session
 def get_party_by_id(sample_unit_type, id, session):
-    v = Validator(IsIn('sampleUnitType', 'B', 'BI'))
-    if not v.validate({'sampleUnitType': sample_unit_type}):
-        raise RasError(v.errors, status=400)
-
     if sample_unit_type == Business.UNIT_TYPE:
         business = query_business_by_party_uuid(id, session)
         if not business:
             raise RasError("Business with id does not exist.", business_id=id, status=404)
-
         return business.to_party_dict()
-
     elif sample_unit_type == Respondent.UNIT_TYPE:
         respondent = query_respondent_by_party_uuid(id, session)
         if not respondent:
             return RasError("Respondent with id does not exist.", respondent_id=id, status=404)
+    else:
+        raise RasError(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']",
+                       status=400)
 
-        return respondent.to_party_dict()
+    return respondent.to_party_dict()
 
 
 def get_business_with_respondents_filtered_by_survey(sample_unit_type, id, survey_id):
