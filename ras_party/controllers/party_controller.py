@@ -2,7 +2,6 @@ from flask import current_app
 
 from ras_party.controllers.queries import query_business_by_party_uuid, query_business_by_ref
 from ras_party.controllers.queries import query_respondent_by_party_uuid
-from ras_party.controllers.validate import Validator, IsIn
 from ras_party.exceptions import RasError
 from ras_party.models.models import Business, Respondent
 from ras_party.support.session_decorator import with_db_session
