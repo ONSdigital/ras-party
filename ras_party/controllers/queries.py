@@ -114,17 +114,23 @@ def search_businesses(search_query, session):
     logger.debug('Searching businesses by name with search query', search_query=search_query)
     filters = list()
     name_filters = list()
+    trading_as_filters = list()
 
     key_words = search_query.split()
 
     for word in key_words:
         name_filters.append(BusinessAttributes.attributes['name'].astext.ilike(f'%{word}%'))
+        trading_as_filters.append(BusinessAttributes.attributes['trading_as'].astext.ilike(f'%{word}%'))
 
     filters.append(Business.business_ref.ilike(f'%{search_query}%'))
     filters.append(and_(*name_filters))
+    filters.append(and_(*trading_as_filters))
 
-    return session.query(BusinessAttributes.attributes['name'], Business.business_ref).join(Business)\
-        .filter(or_(*filters)).distinct().all()
+    return session.query(BusinessAttributes.attributes['name'], BusinessAttributes.attributes['trading_as'],
+                         Business.business_ref)\
+        .join(Business)\
+        .filter(and_(or_(*filters), BusinessAttributes.deleted.isnot(True)))\
+        .distinct().all()
 
 
 def query_enrolment_by_survey_business_respondent(respondent_id, business_id, survey_id, session):

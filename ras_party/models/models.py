@@ -2,19 +2,24 @@ import datetime
 import enum
 import uuid
 
+import logging
+import structlog
 from jsonschema import Draft4Validator
 
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint, Boolean
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import expression
 from sqlalchemy.types import Enum
 from sqlalchemy.ext.declarative import declarative_base
 
+from ras_party.exceptions import RasError
 from ras_party.models import GUID
 from ras_party.support.util import filter_falsey_values, partition_dict
 
 
 Base = declarative_base()
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 class Business(Base):
@@ -27,7 +32,7 @@ class Business(Base):
     business_ref = Column(Text, unique=True)
     respondents = relationship('BusinessRespondent', back_populates='business')
     attributes = relationship('BusinessAttributes', backref='business',
-                              order_by='BusinessAttributes.id', lazy='joined')
+                              order_by='BusinessAttributes.created_on', lazy='joined')
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
     @staticmethod
@@ -116,20 +121,21 @@ class Business(Base):
             'sampleUnitType': self.UNIT_TYPE,
             'sampleSummaryId': attributes.sample_summary_id,
             'name': attributes.attributes.get('name'),
-            'trading_as': self.attributes[-1].attributes.get('trading_as'),
+            'trading_as': attributes.attributes.get('trading_as'),
             'associations': self._get_respondents_associations(self.respondents)
         }
         return d
 
     def to_party_dict(self):
+        attributes = self._get_attributes_for_collection_exercise()
         return {
             'id': self.party_uuid,
             'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
-            'sampleSummaryId': self.attributes[-1].sample_summary_id,
-            'attributes': self.attributes[-1].attributes,
-            'name': self.attributes[-1].attributes.get('name'),
-            'trading_as': self.attributes[-1].attributes.get('trading_as'),
+            'sampleSummaryId': attributes.sample_summary_id,
+            'attributes': attributes.attributes,
+            'name': attributes.attributes.get('name'),
+            'trading_as': attributes.attributes.get('trading_as'),
             'associations': self._get_respondents_associations(self.respondents)
         }
 
@@ -139,7 +145,12 @@ class Business(Base):
                 if attributes.collection_exercise == collection_exercise_id:
                     return attributes
 
-        return self.attributes[-1]
+        try:
+            return next((self.attributes[i] for i in range(len(self.attributes) - 1, -1, -1)
+                         if not self.attributes[i].deleted))
+        except StopIteration:
+            logger.error("No active attributes for business", party_id=self.party_uuid)
+            raise RasError("Business with reference does not exist.", reference=self.business_ref, status=404)
 
 
 class BusinessAttributes(Base):
@@ -150,6 +161,7 @@ class BusinessAttributes(Base):
     sample_summary_id = Column(Text)
     collection_exercise = Column(Text)
     attributes = Column(JSONB)
+    deleted = Column(Boolean, server_default=expression.false(), default=False)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
 

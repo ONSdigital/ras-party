@@ -90,11 +90,34 @@ class TestParties(PartyTestClient):
 
         self.put_to_businesses_sample_link(sample_id, put_data, 200)
 
+    def test_put_business_sample_remove_200(self):
+        mock_business_1 = MockBusiness().attributes(source='test_put_business_sample_remove_200').as_business()
+        mock_business_2 = MockBusiness().attributes(source='test_put_business_sample_remove_200').as_business()
+        self.post_to_businesses(mock_business_1, 200)
+        self.post_to_businesses(mock_business_2, 200)
+
+        self.assertEqual(len(businesses()), 2)
+
+        sample_id = mock_business_1['sampleSummaryId']
+        response = self.put_to_businesses_sample_remove(sample_id, 200)
+
+        self.assertEqual(response['businesses_updated'], 1)
+
     def test_put_business_sample_link_returns_400_when_no_ce(self):
         mock_business = MockBusiness()\
             .attributes(source='test_put_business_sample_link_returns_400_when_no_ce').as_business()
         sample_id = mock_business['sampleSummaryId']
         self.put_to_businesses_sample_link(sample_id, {}, 400)
+
+    def test_get_business_after_attributes_remove_404(self):
+        mock_business = MockBusiness().attributes(source='test_put_business_sample_remove_200').as_business()
+        self.post_to_businesses(mock_business, 200)
+        self.assertEqual(len(businesses()), 1)
+
+        sample_id = mock_business['sampleSummaryId']
+        self.put_to_businesses_sample_remove(sample_id, 200)
+
+        self.get_business_by_ref(mock_business['sampleUnitRef'], 404)
 
     def test_get_business_by_ref_returns_correct_representation_verbose(self):
         mock_business = MockBusiness() \

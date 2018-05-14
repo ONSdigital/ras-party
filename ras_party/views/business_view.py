@@ -59,6 +59,14 @@ def put_business_attributes_ce(sample):
     return jsonify(response)
 
 
+@business_view.route('/businesses/sample/remove/<sample>', methods=['PUT'])
+def remove_business_attributes_by_sample(sample):
+    count = business_controller.businesses_remove_sample(sample)
+
+    response = {"sampleSummaryId": sample, "businesses_updated": count}
+    return jsonify(response)
+
+
 @business_view.route('/businesses/search', methods=['GET'])
 def get_party_by_search():
     query = request.args.get('query', '')
