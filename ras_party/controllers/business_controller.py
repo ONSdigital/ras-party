@@ -1,7 +1,7 @@
 from flask import current_app
 
 from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid, search_businesses
-from ras_party.controllers.validate import Validator, IsUuid, Exists
+from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.exceptions import RasError
 from ras_party.models.models import Business, BusinessAttributes
 from ras_party.support.session_decorator import with_db_session
@@ -95,9 +95,10 @@ def businesses_sample_ce_link(sample, ce_data, session):
     :param session: database session.
     """
 
-    v = Validator(Exists('collectionExerciseId'))
-    if not v.validate(ce_data):
-        raise RasError(v.errors, 400)
+    try:
+        ce_data['collectionExerciseId']
+    except KeyError:
+        raise RasError("Required key 'collectionExerciseId' is missing.", 400)
 
     collection_exercise_id = ce_data['collectionExerciseId']
 

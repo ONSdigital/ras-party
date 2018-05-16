@@ -92,9 +92,10 @@ def respondent_add_survey():
 @account_view.route('/respondents/edit-account-status/<party_id>', methods=['PUT'])
 def put_respondent_account_status(party_id):
     payload = request.get_json() or {}
-    v = Validator(Exists('status_change'))
-    if not v.validate(payload):
-        raise RasError(v.errors, 400)
+    try:
+        payload['status_change']
+    except KeyError:
+        raise RasError("Required key 'status_change' is missing.", 400)
 
     account_controller.change_respondent_account_status(payload, party_id)
     return make_response(jsonify('OK'), 200)

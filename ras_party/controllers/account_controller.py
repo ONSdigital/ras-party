@@ -219,9 +219,10 @@ def verify_token(token, session):
 @transactional
 @with_db_session
 def change_respondent_password(token, payload, tran, session):
-    v = Validator(Exists('new_password'))
-    if not v.validate(payload):
-        raise RasError(v.errors, 400)
+    try:
+        payload['new_password']
+    except KeyError:
+        raise RasError("Required key 'new_password' is missing.", 400)
 
     try:
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
@@ -265,16 +266,18 @@ def change_respondent_password(token, payload, tran, session):
 
 @with_db_session
 def request_password_change(payload, session):
-    v = Validator(Exists('email_address'))
-    if not v.validate(payload):
-        raise RasError(v.errors, 400)
-
-    email_address = payload['email_address']
+    try:
+        email_address = payload['email_address']
+    except KeyError:
+        raise RasError("Required key 'email_address' is missing.", 400)
 
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
         raise RasError("Respondent does not exist.", status=404)
 
+    # FIXME This line doesn't make much sense as the email address is given in the payload.
+    # When would this be different?  Someone needs to either remove this line or put a comment
+    # explaining why these would ever be different.
     email_address = respondent.email_address
     verification_url = PublicWebsite().reset_password_url(email_address)
 
