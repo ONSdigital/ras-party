@@ -38,6 +38,82 @@ class TestParties(PartyTestClient):
         self.assertEqual(response.get('name'), mock_business.get('name'))
         self.assertEqual(response.get('trading_as'), 'Tradstyle-1 Tradstyle-2 Tradstyle-3')
 
+    def test_get_businesses(self):
+        mock_business_1 = MockBusiness() \
+            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
+            .as_business()
+
+        mock_business_2 = MockBusiness() \
+            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
+            .as_business()
+
+        party_id_1 = self.post_to_businesses(mock_business_1, 200)['id']
+        party_id_2 = self.post_to_businesses(mock_business_2, 200)['id']
+        self.assertNotEquals(party_id_1, party_id_2)
+        response = self.get_businesses()
+
+        self.assertEquals(len(response), 2)
+
+        self.assertEqual(response[0].get('id'), party_id_1)
+        self.assertEqual(response[0].get('sampleSummaryId'), mock_business_1['sampleSummaryId'])
+        self.assertEqual(response[0].get('name'), mock_business_1.get('name'))
+
+        self.assertEqual(response[1].get('id'), party_id_2)
+        self.assertEqual(response[1].get('sampleSummaryId'), mock_business_2['sampleSummaryId'])
+        self.assertEqual(response[1].get('name'), mock_business_2.get('name'))
+
+    def test_get_business_by_ids_returns_correct_representation(self):
+        mock_business_1 = MockBusiness() \
+            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
+            .as_business()
+
+        mock_business_2 = MockBusiness() \
+            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
+            .as_business()
+
+        party_id_1 = self.post_to_businesses(mock_business_1, 200)['id']
+        party_id_2 = self.post_to_businesses(mock_business_2, 200)['id']
+        self.assertNotEquals(party_id_1, party_id_2)
+        response = self.get_businesses_by_ids(party_id_1 + ',' + party_id_2)
+
+        self.assertEquals(len(response), 2)
+
+        self.assertEqual(response[0].get('id'), party_id_1)
+        self.assertEqual(response[0].get('sampleSummaryId'), mock_business_1['sampleSummaryId'])
+        self.assertEqual(response[0].get('name'), mock_business_1.get('name'))
+
+        self.assertEqual(response[1].get('id'), party_id_2)
+        self.assertEqual(response[1].get('sampleSummaryId'), mock_business_2['sampleSummaryId'])
+        self.assertEqual(response[1].get('name'), mock_business_2.get('name'))
+
+    def test_get_business_by_ids_with_unknown_id_returns_correct_representation(self):
+        mock_business_1 = MockBusiness() \
+            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
+            .as_business()
+
+        mock_business_2 = MockBusiness() \
+            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
+            .as_business()
+
+        party_id_1 = self.post_to_businesses(mock_business_1, 200)['id']
+        party_id_2 = self.post_to_businesses(mock_business_2, 200)['id']
+        self.assertNotEquals(party_id_1, party_id_2)
+        response = self.get_businesses_by_ids(party_id_1 + ',' + party_id_2 + ',' + str(uuid.uuid4()))
+
+        self.assertEquals(len(response), 2)
+
+        self.assertEqual(response[0].get('id'), party_id_1)
+        self.assertEqual(response[0].get('sampleSummaryId'), mock_business_1['sampleSummaryId'])
+        self.assertEqual(response[0].get('name'), mock_business_1.get('name'))
+
+        self.assertEqual(response[1].get('id'), party_id_2)
+        self.assertEqual(response[1].get('sampleSummaryId'), mock_business_2['sampleSummaryId'])
+        self.assertEqual(response[1].get('name'), mock_business_2.get('name'))
+
+    def test_get_business_by_ids_with_only_an_unknown_id_returns_nothing(self):
+        response = self.get_businesses_by_ids(str(uuid.uuid4()))
+        self.assertEquals(len(response), 0)
+
     def test_get_business_by_id_and_collection_exercise_returns_correct_representation(self):
         # Post business and link to sample/collection exercise
         mock_business = MockBusiness() \

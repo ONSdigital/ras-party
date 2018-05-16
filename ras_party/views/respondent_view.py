@@ -23,6 +23,18 @@ def get_pw(username):
         return config_password
 
 
+@respondent_view.route('/respondents', methods=['GET'])
+def get_respondents():
+    args_ids = request.args.get("ids")
+    if args_ids:
+        ids = args_ids.split(",")
+        response = respondent_controller.get_respondent_by_ids(ids)
+    else:
+        response = respondent_controller.get_respondents()
+
+    return jsonify(response)
+
+
 @respondent_view.route('/respondents/id/<id>', methods=['GET'])
 def get_respondent_by_id(id):
     response = respondent_controller.get_respondent_by_id(id)

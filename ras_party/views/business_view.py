@@ -31,6 +31,18 @@ def post_business():
     return jsonify(response)
 
 
+@business_view.route('/businesses', methods=['GET'])
+def get_businesses():
+    args_ids = request.args.get("ids")
+    if args_ids:
+        ids = args_ids.split(",")
+        response = business_controller.get_businesses_by_ids(ids)
+    else:
+        response = business_controller.get_businesses()
+
+    return jsonify(response)
+
+
 @business_view.route('/businesses/id/<business_id>', methods=['GET'])
 def get_business_by_id(business_id):
     verbose = request.args.get('verbose', '')

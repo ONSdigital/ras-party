@@ -128,6 +128,20 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
+    def get_businesses(self, expected_status=200, query_string=None):
+        response = self.client.get(f'/party-api/v1/businesses',
+                                   query_string=query_string,
+                                   headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def get_businesses_by_ids(self, ids, expected_status=200, query_string=None):
+        response = self.client.get(f'/party-api/v1/businesses?ids={ids}',
+                                   query_string=query_string,
+                                   headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
     def get_business_by_ref(self, ref, expected_status=200, query_string=None):
         response = self.client.get(f'/party-api/v1/businesses/ref/{ref}',
                                    query_string=query_string,

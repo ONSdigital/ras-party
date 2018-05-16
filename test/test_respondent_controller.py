@@ -103,6 +103,81 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response['sampleUnitType'], self.mock_respondent['sampleUnitType'])
         self.assertEqual(response['telephone'], self.mock_respondent['telephone'])
 
+    def test_get_respondent_by_ids_returns_correct_representation(self):
+        respondent_1 = MockRespondent()
+        respondent_1.attributes(email='res1@example.com')
+
+        respondent_2 = MockRespondent()
+        respondent_2.attributes(email='res2@example.com')
+
+        self.populate_with_respondent(respondent=respondent_1.as_respondent())
+        self.populate_with_respondent(respondent=respondent_2.as_respondent())
+
+        self.assertNotEquals(respondent_1.party_uuid, respondent_2.party_uuid)
+        response = self.get_respondent_by_ids(respondent_1.party_uuid + "," + respondent_2.party_uuid)
+
+        self.assertEqualslen(len(response), 2)
+
+        self.assertTrue('id' in response[0])
+        self.assertEqual(response[0]['emailAddress'], 'res1@example.com')
+        self.assertEqual(response[0]['firstName'], self.mock_respondent['firstName'])
+        self.assertEqual(response[0]['lastName'], self.mock_respondent['lastName'])
+        self.assertEqual(response[0]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
+        self.assertEqual(response[0]['telephone'], self.mock_respondent['telephone'])
+
+        self.assertTrue('id' in response[1])
+        self.assertEqual(response[1]['emailAddress'], 'res2@example.com')
+        self.assertEqual(response[1]['firstName'], self.mock_respondent['firstName'])
+        self.assertEqual(response[1]['lastName'], self.mock_respondent['lastName'])
+        self.assertEqual(response[1]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
+        self.assertEqual(response[1]['telephone'], self.mock_respondent['telephone'])
+
+    def test_get_respondent_by_ids_with_only_unknown_id_returns_none(self):
+        respondent_1 = MockRespondent()
+        respondent_1.attributes(email='res1@example.com')
+
+        respondent_2 = MockRespondent()
+        respondent_2.attributes(email='res2@example.com')
+
+        self.populate_with_respondent(respondent=respondent_1.as_respondent())
+        self.populate_with_respondent(respondent=respondent_2.as_respondent())
+
+        self.assertNotEquals(respondent_1.party_uuid, respondent_2.party_uuid)
+        response = self.get_respondent_by_ids(str(uuid.uuid4()))
+
+        self.assertEqualslen(len(response), 0)
+
+    def test_get_respondent_by_ids_with_unknown_id_returns_correct_representation(self):
+        respondent_1 = MockRespondent()
+        respondent_1.attributes(email='res1@example.com')
+
+        respondent_2 = MockRespondent()
+        respondent_2.attributes(email='res2@example.com')
+
+        self.populate_with_respondent(respondent=respondent_1.as_respondent())
+        self.populate_with_respondent(respondent=respondent_2.as_respondent())
+
+        self.assertNotEquals(respondent_1.party_uuid, respondent_2.party_uuid)
+        response = self.get_respondent_by_ids(respondent_1.party_uuid + ","
+                                              + respondent_2.party_uuid + ","
+                                              + str(uuid.uuid4()))
+
+        self.assertEqualslen(len(response), 2)
+
+        self.assertTrue('id' in response[0])
+        self.assertEqual(response[0]['emailAddress'], 'res1@example.com')
+        self.assertEqual(response[0]['firstName'], self.mock_respondent['firstName'])
+        self.assertEqual(response[0]['lastName'], self.mock_respondent['lastName'])
+        self.assertEqual(response[0]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
+        self.assertEqual(response[0]['telephone'], self.mock_respondent['telephone'])
+
+        self.assertTrue('id' in response[1])
+        self.assertEqual(response[1]['emailAddress'], 'res2@example.com')
+        self.assertEqual(response[1]['firstName'], self.mock_respondent['firstName'])
+        self.assertEqual(response[1]['lastName'], self.mock_respondent['lastName'])
+        self.assertEqual(response[1]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
+        self.assertEqual(response[1]['telephone'], self.mock_respondent['telephone'])
+
     def test_get_respondent_with_invalid_email(self):
         payload = {
             "email": "123"
