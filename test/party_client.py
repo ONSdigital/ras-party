@@ -87,12 +87,6 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def put_to_businesses_sample_remove(self, sample_id, expected_status=200):
-        response = self.client.put('/party-api/v1/businesses/sample/remove/{}'.format(sample_id),
-                                   headers=self.auth_headers)
-        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
-        return json.loads(response.get_data(as_text=True))
-
     def post_to_respondents(self, payload, expected_status):
         response = self.client.post('/party-api/v1/respondents',
                                     headers=self.auth_headers,

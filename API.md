@@ -256,20 +256,6 @@ The pendingEmailAddress field holds the unverified email address when it is bein
 }
 ```
 
-
-* `PUT /businesses/sample/remove/<sampleSummaryId>`
-
-&mdash; This endpoint will update all businesses' attributes associated to given sample and tag them as removed.
-
-### Example JSON Response
-```json
-{
-    "businesses_updated": 2,
-    "sampleSummaryId": "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3"
-}
-```
-
-
 * `POST /respondents/add-survey`
 
 ### Example JSON data for post

@@ -129,7 +129,7 @@ def search_businesses(search_query, session):
     return session.query(BusinessAttributes.attributes['name'], BusinessAttributes.attributes['trading_as'],
                          Business.business_ref)\
         .join(Business)\
-        .filter(and_(or_(*filters), BusinessAttributes.deleted.isnot(True)))\
+        .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None)))\
         .distinct().all()
 
 

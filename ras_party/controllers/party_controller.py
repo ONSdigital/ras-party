@@ -31,7 +31,7 @@ def parties_post(party_data, session):
     else:
         business = Business.from_party_dict(party_data)
         session.add(business)
-    return business.to_party_dict()
+    return business.to_post_response_dict()
 
 
 @with_db_session
