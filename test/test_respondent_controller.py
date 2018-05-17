@@ -55,24 +55,6 @@ class TestRespondents(PartyTestClient):
         account_controller.register_user(respondent, tran)
         return self.respondent
 
-    @transactional
-    @with_db_session
-    def populate_with_active_respondent(self, tran, session, respondent=None):
-        if not respondent:
-            respondent = self.mock_respondent
-        translated_party = {
-            'party_uuid': respondent.get('id') or str(uuid.uuid4()),
-            'email_address': respondent['emailAddress'],
-            'first_name': respondent['firstName'],
-            'last_name': respondent['lastName'],
-            'telephone': respondent['telephone'],
-            'status': RespondentStatus.ACTIVE
-            }
-        self.respondent = Respondent(**translated_party)
-        session.add(self.respondent)
-        account_controller.register_user(respondent, tran)
-        return self.respondent
-
     @with_db_session
     def populate_with_enrolment(self, session, enrolment=None):
         if not enrolment:
@@ -225,7 +207,7 @@ class TestRespondents(PartyTestClient):
 
     def test_request_password_change_active_account_calls_notify_gateway(self):
         # Given there is a respondent
-        respondent = self.populate_with_active_respondent()
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
         # When the request password end point is hit with an existing email address
         payload = {'email_address': respondent.email_address}
         self.request_password_change(payload)
@@ -267,7 +249,7 @@ class TestRespondents(PartyTestClient):
         self.request_password_change(payload, expected_status=404)
 
     def test_should_reset_password_when_email_wrong_case(self):
-        respondent = self.populate_with_active_respondent()
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
         payload = {'email_address': respondent.email_address.upper()}
         self.request_password_change(payload)
         personalisation = {
