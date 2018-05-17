@@ -149,6 +149,16 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
+    def get_respondents(self, expected_status=200):
+        response = self.client.get(f'/party-api/v1/respondents', headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def get_respondents_by_ids(self, ids, expected_status=200):
+        response = self.client.get(f'/party-api/v1/respondents?ids={ids}', headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
     def get_respondent_by_id(self, id, expected_status=200):
         response = self.client.get(f'/party-api/v1/respondents/id/{id}', headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
