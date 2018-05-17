@@ -74,24 +74,6 @@ class IsUuid(ValidatorBase):
         return True
 
 
-class IsIn(ValidatorBase):
-
-    ERROR_MESSAGE = "'{}' is not a valid value for {}. Must be one of {}"
-
-    def __init__(self, key, *valid_set):
-        super().__init__()
-        self._key = key
-        self._value = None
-        self._valid_set = valid_set
-
-    def __call__(self, data):
-        self._value = data.get(self._key)
-        result = self._value in self._valid_set
-        if not result:
-            self._errors = [self.ERROR_MESSAGE.format(self._value, self._key, self._valid_set)]
-        return result
-
-
 class Validator:
     def __init__(self, *rules):
         self._rules = list(rules)
