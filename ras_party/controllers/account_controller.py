@@ -239,8 +239,7 @@ def change_respondent_password(token, payload, tran, session):
 
     oauth_response = OauthClient().update_account(
                                                 username=email_address,
-                                                password=new_password,
-                                                account_verified='true')
+                                                password=new_password)
 
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent password.")
@@ -275,23 +274,24 @@ def request_password_change(payload, session):
     if not respondent:
         raise RasError("Respondent does not exist.", status=404)
 
-    email_address = respondent.email_address
-    verification_url = PublicWebsite().reset_password_url(email_address)
+    if respondent.status is RespondentStatus.ACTIVE:
+        email_address = respondent.email_address
+        verification_url = PublicWebsite().reset_password_url(email_address)
 
-    personalisation = {
-        'RESET_PASSWORD_URL': verification_url,
-        'FIRST_NAME': respondent.first_name
-    }
+        personalisation = {
+            'RESET_PASSWORD_URL': verification_url,
+            'FIRST_NAME': respondent.first_name
+        }
 
-    logger.info('Reset password url', url=verification_url)
+        logger.info('Reset password url', url=verification_url)
 
-    party_id = respondent.party_uuid
-    try:
-        NotifyGateway(current_app.config).request_password_change(
-            email_address, personalisation, str(party_id))
-    except RasNotifyError:
-        # Note: intentionally suppresses exception
-        logger.error('Error sending notification email for party_id', party_id=party_id)
+        party_id = respondent.party_uuid
+        try:
+            NotifyGateway(current_app.config).request_password_change(
+                email_address, personalisation, str(party_id))
+        except RasNotifyError:
+            # Note: intentionally suppresses exception
+            logger.error('Error sending notification email for party_id', party_id=party_id)
 
     return {'response': "Ok"}
 
