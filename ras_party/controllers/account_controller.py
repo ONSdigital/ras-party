@@ -274,7 +274,10 @@ def request_password_change(payload, session):
     if not respondent:
         raise RasError("Respondent does not exist.", status=404)
 
+    logger.debug("Requesting password change", party_id=respondent.party_uuid)
+
     if respondent.status is RespondentStatus.ACTIVE:
+
         email_address = respondent.email_address
         verification_url = PublicWebsite().reset_password_url(email_address)
 
@@ -283,7 +286,7 @@ def request_password_change(payload, session):
             'FIRST_NAME': respondent.first_name
         }
 
-        logger.info('Reset password url', url=verification_url)
+        logger.info('Reset password url', url=verification_url, party_id=respondent.party_uuid)
 
         party_id = respondent.party_uuid
         try:
@@ -292,6 +295,8 @@ def request_password_change(payload, session):
         except RasNotifyError:
             # Note: intentionally suppresses exception
             logger.error('Error sending notification email for party_id', party_id=party_id)
+
+        logger.debug('Password reset email successfully sent', party_id=respondent.party_uuid)
 
     return {'response': "Ok"}
 
