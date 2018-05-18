@@ -160,7 +160,8 @@ class Business(Base):
             return next((attributes for attributes in self.attributes if attributes.collection_exercise))
         except StopIteration:
             logger.error("No active attributes for business", party_id=self.party_uuid)
-            raise RasError("Business with reference does not exist.", reference=self.business_ref, status=404)
+            raise RasError("Business with reference does not have any active attributes.", reference=self.business_ref,
+                           status=404)
 
 
 class BusinessAttributes(Base):
