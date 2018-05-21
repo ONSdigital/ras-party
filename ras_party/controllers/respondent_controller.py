@@ -10,9 +10,7 @@ from ras_party.controllers.account_controller import change_respondent
 def get_respondents(session):
     """
     Get all respondents
-    Returns a multiple parties
-    :param id: ID of Respondent to return
-    :type id: str
+    Returns multiple parties
 
     :rtype: Respondent
     """
@@ -23,10 +21,10 @@ def get_respondents(session):
 @with_db_session
 def get_respondent_by_ids(ids, session):
     """
-    Get respondents by Party IDs
-    Returns a multiple parties
-    :param id: ID of Respondent to return
-    :type id: str
+    Get respondents by Party IDs, if an id doesn't exist then nothing is return for that id.
+    Returns multiple parties
+    :param ids: the ids of Respondent to return
+    :type ids: str
 
     :rtype: Respondent
     """
