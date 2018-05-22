@@ -49,7 +49,6 @@ class TestParties(PartyTestClient):
 
         party_id_1 = self.post_to_businesses(mock_business_1, 200)['id']
         party_id_2 = self.post_to_businesses(mock_business_2, 200)['id']
-        self.assertNotEquals(party_id_1, party_id_2)
         response = self.get_businesses_by_ids([party_id_1, party_id_2])
 
         self.assertEquals(len(response), 2)
@@ -62,7 +61,7 @@ class TestParties(PartyTestClient):
         self.assertEqual(response[1].get('sampleSummaryId'), mock_business_2['sampleSummaryId'])
         self.assertEqual(response[1].get('name'), mock_business_2.get('name'))
 
-    def test_get_business_by_ids_with_unknown_id_returns_correct_representation(self):
+    def test_get_business_by_ids_with_an_unknown_id_still_returns_correct_representation_for_other_ids(self):
         mock_business_1 = MockBusiness() \
             .attributes(source='test_get_business_by_ids_returns_correct_representation') \
             .as_business()
@@ -73,7 +72,6 @@ class TestParties(PartyTestClient):
 
         party_id_1 = self.post_to_businesses(mock_business_1, 200)['id']
         party_id_2 = self.post_to_businesses(mock_business_2, 200)['id']
-        self.assertNotEquals(party_id_1, party_id_2)
         response = self.get_businesses_by_ids([party_id_1, party_id_2, str(uuid.uuid4())])
 
         self.assertEquals(len(response), 2)

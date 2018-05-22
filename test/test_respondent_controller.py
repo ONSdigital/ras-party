@@ -127,7 +127,6 @@ class TestRespondents(PartyTestClient):
         respondent_1 = self.populate_with_respondent(respondent=respondent_1.as_respondent())
         respondent_2 = self.populate_with_respondent(respondent=respondent_2.as_respondent())
 
-        self.assertNotEquals(respondent_1.party_uuid, respondent_2.party_uuid)
         ids = [respondent_1.party_uuid, respondent_2.party_uuid]
         response = self.get_respondents_by_ids(ids)
 
@@ -158,7 +157,7 @@ class TestRespondents(PartyTestClient):
         response = self.get_respondents_by_ids([party_uuid])
         self.assertEquals(len(response), 0)
 
-    def test_get_respondent_by_ids_with_unknown_id_returns_correct_representation(self):
+    def test_get_respondent_by_ids_with_an_unknown_id_still_returns_correct_representation_for_other_ids(self):
         respondent_1 = MockRespondent()
         respondent_1.attributes(emailAddress='res1@example.com')
 
@@ -168,7 +167,6 @@ class TestRespondents(PartyTestClient):
         respondent_1 = self.populate_with_respondent(respondent=respondent_1.as_respondent())
         respondent_2 = self.populate_with_respondent(respondent=respondent_2.as_respondent())
 
-        self.assertNotEquals(respondent_1.party_uuid, respondent_2.party_uuid)
         response = self.get_respondents_by_ids([respondent_1.party_uuid, respondent_2.party_uuid, str(uuid.uuid4())])
 
         self.assertEquals(len(response), 2)
