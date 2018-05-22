@@ -1,6 +1,7 @@
 from flask import Blueprint, current_app, make_response, jsonify, request
 from flask_httpauth import HTTPBasicAuth
 
+from ras_party.exceptions import RasError
 from ras_party.controllers import respondent_controller
 from ras_party.support.log_decorator import log_route
 
@@ -25,12 +26,11 @@ def get_pw(username):
 
 @respondent_view.route('/respondents', methods=['GET'])
 def get_respondents():
-    args_ids = request.args.get("ids")
-    if args_ids:
-        ids = args_ids.split(",")
+    ids = request.args.getlist("id")
+    if ids:
         response = respondent_controller.get_respondent_by_ids(ids)
     else:
-        response = respondent_controller.get_respondents()
+        raise RasError("The parameter id is required.", status=400)
 
     return jsonify(response)
 

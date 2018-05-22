@@ -1,6 +1,7 @@
 from flask import Blueprint, request, current_app, jsonify
 from flask_httpauth import HTTPBasicAuth
 
+from ras_party.exceptions import RasError
 from ras_party.controllers import business_controller
 from ras_party.support.log_decorator import log_route
 
@@ -33,12 +34,11 @@ def post_business():
 
 @business_view.route('/businesses', methods=['GET'])
 def get_businesses():
-    args_ids = request.args.get("ids")
-    if args_ids:
-        ids = args_ids.split(",")
+    ids = request.args.getlist("id")
+    if ids:
         response = business_controller.get_businesses_by_ids(ids)
     else:
-        response = business_controller.get_businesses()
+        raise RasError("The parameter id is required.", status=400)
 
     return jsonify(response)
 

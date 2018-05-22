@@ -107,7 +107,8 @@ class TestRespondents(PartyTestClient):
         # Given there is a respondent in the db
         respondent = self.populate_with_respondent()
         # And we get the new respondent
-        response = self.get_respondents_by_ids(respondent.party_uuid)
+        ids = [respondent.party_uuid]
+        response = self.get_respondents_by_ids(ids)
         # Then the response matches the posted respondent
         self.assertEquals(len(response), 1)
         self.assertEqual(response[0]['emailAddress'], self.mock_respondent['emailAddress'])
@@ -127,7 +128,8 @@ class TestRespondents(PartyTestClient):
         respondent_2 = self.populate_with_respondent(respondent=respondent_2.as_respondent())
 
         self.assertNotEquals(respondent_1.party_uuid, respondent_2.party_uuid)
-        response = self.get_respondents_by_ids(respondent_1.party_uuid + "," + respondent_2.party_uuid)
+        ids = [respondent_1.party_uuid, respondent_2.party_uuid]
+        response = self.get_respondents_by_ids(ids)
 
         self.assertEquals(len(response), 2)
 
@@ -145,7 +147,7 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(response[1]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
         self.assertEqual(response[1]['telephone'], self.mock_respondent['telephone'])
 
-        response = self.get_respondents_by_ids(respondent_1.party_uuid)
+        response = self.get_respondents_by_ids([respondent_1.party_uuid])
 
         self.assertEquals(len(response), 1)
         self.assertEqual(response[0]['emailAddress'], 'res1@example.com')
@@ -153,7 +155,7 @@ class TestRespondents(PartyTestClient):
     def test_get_respondent_by_ids_with_only_unknown_id_returns_none(self):
         self.populate_with_respondent()
         party_uuid = str(uuid.uuid4())
-        response = self.get_respondents_by_ids(party_uuid)
+        response = self.get_respondents_by_ids([party_uuid])
         self.assertEquals(len(response), 0)
 
     def test_get_respondent_by_ids_with_unknown_id_returns_correct_representation(self):
@@ -167,9 +169,7 @@ class TestRespondents(PartyTestClient):
         respondent_2 = self.populate_with_respondent(respondent=respondent_2.as_respondent())
 
         self.assertNotEquals(respondent_1.party_uuid, respondent_2.party_uuid)
-        response = self.get_respondents_by_ids(respondent_1.party_uuid + ","
-                                               + respondent_2.party_uuid + ","
-                                               + str(uuid.uuid4()))
+        response = self.get_respondents_by_ids([respondent_1.party_uuid, respondent_2.party_uuid, str(uuid.uuid4())])
 
         self.assertEquals(len(response), 2)
 
