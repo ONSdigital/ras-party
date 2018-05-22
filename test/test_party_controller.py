@@ -13,6 +13,11 @@ class TestParties(PartyTestClient):
         self.mock_requests = MockRequests()
         Requests._lib = self.mock_requests
 
+    def _make_business_attributes_active(self, mock_business):
+        sample_id = mock_business['sampleSummaryId']
+        put_data = {'collectionExerciseId': 'test_id'}
+        self.put_to_businesses_sample_link(sample_id, put_data, 200)
+
     def test_post_valid_business_adds_to_db(self):
         mock_business = MockBusiness().attributes(source='test_post_valid_business_adds_to_db').as_business()
         self.post_to_businesses(mock_business, 200)
@@ -30,6 +35,7 @@ class TestParties(PartyTestClient):
             .attributes(source='test_get_business_by_id_returns_correct_representation') \
             .as_business()
         party_id = self.post_to_businesses(mock_business, 200)['id']
+        self._make_business_attributes_active(mock_business)
 
         response = self.get_business_by_id(party_id)
         self.assertEqual(len(response.items()), 7)
@@ -88,6 +94,14 @@ class TestParties(PartyTestClient):
         response = self.get_businesses_by_ids([str(uuid.uuid4())])
         self.assertEquals(len(response), 0)
 
+    def test_get_business_by_id_with_no_active_attributes_returns_404(self):
+        mock_business = MockBusiness() \
+            .attributes(source='test_get_business_by_id_with_no_active_attributes_returns_404') \
+            .as_business()
+        party_id = self.post_to_businesses(mock_business, 200)['id']
+
+        self.get_business_by_id(party_id, 404)
+
     def test_get_business_by_id_and_collection_exercise_returns_correct_representation(self):
         # Post business and link to sample/collection exercise
         mock_business = MockBusiness() \
@@ -125,6 +139,7 @@ class TestParties(PartyTestClient):
             .attributes(source='test_get_business_by_id_returns_correct_representation_summary') \
             .as_business()
         party_id = self.post_to_businesses(mock_business, 200)['id']
+        self._make_business_attributes_active(mock_business)
 
         response = self.get_business_by_id(party_id, query_string={"verbose": "true"})
         self.assertTrue(len(response.items()) >= len(mock_business.items()))
@@ -151,6 +166,7 @@ class TestParties(PartyTestClient):
             .attributes(source='test_get_business_by_ref_returns_correct_representation') \
             .as_business()
         self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business)
 
         response = self.get_business_by_ref(mock_business['sampleUnitRef'], query_string={"verbose": "true"})
 
@@ -163,6 +179,7 @@ class TestParties(PartyTestClient):
             .attributes(source='test_get_party_by_id_returns_correct_representation') \
             .as_party()
         party_id_b = self.post_to_parties(mock_party_b, 200)['id']
+        self._make_business_attributes_active(mock_party_b)
 
         response = self.get_party_by_id('B', party_id_b)
 
@@ -170,11 +187,20 @@ class TestParties(PartyTestClient):
         for x in mock_party_b:
             self.assertTrue(x in response)
 
+    def test_get_party_by_id_no_active_attributes_returns_404(self):
+        mock_party_b = MockBusiness() \
+            .attributes(source='test_get_party_by_id_no_active_attributes_returns_404') \
+            .as_party()
+        party_id_b = self.post_to_parties(mock_party_b, 200)['id']
+
+        self.get_party_by_id('B', party_id_b, 404)
+
     def test_get_party_by_ref_returns_correct_representation(self):
         mock_party_b = MockBusiness() \
             .attributes(source='test_get_party_by_ref_returns_correct_representation') \
             .as_party()
         self.post_to_parties(mock_party_b, 200)
+        self._make_business_attributes_active(mock_party_b)
         response = self.get_party_by_ref('B', mock_party_b['sampleUnitRef'])
 
         del mock_party_b['sampleSummaryId']
@@ -187,12 +213,12 @@ class TestParties(PartyTestClient):
         response_1 = self.post_to_businesses(mock_business.as_business(), 200)
 
         self.assertEqual(len(businesses()), 1)
-        self.assertEqual(response_1['version'], 1)
+        self.assertEqual(response_1['attributes']['version'], 1)
 
         mock_business.attributes(version=2)
         response_2 = self.post_to_businesses(mock_business.as_business(), 200)
         self.assertEqual(len(businesses()), 1)
-        self.assertEqual(response_2['version'], 2)
+        self.assertEqual(response_2['attributes']['version'], 2)
 
     def test_existing_party_can_be_updated(self):
         mock_party = MockBusiness() \
