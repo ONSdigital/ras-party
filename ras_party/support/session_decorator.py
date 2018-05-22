@@ -1,13 +1,33 @@
-from functools import wraps
 import logging
+from functools import wraps
 
-from flask import current_app
 import structlog
+from flask import current_app
 
-from ras_party.exceptions import RasError, RasDatabaseError
-
+from ras_party.exceptions import RasError
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
+
+
+def handle_session(f, args, kwargs):
+    logger.info("Acquiring database session.")
+    session = current_app.db.session()
+    try:
+        result = f(*args, session=session, **kwargs)
+        logger.info("Committing database session.")
+        session.commit()
+        return result
+    except RasError:
+        logger.error(f"Rolling back database session due to failure executing function", function=f.__name__)
+        session.rollback()
+        raise
+    except Exception as e:
+        logger.error("Rolling back database session due to uncaught exception", exception_type=e.__name__)
+        session.rollback()
+        raise
+    finally:
+        logger.info("Removing database session.")
+        current_app.db.session.remove()
 
 
 def with_db_session(f):
@@ -19,23 +39,6 @@ def with_db_session(f):
     """
     @wraps(f)
     def wrapper(*args, **kwargs):
-        logger.info("Acquiring database session.")
-        session = current_app.db.session()
-        try:
-            result = f(*args, session=session, **kwargs)
-            logger.info("Committing database session.")
-            session.commit()
-            return result
-        except RasError:
-            logger.info("Rolling-back database session.")
-            session.rollback()
-            raise
-        except Exception as e:
-            logger.info("Rolling-back database session.")
-            logger.exception("There was an error committing the changes to the database.")
-            session.rollback()
-            raise RasDatabaseError("There was an error committing the changes to the database.", error=e)
-        finally:
-            logger.info("Removing database session.")
-            current_app.db.session.remove()
+        handle_session(f, args, kwargs)
+
     return wrapper
