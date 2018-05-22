@@ -1,6 +1,6 @@
 from flask import current_app
 
-from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid, query_businesses,\
+from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid, \
     query_businesses_by_party_uuids,  search_businesses
 from ras_party.controllers.validate import Validator, IsUuid, Exists
 from ras_party.exceptions import RasError
@@ -28,12 +28,6 @@ def get_business_by_ref(ref, session, verbose=False):
         return business.to_business_dict()
     else:
         return business.to_business_summary_dict()
-
-
-@with_db_session
-def get_businesses(session):
-    businesses = query_businesses(session)
-    return [business.to_business_summary_dict() for business in businesses]
 
 
 @with_db_session

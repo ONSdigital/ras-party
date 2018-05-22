@@ -8,15 +8,6 @@ from ras_party.models.models import Business, BusinessRespondent, Enrolment, Res
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
-def query_businesses(session):
-    """
-    Query to return all businesses
-    :return: the businesses
-    """
-    logger.debug('Querying businesses')
-    return session.query(Business).all()
-
-
 def query_businesses_by_party_uuids(party_uuids, session):
     """
     Query to return businesses based on party uuids
@@ -47,16 +38,6 @@ def query_business_by_ref(business_ref, session):
     logger.debug('Querying businesses by business_ref', business_ref=business_ref)
 
     return session.query(Business).filter(Business.business_ref == business_ref).first()
-
-
-def query_respondents(session):
-    """
-    Query to return all respondents
-    :return: respondents
-    """
-    logger.debug('Querying respondents')
-
-    return session.query(Respondent).all()
 
 
 def query_respondent_by_party_uuids(party_uuids, session):

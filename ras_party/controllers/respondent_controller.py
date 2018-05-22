@@ -1,21 +1,9 @@
 from ras_party.controllers.queries import query_respondent_by_party_uuid, \
-    query_respondent_by_email, update_respondent_details, query_respondent_by_party_uuids, query_respondents
+    query_respondent_by_email, update_respondent_details, query_respondent_by_party_uuids
 from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.exceptions import RasError
 from ras_party.support.session_decorator import with_db_session
 from ras_party.controllers.account_controller import change_respondent
-
-
-@with_db_session
-def get_respondents(session):
-    """
-    Get all respondents
-    Returns multiple parties
-
-    :rtype: Respondent
-    """
-    respondents = query_respondents(session)
-    return [respondent.to_respondent_dict() for respondent in respondents]
 
 
 @with_db_session
