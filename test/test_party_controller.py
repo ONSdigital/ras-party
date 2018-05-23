@@ -55,6 +55,9 @@ class TestParties(PartyTestClient):
 
         party_id_1 = self.post_to_businesses(mock_business_1, 200)['id']
         party_id_2 = self.post_to_businesses(mock_business_2, 200)['id']
+
+        self._make_business_attributes_active(mock_business_1)
+        self._make_business_attributes_active(mock_business_2)
         response = self.get_businesses_by_ids([party_id_1, party_id_2])
 
         self.assertEquals(len(response), 2)
@@ -78,6 +81,9 @@ class TestParties(PartyTestClient):
 
         party_id_1 = self.post_to_businesses(mock_business_1, 200)['id']
         party_id_2 = self.post_to_businesses(mock_business_2, 200)['id']
+        self._make_business_attributes_active(mock_business_2)
+        self._make_business_attributes_active(mock_business_1)
+
         response = self.get_businesses_by_ids([party_id_1, party_id_2, str(uuid.uuid4())])
 
         self.assertEquals(len(response), 2)
