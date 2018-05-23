@@ -35,4 +35,6 @@ def http_error(error):
 @blueprint.app_errorhandler(Exception)
 def exception_error(_):
     logger.exception('Uncaught exception', status=500)
-    return Response(status=500)
+    response = jsonify({})
+    response.status_code = 500
+    return response
