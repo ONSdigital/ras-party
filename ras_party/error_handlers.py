@@ -24,8 +24,11 @@ def ras_error(error):
 def http_error(error):
     errors = {'errors': {'method': error.request.method, 'url': error.request.url, }}
     response = jsonify(errors)
-    response.status_code = 500
-    logger.exception('Uncaught exception', errors=errors, status=500)
+    if error.response is not None:
+        response.status_code = error.response.status_code
+    else:
+        response.status_code = 500
+    logger.exception('Uncaught exception', errors=errors, status=response.status_code)
     return response
 
 
