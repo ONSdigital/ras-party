@@ -2,7 +2,7 @@ import logging
 
 import flask
 import structlog
-from flask import jsonify, Response
+from flask import jsonify
 from requests import RequestException
 
 from ras_party.exceptions import RasError
