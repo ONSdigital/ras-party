@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from requests import RequestException, Request
+from requests import RequestException, Request, Response
 
 from ras_party.error_handlers import ras_error, exception_error, http_error
 from ras_party.exceptions import RasError
@@ -32,12 +32,14 @@ class TestErrorHandlers(PartyTestClient):
 
     def test_uncaught_request_exception_handler(self):
         # Given
-        error = RequestException(request=Request(method='GET', url='http://localhost'))
+        response = Response()
+        response.status_code = 418
+        error = RequestException(request=Request(method='GET', url='http://localhost'), response=response)
         # When
         response = http_error(error)
 
         # Then
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 418)
 
     def test_uncaught_request_exception_handler_will_log_exception(self):
         # Given

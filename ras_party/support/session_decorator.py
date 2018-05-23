@@ -18,11 +18,11 @@ def handle_session(f, args, kwargs):
         session.commit()
         return result
     except RasError:
-        logger.error(f"Rolling back database session due to failure executing function", function=f.__name__)
+        logger.error(f"Rolling back database session due to failure executing function")
         session.rollback()
         raise
     except Exception as e:
-        logger.error("Rolling back database session due to uncaught exception", exception_type=e.__name__)
+        logger.error("Rolling back database session due to uncaught exception")
         session.rollback()
         raise
     finally:
@@ -39,6 +39,6 @@ def with_db_session(f):
     """
     @wraps(f)
     def wrapper(*args, **kwargs):
-        handle_session(f, args, kwargs)
+        return handle_session(f, args, kwargs)
 
     return wrapper
