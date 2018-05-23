@@ -133,23 +133,26 @@ class TestRespondents(PartyTestClient):
         self.assertEquals(len(response), 2)
 
         self.assertTrue('id' in response[0])
-        self.assertEqual(response[0]['emailAddress'], 'res1@example.com')
-        self.assertEqual(response[0]['firstName'], self.mock_respondent['firstName'])
-        self.assertEqual(response[0]['lastName'], self.mock_respondent['lastName'])
-        self.assertEqual(response[0]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
-        self.assertEqual(response[0]['telephone'], self.mock_respondent['telephone'])
+
+        res_dict = {res['id']: res for res in response}
+
+        self.assertEqual(res_dict[respondent_1.party_uuid]['emailAddress'], 'res1@example.com')
+        self.assertEqual(res_dict[respondent_1.party_uuid]['firstName'], self.mock_respondent['firstName'])
+        self.assertEqual(res_dict[respondent_1.party_uuid]['lastName'], self.mock_respondent['lastName'])
+        self.assertEqual(res_dict[respondent_1.party_uuid]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
+        self.assertEqual(res_dict[respondent_1.party_uuid]['telephone'], self.mock_respondent['telephone'])
 
         self.assertTrue('id' in response[1])
-        self.assertEqual(response[1]['emailAddress'], 'res2@example.com')
-        self.assertEqual(response[1]['firstName'], self.mock_respondent['firstName'])
-        self.assertEqual(response[1]['lastName'], self.mock_respondent['lastName'])
-        self.assertEqual(response[1]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
-        self.assertEqual(response[1]['telephone'], self.mock_respondent['telephone'])
+        self.assertEqual(res_dict[respondent_2.party_uuid]['emailAddress'], 'res2@example.com')
+        self.assertEqual(res_dict[respondent_2.party_uuid]['firstName'], self.mock_respondent['firstName'])
+        self.assertEqual(res_dict[respondent_2.party_uuid]['lastName'], self.mock_respondent['lastName'])
+        self.assertEqual(res_dict[respondent_2.party_uuid]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
+        self.assertEqual(res_dict[respondent_2.party_uuid]['telephone'], self.mock_respondent['telephone'])
 
         response = self.get_respondents_by_ids([respondent_1.party_uuid])
 
         self.assertEquals(len(response), 1)
-        self.assertEqual(response[0]['emailAddress'], 'res1@example.com')
+        self.assertEqual(res_dict[respondent_1.party_uuid]['emailAddress'], 'res1@example.com')
 
     def test_get_respondent_by_ids_with_only_unknown_id_returns_none(self):
         self.populate_with_respondent()
@@ -172,18 +175,21 @@ class TestRespondents(PartyTestClient):
         self.assertEquals(len(response), 2)
 
         self.assertTrue('id' in response[0])
-        self.assertEqual(response[0]['emailAddress'], 'res1@example.com')
-        self.assertEqual(response[0]['firstName'], self.mock_respondent['firstName'])
-        self.assertEqual(response[0]['lastName'], self.mock_respondent['lastName'])
-        self.assertEqual(response[0]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
-        self.assertEqual(response[0]['telephone'], self.mock_respondent['telephone'])
+
+        res_dict = {res['id']: res for res in response}
+
+        self.assertEqual(res_dict[respondent_1.party_uuid]['emailAddress'], 'res1@example.com')
+        self.assertEqual(res_dict[respondent_1.party_uuid]['firstName'], self.mock_respondent['firstName'])
+        self.assertEqual(res_dict[respondent_1.party_uuid]['lastName'], self.mock_respondent['lastName'])
+        self.assertEqual(res_dict[respondent_1.party_uuid]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
+        self.assertEqual(res_dict[respondent_1.party_uuid]['telephone'], self.mock_respondent['telephone'])
 
         self.assertTrue('id' in response[1])
-        self.assertEqual(response[1]['emailAddress'], 'res2@example.com')
-        self.assertEqual(response[1]['firstName'], self.mock_respondent['firstName'])
-        self.assertEqual(response[1]['lastName'], self.mock_respondent['lastName'])
-        self.assertEqual(response[1]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
-        self.assertEqual(response[1]['telephone'], self.mock_respondent['telephone'])
+        self.assertEqual(res_dict[respondent_2.party_uuid]['emailAddress'], 'res2@example.com')
+        self.assertEqual(res_dict[respondent_2.party_uuid]['firstName'], self.mock_respondent['firstName'])
+        self.assertEqual(res_dict[respondent_2.party_uuid]['lastName'], self.mock_respondent['lastName'])
+        self.assertEqual(res_dict[respondent_2.party_uuid]['sampleUnitType'], self.mock_respondent['sampleUnitType'])
+        self.assertEqual(res_dict[respondent_2.party_uuid]['telephone'], self.mock_respondent['telephone'])
 
     def test_get_respondent_with_invalid_email(self):
         payload = {

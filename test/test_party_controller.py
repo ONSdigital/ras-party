@@ -59,16 +59,17 @@ class TestParties(PartyTestClient):
         self._make_business_attributes_active(mock_business_1)
         self._make_business_attributes_active(mock_business_2)
         response = self.get_businesses_by_ids([party_id_1, party_id_2])
-
         self.assertEquals(len(response), 2)
 
-        self.assertEqual(response[0].get('id'), party_id_1)
-        self.assertEqual(response[0].get('sampleSummaryId'), mock_business_1['sampleSummaryId'])
-        self.assertEqual(response[0].get('name'), mock_business_1.get('name'))
+        res_dict = {res['id']: res for res in response}
 
-        self.assertEqual(response[1].get('id'), party_id_2)
-        self.assertEqual(response[1].get('sampleSummaryId'), mock_business_2['sampleSummaryId'])
-        self.assertEqual(response[1].get('name'), mock_business_2.get('name'))
+        self.assertEqual(res_dict[party_id_1].get('id'), party_id_1)
+        self.assertEqual(res_dict[party_id_1].get('sampleSummaryId'), mock_business_1['sampleSummaryId'])
+        self.assertEqual(res_dict[party_id_1].get('name'), mock_business_1.get('name'))
+
+        self.assertEqual(res_dict[party_id_2].get('id'), party_id_2)
+        self.assertEqual(res_dict[party_id_2].get('sampleSummaryId'), mock_business_2['sampleSummaryId'])
+        self.assertEqual(res_dict[party_id_2].get('name'), mock_business_2.get('name'))
 
     def test_get_business_by_ids_with_an_unknown_id_still_returns_correct_representation_for_other_ids(self):
         mock_business_1 = MockBusiness() \
@@ -85,16 +86,17 @@ class TestParties(PartyTestClient):
         self._make_business_attributes_active(mock_business_1)
 
         response = self.get_businesses_by_ids([party_id_1, party_id_2, str(uuid.uuid4())])
-
         self.assertEquals(len(response), 2)
 
-        self.assertEqual(response[0].get('id'), party_id_1)
-        self.assertEqual(response[0].get('sampleSummaryId'), mock_business_1['sampleSummaryId'])
-        self.assertEqual(response[0].get('name'), mock_business_1.get('name'))
+        res_dict = {res['id']: res for res in response}
 
-        self.assertEqual(response[1].get('id'), party_id_2)
-        self.assertEqual(response[1].get('sampleSummaryId'), mock_business_2['sampleSummaryId'])
-        self.assertEqual(response[1].get('name'), mock_business_2.get('name'))
+        self.assertEqual(res_dict[party_id_1].get('id'), party_id_1)
+        self.assertEqual(res_dict[party_id_1].get('sampleSummaryId'), mock_business_1['sampleSummaryId'])
+        self.assertEqual(res_dict[party_id_1].get('name'), mock_business_1.get('name'))
+
+        self.assertEqual(res_dict[party_id_2].get('id'), party_id_2)
+        self.assertEqual(res_dict[party_id_2].get('sampleSummaryId'), mock_business_2['sampleSummaryId'])
+        self.assertEqual(res_dict[party_id_2].get('name'), mock_business_2.get('name'))
 
     def test_get_business_by_ids_with_only_an_unknown_id_returns_nothing(self):
         response = self.get_businesses_by_ids([str(uuid.uuid4())])
