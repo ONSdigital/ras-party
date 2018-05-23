@@ -21,7 +21,7 @@ def handle_session(f, args, kwargs):
         logger.error(f"Rolling back database session due to failure executing function")
         session.rollback()
         raise
-    except Exception as e:
+    except Exception:
         logger.error("Rolling back database session due to uncaught exception")
         session.rollback()
         raise
