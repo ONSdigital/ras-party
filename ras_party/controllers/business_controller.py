@@ -82,7 +82,7 @@ def businesses_post(business_data, session):
     else:
         business = Business.from_party_dict(party_data)
         session.add(business)
-    return business.to_business_dict()
+    return business.to_post_response_dict()
 
 
 @with_db_session
@@ -109,5 +109,5 @@ def businesses_sample_ce_link(sample, ce_data, session):
 @with_db_session
 def get_businesses_by_search_query(search_query, session):
     businesses = search_businesses(search_query, session)
-    businesses = [{"ruref": business[1], "name": business[0]} for business in businesses]
+    businesses = [{"ruref": business[2], "trading_as": business[1], "name": business[0]} for business in businesses]
     return businesses
