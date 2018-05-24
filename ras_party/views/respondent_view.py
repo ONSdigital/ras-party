@@ -29,7 +29,7 @@ def get_respondents():
     ids = request.args.getlist("id")
     if ids:
         # with_db_session function wrapper automatically injects the session parameter
-        # pylint: disable=maybe-no-member
+        # pylint: disable=no-value-for-parameter
         response = respondent_controller.get_respondent_by_ids(ids)
     else:
         raise RasError("The parameter id is required.", status=400)
