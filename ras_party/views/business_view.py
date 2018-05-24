@@ -36,6 +36,8 @@ def post_business():
 def get_businesses():
     ids = request.args.getlist("id")
     if ids:
+        # with_db_session function wrapper automatically injects the session parameter
+        # pylint: disable=maybe-no-member
         response = business_controller.get_businesses_by_ids(ids)
     else:
         raise RasError("The parameter id is required.", status=400)
