@@ -12,7 +12,7 @@ from ras_party.controllers.queries import query_respondent_by_email, query_respo
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
 from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
 from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
-from ras_party.controllers.validate import Exists, IsUuid, Validator
+from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import RasError, RasNotifyError
 from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
 from ras_party.models.models import PendingEnrolment, Respondent, RespondentStatus
@@ -54,8 +54,11 @@ def post_respondent(party, tran, session):
     if 'id' in party:
         # Note: there's not strictly a requirement to be able to pass in a UUID, this is currently supported to
         # aid with testing.
-        logger.debug("'id' in respondent post message. Adding validation rule IsUuid")
-        v.add_rule(IsUuid('id'))
+        logger.debug("'id' in respondent post message.")
+        try:
+            uuid.UUID(party['id'])
+        except ValueError:
+            raise RasError(f"'{party['id']}' is not a valid UUID format for property 'id'", status=400)
 
     if not v.validate(party):
         raise RasError(v.errors, 400)
@@ -238,9 +241,9 @@ def change_respondent_password(token, payload, tran, session):
     new_password = payload['new_password']
 
     oauth_response = OauthClient().update_account(
-                                                username=email_address,
-                                                password=new_password,
-                                                account_verified='true')
+        username=email_address,
+        password=new_password,
+        account_verified='true')
 
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent password.")
@@ -362,18 +365,18 @@ def update_verified_email_address(respondent, tran, session):
     email_address = respondent.email_address
 
     oauth_response = OauthClient().update_account(
-                                                username=email_address,
-                                                new_username=new_email_address,
-                                                account_verified='false')
+        username=email_address,
+        new_username=new_email_address,
+        account_verified='false')
 
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent email")
 
     def compensate_oauth_change():
         rollback_response = OauthClient().update_account(
-                                                        username=new_email_address,
-                                                        new_username=email_address,
-                                                        account_verified='true')
+            username=new_email_address,
+            new_username=email_address,
+            account_verified='true')
         respondent.pending_email_address = new_email_address
 
         if rollback_response.status_code != 201:

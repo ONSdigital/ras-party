@@ -1,6 +1,7 @@
+import uuid
+
 from ras_party.controllers.queries import query_respondent_by_party_uuid, \
     query_respondent_by_email, update_respondent_details
-from ras_party.controllers.validate import Validator, IsUuid
 from ras_party.exceptions import RasError
 from ras_party.support.session_decorator import with_db_session
 from ras_party.controllers.account_controller import change_respondent
@@ -16,9 +17,10 @@ def get_respondent_by_id(id, session):
 
     :rtype: Respondent
     """
-    v = Validator(IsUuid('id'))
-    if not v.validate({'id': id}):
-        raise RasError(v.errors, status=400)
+    try:
+        uuid.UUID(id)
+    except ValueError:
+        raise RasError(f"'{id}' is not a valid UUID format for property 'id'", status=400)
 
     respondent = query_respondent_by_party_uuid(id, session)
     if not respondent:
