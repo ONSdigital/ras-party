@@ -1,17 +1,12 @@
 [[source]]
-
 verify_ssl = true
 name = "pypi"
 url = "https://pypi.python.org/simple"
 
-
 [requires]
-
 python_version = "3.6"
 
-
 [packages]
-
 alembic = "==0.9.6"
 cfenv = "==0.5.3"
 flask = "==0.12.2"
@@ -28,11 +23,10 @@ sqlalchemy = "==1.1.10"
 sqlalchemy-utils = "==0.32.14"
 structlog = "==17.2.0"
 
-
 [dev-packages]
-
 coverage = "*"
 "flake8" = "*"
 flask-testing = "==0.6.2"
 pytest-cov = "*"
 tox = "*"
+pylint = "*"

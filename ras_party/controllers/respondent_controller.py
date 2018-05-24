@@ -16,6 +16,11 @@ def get_respondent_by_ids(ids, session):
 
     :rtype: Respondent
     """
+    for party_id in ids:
+        v = Validator(IsUuid('id'))
+        if not v.validate({'id': party_id}):
+            raise RasError(v.errors, status=400)
+
     respondents = query_respondent_by_party_uuids(ids, session)
     return [respondent.to_respondent_dict() for respondent in respondents]
 

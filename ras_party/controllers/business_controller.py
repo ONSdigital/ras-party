@@ -32,6 +32,11 @@ def get_business_by_ref(ref, session, verbose=False):
 
 @with_db_session
 def get_businesses_by_ids(party_uuids, session):
+    for party_uuid in party_uuids:
+        v = Validator(IsUuid('id'))
+        if not v.validate({'id': party_uuid}):
+            raise RasError(v.errors, status=400)
+
     businesses = query_businesses_by_party_uuids(party_uuids, session)
     return [business.to_business_summary_dict() for business in businesses]
 
