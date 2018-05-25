@@ -24,22 +24,6 @@ class ValidatorBase:
         return self._errors
 
 
-class Exists(ValidatorBase):
-
-    ERROR_MESSAGE = "Required key '{}' is missing."
-
-    def __init__(self, *keys):
-        super().__init__()
-        self._keys = set(keys)
-        self._diff = []
-
-    def __call__(self, data):
-        keys = flatten_keys(data)
-        self._diff = self._keys.difference(keys)
-        self._errors = [self.ERROR_MESSAGE.format(d) for d in self._diff]
-        return len(self._diff) == 0
-
-
 class MutuallyExclusive(ValidatorBase):
 
     ERROR_MESSAGE = "Mutually exclusive keys '{}' have been provided."
