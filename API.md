@@ -141,8 +141,8 @@ This page documents the Party service API endpoints. All endpoints return an `HT
     "cell_no": 1,
     "formtype": "0001",
     "currency": "H",
-    "name": "Bolts and Ratchets Ltd",
-    "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
+    "name": "Bolts and Ratchets Ltd",
+    "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
     "sampleUnitRef": "50012345678",
     "sampleUnitType": "B"
 }
@@ -169,8 +169,8 @@ This page documents the Party service API endpoints. All endpoints return an `HT
         "businessRespondentStatus": "ACTIVE"
         }
     ],
-    "name": "Bolts and Ratchets Ltd",
-    "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
+    "name": "Bolts and Ratchets Ltd",
+    "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
     "sampleUnitRef": "50012345678",
     "sampleUnitType": "B"
 },
@@ -188,8 +188,8 @@ This page documents the Party service API endpoints. All endpoints return an `HT
         "businessRespondentStatus": "ACTIVE"
         }
     ],
-    "name": "Example Ltd",
-    "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
+    "name": "Example Ltd",
+    "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
     "sampleUnitRef": "50012345678",
     "sampleUnitType": "B"
 }]
