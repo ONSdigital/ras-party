@@ -148,6 +148,53 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 }
 ```
 
+* `GET /businesses?id=d826818e-179e-467b-9936-6a8603dc8b46&id=623435fa-708e-49c0-8f90-507ac862a540`
+
+&mdash; When multiple businesses are requested this returns a concrete representation of the business parties. This representation will include any respondents associated with the business and any survey enrolments they have.
+
+### Example JSON Response
+
+```json
+[{
+    "associations": [
+        {
+        "enrolments": [
+            {
+                "enrolmentStatus": "ENABLED",
+                "name": "Business Register and Employment Survey",
+                "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+            }
+        ],
+        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233",
+        "businessRespondentStatus": "ACTIVE"
+        }
+    ],
+    "name": "Bolts and Ratchets Ltd",
+    "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
+    "sampleUnitRef": "50012345678",
+    "sampleUnitType": "B"
+},
+{
+    "associations": [
+        {
+        "enrolments": [
+            {
+                "enrolmentStatus": "ENABLED",
+                "name": "Business Register and Employment Survey",
+                "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+            }
+        ],
+        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233",
+        "businessRespondentStatus": "ACTIVE"
+        }
+    ],
+    "name": "Example Ltd",
+    "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
+    "sampleUnitRef": "50012345678",
+    "sampleUnitType": "B"
+}]
+```
+
 
 * `GET /parties/type/BI/id/3b136c4b-7a14-4904-9e01-13364dd7b972`
 
@@ -214,6 +261,61 @@ The pendingEmailAddress field holds the unverified email address when it is bein
     "sampleUnitType": "BI",
     "status": "ACTIVE"
 }
+```
+
+* `GET /respondents?id=3b136c4b-7a14-4904-9e01-13364dd7b972&id=be3711f4-d6c3-45e4-810e-5589b547cc5d`
+
+&mdash; When multiple respondents are requested this returns a concrete representation of the respondent parties. This representation will include any businesses associated with the respondent and any survey enrolments they have.
+
+### Example JSON Response
+```json
+[{
+    "associations": [
+        {
+            "enrolments": [
+                {
+                    "enrolmentStatus": "ENABLED",
+                    "name": "Business Register and Employment Survey",
+                    "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+                }
+            ],
+            "partyId": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
+            "businessRespondentStatus": "ACTIVE",
+            "sampleUnitRef": "50012345678"
+        }
+    ],
+    "emailAddress": "Jacky.Turner@email.com",
+    "firstName": "Jacky",
+    "lastName": "Turner",
+    "telephone": "7971161859",
+    "id": "cd592e0f-8d07-407b-b75d-e01fbdae8233",
+    "sampleUnitType": "BI",
+    "status": "ACTIVE"
+},
+{
+    "associations": [
+        {
+            "enrolments": [
+                {
+                    "enrolmentStatus": "ENABLED",
+                    "name": "Business Register and Employment Survey",
+                    "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+                }
+            ],
+            "partyId": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
+            "businessRespondentStatus": "ACTIVE",
+            "sampleUnitRef": "50012345678"
+        }
+    ],
+    "emailAddress": "Timmy.Turner@email.com",
+    "firstName": "Timmy",
+    "lastName": "Turner",
+    "telephone": "7971161859",
+    "id": "cd592e0f-8d07-407b-b75d-e01fbdae8233",
+    "sampleUnitType": "BI",
+    "status": "ACTIVE"
+}
+]
 ```
 
 * `PUT /respondents/email`
