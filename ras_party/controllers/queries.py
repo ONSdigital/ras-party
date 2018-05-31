@@ -8,6 +8,16 @@ from ras_party.models.models import Business, BusinessRespondent, Enrolment, Res
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
+def query_businesses_by_party_uuids(party_uuids, session):
+    """
+    Query to return businesses based on party uuids
+    :param party_uuids: a list of party uuids
+    :return: the businesses
+    """
+    logger.debug('Querying businesses by party_uuids', party_uuids=party_uuids)
+    return session.query(Business).filter(Business.party_uuid.in_(party_uuids))
+
+
 def query_business_by_party_uuid(party_uuid, session):
     """
     Query to return business based on party uuid
@@ -28,6 +38,17 @@ def query_business_by_ref(business_ref, session):
     logger.debug('Querying businesses by business_ref', business_ref=business_ref)
 
     return session.query(Business).filter(Business.business_ref == business_ref).first()
+
+
+def query_respondent_by_party_uuids(party_uuids, session):
+    """
+    Query to return respondents based on party uuids
+    :param party_uuids: the party uuids
+    :return: respondents or empty list
+    """
+    logger.debug('Querying respondents by party_uuids', party_uuids=party_uuids)
+
+    return session.query(Respondent).filter(Respondent.party_uuid.in_(party_uuids))
 
 
 def query_respondent_by_party_uuid(party_uuid, session):
@@ -114,17 +135,23 @@ def search_businesses(search_query, session):
     logger.debug('Searching businesses by name with search query', search_query=search_query)
     filters = list()
     name_filters = list()
+    trading_as_filters = list()
 
     key_words = search_query.split()
 
     for word in key_words:
         name_filters.append(BusinessAttributes.attributes['name'].astext.ilike(f'%{word}%'))
+        trading_as_filters.append(BusinessAttributes.attributes['trading_as'].astext.ilike(f'%{word}%'))
 
     filters.append(Business.business_ref.ilike(f'%{search_query}%'))
     filters.append(and_(*name_filters))
+    filters.append(and_(*trading_as_filters))
 
-    return session.query(BusinessAttributes.attributes['name'], Business.business_ref).join(Business)\
-        .filter(or_(*filters)).distinct().all()
+    return session.query(BusinessAttributes.attributes['name'], BusinessAttributes.attributes['trading_as'],
+                         Business.business_ref)\
+        .join(Business)\
+        .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None)))\
+        .distinct().all()
 
 
 def query_enrolment_by_survey_business_respondent(respondent_id, business_id, survey_id, session):

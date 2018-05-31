@@ -1,6 +1,7 @@
 from flask import current_app
 
-from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid, search_businesses
+from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid, \
+    query_businesses_by_party_uuids,  search_businesses
 from ras_party.controllers.validate import Validator, IsUuid, Exists
 from ras_party.exceptions import RasError
 from ras_party.models.models import Business, BusinessAttributes
@@ -27,6 +28,17 @@ def get_business_by_ref(ref, session, verbose=False):
         return business.to_business_dict()
     else:
         return business.to_business_summary_dict()
+
+
+@with_db_session
+def get_businesses_by_ids(party_uuids, session):
+    for party_uuid in party_uuids:
+        v = Validator(IsUuid('id'))
+        if not v.validate({'id': party_uuid}):
+            raise RasError(v.errors, status=400)
+
+    businesses = query_businesses_by_party_uuids(party_uuids, session)
+    return [business.to_business_summary_dict() for business in businesses]
 
 
 @with_db_session
@@ -82,7 +94,7 @@ def businesses_post(business_data, session):
     else:
         business = Business.from_party_dict(party_data)
         session.add(business)
-    return business.to_business_dict()
+    return business.to_post_response_dict()
 
 
 @with_db_session
@@ -108,5 +120,5 @@ def businesses_sample_ce_link(sample, ce_data, session):
 @with_db_session
 def get_businesses_by_search_query(search_query, session):
     businesses = search_businesses(search_query, session)
-    businesses = [{"ruref": business[1], "name": business[0]} for business in businesses]
+    businesses = [{"ruref": business[2], "trading_as": business[1], "name": business[0]} for business in businesses]
     return businesses
