@@ -299,9 +299,9 @@ class TestRespondents(PartyTestClient):
         payload = {'email_address': respondent.email_address}
         self.request_password_change(payload)
 
-    def test_request_password_change_calls_notify_gateway(self):
+    def test_request_password_change_active_account_calls_notify_gateway(self):
         # Given there is a respondent
-        respondent = self.populate_with_respondent()
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
         # When the request password end point is hit with an existing email address
         payload = {'email_address': respondent.email_address}
         self.request_password_change(payload)
@@ -315,6 +315,14 @@ class TestRespondents(PartyTestClient):
             personalisation,
             respondent.party_uuid
         )
+
+    def test_request_password_change_created_account_doesnt_call_notify_gateway(self):
+        # Given there is a respondent
+        respondent = self.populate_with_respondent()
+        # When the request password end point is hit with an existing email address
+        payload = {'email_address': respondent.email_address}
+        self.request_password_change(payload)
+        self.mock_notify.request_password_change.assert_not_called()
 
     def test_request_password_change_with_no_email(self):
         payload = {}
@@ -335,7 +343,7 @@ class TestRespondents(PartyTestClient):
         self.request_password_change(payload, expected_status=404)
 
     def test_should_reset_password_when_email_wrong_case(self):
-        respondent = self.populate_with_respondent()
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
         payload = {'email_address': respondent.email_address.upper()}
         self.request_password_change(payload)
         personalisation = {

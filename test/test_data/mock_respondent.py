@@ -90,7 +90,7 @@ class MockRespondentWithIdActive:
             'telephone': '123',
             'enrolment_code': 'fb747cq725lj',
             'password': 'banana',
-            'status': 'SUSPENDED'
+            'status': 'ACTIVE'
         }
 
     def attributes(self, **kwargs):
