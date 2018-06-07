@@ -44,13 +44,14 @@ def create_app(config=None):
     return app
 
 
-def create_database(db_connection, db_schema):
+def create_database(db_connection, db_schema, pool_size, max_overflow):
     from ras_party.models import models
 
     def current_request():
         return _app_ctx_stack.__ident_func__()
 
-    engine = create_engine(db_connection, convert_unicode=True)
+    engine = create_engine(db_connection, convert_unicode=True, pool_size=pool_size, max_overflow=max_overflow,
+                           pool_recycle=3600)
     session = scoped_session(sessionmaker(), scopefunc=current_request)
     session.configure(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
     # TODO: change this
@@ -99,7 +100,8 @@ def retry_if_database_error(exception):
 @retry(retry_on_exception=retry_if_database_error, wait_fixed=2000, stop_max_delay=30000, wrap_exception=True)
 def initialise_db(app):
     # TODO: this isn't entirely safe, use a get_db() lazy initializer instead...
-    app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'])
+    app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'], app.config['DB_POOL_SIZE'],
+                             app.config['DB_MAX_OVERFLOW'])
 
 
 if __name__ == '__main__':

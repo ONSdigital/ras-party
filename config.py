@@ -28,6 +28,9 @@ class Config(object):
     EMAIL_TOKEN_EXPIRY = int(os.getenv('EMAIL_TOKEN_EXPIRY', 306000))
     PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
 
+    DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', 5))
+    DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', 10))
+
     if cf.detected:
         DATABASE_SCHEMA = 'partysvc'
         DATABASE_URI = cf.db.credentials['uri']
@@ -121,6 +124,8 @@ class TestingConfig(DevelopmentConfig):
     REQUESTS_GET_TIMEOUT = 99
     REQUESTS_POST_TIMEOUT = 99
     DATABASE_SCHEMA = 'partysvc'
+    DB_POOL_SIZE = 5
+    DB_MAX_OVERFLOW = 10
 
     RAS_PUBLIC_WEBSITE_URL = 'http://dummy.ons.gov.uk'
     RAS_CASE_SERVICE = 'http://mockhost:1111'
