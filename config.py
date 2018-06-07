@@ -125,9 +125,6 @@ class TestingConfig(DevelopmentConfig):
     REQUESTS_GET_TIMEOUT = 99
     REQUESTS_POST_TIMEOUT = 99
     DATABASE_SCHEMA = 'partysvc'
-    DB_POOL_SIZE = 5
-    DB_MAX_OVERFLOW = 10
-    DB_POOL_RECYCLE = -1
 
     RAS_PUBLIC_WEBSITE_URL = 'http://dummy.ons.gov.uk'
     RAS_CASE_SERVICE = 'http://mockhost:1111'
