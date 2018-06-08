@@ -10,7 +10,11 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def handle_session(f, args, kwargs):
-    logger.info("Acquiring database session.")
+    logger.info("Acquiring database session.",
+                pool_size=current_app.db.engine.pool.size(),
+                connections_in_pool=current_app.db.engine.pool.checkedin(),
+                connections_checked_out=current_app.db.engine.pool.checkedout(),
+                current_overflow=current_app.db.engine.pool.overflow())
     session = current_app.db.session()
     try:
         result = f(*args, session=session, **kwargs)
