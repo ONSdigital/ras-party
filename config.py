@@ -28,6 +28,10 @@ class Config(object):
     EMAIL_TOKEN_EXPIRY = int(os.getenv('EMAIL_TOKEN_EXPIRY', 306000))
     PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
 
+    DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', 5))
+    DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', 10))
+    DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', -1))
+
     if cf.detected:
         DATABASE_SCHEMA = 'partysvc'
         DATABASE_URI = cf.db.credentials['uri']
