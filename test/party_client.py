@@ -1,5 +1,6 @@
 import base64
 import json
+from urllib.parse import urlencode
 
 from flask import current_app
 from flask_testing import TestCase
@@ -39,7 +40,8 @@ class PartyTestClient(TestCase):
         app = create_app('TestingConfig')
         logger_initial_config(service_name='ras-party', log_level=app.config['LOGGING_LEVEL'])
         app.config['PARTY_SCHEMA'] = party_schema.schema
-        app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'])
+        app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'], app.config['DB_POOL_SIZE'],
+                                 app.config['DB_MAX_OVERFLOW'], app.config['DB_POOL_RECYCLE'])
         return app
 
     def tearDown(self):
@@ -128,10 +130,33 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
+    def get_businesses_by_ids(self, ids, expected_status=200):
+        url_params = tuple(("id", id_param) for id_param in ids)
+        url = "/party-api/v1/businesses?"
+        url += urlencode(url_params)
+
+        response = self.client.get(url, headers=self.auth_headers)
+
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
     def get_business_by_ref(self, ref, expected_status=200, query_string=None):
         response = self.client.get(f'/party-api/v1/businesses/ref/{ref}',
                                    query_string=query_string,
                                    headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def get_respondents(self, expected_status=200):
+        response = self.client.get(f'/party-api/v1/respondents', headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def get_respondents_by_ids(self, ids, expected_status=200):
+        url_params = tuple(("id", id_param) for id_param in ids)
+        url = "/party-api/v1/respondents?"
+        url += urlencode(url_params)
+        response = self.client.get(url, headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 

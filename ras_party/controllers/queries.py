@@ -8,6 +8,16 @@ from ras_party.models.models import Business, BusinessRespondent, Enrolment, Res
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
+def query_businesses_by_party_uuids(party_uuids, session):
+    """
+    Query to return businesses based on party uuids
+    :param party_uuids: a list of party uuids
+    :return: the businesses
+    """
+    logger.debug('Querying businesses by party_uuids', party_uuids=party_uuids)
+    return session.query(Business).filter(Business.party_uuid.in_(party_uuids))
+
+
 def query_business_by_party_uuid(party_uuid, session):
     """
     Query to return business based on party uuid
@@ -28,6 +38,17 @@ def query_business_by_ref(business_ref, session):
     logger.debug('Querying businesses by business_ref', business_ref=business_ref)
 
     return session.query(Business).filter(Business.business_ref == business_ref).first()
+
+
+def query_respondent_by_party_uuids(party_uuids, session):
+    """
+    Query to return respondents based on party uuids
+    :param party_uuids: the party uuids
+    :return: respondents or empty list
+    """
+    logger.debug('Querying respondents by party_uuids', party_uuids=party_uuids)
+
+    return session.query(Respondent).filter(Respondent.party_uuid.in_(party_uuids))
 
 
 def query_respondent_by_party_uuid(party_uuid, session):

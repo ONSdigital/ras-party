@@ -44,6 +44,69 @@ class TestParties(PartyTestClient):
         self.assertEqual(response.get('name'), mock_business.get('name'))
         self.assertEqual(response.get('trading_as'), 'Tradstyle-1 Tradstyle-2 Tradstyle-3')
 
+    def test_get_business_by_ids_returns_correct_representation(self):
+        mock_business_1 = MockBusiness() \
+            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
+            .as_business()
+
+        mock_business_2 = MockBusiness() \
+            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
+            .as_business()
+
+        party_id_1 = self.post_to_businesses(mock_business_1, 200)['id']
+        party_id_2 = self.post_to_businesses(mock_business_2, 200)['id']
+
+        self._make_business_attributes_active(mock_business_1)
+        self._make_business_attributes_active(mock_business_2)
+        response = self.get_businesses_by_ids([party_id_1, party_id_2])
+        self.assertEquals(len(response), 2)
+
+        res_dict = {res['id']: res for res in response}
+
+        self.assertEqual(res_dict[party_id_1].get('id'), party_id_1)
+        self.assertEqual(res_dict[party_id_1].get('sampleSummaryId'), mock_business_1['sampleSummaryId'])
+        self.assertEqual(res_dict[party_id_1].get('name'), mock_business_1.get('name'))
+
+        self.assertEqual(res_dict[party_id_2].get('id'), party_id_2)
+        self.assertEqual(res_dict[party_id_2].get('sampleSummaryId'), mock_business_2['sampleSummaryId'])
+        self.assertEqual(res_dict[party_id_2].get('name'), mock_business_2.get('name'))
+
+    def test_get_business_by_ids_with_an_unknown_id_still_returns_correct_representation_for_other_ids(self):
+        mock_business_1 = MockBusiness() \
+            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
+            .as_business()
+
+        mock_business_2 = MockBusiness() \
+            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
+            .as_business()
+
+        party_id_1 = self.post_to_businesses(mock_business_1, 200)['id']
+        party_id_2 = self.post_to_businesses(mock_business_2, 200)['id']
+        self._make_business_attributes_active(mock_business_2)
+        self._make_business_attributes_active(mock_business_1)
+
+        response = self.get_businesses_by_ids([party_id_1, party_id_2, str(uuid.uuid4())])
+        self.assertEquals(len(response), 2)
+
+        res_dict = {res['id']: res for res in response}
+
+        self.assertEqual(res_dict[party_id_1].get('id'), party_id_1)
+        self.assertEqual(res_dict[party_id_1].get('sampleSummaryId'), mock_business_1['sampleSummaryId'])
+        self.assertEqual(res_dict[party_id_1].get('name'), mock_business_1.get('name'))
+
+        self.assertEqual(res_dict[party_id_2].get('id'), party_id_2)
+        self.assertEqual(res_dict[party_id_2].get('sampleSummaryId'), mock_business_2['sampleSummaryId'])
+        self.assertEqual(res_dict[party_id_2].get('name'), mock_business_2.get('name'))
+
+    def test_get_business_by_ids_with_only_an_unknown_id_returns_nothing(self):
+        response = self.get_businesses_by_ids([str(uuid.uuid4())])
+        self.assertEquals(len(response), 0)
+
+    def test_get_business_by_ids_fails_if_id_is_not_uuid(self):
+        party_uuid = "gibberish"
+        response = self.get_businesses_by_ids([party_uuid], expected_status=400)
+        self.assertEquals(response['errors'][0], """'gibberish' is not a valid UUID format for property 'id'.""")
+
     def test_get_business_by_id_with_no_active_attributes_returns_404(self):
         mock_business = MockBusiness() \
             .attributes(source='test_get_business_by_id_with_no_active_attributes_returns_404') \

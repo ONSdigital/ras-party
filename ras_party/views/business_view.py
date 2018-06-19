@@ -1,6 +1,7 @@
 from flask import Blueprint, request, current_app, jsonify
 from flask_httpauth import HTTPBasicAuth
 
+from ras_party.exceptions import RasError
 from ras_party.controllers import business_controller
 from ras_party.support.log_decorator import log_route
 
@@ -28,6 +29,19 @@ def get_pw(username):
 def post_business():
     payload = request.get_json() or {}
     response = business_controller.businesses_post(payload)
+    return jsonify(response)
+
+
+@business_view.route('/businesses', methods=['GET'])
+def get_businesses():
+    ids = request.args.getlist("id")
+    if ids:
+        # with_db_session function wrapper automatically injects the session parameter
+        # pylint: disable=no-value-for-parameter
+        response = business_controller.get_businesses_by_ids(ids)
+    else:
+        raise RasError("The parameter id is required.", status=400)
+
     return jsonify(response)
 
 

@@ -17,7 +17,7 @@ def _is_true(value):
 class Config(object):
 
     NAME = os.getenv('RAS-PARTY', 'ras-party')
-    VERSION = os.getenv('VERSION', '1.1.0')
+    VERSION = os.getenv('VERSION', '1.2.1')
     SCHEME = os.getenv('http')
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = os.getenv('PORT', 8081)
@@ -27,6 +27,10 @@ class Config(object):
     EMAIL_TOKEN_SALT = os.getenv('EMAIL_TOKEN_SALT', 'aardvark')
     EMAIL_TOKEN_EXPIRY = int(os.getenv('EMAIL_TOKEN_EXPIRY', 306000))
     PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
+
+    DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', 5))
+    DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', 10))
+    DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', -1))
 
     if cf.detected:
         DATABASE_SCHEMA = 'partysvc'

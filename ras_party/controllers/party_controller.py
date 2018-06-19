@@ -62,7 +62,7 @@ def get_party_by_id(sample_unit_type, id, session):
     elif sample_unit_type == Respondent.UNIT_TYPE:
         respondent = query_respondent_by_party_uuid(id, session)
         if not respondent:
-            return RasError("Respondent with id does not exist.", respondent_id=id, status=404)
+            raise RasError("Respondent with id does not exist.", respondent_id=id, status=404)
         return respondent.to_party_dict()
     else:
         raise RasError(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']",

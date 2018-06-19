@@ -1,10 +1,31 @@
 import uuid
 
 from ras_party.controllers.queries import query_respondent_by_party_uuid, \
-    query_respondent_by_email, update_respondent_details
+    query_respondent_by_email, update_respondent_details, query_respondent_by_party_uuids
+
 from ras_party.exceptions import RasError
 from ras_party.support.session_decorator import with_db_session
 from ras_party.controllers.account_controller import change_respondent
+
+
+@with_db_session
+def get_respondent_by_ids(ids, session):
+    """
+    Get respondents by Party IDs, if an id doesn't exist then nothing is return for that id.
+    Returns multiple parties
+    :param ids: the ids of Respondent to return
+    :type ids: str
+
+    :rtype: Respondent
+    """
+    for party_id in ids:
+        try:
+            uuid.UUID(party_id)
+        except ValueError:
+            raise RasError(f"'{party_id}' is not a valid UUID format for property 'id'", status=400)
+
+    respondents = query_respondent_by_party_uuids(ids, session)
+    return [respondent.to_respondent_dict() for respondent in respondents]
 
 
 @with_db_session
