@@ -8,41 +8,41 @@ from ras_party.models.models import Business, BusinessAttributes
 from ras_party.support.session_decorator import with_db_session
 
 
-@with_db_session
-def get_business_by_ref(ref, session, verbose=False):
-    """
-    Get a Business by its unique business reference
-    Returns a single Business
-    :param ref: Reference of the Business to return
-    :type ref: str
-
-    :param verbose: Verbosity of business details
-
-    :rtype: Business
-    """
-    business = query_business_by_ref(ref, session)
-    if not business:
-        raise RasError("Business with reference does not exist.", reference=ref, status=404)
-
-    if verbose:
-        return business.to_business_dict()
-    else:
-        return business.to_business_summary_dict()
-
-
-@with_db_session
-def get_businesses_by_ids(party_uuids, session):
-    for party_uuid in party_uuids:
-        v = Validator(IsUuid('id'))
-        if not v.validate({'id': party_uuid}):
-            raise RasError(v.errors, status=400)
-
-    businesses = query_businesses_by_party_uuids(party_uuids, session)
-    return [business.to_business_summary_dict() for business in businesses]
+# @with_db_session
+# def get_business_by_ref(ref, session, verbose=False):
+#     """
+#     Get a Business by its unique business reference
+#     Returns a single Business
+#     :param ref: Reference of the Business to return
+#     :type ref: str
+#
+#     :param verbose: Verbosity of business details
+#
+#     :rtype: Business
+#     """
+#     business = query_business_by_ref(ref, session)
+#     if not business:
+#         raise RasError("Business with reference does not exist.", reference=ref, status=404)
+#
+#     if verbose:
+#         return business.to_business_dict()
+#     else:
+#         return business.to_business_summary_dict()
 
 
-@with_db_session
-def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_id=None):
+# @with_db_session
+# def get_businesses_by_ids(party_uuids, session):
+#     for party_uuid in party_uuids:
+#         v = Validator(IsUuid('id'))
+#         if not v.validate({'id': party_uuid}):
+#             raise RasError(v.errors, status=400)
+#
+#     businesses = query_businesses_by_party_uuids(party_uuids, session)
+#     return [business.to_business_summary_dict() for business in businesses]
+
+
+# @with_db_session
+def get_business_with_id(party_uuid, db, verbose=False, collection_exercise_id=None):
     """
     Get a Business by its Party ID
     Returns a single Party
@@ -56,22 +56,26 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
 
     :rtype: Business
     """
-    v = Validator(IsUuid('id'))
-    if not v.validate({'id': party_uuid}):
-        raise RasError(v.errors, status=400)
+    # v = Validator(IsUuid('id'))
+    # if not v.validate({'id': party_uuid}):
+    #     raise RasError(v.errors, status=400)
 
-    business = query_business_by_party_uuid(party_uuid, session)
+    session = db.session()
+    business = session.query(Business).filter(Business.party_uuid == party_uuid).first()
     if not business:
-        raise RasError("Business with party id does not exist.", party_uuid=party_uuid, status=404)
+        session.close()
+        return None
 
     if verbose:
-        return business.to_business_dict(collection_exercise_id=collection_exercise_id)
+        business = business.to_business_dict(collection_exercise_id=collection_exercise_id)
     else:
-        return business.to_business_summary_dict(collection_exercise_id=collection_exercise_id)
+        business = business.to_business_summary_dict(collection_exercise_id=collection_exercise_id)
+    session.close()
+    return business
 
 
-@with_db_session
-def businesses_post(business_data, session):
+# @with_db_session
+def businesses_post(business_data, db):
     """
     Create a new business in the database based on the supplied data dictionary.
 
@@ -82,11 +86,13 @@ def businesses_post(business_data, session):
     party_data = Business.to_party(business_data)
 
     # FIXME: this is incorrect, it doesn't make sense to require sampleUnitType for the concrete endpoints
-    errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
-    if errors:
-        raise RasError([e.split('\n')[0] for e in errors], status=400)
+    # errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
+    # if errors:
+    #     raise RasError([e.split('\n')[0] for e in errors], status=400)
 
-    business = query_business_by_ref(party_data['sampleUnitRef'], session)
+    session = db.session()
+    business = session.query(Business).filter(Business.business_ref == party_data['sampleUnitRef']).first()
+
     if business:
         party_data['id'] = str(business.party_uuid)
         business.add_versioned_attributes(party_data)
@@ -94,11 +100,12 @@ def businesses_post(business_data, session):
     else:
         business = Business.from_party_dict(party_data)
         session.add(business)
+    session.commit()
     return business.to_post_response_dict()
 
 
-@with_db_session
-def businesses_sample_ce_link(sample, ce_data, session):
+# @with_db_session
+def businesses_sample_ce_link(sample, ce_data, db):
     """
     Update business versions to have the correct collection exercise and sample link.
 
@@ -107,18 +114,19 @@ def businesses_sample_ce_link(sample, ce_data, session):
     :param session: database session.
     """
 
-    v = Validator(Exists('collectionExerciseId'))
-    if not v.validate(ce_data):
-        raise RasError(v.errors, 400)
+    # v = Validator(Exists('collectionExerciseId'))
+    # if not v.validate(ce_data):
+    #     raise RasError(v.errors, 400)
 
     collection_exercise_id = ce_data['collectionExerciseId']
-
+    session = db.session()
     session.query(BusinessAttributes).filter(BusinessAttributes.sample_summary_id == sample)\
         .update({'collection_exercise': collection_exercise_id})
+    session.commit()
 
 
-@with_db_session
-def get_businesses_by_search_query(search_query, session):
-    businesses = search_businesses(search_query, session)
-    businesses = [{"ruref": business[2], "trading_as": business[1], "name": business[0]} for business in businesses]
-    return businesses
+# @with_db_session
+# def get_businesses_by_search_query(search_query, session):
+#     businesses = search_businesses(search_query, session)
+#     businesses = [{"ruref": business[2], "trading_as": business[1], "name": business[0]} for business in businesses]
+#     return businesses

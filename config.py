@@ -37,7 +37,23 @@ class Config(object):
         DATABASE_URI = cf.db.credentials['uri']
     else:
         DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'partysvc')
-        DATABASE_URI = os.getenv('DATABASE_URI', "postgres://postgres:postgres@localhost:6432/postgres")
+        DATABASE_URI = os.getenv('DATABASE_URI', "postgres://postgres:postgres@localhost:5432/postgres")
+
+    # if cf.detected:
+    #     RABBIT_URL, RABBIT_HEALTHCHECK_URL = parse_vcap_services()
+    # else:
+    RABBIT_URL = 'amqp://{user}:{password}@{hostname}:{port}/{vhost}'.format(
+        hostname=os.getenv('SEFT_RABBITMQ_HOST', '127.0.0.1'),
+        port=os.getenv('SEFT_RABBITMQ_PORT', 6672),
+        user=os.getenv('SEFT_RABBITMQ_DEFAULT_USER', 'guest'),
+        password=os.getenv('SEFT_RABBITMQ_DEFAULT_PASS', 'guest'),
+        vhost='%2f'
+    )
+
+    RABBIT_URLS = [RABBIT_URL]
+    RABBIT_QUEUE = "Create.Account"
+    RABBIT_EXCHANGE = 'message'
+    RABBIT_QUARANTINE_QUEUE = "Create.Account.Quarantine"
 
     REQUESTS_GET_TIMEOUT = os.getenv('REQUESTS_GET_TIMEOUT', 20)
     REQUESTS_POST_TIMEOUT = os.getenv('REQUESTS_POST_TIMEOUT', 20)

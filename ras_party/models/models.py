@@ -115,7 +115,7 @@ class Business(Base):
     def to_business_summary_dict(self, collection_exercise_id=None):
         attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
         d = {
-            'id': self.party_uuid,
+            'id': str(self.party_uuid),
             'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
             'sampleSummaryId': attributes.sample_summary_id,
@@ -140,7 +140,7 @@ class Business(Base):
 
     def to_post_response_dict(self):
         return {
-            'id': self.party_uuid,
+            'id': str(self.party_uuid),
             'sampleUnitRef': self.business_ref,
             'sampleUnitType': self.UNIT_TYPE,
             'sampleSummaryId': self.attributes[-1].sample_summary_id,

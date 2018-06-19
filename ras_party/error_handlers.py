@@ -1,40 +1,32 @@
 import logging
 
-import flask
+from aiohttp import web
 import structlog
-from flask import jsonify
 from requests import RequestException
 
 from ras_party.exceptions import RasError
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
-blueprint = flask.Blueprint('error_handlers', __name__)
 
-
-@blueprint.app_errorhandler(RasError)
-def ras_error(error):
-    response = jsonify(error.to_dict())
-    response.status_code = error.status_code
-    logger.exception('Uncaught exception', errors=error.to_dict(), status=error.status_code)
-    return response
-
-
-@blueprint.app_errorhandler(RequestException)
-def http_error(error):
-    errors = {'errors': {'method': error.request.method, 'url': error.request.url, }}
-    response = jsonify(errors)
-    if error.response is not None:
-        response.status_code = error.response.status_code
-    else:
-        response.status_code = 500
-    logger.exception('Uncaught exception', errors=errors, status=response.status_code)
-    return response
-
-
-@blueprint.app_errorhandler(Exception)
-def exception_error(_):
-    logger.exception('Uncaught exception', status=500)
-    response = jsonify({})
-    response.status_code = 500
-    return response
+async def error_handler(app, handler):
+    async def middleware(request):
+        try:
+            response = await handler(request)
+            return response
+        except RasError as error:
+            error_message = error.to_dict()
+            logger.exception('Uncaught exception', errors=error.to_dict(), status=error.status_code)
+            return web.json_response(data=error_message, status=error.status_code)
+        except RequestException as ex:
+            errors = {'errors': {'method': ex.request.method, 'url': ex.request.url, }}
+            if ex.response is not None:
+                status_code = ex.response.status_code
+            else:
+                status_code = 500
+            logger.exception('Uncaught exception', errors=errors, status=status_code)
+            return web.json_response(data=errors, status=status_code)
+        except Exception:
+            logger.exception('Uncaught exception', status=500)
+            return web.json_response(data={}, status=500)
+    return middleware
