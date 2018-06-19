@@ -22,7 +22,7 @@ def get_respondent_by_ids(ids, session):
         try:
             uuid.UUID(party_id)
         except ValueError:
-            raise RasError(f"'{party_id}' is not a valid UUID format for property 'id'", status=400)
+            raise RasError(f"'{party_id}' is not a valid UUID format for property 'id'.", status=400)
 
     respondents = query_respondent_by_party_uuids(ids, session)
     return [respondent.to_respondent_dict() for respondent in respondents]
@@ -41,7 +41,7 @@ def get_respondent_by_id(id, session):
     try:
         uuid.UUID(id)
     except ValueError:
-        raise RasError(f"'{id}' is not a valid UUID format for property 'id'", status=400)
+        raise RasError(f"'{id}' is not a valid UUID format for property 'id'.", status=400)
 
     respondent = query_respondent_by_party_uuid(id, session)
     if not respondent:

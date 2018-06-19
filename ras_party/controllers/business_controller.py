@@ -39,7 +39,7 @@ def get_businesses_by_ids(party_uuids, session):
         try:
             uuid.UUID(party_uuid)
         except ValueError:
-            raise RasError(f"'{party_uuid}' is not a valid UUID format for property 'id'", status=400)
+            raise RasError(f"'{party_uuid}' is not a valid UUID format for property 'id'.", status=400)
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
     return [business.to_business_summary_dict() for business in businesses]
