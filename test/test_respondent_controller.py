@@ -235,7 +235,7 @@ class TestRespondents(PartyTestClient):
             "telephone": "07837230942",
             "email_address": "a@b.com",
             "new_email_address": "a@b.com"
-            }
+        }
         self.change_respondent_details(respondent_id, payload, 200)
 
     def test_update_respondent_details_check_email(self):
@@ -247,7 +247,7 @@ class TestRespondents(PartyTestClient):
             "telephone": "07837230942",
             "email_address": "a@b.com",
             "new_email_address": "john.snow@thisemail.com"
-            }
+        }
         self.change_respondent_details(respondent_id, payload, 200)
 
     def test_update_respondent_details_respondent_does_not_exist_error(self):
@@ -258,7 +258,7 @@ class TestRespondents(PartyTestClient):
             "telephone": "07837230942",
             "email_address": "a@b.com",
             "new_email_address": "a@b.com"
-            }
+        }
         self.change_respondent_details(respondent_id, payload, 404)
 
     def test_resend_verification_email(self):
