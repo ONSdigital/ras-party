@@ -127,16 +127,14 @@ def listen_to_rabbit(app):
     try:
         consumer.run()
     except asyncio.CancelledError:
-        pass
-    finally:
         consumer.stop()
+
 
 async def start_background_tasks(app):
     app['rabbit_listener'] = app.loop.create_task(listen_to_rabbit(app))
 
 async def cleanup_background_tasks(app):
     app['rabbit_listener'].cancel()
-    await app['rabbit_listener']
 
 # def dispose_db(app):
 #     app['db'].dispose()
