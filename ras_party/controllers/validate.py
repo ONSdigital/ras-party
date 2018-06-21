@@ -39,21 +39,6 @@ class Exists(ValidatorBase):
         return len(self._diff) == 0
 
 
-class MutuallyExclusive(ValidatorBase):
-
-    ERROR_MESSAGE = "Mutually exclusive keys '{}' have been provided."
-
-    def __init__(self, *keys):
-        super().__init__()
-        self._keys = set(keys)
-
-    def __call__(self, data):
-        keys = flatten_keys(data)
-        self._intersection = self._keys.intersection(keys)
-        self._errors = [self.ERROR_MESSAGE.format(list(self._intersection))]
-        return len(self._intersection) <= 1
-
-
 class Validator:
     def __init__(self, *rules):
         self._rules = list(rules)
