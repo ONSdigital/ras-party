@@ -1,5 +1,4 @@
 import itertools
-import uuid
 
 from ras_party.support.util import flatten_keys
 
@@ -38,25 +37,6 @@ class Exists(ValidatorBase):
         self._diff = self._keys.difference(keys)
         self._errors = [self.ERROR_MESSAGE.format(d) for d in self._diff]
         return len(self._diff) == 0
-
-
-class IsUuid(ValidatorBase):
-
-    ERROR_MESSAGE = "'{}' is not a valid UUID format for property '{}'."
-
-    def __init__(self, key):
-        super().__init__()
-        self._key = key
-        self._value = None
-
-    def __call__(self, data):
-        self._value = data[self._key]
-        try:
-            uuid.UUID(self._value)
-        except ValueError:
-            self._errors = [self.ERROR_MESSAGE.format(self._value, self._key)]
-            return False
-        return True
 
 
 class Validator:

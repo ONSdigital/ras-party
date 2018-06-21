@@ -1,8 +1,11 @@
+import uuid
+
 from flask import current_app
 
 from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid, \
-    query_businesses_by_party_uuids,  search_businesses
-from ras_party.controllers.validate import Validator, IsUuid, Exists
+    query_businesses_by_party_uuids, search_businesses
+from ras_party.controllers.validate import Validator, Exists
+
 from ras_party.exceptions import RasError
 from ras_party.models.models import Business, BusinessAttributes
 from ras_party.support.session_decorator import with_db_session
@@ -33,9 +36,10 @@ def get_business_by_ref(ref, session, verbose=False):
 @with_db_session
 def get_businesses_by_ids(party_uuids, session):
     for party_uuid in party_uuids:
-        v = Validator(IsUuid('id'))
-        if not v.validate({'id': party_uuid}):
-            raise RasError(v.errors, status=400)
+        try:
+            uuid.UUID(party_uuid)
+        except ValueError:
+            raise RasError(f"'{party_uuid}' is not a valid UUID format for property 'id'.", status=400)
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
     return [business.to_business_summary_dict() for business in businesses]
@@ -56,9 +60,10 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
 
     :rtype: Business
     """
-    v = Validator(IsUuid('id'))
-    if not v.validate({'id': party_uuid}):
-        raise RasError(v.errors, status=400)
+    try:
+        uuid.UUID(party_uuid)
+    except ValueError:
+        raise RasError(f"'{party_uuid}' is not a valid UUID format for property 'id'", status=400)
 
     business = query_business_by_party_uuid(party_uuid, session)
     if not business:
