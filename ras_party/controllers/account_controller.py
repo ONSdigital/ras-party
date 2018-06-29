@@ -356,8 +356,8 @@ def put_email_verification(token, tran, session):
             logger.info('No pending enrolment for respondent while checking email verification token',
                         party_uuid=respondent.party_uuid)
 
-    # We set the user as verified on the OAuth2 server.
-    set_user_verified(email_address)
+        # We set the user as verified on the OAuth2 server.
+        set_user_verified(email_address)
 
     return respondent.to_respondent_dict()
 
@@ -372,7 +372,7 @@ def update_verified_email_address(respondent, tran, session):
     oauth_response = OauthClient().update_account(
         username=email_address,
         new_username=new_email_address,
-        account_verified='false')
+        account_verified='true')
 
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent email")
