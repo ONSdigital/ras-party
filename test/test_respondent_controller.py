@@ -46,6 +46,7 @@ class TestRespondents(PartyTestClient):
         translated_party = {
             'party_uuid': respondent.get('id') or str(uuid.uuid4()),
             'email_address': respondent['emailAddress'],
+            'pending_email_address': respondent.get('pendingEmailAddress'),
             'first_name': respondent['firstName'],
             'last_name': respondent['lastName'],
             'telephone': respondent['telephone'],
@@ -301,10 +302,11 @@ class TestRespondents(PartyTestClient):
         # When the resend verification email endpoint is hit
         self.resend_verification_email(respondent.party_uuid)
         # Then a notification message is sent to the pending email address and not the current one
+        pending_email = PublicWebsite().activate_account_url(respondent.pending_email_address)
         personalisation = {
-            'ACCOUNT_VERIFICATION_URL': PublicWebsite().activate_account_url(respondent.pending_email_address)
+            'ACCOUNT_VERIFICATION_URL': pending_email
         }
-        self.mock_notify.email_verification.assert_called_once_with(
+        self.mock_notify.verify_email.assert_called_once_with(
             respondent.pending_email_address,
             personalisation,
             respondent.party_uuid
