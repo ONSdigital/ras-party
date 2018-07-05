@@ -479,7 +479,7 @@ def _send_email_verification(party_id, email):
     Send an email verification to the respondent
     """
     verification_url = PublicWebsite().activate_account_url(email)
-    logger.info('Verification URL for party_id', party_id=party_id, url=verification_url, email=email)
+    logger.info('Verification URL for party_id', party_id=party_id, url=verification_url)
 
     personalisation = {
         'ACCOUNT_VERIFICATION_URL': verification_url
