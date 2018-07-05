@@ -19,7 +19,7 @@ from test.mocks import MockRequests, MockResponse
 from test.party_client import PartyTestClient, respondents, businesses, business_respondent_associations, enrolments
 from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDisabled
 from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, \
-    MockRespondentWithIdActive, MockRespondentWithIdSuspended
+    MockRespondentWithIdActive, MockRespondentWithIdSuspended, MockRespondentWithPendingEmail
 
 
 class TestRespondents(PartyTestClient):
@@ -33,6 +33,7 @@ class TestRespondents(PartyTestClient):
         self.mock_respondent_with_id = MockRespondentWithId().attributes().as_respondent()
         self.mock_respondent_with_id_suspended = MockRespondentWithIdSuspended().attributes().as_respondent()
         self.mock_respondent_with_id_active = MockRespondentWithIdActive().attributes().as_respondent()
+        self.mock_respondent_with_pending_email = MockRespondentWithPendingEmail().attributes().as_respondent()
         self.respondent = None
         self.mock_enrolment_enabled = MockEnrolmentEnabled().attributes().as_enrolment()
         self.mock_enrolment_disabled = MockEnrolmentDisabled().attributes().as_enrolment()
@@ -293,6 +294,21 @@ class TestRespondents(PartyTestClient):
 
     def test_resend_verification_email_party_id_malformed(self):
         self.resend_verification_email('malformed', 500)
+
+    def test_resend_verification_email_sends_to_new_email_address(self):
+        # Given there is a respondent with a pending email address
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_pending_email)
+        # When the resend verification email endpoint is hit
+        self.resend_verification_email(respondent.party_uuid)
+        # Then a notification message is sent to the pending email address and not the current one
+        personalisation = {
+            'ACCOUNT_VERIFICATION_URL': PublicWebsite().activate_account_url(respondent.pending_email_address)
+        }
+        self.mock_notify.email_verification.assert_called_once_with(
+            respondent.pending_email_address,
+            personalisation,
+            respondent.party_uuid
+        )
 
     def test_request_password_change_with_valid_email(self):
         respondent = self.populate_with_respondent()
