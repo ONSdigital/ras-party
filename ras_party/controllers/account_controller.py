@@ -410,7 +410,10 @@ def resend_verification_email(party_uuid, session):
     if not respondent:
         raise RasError(NO_RESPONDENT_FOR_PARTY_ID, status=404)
 
-    _send_email_verification(party_uuid, respondent.email_address)
+    if respondent.pending_email_address:
+        _send_email_verification(party_uuid, respondent.pending_email_address)
+    else:
+        _send_email_verification(party_uuid, respondent.email_address)
 
     return {'message': EMAIL_VERIFICATION_SENT}
 
