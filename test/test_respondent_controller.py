@@ -296,6 +296,22 @@ class TestRespondents(PartyTestClient):
     def test_resend_verification_email_party_id_malformed(self):
         self.resend_verification_email('malformed', 500)
 
+    def test_resend_verification_email_sends_via_notify(self):
+        # Given there is an enrolled respondent
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        # When the resend verification email endpoint is hit
+        self.resend_verification_email(respondent.party_uuid)
+        # Then a notification message is sent to the respondent's current email address
+        email = PublicWebsite().activate_account_url(respondent.email_address)
+        personalisation = {
+            'ACCOUNT_VERIFICATION_URL': email
+        }
+        self.mock_notify.verify_email.assert_called_once_with(
+            respondent.email_address,
+            personalisation,
+            respondent.party_uuid
+        )
+
     def test_resend_verification_email_sends_to_new_email_address(self):
         # Given there is a respondent with a pending email address
         respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_pending_email)
