@@ -173,7 +173,7 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
 
 def query_enrolment_by_survey_business(business_id, survey_id, session):
     """
-    Query to return enrolment based on business id and survey
+    Query to return enrolments based on business id and survey
     :param business_id,
     :param survey_id
     :return: enrolment for survey and business for respondent
