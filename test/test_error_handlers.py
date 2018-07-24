@@ -1,13 +1,24 @@
 from unittest.mock import patch
 
-from requests import RequestException, Request, Response
+from requests import Request, RequestException, Response
 
-from ras_party.error_handlers import ras_error, exception_error, http_error
-from ras_party.exceptions import RasError
+from ras_party.error_handlers import client_error, exception_error, http_error, ras_error
+from ras_party.exceptions import ClientError, RasError
 from test.party_client import PartyTestClient
 
 
 class TestErrorHandlers(PartyTestClient):
+
+    def test_uncaught_client_error_handler_will_log_exception(self):
+        # Given
+        error = ClientError(errors=['some error'], status=400)
+
+        with patch('ras_party.error_handlers.logger') as logger:
+            # When
+            client_error(error)
+            # Then
+            logger.info.assert_called_once_with('Client error', errors={'errors': ['some error']},
+                                                status=400)
 
     def test_uncaught_ras_error_handler(self):
         # Given

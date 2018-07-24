@@ -4,7 +4,7 @@ from functools import wraps
 import structlog
 from flask import current_app
 
-from ras_party.exceptions import RasError
+from ras_party.exceptions import ClientError, RasError
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -21,12 +21,16 @@ def handle_session(f, args, kwargs):
         logger.info("Committing database session.")
         session.commit()
         return result
+    except ClientError:
+        logger.info(f"Rolling back database session due to a ClientError")
+        session.rollback()
+        raise
     except RasError:
-        logger.error(f"Rolling back database session due to failure executing function")
+        logger.info(f"Rolling back database session due to failure executing function")
         session.rollback()
         raise
     except Exception:
-        logger.error("Rolling back database session due to uncaught exception")
+        logger.info("Rolling back database session due to uncaught exception")
         session.rollback()
         raise
     finally:
