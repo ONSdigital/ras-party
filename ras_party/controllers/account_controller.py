@@ -301,7 +301,7 @@ def request_password_change(payload, session):
                 email_address, personalisation, str(party_id))
         except RasNotifyError:
             # Note: intentionally suppresses exception
-            logger.error('Error sending reset password email for party_id', party_id=party_id)
+            logger.error('Error sending reset password email for respondent_id', respondent_id=party_id)
 
         logger.debug('Password reset email successfully sent', party_id=respondent.party_uuid)
 
