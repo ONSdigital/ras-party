@@ -3,7 +3,8 @@ import logging
 from sqlalchemy import func, and_, or_
 import structlog
 
-from ras_party.models.models import Business, BusinessRespondent, Enrolment, EnrolmentStatus, Respondent, BusinessAttributes
+from ras_party.models.models import Business, BusinessAttributes, BusinessRespondent, \
+    Enrolment, EnrolmentStatus, Respondent
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
