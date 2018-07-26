@@ -39,7 +39,7 @@ def get_businesses_by_ids(party_uuids, session):
         try:
             uuid.UUID(party_uuid)
         except ValueError:
-            raise RasError(f"'{party_uuid}' is not a valid UUID format for property 'id'.", status=400)
+            raise ClientError(f"'{party_uuid}' is not a valid UUID format for property 'id'.", status=400)
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
     return [business.to_business_summary_dict() for business in businesses]
@@ -63,11 +63,11 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
     try:
         uuid.UUID(party_uuid)
     except ValueError:
-        raise RasError(f"'{party_uuid}' is not a valid UUID format for property 'id'", status=400)
+        raise ClientError(f"'{party_uuid}' is not a valid UUID format for property 'id'", status=400)
 
     business = query_business_by_party_uuid(party_uuid, session)
     if not business:
-        raise RasError("Business with party id does not exist.", party_uuid=party_uuid, status=404)
+        raise ClientError("Business with party id does not exist.", party_uuid=party_uuid, status=404)
 
     if verbose:
         return business.to_business_dict(collection_exercise_id=collection_exercise_id)
@@ -89,7 +89,7 @@ def businesses_post(business_data, session):
     # FIXME: this is incorrect, it doesn't make sense to require sampleUnitType for the concrete endpoints
     errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
     if errors:
-        raise RasError([e.split('\n')[0] for e in errors], status=400)
+        raise ClientError([e.split('\n')[0] for e in errors], status=400)
 
     business = query_business_by_ref(party_data['sampleUnitRef'], session)
     if business:
@@ -114,7 +114,7 @@ def businesses_sample_ce_link(sample, ce_data, session):
 
     v = Validator(Exists('collectionExerciseId'))
     if not v.validate(ce_data):
-        raise RasError(v.errors, 400)
+        raise ClientError(v.errors, 400)
 
     collection_exercise_id = ce_data['collectionExerciseId']
 
