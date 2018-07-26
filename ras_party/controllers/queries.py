@@ -182,5 +182,5 @@ def query_enrolment_by_survey_business(business_id, survey_id, session):
     logger.debug('Querying enrolment', business_id=business_id, survey_id=survey_id)
     response = session.query(Enrolment).filter(and_(Enrolment.business_id == business_id,
                                                     Enrolment.survey_id == survey_id,
-                                                    Enrolment.status == EnrolmentStatus.ENABLED)).first()
+                                                    Enrolment.status == EnrolmentStatus.ENABLED)).count()
     return response
