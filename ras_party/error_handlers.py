@@ -46,7 +46,6 @@ def http_error(error):
         response.status_code = 500
     logger.exception('Uncaught exception',
                      url=request.url,
-                     api_url=error.url,
                      errors=errors,
                      status=response.status_code)
     return response

@@ -1,3 +1,5 @@
+from flask import request
+
 from unittest.mock import patch
 
 from requests import Request, RequestException, Response
@@ -11,14 +13,14 @@ class TestErrorHandlers(PartyTestClient):
 
     def test_uncaught_client_error_handler_will_log_exception(self):
         # Given
-        error = ClientError(errors=['some error'], status=400)
+        error = ClientError(errors=['some error'], status=400, )
 
         with patch('ras_party.error_handlers.logger') as logger:
             # When
             client_error(error)
             # Then
             logger.info.assert_called_once_with('Client error', errors={'errors': ['some error']},
-                                                status=400)
+                                                status=400, url=request.url)
 
     def test_uncaught_ras_error_handler(self):
         # Given
@@ -39,7 +41,8 @@ class TestErrorHandlers(PartyTestClient):
 
             # Then
             logger.exception.assert_called_once_with('Uncaught exception', errors={'errors': ['some error']},
-                                                     status=418)
+                                                     status=418,
+                                                     url=request.url)
 
     def test_uncaught_request_exception_handler(self):
         # Given
@@ -63,7 +66,8 @@ class TestErrorHandlers(PartyTestClient):
             # Then
             logger.exception.assert_called_once_with('Uncaught exception',
                                                      errors={'errors': {'method': 'GET', 'url': 'http://localhost'}},
-                                                     status=500)
+                                                     status=500,
+                                                     url=request.url)
 
     def test_uncaught_exception_handler(self):
         # Given

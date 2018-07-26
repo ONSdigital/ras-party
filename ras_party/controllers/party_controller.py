@@ -44,7 +44,8 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
     :rtype: Party
     """
     if sample_unit_type != Business.UNIT_TYPE:
-        raise ClientError(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B']", status=400)
+        raise ClientError(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B']",
+                          status=400)
     business = query_business_by_ref(sample_unit_ref, session)
     if not business:
         raise ClientError("Business with reference does not exist.", refernce=sample_unit_ref, status=404)
@@ -66,7 +67,7 @@ def get_party_by_id(sample_unit_type, id, session):
         return respondent.to_party_dict()
     else:
         raise ClientError(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']",
-                       status=400)
+                          status=400)
 
 
 def get_business_with_respondents_filtered_by_survey(sample_unit_type, id, survey_id):

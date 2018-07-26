@@ -89,8 +89,8 @@ def post_respondent(party, tran, session):
     business = query_business_by_party_uuid(business_id, session)
     if not business:
         raise ClientError("Could not locate business when creating business association",
-                       business_id=business_id,
-                       status=404)
+                          business_id=business_id,
+                          status=404)
 
     # Chain of enrolment processes
     translated_party = {
@@ -159,7 +159,7 @@ def change_respondent_enrolment_status(payload, session):
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
         raise ClientError("Respondent does not exist.  Unable to change enrolment status",
-                       respondent_id=respondent_id, status=404)
+                          respondent_id=respondent_id, status=404)
 
     enrolment = query_enrolment_by_survey_business_respondent(respondent_id=respondent.id,
                                                               business_id=business_id,
@@ -241,7 +241,7 @@ def change_respondent_password(token, payload, tran, session):
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
         raise ClientError("Respondent does not exist.",
-                       status=404)
+                          status=404)
 
     new_password = payload['new_password']
 
@@ -317,7 +317,7 @@ def change_respondent_account_status(payload, party_id, session):
     respondent = query_respondent_by_party_uuid(party_id, session)
     if not respondent:
         raise ClientError("Respondent does not exist.  Unable to change account status.", respondent_id=party_id,
-                       status=404)
+                          status=404)
     respondent.status = status
 
 
@@ -462,8 +462,8 @@ def add_new_survey_for_respondent(payload, tran, session):
         business = query_business_by_party_uuid(business_id, session)
         if not business:
             raise ClientError("Could not locate business when creating business association.",
-                           business_id=business_id,
-                           status=404)
+                              business_id=business_id,
+                              status=404)
         br = BusinessRespondent(business=business, respondent=respondent)
 
     enrolment = Enrolment(business_respondent=br,
