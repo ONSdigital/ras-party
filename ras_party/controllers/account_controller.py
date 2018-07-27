@@ -11,7 +11,7 @@ from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import query_respondent_by_email, query_respondent_by_pending_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
 from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
-from ras_party.controllers.queries import query_enrolment_by_survey_business
+from ras_party.controllers.queries import count_enrolment_by_survey_business
 from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import RasError, RasNotifyError
@@ -163,17 +163,18 @@ def change_respondent_enrolment_status(payload, session):
                                                               survey_id=survey_id,
                                                               session=session)
     enrolment.status = change_flag
-
-    casegroup_ids = get_business_survey_casegroups(survey_id, business_id)
+    session.commit()
 
     category = 'DISABLE_RESPONDENT_ENROLMENT' if change_flag == 'DISABLED' else 'ENABLE_RESPONDENT_ENROLMENT'
     description = "Disable respondent enrolment" if change_flag == 'DISABLED' else 'Enable respondent enrolment'
+    casegroup_ids = get_business_survey_casegroups(survey_id, business_id)
     for case in get_cases_for_casegroups(casegroup_ids, respondent_id):
         post_case_event(case['id'], business_id, category=category, desc=description)
 
-    session.commit()
-    enrolment = query_enrolment_by_survey_business(business_id, survey_id, session)
-    if not enrolment:
+    # If no enrolments are remaining for business/survey
+    # then send NO_ACTIVE_ENROLMENTS case event for each relevant B case
+    enrolment_count = count_enrolment_by_survey_business(business_id, survey_id, session)
+    if not enrolment_count:
         logger.info('No active enrolments', business_id=business_id, survey_id=survey_id)
         for case in get_cases_for_casegroups(casegroup_ids, business_id):
             post_case_event(case['id'],

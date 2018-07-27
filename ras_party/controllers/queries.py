@@ -172,12 +172,12 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
     return response
 
 
-def query_enrolment_by_survey_business(business_id, survey_id, session):
+def count_enrolment_by_survey_business(business_id, survey_id, session):
     """
-    Query to return enrolments based on business id and survey
+    Query to return count of enrolments for given business id and survey
     :param business_id,
     :param survey_id
-    :return: enrolment for survey and business for respondent
+    :return: Integer count of number of enrolments
     """
     logger.debug('Querying enrolment', business_id=business_id, survey_id=survey_id)
     response = session.query(Enrolment).filter(and_(Enrolment.business_id == business_id,
