@@ -22,11 +22,11 @@ def handle_session(f, args, kwargs):
         session.commit()
         return result
     except ClientError:
-        logger.info(f"Rolling back database session due to a ClientError")
+        logger.info("Rolling back database session due to a ClientError")
         session.rollback()
         raise
     except RasError:
-        logger.info(f"Rolling back database session due to failure executing function")
+        logger.info("Rolling back database session due to failure executing function")
         session.rollback()
         raise
     except Exception:

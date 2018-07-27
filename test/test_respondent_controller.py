@@ -166,7 +166,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent()
         party_uuid = "gibberish"
         response = self.get_respondents_by_ids([party_uuid], expected_status=400)
-        self.assertEquals(response['errors'][0], """'gibberish' is not a valid UUID format for property 'id'.""")
+        self.assertEquals(response['errors'][0], """'gibberish' is not a valid UUID format for property 'id'""")
 
     def test_get_respondent_by_ids_with_an_unknown_id_still_returns_correct_representation_for_other_ids(self):
         respondent_1 = MockRespondent()

@@ -54,7 +54,7 @@ def post_respondent(party, tran, session):
     if 'id' in party:
         # Note: there's not strictly a requirement to be able to pass in a UUID, this is currently supported to
         # aid with testing.
-        logger.debug("'id' in respondent post message.")
+        logger.debug("'id' in respondent post message")
         try:
             uuid.UUID(party['id'])
         except ValueError:
@@ -65,11 +65,11 @@ def post_respondent(party, tran, session):
 
     iac = request_iac(party['enrolmentCode'])
     if not iac.get('active'):
-        raise ClientError("Enrolment code is not active.", status=400)
+        raise ClientError("Enrolment code is not active", status=400)
 
     existing = query_respondent_by_email(party['emailAddress'], session)
     if existing:
-        raise ClientError("Email address already exists.",
+        raise ClientError("Email address already exists",
                           status=400,
                           party_uuid=str(existing.party_uuid))
 
@@ -158,7 +158,7 @@ def change_respondent_enrolment_status(payload, session):
                 status=change_flag)
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
-        raise ClientError("Respondent does not exist.  Unable to change enrolment status",
+        raise ClientError("Respondent does not exist",
                           respondent_id=respondent_id, status=404)
 
     enrolment = query_enrolment_by_survey_business_respondent(respondent_id=respondent.id,
@@ -188,14 +188,14 @@ def change_respondent(payload, session):
     respondent = query_respondent_by_email(email_address, session)
 
     if not respondent:
-        raise ClientError("Respondent does not exist.", status=404)
+        raise ClientError("Respondent does not exist", status=404)
 
     if new_email_address == email_address:
         return respondent.to_respondent_dict()
 
     respondent_with_new_email = query_respondent_by_email(new_email_address, session)
     if respondent_with_new_email:
-        raise ClientError("New email address already taken.", status=409)
+        raise ClientError("New email address already taken", status=409)
 
     respondent.pending_email_address = new_email_address
 
@@ -218,7 +218,7 @@ def verify_token(token, session):
 
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
-        raise ClientError("Respondent does not exist.", status=404)
+        raise ClientError("Respondent does not exist", status=404)
 
     return {'response': "Ok"}
 
@@ -240,7 +240,7 @@ def change_respondent_password(token, payload, tran, session):
 
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
-        raise ClientError("Respondent does not exist.",
+        raise ClientError("Respondent does not exist",
                           status=404)
 
     new_password = payload['new_password']
@@ -250,7 +250,7 @@ def change_respondent_password(token, payload, tran, session):
         password=new_password)
 
     if oauth_response.status_code != 201:
-        raise RasError("Failed to change respondent password.")
+        raise RasError("Failed to change respondent password")
 
     personalisation = {
         'FIRST_NAME': respondent.first_name
@@ -265,7 +265,7 @@ def change_respondent_password(token, payload, tran, session):
         logger.error('Error sending notification email', respondent_id=party_id)
 
     # This ensures the log message is only written once the DB transaction is committed
-    tran.on_success(lambda: logger.info('Respondent has changed their password', party_id=party_id))
+    tran.on_success(lambda: logger.info('Respondent has changed their password', respondent_id=party_id))
 
     return {'response': "Ok"}
 
@@ -280,7 +280,7 @@ def request_password_change(payload, session):
 
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
-        raise ClientError("Respondent does not exist.", status=404)
+        raise ClientError("Respondent does not exist", status=404)
 
     logger.debug("Requesting password change", party_id=respondent.party_uuid)
 
@@ -302,7 +302,7 @@ def request_password_change(payload, session):
                 email_address, personalisation, str(party_id))
         except RasNotifyError:
             # Note: intentionally suppresses exception
-            logger.error('Error sending request to Notify Gateway for respondent_id', respondent_id=party_id)
+            logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
 
         logger.debug('Password reset email successfully sent', party_id=respondent.party_uuid)
 
@@ -316,7 +316,7 @@ def change_respondent_account_status(payload, party_id, session):
 
     respondent = query_respondent_by_party_uuid(party_id, session)
     if not respondent:
-        raise ClientError("Respondent does not exist.  Unable to change account status.", respondent_id=party_id,
+        raise ClientError("Respondent does not exist", respondent_id=party_id,
                           status=404)
     respondent.status = status
 
@@ -393,7 +393,7 @@ def update_verified_email_address(respondent, tran, session):
         if rollback_response.status_code != 201:
             logger.error("Failed to rollback change to respondent email. Please investigate.",
                          party_id=respondent.party_uuid)
-            raise RasError("Failed to rollback change to respondent email.")
+            raise RasError("Failed to rollback change to respondent email")
 
     tran.compensate(compensate_oauth_change)
 
@@ -439,7 +439,7 @@ def add_new_survey_for_respondent(payload, tran, session):
 
     iac = request_iac(enrolment_code)
     if not iac.get('active'):
-        raise ClientError("Enrolment code is not active.", status=400)
+        raise ClientError("Enrolment code is not active", status=400)
 
     respondent = query_respondent_by_party_uuid(respondent_party_id, session)
 
@@ -461,7 +461,7 @@ def add_new_survey_for_respondent(payload, tran, session):
         """
         business = query_business_by_party_uuid(business_id, session)
         if not business:
-            raise ClientError("Could not locate business when creating business association.",
+            raise ClientError("Could not locate business when creating business association",
                               business_id=business_id,
                               status=404)
         br = BusinessRespondent(business=business, respondent=respondent)

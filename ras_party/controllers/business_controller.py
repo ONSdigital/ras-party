@@ -25,7 +25,7 @@ def get_business_by_ref(ref, session, verbose=False):
     """
     business = query_business_by_ref(ref, session)
     if not business:
-        raise ClientError("Business with reference does not exist.", reference=ref, status=404)
+        raise ClientError("Business with reference does not exist", reference=ref, status=404)
 
     if verbose:
         return business.to_business_dict()
@@ -39,7 +39,7 @@ def get_businesses_by_ids(party_uuids, session):
         try:
             uuid.UUID(party_uuid)
         except ValueError:
-            raise ClientError(f"'{party_uuid}' is not a valid UUID format for property 'id'.", status=400)
+            raise ClientError(f"'{party_uuid}' is not a valid UUID format for property 'id'", status=400)
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
     return [business.to_business_summary_dict() for business in businesses]
@@ -67,7 +67,7 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
 
     business = query_business_by_party_uuid(party_uuid, session)
     if not business:
-        raise ClientError("Business with party id does not exist.", party_uuid=party_uuid, status=404)
+        raise ClientError("Business with party id does not exist", party_uuid=party_uuid, status=404)
 
     if verbose:
         return business.to_business_dict(collection_exercise_id=collection_exercise_id)
