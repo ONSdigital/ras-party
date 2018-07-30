@@ -1,13 +1,27 @@
+from flask import request
+
 from unittest.mock import patch
 
-from requests import RequestException, Request, Response
+from requests import Request, RequestException, Response
 
-from ras_party.error_handlers import ras_error, exception_error, http_error
-from ras_party.exceptions import RasError
+from ras_party.error_handlers import client_error, exception_error, http_error, ras_error
+from ras_party.exceptions import ClientError, RasError
 from test.party_client import PartyTestClient
 
 
 class TestErrorHandlers(PartyTestClient):
+
+    @staticmethod
+    def test_uncaught_client_error_handler_will_log_exception():
+        # Given
+        error = ClientError(errors=['some error'], status=400, )
+
+        with patch('ras_party.error_handlers.logger') as logger:
+            # When
+            client_error(error)
+            # Then
+            logger.info.assert_called_once_with('Client error', errors={'errors': ['some error']},
+                                                status=400, url=request.url)
 
     def test_uncaught_ras_error_handler(self):
         # Given
@@ -28,7 +42,8 @@ class TestErrorHandlers(PartyTestClient):
 
             # Then
             logger.exception.assert_called_once_with('Uncaught exception', errors={'errors': ['some error']},
-                                                     status=418)
+                                                     status=418,
+                                                     url=request.url)
 
     def test_uncaught_request_exception_handler(self):
         # Given
@@ -52,7 +67,8 @@ class TestErrorHandlers(PartyTestClient):
             # Then
             logger.exception.assert_called_once_with('Uncaught exception',
                                                      errors={'errors': {'method': 'GET', 'url': 'http://localhost'}},
-                                                     status=500)
+                                                     status=500,
+                                                     url=request.url)
 
     def test_uncaught_exception_handler(self):
         # Given
