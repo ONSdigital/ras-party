@@ -11,7 +11,8 @@ from test.party_client import PartyTestClient
 
 class TestErrorHandlers(PartyTestClient):
 
-    def test_uncaught_client_error_handler_will_log_exception(self):
+    @staticmethod
+    def test_uncaught_client_error_handler_will_log_exception():
         # Given
         error = ClientError(errors=['some error'], status=400, )
 
