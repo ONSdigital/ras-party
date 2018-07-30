@@ -13,7 +13,7 @@ from ras_party.controllers.queries import query_respondent_by_party_uuid, query_
 from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
 from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.validate import Exists, Validator
-from ras_party.exceptions import RasError, RasNotifyError
+from ras_party.exceptions import ClientError, RasError, RasNotifyError
 from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
 from ras_party.models.models import PendingEnrolment, Respondent, RespondentStatus
 from ras_party.support.public_website import PublicWebsite
@@ -54,22 +54,24 @@ def post_respondent(party, tran, session):
     if 'id' in party:
         # Note: there's not strictly a requirement to be able to pass in a UUID, this is currently supported to
         # aid with testing.
-        logger.debug("'id' in respondent post message.")
+        logger.debug("'id' in respondent post message")
         try:
             uuid.UUID(party['id'])
         except ValueError:
-            raise RasError(f"'{party['id']}' is not a valid UUID format for property 'id'", status=400)
+            raise ClientError(f"'{party['id']}' is not a valid UUID format for property 'id'", status=400)
 
     if not v.validate(party):
-        raise RasError(v.errors, 400)
+        raise ClientError(v.errors, 400)
 
     iac = request_iac(party['enrolmentCode'])
     if not iac.get('active'):
-        raise RasError("Enrolment code is not active.", status=400)
+        raise ClientError("Enrolment code is not active", status=400)
 
     existing = query_respondent_by_email(party['emailAddress'], session)
     if existing:
-        raise RasError("Email address already exists.", status=400, party_uuid=party.get('party_uuid', None))
+        raise ClientError("Email address already exists",
+                          status=400,
+                          party_uuid=str(existing.party_uuid))
 
     case_context = request_case(party['enrolmentCode'])
     case_id = case_context['id']
@@ -82,12 +84,13 @@ def post_respondent(party, tran, session):
         survey = request_survey(survey_id)
         survey_name = survey['longName']
     except KeyError:
-        raise RasError("There is no survey bound for this user", party_uuid=party['party_uuid'])
+        raise ClientError("There is no survey bound for this user", party_uuid=party['party_uuid'])
 
     business = query_business_by_party_uuid(business_id, session)
     if not business:
-        raise RasError("Could not locate business when creating business association", business_id=business_id,
-                       status=404)
+        raise ClientError("Could not locate business when creating business association",
+                          business_id=business_id,
+                          status=404)
 
     # Chain of enrolment processes
     translated_party = {
@@ -155,7 +158,8 @@ def change_respondent_enrolment_status(payload, session):
                 status=change_flag)
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
-        raise RasError("Respondent does not exist.", status=404)
+        raise ClientError("Respondent does not exist",
+                          respondent_id=respondent_id, status=404)
 
     enrolment = query_enrolment_by_survey_business_respondent(respondent_id=respondent.id,
                                                               business_id=business_id,
@@ -176,7 +180,7 @@ def change_respondent(payload, session):
     """
     v = Validator(Exists('email_address', 'new_email_address'))
     if not v.validate(payload):
-        raise RasError(v.errors, 400)
+        raise ClientError(v.errors, 400)
 
     email_address = payload['email_address']
     new_email_address = payload['new_email_address']
@@ -184,20 +188,20 @@ def change_respondent(payload, session):
     respondent = query_respondent_by_email(email_address, session)
 
     if not respondent:
-        raise RasError("Respondent does not exist.", status=404)
+        raise ClientError("Respondent does not exist", status=404)
 
     if new_email_address == email_address:
         return respondent.to_respondent_dict()
 
     respondent_with_new_email = query_respondent_by_email(new_email_address, session)
     if respondent_with_new_email:
-        raise RasError("New email address already taken.", status=409)
+        raise ClientError("New email address already taken", status=409)
 
     respondent.pending_email_address = new_email_address
 
     _send_email_verification(respondent.party_uuid, new_email_address)
 
-    logger.info('Verification email sent for changing respondents email', party_uuid=respondent.party_uuid)
+    logger.info('Verification email sent for changing respondents email', respondent_id=str(respondent.party_uuid))
 
     return respondent.to_respondent_dict()
 
@@ -208,13 +212,13 @@ def verify_token(token, session):
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
-        raise RasError('Expired email verification token', status=409, token=token)
+        raise ClientError('Expired email verification token', status=409, token=token)
     except (BadSignature, BadData) as e:
-        raise RasError('Unknown email verification token', status=404, token=token, error=e)
+        raise ClientError('Unknown email verification token', status=404, token=token, error=e)
 
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
-        raise RasError("Respondent does not exist.", status=404)
+        raise ClientError("Respondent does not exist", status=404)
 
     return {'response': "Ok"}
 
@@ -224,19 +228,20 @@ def verify_token(token, session):
 def change_respondent_password(token, payload, tran, session):
     v = Validator(Exists('new_password'))
     if not v.validate(payload):
-        raise RasError(v.errors, 400)
+        raise ClientError(v.errors, 400)
 
     try:
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
-        raise RasError('Expired email verification token', status=409, token=token)
+        raise ClientError('Expired email verification token', status=409, token=token)
     except (BadSignature, BadData) as e:
-        raise RasError('Unknown email verification token', status=404, token=token, error=e)
+        raise ClientError('Unknown email verification token', status=404, token=token, error=e)
 
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
-        raise RasError("Respondent does not exist.", status=404)
+        raise ClientError("Respondent does not exist",
+                          status=404)
 
     new_password = payload['new_password']
 
@@ -245,7 +250,7 @@ def change_respondent_password(token, payload, tran, session):
         password=new_password)
 
     if oauth_response.status_code != 201:
-        raise RasError("Failed to change respondent password.")
+        raise RasError("Failed to change respondent password")
 
     personalisation = {
         'FIRST_NAME': respondent.first_name
@@ -257,10 +262,10 @@ def change_respondent_password(token, payload, tran, session):
         NotifyGateway(current_app.config).confirm_password_change(
             email_address, personalisation, str(party_id))
     except RasNotifyError:
-        logger.error('Error sending notification email', party_id=party_id)
+        logger.error('Error sending notification email', respondent_id=str(party_id))
 
     # This ensures the log message is only written once the DB transaction is committed
-    tran.on_success(lambda: logger.info('Respondent has changed their password', party_id=party_id))
+    tran.on_success(lambda: logger.info('Respondent has changed their password', respondent_id=party_id))
 
     return {'response': "Ok"}
 
@@ -269,13 +274,13 @@ def change_respondent_password(token, payload, tran, session):
 def request_password_change(payload, session):
     v = Validator(Exists('email_address'))
     if not v.validate(payload):
-        raise RasError(v.errors, 400)
+        raise ClientError(v.errors, 400)
 
     email_address = payload['email_address']
 
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
-        raise RasError("Respondent does not exist.", status=404)
+        raise ClientError("Respondent does not exist", status=404)
 
     logger.debug("Requesting password change", party_id=respondent.party_uuid)
 
@@ -289,17 +294,18 @@ def request_password_change(payload, session):
             'FIRST_NAME': respondent.first_name
         }
 
-        logger.info('Reset password url', url=verification_url, party_id=respondent.party_uuid)
+        party_id = str(respondent.party_uuid)
 
-        party_id = respondent.party_uuid
+        logger.info('Reset password url', url=verification_url, party_id=party_id)
+
         try:
             NotifyGateway(current_app.config).request_password_change(
-                email_address, personalisation, str(party_id))
+                email_address, personalisation, party_id)
         except RasNotifyError:
             # Note: intentionally suppresses exception
-            logger.error('Error sending notification email for party_id', party_id=party_id)
+            logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
 
-        logger.debug('Password reset email successfully sent', party_id=respondent.party_uuid)
+        logger.debug('Password reset email successfully sent', party_id=party_id)
 
     return {'response': "Ok"}
 
@@ -311,7 +317,8 @@ def change_respondent_account_status(payload, party_id, session):
 
     respondent = query_respondent_by_party_uuid(party_id, session)
     if not respondent:
-        raise RasError("Unable to find respondent account", status=404)
+        raise ClientError("Respondent does not exist", respondent_id=party_id,
+                          status=404)
     respondent.status = status
 
 
@@ -329,9 +336,9 @@ def put_email_verification(token, tran, session):
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
-        raise RasError('Expired email verification token', status=409, token=token)
+        raise ClientError('Expired email verification token', status=409, token=token)
     except (BadSignature, BadData) as e:
-        raise RasError('Bad email verification token', status=404, token=token, error=e)
+        raise ClientError('Bad email verification token', status=404, token=token, error=e)
 
     respondent = query_respondent_by_email(email_address, session)
 
@@ -343,7 +350,7 @@ def put_email_verification(token, tran, session):
         if respondent:
             update_verified_email_address(respondent, tran, session)
         else:
-            raise RasError("Unable to find user while checking email verification token", status=404)
+            raise ClientError("Unable to find user while checking email verification token", status=404)
 
     if respondent.status != RespondentStatus.ACTIVE:
         # We set the party as ACTIVE in this service
@@ -354,7 +361,7 @@ def put_email_verification(token, tran, session):
             enrol_respondent_for_survey(respondent, session)
         else:
             logger.info('No pending enrolment for respondent while checking email verification token',
-                        party_uuid=respondent.party_uuid)
+                        party_uuid=str(respondent.party_uuid))
 
         # We set the user as verified on the OAuth2 server.
         set_user_verified(email_address)
@@ -375,7 +382,7 @@ def update_verified_email_address(respondent, tran, session):
         account_verified='true')
 
     if oauth_response.status_code != 201:
-        raise RasError("Failed to change respondent email")
+        raise RasError("Failed to change respondent email", respondent_id=str(respondent.party_uuid))
 
     def compensate_oauth_change():
         rollback_response = OauthClient().update_account(
@@ -387,7 +394,7 @@ def update_verified_email_address(respondent, tran, session):
         if rollback_response.status_code != 201:
             logger.error("Failed to rollback change to respondent email. Please investigate.",
                          party_id=respondent.party_uuid)
-            raise RasError("Failed to rollback change to respondent email.")
+            raise RasError("Failed to rollback change to respondent email")
 
     tran.compensate(compensate_oauth_change)
 
@@ -408,7 +415,7 @@ def resend_verification_email(party_uuid, session):
 
     respondent = query_respondent_by_party_uuid(party_uuid, session)
     if not respondent:
-        raise RasError(NO_RESPONDENT_FOR_PARTY_ID, status=404)
+        raise ClientError(NO_RESPONDENT_FOR_PARTY_ID, status=404)
 
     if respondent.pending_email_address:
         _send_email_verification(party_uuid, respondent.pending_email_address)
@@ -433,7 +440,7 @@ def add_new_survey_for_respondent(payload, tran, session):
 
     iac = request_iac(enrolment_code)
     if not iac.get('active'):
-        raise RasError("Enrolment code is not active.", status=400)
+        raise ClientError("Enrolment code is not active", status=400)
 
     respondent = query_respondent_by_party_uuid(respondent_party_id, session)
 
@@ -455,9 +462,9 @@ def add_new_survey_for_respondent(payload, tran, session):
         """
         business = query_business_by_party_uuid(business_id, session)
         if not business:
-            raise RasError("Could not locate business when creating business association.",
-                           business_id=business_id,
-                           status=404)
+            raise ClientError("Could not locate business when creating business association",
+                              business_id=business_id,
+                              status=404)
         br = BusinessRespondent(business=business, respondent=respondent)
 
     enrolment = Enrolment(business_respondent=br,
@@ -479,7 +486,7 @@ def _send_email_verification(party_id, email):
     Send an email verification to the respondent
     """
     verification_url = PublicWebsite().activate_account_url(email)
-    logger.info('Verification URL for party_id', party_id=party_id, url=verification_url)
+    logger.info('Verification URL for party_id', party_id=str(party_id), url=verification_url)
 
     personalisation = {
         'ACCOUNT_VERIFICATION_URL': verification_url
@@ -487,10 +494,10 @@ def _send_email_verification(party_id, email):
 
     try:
         NotifyGateway(current_app.config).verify_email(email, personalisation, str(party_id))
-        logger.info('Verification email sent', party_id=party_id)
+        logger.info('Verification email sent', party_id=str(party_id))
     except RasNotifyError:
         # Note: intentionally suppresses exception
-        logger.error('Error sending verification email for party_id', party_id=party_id)
+        logger.error('Error sending verification email for party_id', party_id=str(party_id))
 
 
 def set_user_verified(email_address):

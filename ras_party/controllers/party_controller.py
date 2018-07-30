@@ -2,7 +2,7 @@ from flask import current_app
 
 from ras_party.controllers.queries import query_business_by_party_uuid, query_business_by_ref
 from ras_party.controllers.queries import query_respondent_by_party_uuid
-from ras_party.exceptions import RasError
+from ras_party.exceptions import ClientError
 from ras_party.models.models import Business, Respondent
 from ras_party.support.session_decorator import with_db_session
 
@@ -17,10 +17,10 @@ def parties_post(party_data, session):
     """
     errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
     if errors:
-        raise RasError([e.split('\n')[0] for e in errors], status=400)
+        raise ClientError([e.split('\n')[0] for e in errors], status=400)
 
     if party_data['sampleUnitType'] != Business.UNIT_TYPE:
-        raise RasError('sampleUnitType must be of type', type=Business.UNIT_TYPE, status=400)
+        raise ClientError('sampleUnitType must be of type', type=Business.UNIT_TYPE, status=400)
 
     business = query_business_by_ref(party_data['sampleUnitRef'], session)
     if business:
@@ -44,10 +44,11 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
     :rtype: Party
     """
     if sample_unit_type != Business.UNIT_TYPE:
-        raise RasError(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B']", status=400)
+        raise ClientError(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B']",
+                          status=400)
     business = query_business_by_ref(sample_unit_ref, session)
     if not business:
-        raise RasError("Business with reference does not exist.", refernce=sample_unit_ref, status=404)
+        raise ClientError("Business with reference does not exist.", refernce=sample_unit_ref, status=404)
 
     return business.to_party_dict()
 
@@ -57,16 +58,16 @@ def get_party_by_id(sample_unit_type, id, session):
     if sample_unit_type == Business.UNIT_TYPE:
         business = query_business_by_party_uuid(id, session)
         if not business:
-            raise RasError("Business with id does not exist.", business_id=id, status=404)
+            raise ClientError("Business with id does not exist", business_id=id, status=404)
         return business.to_party_dict()
     elif sample_unit_type == Respondent.UNIT_TYPE:
         respondent = query_respondent_by_party_uuid(id, session)
         if not respondent:
-            raise RasError("Respondent with id does not exist.", respondent_id=id, status=404)
+            raise ClientError("Respondent with id does not exist", respondent_id=id, status=404)
         return respondent.to_party_dict()
     else:
-        raise RasError(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']",
-                       status=400)
+        raise ClientError(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']",
+                          status=400)
 
 
 def get_business_with_respondents_filtered_by_survey(sample_unit_type, id, survey_id):

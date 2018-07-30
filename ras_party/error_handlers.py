@@ -2,21 +2,37 @@ import logging
 
 import flask
 import structlog
-from flask import jsonify
+from flask import jsonify, request
 from requests import RequestException
 
-from ras_party.exceptions import RasError
+from ras_party.exceptions import ClientError, RasError
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 blueprint = flask.Blueprint('error_handlers', __name__)
 
 
+@blueprint.app_errorhandler(ClientError)
+def client_error(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    logger.info('Client error',
+                url=request.url,
+                errors=error.to_dict(),
+                status=error.status_code,
+                **error.kwargs)
+    return response
+
+
 @blueprint.app_errorhandler(RasError)
 def ras_error(error):
     response = jsonify(error.to_dict())
     response.status_code = error.status_code
-    logger.exception('Uncaught exception', errors=error.to_dict(), status=error.status_code)
+    logger.exception('Uncaught exception',
+                     url=request.url,
+                     errors=error.to_dict(),
+                     status=error.status_code,
+                     **error.kwargs)
     return response
 
 
@@ -28,7 +44,10 @@ def http_error(error):
         response.status_code = error.response.status_code
     else:
         response.status_code = 500
-    logger.exception('Uncaught exception', errors=errors, status=response.status_code)
+    logger.exception('Uncaught exception',
+                     url=request.url,
+                     errors=errors,
+                     status=response.status_code)
     return response
 
 

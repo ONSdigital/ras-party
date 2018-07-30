@@ -1,3 +1,13 @@
+class ClientError(Exception):
+
+    def __init__(self, errors, status=400, **kwargs):
+        self.errors = errors if isinstance(errors, list) else [errors]
+        self.status_code = status or RasPartyError.status_code
+        self.kwargs = kwargs
+
+    def to_dict(self):
+        return {'errors': self.errors}
+
 
 class RasError(Exception):
 

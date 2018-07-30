@@ -8,7 +8,7 @@ from itsdangerous import URLSafeTimedSerializer
 
 from ras_party.controllers import account_controller
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
-from ras_party.exceptions import RasError
+from ras_party.exceptions import ClientError
 from ras_party.models.models import BusinessRespondent, Enrolment, RespondentStatus, Respondent
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
@@ -166,7 +166,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent()
         party_uuid = "gibberish"
         response = self.get_respondents_by_ids([party_uuid], expected_status=400)
-        self.assertEquals(response['errors'][0], """'gibberish' is not a valid UUID format for property 'id'.""")
+        self.assertEquals(response['errors'][0], """'gibberish' is not a valid UUID format for property 'id'""")
 
     def test_get_respondent_by_ids_with_an_unknown_id_still_returns_correct_representation_for_other_ids(self):
         respondent_1 = MockRespondent()
@@ -750,7 +750,7 @@ class TestRespondents(PartyTestClient):
                 'enrolmentCode': 'abc'
             }
             query('test@example.test', db.session()).return_value = None
-            with self.assertRaises(RasError):
+            with self.assertRaises(ClientError):
                 account_controller.post_respondent(payload)
             query.assert_called_once_with('test@example.test', db.session())
 
