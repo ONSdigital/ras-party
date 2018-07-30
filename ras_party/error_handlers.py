@@ -19,8 +19,8 @@ def client_error(error):
     logger.info('Client error',
                 url=request.url,
                 errors=error.to_dict(),
-                **error.kwargs,
-                status=error.status_code)
+                status=error.status_code,
+                **error.kwargs)
     return response
 
 
@@ -31,8 +31,8 @@ def ras_error(error):
     logger.exception('Uncaught exception',
                      url=request.url,
                      errors=error.to_dict(),
-                     **error.kwargs,
-                     status=error.status_code)
+                     status=error.status_code,
+                     **error.kwargs)
     return response
 
 

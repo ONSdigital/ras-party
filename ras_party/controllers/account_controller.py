@@ -89,7 +89,7 @@ def post_respondent(party, tran, session):
     business = query_business_by_party_uuid(business_id, session)
     if not business:
         raise ClientError("Could not locate business when creating business association",
-                          business_id=business_id,
+                          business_id=str(business_id),
                           status=404)
 
     # Chain of enrolment processes
@@ -159,7 +159,7 @@ def change_respondent_enrolment_status(payload, session):
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
         raise ClientError("Respondent does not exist",
-                          respondent_id=respondent_id, status=404)
+                          respondent_id=str(respondent_id), status=404)
 
     enrolment = query_enrolment_by_survey_business_respondent(respondent_id=respondent.id,
                                                               business_id=business_id,
@@ -201,7 +201,7 @@ def change_respondent(payload, session):
 
     _send_email_verification(respondent.party_uuid, new_email_address)
 
-    logger.info('Verification email sent for changing respondents email', respondent_id=respondent.party_uuid)
+    logger.info('Verification email sent for changing respondents email', respondent_id=str(respondent.party_uuid))
 
     return respondent.to_respondent_dict()
 
@@ -262,7 +262,7 @@ def change_respondent_password(token, payload, tran, session):
         NotifyGateway(current_app.config).confirm_password_change(
             email_address, personalisation, str(party_id))
     except RasNotifyError:
-        logger.error('Error sending notification email', respondent_id=party_id)
+        logger.error('Error sending notification email', respondent_id=str(party_id))
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has changed their password', respondent_id=party_id))
@@ -294,9 +294,10 @@ def request_password_change(payload, session):
             'FIRST_NAME': respondent.first_name
         }
 
-        logger.info('Reset password url', url=verification_url, party_id=respondent.party_uuid)
+        party_id = str(respondent.party_uuid)
 
-        party_id = respondent.party_uuid
+        logger.info('Reset password url', url=verification_url, party_id=party_id)
+
         try:
             NotifyGateway(current_app.config).request_password_change(
                 email_address, personalisation, str(party_id))
@@ -304,7 +305,7 @@ def request_password_change(payload, session):
             # Note: intentionally suppresses exception
             logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
 
-        logger.debug('Password reset email successfully sent', party_id=respondent.party_uuid)
+        logger.debug('Password reset email successfully sent', party_id=party_id)
 
     return {'response': "Ok"}
 
@@ -316,7 +317,7 @@ def change_respondent_account_status(payload, party_id, session):
 
     respondent = query_respondent_by_party_uuid(party_id, session)
     if not respondent:
-        raise ClientError("Respondent does not exist", respondent_id=party_id,
+        raise ClientError("Respondent does not exist", respondent_id=str(party_id),
                           status=404)
     respondent.status = status
 
@@ -360,7 +361,7 @@ def put_email_verification(token, tran, session):
             enrol_respondent_for_survey(respondent, session)
         else:
             logger.info('No pending enrolment for respondent while checking email verification token',
-                        party_uuid=respondent.party_uuid)
+                        party_uuid=str(respondent.party_uuid))
 
         # We set the user as verified on the OAuth2 server.
         set_user_verified(email_address)
@@ -381,7 +382,7 @@ def update_verified_email_address(respondent, tran, session):
         account_verified='true')
 
     if oauth_response.status_code != 201:
-        raise RasError("Failed to change respondent email", respondent_id=respondent.party_uuid)
+        raise RasError("Failed to change respondent email", respondent_id=str(respondent.party_uuid))
 
     def compensate_oauth_change():
         rollback_response = OauthClient().update_account(
@@ -410,7 +411,7 @@ def resend_verification_email(party_uuid, session):
     :param party_uuid: the party uuid
     :return: make_response
     """
-    logger.debug('Attempting to resend verification_email', party_uuid=party_uuid)
+    logger.debug('Attempting to resend verification_email', party_uuid=str(party_uuid))
 
     respondent = query_respondent_by_party_uuid(party_uuid, session)
     if not respondent:
@@ -462,7 +463,7 @@ def add_new_survey_for_respondent(payload, tran, session):
         business = query_business_by_party_uuid(business_id, session)
         if not business:
             raise ClientError("Could not locate business when creating business association",
-                              business_id=business_id,
+                              business_id=str(business_id),
                               status=404)
         br = BusinessRespondent(business=business, respondent=respondent)
 
@@ -477,7 +478,7 @@ def add_new_survey_for_respondent(payload, tran, session):
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has enroled to survey for business',
                                         survey_name=survey_name,
-                                        business=business_id))
+                                        business=str(business_id)))
 
 
 def _send_email_verification(party_id, email):
@@ -485,7 +486,7 @@ def _send_email_verification(party_id, email):
     Send an email verification to the respondent
     """
     verification_url = PublicWebsite().activate_account_url(email)
-    logger.info('Verification URL for party_id', party_id=party_id, url=verification_url)
+    logger.info('Verification URL for party_id', party_id=str(party_id), url=verification_url)
 
     personalisation = {
         'ACCOUNT_VERIFICATION_URL': verification_url
@@ -493,10 +494,10 @@ def _send_email_verification(party_id, email):
 
     try:
         NotifyGateway(current_app.config).verify_email(email, personalisation, str(party_id))
-        logger.info('Verification email sent', party_id=party_id)
+        logger.info('Verification email sent', party_id=str(party_id))
     except RasNotifyError:
         # Note: intentionally suppresses exception
-        logger.error('Error sending verification email for party_id', party_id=party_id)
+        logger.error('Error sending verification email for party_id', party_id=str(party_id))
 
 
 def set_user_verified(email_address):
