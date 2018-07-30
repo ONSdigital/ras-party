@@ -67,7 +67,7 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
 
     business = query_business_by_party_uuid(party_uuid, session)
     if not business:
-        raise ClientError("Business with party id does not exist", party_uuid=str(party_uuid), status=404)
+        raise ClientError("Business with party id does not exist", party_uuid=party_uuid, status=404)
 
     if verbose:
         return business.to_business_dict(collection_exercise_id=collection_exercise_id)

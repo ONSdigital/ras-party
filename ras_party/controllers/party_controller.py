@@ -58,12 +58,12 @@ def get_party_by_id(sample_unit_type, id, session):
     if sample_unit_type == Business.UNIT_TYPE:
         business = query_business_by_party_uuid(id, session)
         if not business:
-            raise ClientError("Business with id does not exist", business_id=str(id), status=404)
+            raise ClientError("Business with id does not exist", business_id=id, status=404)
         return business.to_party_dict()
     elif sample_unit_type == Respondent.UNIT_TYPE:
         respondent = query_respondent_by_party_uuid(id, session)
         if not respondent:
-            raise ClientError("Respondent with id does not exist", respondent_id=str(id), status=404)
+            raise ClientError("Respondent with id does not exist", respondent_id=id, status=404)
         return respondent.to_party_dict()
     else:
         raise ClientError(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']",

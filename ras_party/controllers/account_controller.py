@@ -89,7 +89,7 @@ def post_respondent(party, tran, session):
     business = query_business_by_party_uuid(business_id, session)
     if not business:
         raise ClientError("Could not locate business when creating business association",
-                          business_id=str(business_id),
+                          business_id=business_id,
                           status=404)
 
     # Chain of enrolment processes
@@ -159,7 +159,7 @@ def change_respondent_enrolment_status(payload, session):
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
         raise ClientError("Respondent does not exist",
-                          respondent_id=str(respondent_id), status=404)
+                          respondent_id=respondent_id, status=404)
 
     enrolment = query_enrolment_by_survey_business_respondent(respondent_id=respondent.id,
                                                               business_id=business_id,
@@ -300,7 +300,7 @@ def request_password_change(payload, session):
 
         try:
             NotifyGateway(current_app.config).request_password_change(
-                email_address, personalisation, str(party_id))
+                email_address, personalisation, party_id)
         except RasNotifyError:
             # Note: intentionally suppresses exception
             logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
@@ -317,7 +317,7 @@ def change_respondent_account_status(payload, party_id, session):
 
     respondent = query_respondent_by_party_uuid(party_id, session)
     if not respondent:
-        raise ClientError("Respondent does not exist", respondent_id=str(party_id),
+        raise ClientError("Respondent does not exist", respondent_id=party_id,
                           status=404)
     respondent.status = status
 
@@ -411,7 +411,7 @@ def resend_verification_email(party_uuid, session):
     :param party_uuid: the party uuid
     :return: make_response
     """
-    logger.debug('Attempting to resend verification_email', party_uuid=str(party_uuid))
+    logger.debug('Attempting to resend verification_email', party_uuid=party_uuid)
 
     respondent = query_respondent_by_party_uuid(party_uuid, session)
     if not respondent:
@@ -463,7 +463,7 @@ def add_new_survey_for_respondent(payload, tran, session):
         business = query_business_by_party_uuid(business_id, session)
         if not business:
             raise ClientError("Could not locate business when creating business association",
-                              business_id=str(business_id),
+                              business_id=business_id,
                               status=404)
         br = BusinessRespondent(business=business, respondent=respondent)
 
@@ -478,7 +478,7 @@ def add_new_survey_for_respondent(payload, tran, session):
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has enroled to survey for business',
                                         survey_name=survey_name,
-                                        business=str(business_id)))
+                                        business=business_id))
 
 
 def _send_email_verification(party_id, email):
