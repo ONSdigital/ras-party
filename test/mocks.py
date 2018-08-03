@@ -36,6 +36,8 @@ class MockRequests:
                         MockResponse(get_case_by_iac.response),
                     'http://mockhost:1111/cases/partyid/438df969-7c9c-4cd4-a89b-ac88cf0bfdf3':
                         MockResponse(get_cases_by_party.response),
+                    'http://mockhost:1111/cases/partyid/3b136c4b-7a14-4904-9e01-13364dd7b972':
+                        MockResponse(get_cases_by_party.response),
                     'http://mockhost:1111/casegroups/partyid/3b136c4b-7a14-4904-9e01-13364dd7b972':
                         MockResponse(get_casegroups_by_party.response),
                     'http://mockhost:2222/collectionexercises/dab9db7f-3aa0-4866-be20-54d72ee185fb':

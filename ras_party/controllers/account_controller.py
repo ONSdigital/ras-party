@@ -11,6 +11,7 @@ from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import query_respondent_by_email, query_respondent_by_pending_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
 from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
+from ras_party.controllers.queries import count_enrolment_by_survey_business
 from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import ClientError, RasError, RasNotifyError
@@ -166,11 +167,24 @@ def change_respondent_enrolment_status(payload, session):
                                                               survey_id=survey_id,
                                                               session=session)
     enrolment.status = change_flag
+    session.commit()
 
     category = 'DISABLE_RESPONDENT_ENROLMENT' if change_flag == 'DISABLED' else 'ENABLE_RESPONDENT_ENROLMENT'
     description = "Disable respondent enrolment" if change_flag == 'DISABLED' else 'Enable respondent enrolment'
-    for case in get_cases_for_collection_exercise(survey_id, business_id, respondent_id):
+    casegroup_ids = get_business_survey_casegroups(survey_id, business_id)
+    for case in get_cases_for_casegroups(casegroup_ids, respondent_id):
         post_case_event(case['id'], business_id, category=category, desc=description)
+
+    # If no enrolments are remaining for business/survey
+    # then send NO_ACTIVE_ENROLMENTS case event for each relevant B case
+    enrolment_count = count_enrolment_by_survey_business(business_id, survey_id, session)
+    if not enrolment_count:
+        logger.info('No active enrolments', business_id=business_id, survey_id=survey_id)
+        for case in get_cases_for_casegroups(casegroup_ids, business_id):
+            post_case_event(case['id'],
+                            party_id=None,
+                            category='NO_ACTIVE_ENROLMENTS',
+                            desc='No active enrolments remaining for case')
 
 
 @with_db_session
@@ -636,20 +650,28 @@ def request_collection_exercises_for_survey(survey_id):
     return response.json()
 
 
-def get_cases_for_collection_exercise(survey_id, business_id, respondent_id):
-    logger.debug('Retrieving cases for collection exercises',
-                 survey_id=survey_id, business_id=business_id, respondent_id=respondent_id)
-    collection_exercises = request_collection_exercises_for_survey(survey_id)
+def get_business_survey_casegroups(survey_id, business_id):
+    logger.debug('Retrieving casegroups for business and survey',
+                 survey_id=survey_id, business_id=business_id)
+    collection_exercise_ids = [ce['id']
+                               for ce in request_collection_exercises_for_survey(survey_id)]
     casegroups = request_casegroups_for_business(business_id)
-    cases = request_cases_for_respondent(respondent_id)
 
-    ce_casegroups = [casegroup for casegroup in casegroups
-                     if casegroup['collectionExerciseId'] in
-                     [collection_exercise['id'] for collection_exercise in collection_exercises]]
+    # Filtering casegroups by collection exercise ids
+    ce_casegroup_ids = [casegroup['id'] for casegroup in casegroups
+                        if casegroup['collectionExerciseId'] in collection_exercise_ids]
+    logger.debug('Successfully retrieved casegroups for business and survey',
+                 survey_id=survey_id, business_id=business_id)
+    return ce_casegroup_ids
 
+
+def get_cases_for_casegroups(casegroup_ids, case_party_id):
+    logger.debug('Retrieving cases for casegroups', case_party_id=case_party_id)
+
+    cases = request_cases_for_respondent(case_party_id)
+    # Filtering cases by survey/business
     matching_cases = [case for case in cases
-                      if case['caseGroup']['id'] in
-                      [casegroup['id'] for casegroup in ce_casegroups]]
-    logger.debug('Successfully retrieved cases for collection exercises',
-                 survey_id=survey_id, business_id=business_id, respondent_id=respondent_id)
+                      if case['caseGroup']['id'] in casegroup_ids]
+    logger.debug('Successfully retrieved cases for casegroups',
+                 case_party_id=case_party_id)
     return matching_cases

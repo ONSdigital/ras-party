@@ -3,7 +3,8 @@ import logging
 from sqlalchemy import func, and_, or_
 import structlog
 
-from ras_party.models.models import Business, BusinessRespondent, Enrolment, Respondent, BusinessAttributes
+from ras_party.models.models import Business, BusinessAttributes, BusinessRespondent, \
+    Enrolment, EnrolmentStatus, Respondent
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -168,4 +169,18 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
     response = session.query(Enrolment).filter(and_(Enrolment.respondent_id == respondent_id,
                                                     Enrolment.business_id == business_id,
                                                     Enrolment.survey_id == survey_id)).first()
+    return response
+
+
+def count_enrolment_by_survey_business(business_id, survey_id, session):
+    """
+    Query to return count of enrolments for given business id and survey
+    :param business_id,
+    :param survey_id
+    :return: Integer count of number of enrolments
+    """
+    logger.debug('Querying enrolment', business_id=business_id, survey_id=survey_id)
+    response = session.query(Enrolment).filter(and_(Enrolment.business_id == business_id,
+                                                    Enrolment.survey_id == survey_id,
+                                                    Enrolment.status == EnrolmentStatus.ENABLED)).count()
     return response
