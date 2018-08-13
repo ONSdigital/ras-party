@@ -7,6 +7,7 @@ from sqlalchemy import orm
 import structlog
 
 from ras_party.clients.oauth_client import OauthClient
+from ras_party.controllers.iac_controller import disable_iac, request_iac
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import query_respondent_by_email, query_respondent_by_pending_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
@@ -68,6 +69,8 @@ def post_respondent(party, tran, session):
     if not iac.get('active'):
         raise ClientError("Enrolment code is not active", status=400)
 
+    disable_iac(party['enrolmentCode'])
+
     existing = query_respondent_by_email(party['emailAddress'], session)
     if existing:
         raise ClientError("Email address already exists",
@@ -118,12 +121,6 @@ def post_respondent(party, tran, session):
         session.add(respondent)
         session.add(pending_enrolment)
 
-        # Notify the case service of this account being created
-        post_case_event(case_id,
-                        respondent.party_uuid,
-                        "RESPONDENT_ACCOUNT_CREATED",
-                        "New respondent account created")
-
         _send_email_verification(respondent.party_uuid, party['emailAddress'])
     except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError):
         logger.error('Error updating database for user', party_id=party['id'])
@@ -169,14 +166,9 @@ def change_respondent_enrolment_status(payload, session):
     enrolment.status = change_flag
     session.commit()
 
-    category = 'DISABLE_RESPONDENT_ENROLMENT' if change_flag == 'DISABLED' else 'ENABLE_RESPONDENT_ENROLMENT'
-    description = "Disable respondent enrolment" if change_flag == 'DISABLED' else 'Enable respondent enrolment'
-    casegroup_ids = get_business_survey_casegroups(survey_id, business_id)
-    for case in get_cases_for_casegroups(casegroup_ids, respondent_id):
-        post_case_event(case['id'], business_id, category=category, desc=description)
-
     # If no enrolments are remaining for business/survey
     # then send NO_ACTIVE_ENROLMENTS case event for each relevant B case
+    casegroup_ids = get_business_survey_casegroups(survey_id, business_id)
     enrolment_count = count_enrolment_by_survey_business(business_id, survey_id, session)
     if not enrolment_count:
         logger.info('No active enrolments', business_id=business_id, survey_id=survey_id)
@@ -383,7 +375,7 @@ def put_email_verification(token, tran, session):
     return respondent.to_respondent_dict()
 
 
-def update_verified_email_address(respondent, tran, session):
+def update_verified_email_address(respondent, tran, _):
 
     logger.info('Attempting to update verified email address')
 
@@ -456,6 +448,8 @@ def add_new_survey_for_respondent(payload, tran, session):
     if not iac.get('active'):
         raise ClientError("Enrolment code is not active", status=400)
 
+    disable_iac(enrolment_code)
+
     respondent = query_respondent_by_party_uuid(respondent_party_id, session)
 
     case_context = request_case(enrolment_code)
@@ -487,7 +481,8 @@ def add_new_survey_for_respondent(payload, tran, session):
                           status=EnrolmentStatus.ENABLED)
     session.add(enrolment)
 
-    post_case_event(str(case_id), str(respondent_party_id), "RESPONDENT_ENROLED", "Respondent enroled")
+    if count_enrolment_by_survey_business(survey_id, business_id, session) == 0:
+        post_case_event(str(case_id), None, "RESPONDENT_ENROLED", "Respondent enroled")
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has enroled to survey for business',
@@ -542,7 +537,8 @@ def enrol_respondent_for_survey(r, sess):
     # Send an enrolment event to the case service
     case_id = pending_enrolment.case_id
     logger.info('Pending enrolment for case_id', case_id=case_id)
-    post_case_event(str(case_id), str(r.party_uuid), "RESPONDENT_ENROLED", "Respondent enrolled")
+    if count_enrolment_by_survey_business(pending_enrolment.survey_id, pending_enrolment.business_id, sess):
+        post_case_event(str(case_id), None, "RESPONDENT_ENROLED", "Respondent enrolled")
     sess.delete(pending_enrolment)
 
 
@@ -562,18 +558,6 @@ def register_user(party, tran):
     # Add a compensating action to try and avoid an exception leaving the user in an invalid state.
     tran.compensate(dummy_compensating_action)
     logger.info("New user has been registered via the oauth2-service")
-
-
-def request_iac(enrolment_code):
-    # TODO: factor out commonality from these request_* functions
-    # TODO: Comments and expladummy_compensating_actionnation
-    iac_svc = current_app.config['RAS_IAC_SERVICE']
-    iac_url = f'{iac_svc}/iacs/{enrolment_code}'
-    logger.info('GET URL', url=iac_url)
-    response = Requests.get(iac_url)
-    logger.info('IAC service responded with', code=response.status_code)
-    response.raise_for_status()
-    return response.json()
 
 
 def request_case(enrolment_code):

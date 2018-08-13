@@ -1,5 +1,6 @@
 # pylint: disable=no-value-for-parameter
 
+import json
 import uuid
 from unittest.mock import MagicMock, patch
 
@@ -738,9 +739,11 @@ class TestRespondents(PartyTestClient):
 
     def test_post_respondent_uses_case_insensitive_email_query(self):
         with patch('ras_party.controllers.queries.query_respondent_by_email') as query,\
-                patch('ras_party.support.session_decorator.current_app.db') as db,\
-                patch('ras_party.controllers.account_controller.NotifyGateway'),\
-                patch('ras_party.controllers.account_controller.Requests'):
+             patch('ras_party.support.session_decorator.current_app.db') as db,\
+             patch('ras_party.controllers.account_controller.NotifyGateway'),\
+             patch('ras_party.controllers.account_controller.Requests'),\
+             patch('ras_party.controllers.account_controller.request_iac') as requested_iac,\
+             patch('ras_party.controllers.account_controller.disable_iac') as updated_iac:
             payload = {
                 'emailAddress': 'test@example.test',
                 'firstName': 'Joe',
@@ -749,6 +752,10 @@ class TestRespondents(PartyTestClient):
                 'telephone': '111',
                 'enrolmentCode': 'abc'
             }
+            with open('test/test_data/get_active_iac.json') as fp:
+                requested_iac.return_value = json.load(fp)
+            with open('test/test_data/get_updated_iac.json') as fp:
+                updated_iac.return_value = json.load(fp)
             query('test@example.test', db.session()).return_value = None
             with self.assertRaises(ClientError):
                 account_controller.post_respondent(payload)
