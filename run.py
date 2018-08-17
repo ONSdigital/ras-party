@@ -2,7 +2,6 @@ import os
 import logging
 from json import loads
 
-
 import structlog
 from alembic.config import Config
 from alembic import command
@@ -23,6 +22,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 def create_app(config=None):
     # create and configure the Flask app
     app = Flask(__name__)
+    app.name = "ras-party"
     app_config = f"config.{config or os.environ.get('APP_SETTINGS', 'Config')}"
     app.config.from_object(app_config)
 
