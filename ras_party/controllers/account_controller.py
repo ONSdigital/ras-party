@@ -83,8 +83,6 @@ def post_respondent(party, tran, session):
 
     try:
         survey_id = collection_exercise['surveyId']
-        survey = request_survey(survey_id)
-        survey_name = survey['longName']
     except KeyError:
         raise ClientError("There is no survey bound for this user", party_uuid=party['party_uuid'])
 
@@ -114,7 +112,6 @@ def post_respondent(party, tran, session):
                                              survey_id=survey_id)
         Enrolment(business_respondent=br,
                   survey_id=survey_id,
-                  survey_name=survey_name,
                   status=EnrolmentStatus.PENDING)
         session.add(respondent)
         session.add(pending_enrolment)
@@ -466,8 +463,6 @@ def add_new_survey_for_respondent(payload, tran, session):
     collection_exercise = request_collection_exercise(collection_exercise_id)
 
     survey_id = collection_exercise['surveyId']
-    survey = request_survey(survey_id)
-    survey_name = survey['longName']
 
     br = query_business_respondent_by_respondent_id_and_business_id(business_id, respondent.id, session)
 
@@ -484,7 +479,6 @@ def add_new_survey_for_respondent(payload, tran, session):
 
     enrolment = Enrolment(business_respondent=br,
                           survey_id=survey_id,
-                          survey_name=survey_name,
                           status=EnrolmentStatus.ENABLED)
     session.add(enrolment)
 
@@ -492,7 +486,6 @@ def add_new_survey_for_respondent(payload, tran, session):
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has enroled to survey for business',
-                                        survey_name=survey_name,
                                         business=business_id))
 
 

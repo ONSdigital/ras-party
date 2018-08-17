@@ -65,7 +65,6 @@ class TestRespondents(PartyTestClient):
             'business_id': enrolment['business_id'],
             'respondent_id': enrolment['respondent_id'],
             'survey_id': enrolment['survey_id'],
-            'survey_name': enrolment['survey_name'],
             'status': enrolment['status'],
             'created_on': enrolment['created_on']
         }

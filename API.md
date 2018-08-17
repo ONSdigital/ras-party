@@ -21,7 +21,6 @@ This page documents the Party service API endpoints. All endpoints return an `HT
         "enrolments": [
             {
                 "enrolmentStatus": "ENABLED",
-                "name": "Business Register and Employment Survey",
                 "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
             }
         ],
@@ -78,7 +77,6 @@ This page documents the Party service API endpoints. All endpoints return an `HT
         "enrolments": [
             {
                 "enrolmentStatus": "ENABLED",
-                "name": "Business Register and Employment Survey",
                 "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
             }
         ],
@@ -106,7 +104,6 @@ This page documents the Party service API endpoints. All endpoints return an `HT
         "enrolments": [
             {
                 "enrolmentStatus": "ENABLED",
-                "name": "Business Register and Employment Survey",
                 "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
             }
         ],
@@ -161,7 +158,6 @@ This page documents the Party service API endpoints. All endpoints return an `HT
         "enrolments": [
             {
                 "enrolmentStatus": "ENABLED",
-                "name": "Business Register and Employment Survey",
                 "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
             }
         ],
@@ -180,7 +176,6 @@ This page documents the Party service API endpoints. All endpoints return an `HT
         "enrolments": [
             {
                 "enrolmentStatus": "ENABLED",
-                "name": "Business Register and Employment Survey",
                 "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
             }
         ],
@@ -208,7 +203,6 @@ This page documents the Party service API endpoints. All endpoints return an `HT
             "enrolments": [
                 {
                     "enrolmentStatus": "ENABLED",
-                    "name": "Business Register and Employment Survey",
                     "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
                 }
             ],
@@ -244,7 +238,6 @@ The pendingEmailAddress field holds the unverified email address when it is bein
             "enrolments": [
                 {
                     "enrolmentStatus": "ENABLED",
-                    "name": "Business Register and Employment Survey",
                     "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
                 }
             ],
@@ -275,7 +268,6 @@ The pendingEmailAddress field holds the unverified email address when it is bein
             "enrolments": [
                 {
                     "enrolmentStatus": "ENABLED",
-                    "name": "Business Register and Employment Survey",
                     "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
                 }
             ],
@@ -298,7 +290,6 @@ The pendingEmailAddress field holds the unverified email address when it is bein
             "enrolments": [
                 {
                     "enrolmentStatus": "ENABLED",
-                    "name": "Business Register and Employment Survey",
                     "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
                 }
             ],
