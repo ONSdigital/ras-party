@@ -1,21 +1,20 @@
 from flask import current_app
 
+from ras_party import clients
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.exceptions import RasNotifyError
 from test.party_client import PartyTestClient
 from test.mocks import MockRequests
-from ras_party.support.requests_wrapper import Requests
 
 
 class TestNotifyGateway(PartyTestClient):
     """ Notify gateway test class"""
     def setUp(self):
-        self.mock_requests = MockRequests()
-        Requests._lib = self.mock_requests
+        clients.http = MockRequests()
 
     def test_notify_sends_notification_with_basic_message(self):
         # Given a mocked notify gateway and response
-        self.mock_requests.post.response_payload = '{"id": "notification id"}'
+        clients.http.post.response_payload = '{"id": "notification id"}'
 
         notify = NotifyGateway(current_app.config)
         # When an email is sent
@@ -28,13 +27,13 @@ class TestNotifyGateway(PartyTestClient):
                                      current_app.config['SECURITY_USER_PASSWORD']),
                             "timeout": 99, "json": expected_data}
 
-        self.mock_requests.post.assert_called_with(
+        clients.http.post.assert_called_with(
             "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/email_verification_id",
             expected_request)
 
     def test_notify_sends_notification_with_extended_message(self):
         # Given a mocked notify gateway and response
-        self.mock_requests.post.response_payload = '{"id": "notification id"}'
+        clients.http.post.response_payload = '{"id": "notification id"}'
 
         notify = NotifyGateway(current_app.config)
         # When an email is sent
@@ -45,7 +44,7 @@ class TestNotifyGateway(PartyTestClient):
                                      current_app.config['SECURITY_USER_PASSWORD']),
                             "timeout": 99, "json": expected_data}
 
-        self.mock_requests.post.assert_called_with(
+        clients.http.post.assert_called_with(
             "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/request_password_change_id",
             expected_request)
 
@@ -53,7 +52,7 @@ class TestNotifyGateway(PartyTestClient):
         # Given a mocked gov.uk notify and exception
         def mock_post_notify(*args, **kwargs):
             return Exception
-        self.mock_requests.post = mock_post_notify
+        clients.http.post = mock_post_notify
 
         # When an email is sent
         notify = NotifyGateway(current_app.config)

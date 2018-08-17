@@ -1,6 +1,6 @@
 import uuid
 
-from ras_party.support.requests_wrapper import Requests
+from ras_party import clients
 
 from test.mocks import MockRequests
 from test.party_client import PartyTestClient, businesses
@@ -10,8 +10,7 @@ from test.test_data.mock_business import MockBusiness
 class TestParties(PartyTestClient):
 
     def setUp(self):
-        self.mock_requests = MockRequests()
-        Requests._lib = self.mock_requests
+        clients.http = MockRequests()
 
     def _make_business_attributes_active(self, mock_business):
         sample_id = mock_business['sampleSummaryId']

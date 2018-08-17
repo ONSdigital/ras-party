@@ -2,8 +2,8 @@ import logging
 
 import structlog
 
+from ras_party.clients import http
 from ras_party.exceptions import RasNotifyError
-from ras_party.support.requests_wrapper import Requests
 from urllib import parse as urlparse
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -44,7 +44,7 @@ class NotifyGateway:
 
             url = urlparse.urljoin(self.notify_url, str(template_id))
 
-            response = Requests.post(url, json=notification)
+            response = http().post(url, json=notification)
 
             logger.info('Notification id sent via Notify-Gateway to GOV.UK Notify.', id=response.json()["id"])
 
