@@ -1,6 +1,7 @@
 import logging
 
 from sqlalchemy import func, and_, or_
+from sqlalchemy.orm.interfaces import MapperOption
 import structlog
 
 from ras_party.models.models import Business, BusinessAttributes, BusinessRespondent, \
@@ -27,7 +28,7 @@ def query_business_by_party_uuid(party_uuid, session):
     """
     logger.debug('Querying businesses by party_uuid', party_uuid=party_uuid)
 
-    return session.query(Business).filter(Business.party_uuid == party_uuid).first()
+    return session.query(Business).options(FromCache("default")).filter(Business.party_uuid == party_uuid).first()
 
 
 def query_business_by_ref(business_ref, session):
@@ -184,3 +185,30 @@ def count_enrolment_by_survey_business(business_id, survey_id, session):
                                                     Enrolment.survey_id == survey_id,
                                                     Enrolment.status == EnrolmentStatus.ENABLED)).count()
     return response
+
+
+class FromCache(MapperOption):
+    """Specifies that a Query should load results from a cache."""
+
+    propagate_to_loaders = False
+
+    def __init__(self, region="default", cache_key=None):
+        """Construct a new FromCache.
+
+        :param region: the cache region.  Should be a
+        region configured in the dictionary of dogpile
+        regions.
+
+        :param cache_key: optional.  A string cache key
+        that will serve as the key to the query.   Use this
+        if your query has a huge amount of parameters (such
+        as when using in_()) which correspond more simply to
+        some other identifier.
+
+        """
+        self.region = region
+        self.cache_key = cache_key
+
+    def process_query(self, query):
+        """Process a Query during normal loading operation."""
+        query._cache_region = self
