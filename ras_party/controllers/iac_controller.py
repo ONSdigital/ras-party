@@ -17,6 +17,6 @@ def disable_iac(enrolment_code):
     payload = {
         "updatedBy": "Party Service"
     }
-    response = Requests.put(iac_url, payload)
+    response = Requests.put(iac_url, json=payload)
     response.raise_for_status()
     return response.json()
