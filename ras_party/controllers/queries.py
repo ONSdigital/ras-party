@@ -1,7 +1,7 @@
 import logging
 
 from sqlalchemy import func, and_, or_
-from sqlalchemy.orm.interfaces import MapperOption
+from ras_party.support.caching_query import FromCache
 import structlog
 from sqlalchemy import func, and_, or_
 
