@@ -139,7 +139,6 @@
                 "sha256:fe3001b6a4f3f3582a865b9e5081cc548b973ec20320f297f5e2d46860e9c703",
                 "sha256:fe85bf7adb26eb47ad53a1bae5d35a28df16b2b93b89042a3a28746617a4738d"
             ],
-            "markers": "platform_python_implementation == 'cpython'",
             "version": "==0.4.14"
         },
         "gunicorn": {
