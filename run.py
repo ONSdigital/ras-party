@@ -52,7 +52,7 @@ def create_database(db_connection, db_schema, pool_size, max_overflow, pool_recy
     def current_request():
         return _app_ctx_stack.__ident_func__()
 
-    cache_region = make_region().configure(expiration_time=300)
+    cache_region = make_region().configure('dogpile.cache.memory', expiration_time=300)
     regions = {
         "default": cache_region
     }
