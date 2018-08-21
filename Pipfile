@@ -25,6 +25,7 @@ sqlalchemy-utils = "*"
 structlog = "*"
 requestsdefaulter = "*"
 flask-zipkin = "*"
+"dogpile.cache" = "*"
 
 [dev-packages]
 coverage = "*"
