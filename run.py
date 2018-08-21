@@ -13,6 +13,8 @@ from sqlalchemy import create_engine, column, text
 from sqlalchemy.exc import DatabaseError, ProgrammingError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql import exists, select
+from ras_party.support.caching_query import query_callable
+from dogpile.cache import make_region
 
 from logger_config import logger_initial_config
 
@@ -50,9 +52,14 @@ def create_database(db_connection, db_schema, pool_size, max_overflow, pool_recy
     def current_request():
         return _app_ctx_stack.__ident_func__()
 
+    cache_region = make_region()
+    regions = {
+        "default": cache_region
+    }
+
     engine = create_engine(db_connection, convert_unicode=True, pool_size=pool_size, max_overflow=max_overflow,
                            pool_recycle=pool_recycle)
-    session = scoped_session(sessionmaker(), scopefunc=current_request)
+    session = scoped_session(sessionmaker(querycls=query_callable(regions)), scopefunc=current_request)
     session.configure(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
     # TODO: change this
     engine.session = session
