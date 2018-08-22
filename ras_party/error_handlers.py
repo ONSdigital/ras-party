@@ -7,6 +7,7 @@ from requests import RequestException
 
 from ras_party.exceptions import ClientError, RasError
 
+
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 blueprint = flask.Blueprint('error_handlers', __name__)

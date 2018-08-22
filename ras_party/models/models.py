@@ -1,16 +1,15 @@
 import datetime
 import enum
+import logging
 import uuid
 
-import logging
 import structlog
 from jsonschema import Draft4Validator
-
 from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
-from sqlalchemy.ext.declarative import declarative_base
 
 from ras_party.exceptions import RasError
 from ras_party.models import GUID

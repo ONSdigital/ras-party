@@ -1,11 +1,10 @@
-import os
 import logging
+import os
 from json import loads
 
-
 import structlog
-from alembic.config import Config
 from alembic import command
+from alembic.config import Config
 from flask import Flask, _app_ctx_stack
 from flask_cors import CORS
 from retrying import retry, RetryError

@@ -1,10 +1,11 @@
 import logging
 
-from sqlalchemy import func, and_, or_
 import structlog
+from sqlalchemy import func, and_, or_
 
 from ras_party.models.models import Business, BusinessAttributes, BusinessRespondent, \
     Enrolment, EnrolmentStatus, Respondent
+
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 

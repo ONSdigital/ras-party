@@ -6,6 +6,7 @@ from flask import current_app
 
 from ras_party.exceptions import ClientError, RasError
 
+
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 

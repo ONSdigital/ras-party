@@ -1,18 +1,18 @@
 import logging
 import uuid
 
+import structlog
 from flask import current_app
 from itsdangerous import SignatureExpired, BadSignature, BadData
 from sqlalchemy import orm
-import structlog
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.notify_gateway import NotifyGateway
+from ras_party.controllers.queries import count_enrolment_by_survey_business
+from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
+from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.queries import query_respondent_by_email, query_respondent_by_pending_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
-from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
-from ras_party.controllers.queries import count_enrolment_by_survey_business
-from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import ClientError, RasError, RasNotifyError
 from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
@@ -22,6 +22,7 @@ from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.transactional import transactional
 from ras_party.support.verification import decode_email_token
+
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
