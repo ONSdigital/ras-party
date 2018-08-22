@@ -537,7 +537,7 @@ def enrol_respondent_for_survey(r, sess):
     # Send an enrolment event to the case service
     case_id = pending_enrolment.case_id
     logger.info('Pending enrolment for case_id', case_id=case_id)
-    if count_enrolment_by_survey_business(pending_enrolment.survey_id, pending_enrolment.business_id, sess):
+    if count_enrolment_by_survey_business(survey_id=enrolment.survey_id, business_id=enrolment.business_id, session=sess) == 0:
         post_case_event(str(case_id), None, "RESPONDENT_ENROLED", "Respondent enrolled")
     sess.delete(pending_enrolment)
 
