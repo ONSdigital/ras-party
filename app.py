@@ -1,8 +1,8 @@
+import requests
 from json import loads
 import logging
 
 import structlog
-import requestsdefaulter
 
 from retrying import RetryError
 from flask_zipkin import Zipkin
@@ -20,7 +20,19 @@ app = create_app()
 
 # Zipkin
 zipkin = Zipkin(app=app, sample_rate=app.config.get("ZIPKIN_SAMPLE_RATE"))
-requestsdefaulter.default_headers(zipkin.create_http_headers_for_new_span)
+original_prepare_headers = requests.models.PreparedRequest.prepare_headers
+
+
+def new_prepare_headers(self, headers):
+    defaults = zipkin.create_http_headers_for_new_span()
+
+    if headers is not None:
+        defaults.update(headers)
+
+    original_prepare_headers(self, defaults)
+
+
+requests.models.PreparedRequest.prepare_headers = new_prepare_headers
 
 with open(app.config['PARTY_SCHEMA']) as io:
     app.config['PARTY_SCHEMA'] = loads(io.read())
