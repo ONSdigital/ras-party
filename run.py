@@ -2,7 +2,6 @@ import os
 import logging
 from json import loads
 
-
 import structlog
 from alembic.config import Config
 from alembic import command

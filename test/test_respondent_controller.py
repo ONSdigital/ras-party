@@ -6,12 +6,12 @@ from unittest.mock import MagicMock, patch
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 
+from ras_party import clients
 from ras_party.controllers import account_controller
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
 from ras_party.exceptions import ClientError
 from ras_party.models.models import BusinessRespondent, Enrolment, RespondentStatus, Respondent
 from ras_party.support.public_website import PublicWebsite
-from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.transactional import transactional
 from ras_party.support.verification import generate_email_token
@@ -25,8 +25,7 @@ from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId,
 class TestRespondents(PartyTestClient):
 
     def setUp(self):
-        self.mock_requests = MockRequests()
-        Requests._lib = self.mock_requests
+        clients.http = MockRequests()
         self.mock_notify = MagicMock()
         account_controller.NotifyGateway = MagicMock(return_value=self.mock_notify)
         self.mock_respondent = MockRespondent().attributes().as_respondent()

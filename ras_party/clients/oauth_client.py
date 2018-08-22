@@ -1,6 +1,6 @@
 from flask import current_app
 
-from ras_party.support.requests_wrapper import Requests
+from ras_party.clients import http
 
 
 class OauthClient:
@@ -21,7 +21,7 @@ class OauthClient:
             'client_secret': self.client_secret
         }
         basic_auth = (self.client_id, self.client_secret)
-        return Requests.post(self.admin_url, auth=basic_auth, data=payload)
+        return http().post(self.admin_url, auth=basic_auth, data=payload)
 
     def update_account(self, **kwargs):
         basic_auth = (self.client_id, self.client_secret)
@@ -30,4 +30,4 @@ class OauthClient:
             'client_secret': self.client_secret
         }
         payload.update(kwargs)
-        return Requests.put(self.admin_url, auth=basic_auth, data=payload)
+        return http().put(self.admin_url, auth=basic_auth, data=payload)

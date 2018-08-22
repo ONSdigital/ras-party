@@ -6,6 +6,7 @@ from itsdangerous import SignatureExpired, BadSignature, BadData
 from sqlalchemy import orm
 import structlog
 
+from ras_party.clients import http
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import query_respondent_by_email, query_respondent_by_pending_email
@@ -18,7 +19,6 @@ from ras_party.exceptions import ClientError, RasError, RasNotifyError
 from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
 from ras_party.models.models import PendingEnrolment, Respondent, RespondentStatus
 from ras_party.support.public_website import PublicWebsite
-from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.transactional import transactional
 from ras_party.support.verification import decode_email_token
@@ -570,7 +570,7 @@ def request_iac(enrolment_code):
     iac_svc = current_app.config['RAS_IAC_SERVICE']
     iac_url = f'{iac_svc}/iacs/{enrolment_code}'
     logger.info('GET URL', url=iac_url)
-    response = Requests.get(iac_url)
+    response = http().get(iac_url)
     logger.info('IAC service responded with', code=response.status_code)
     response.raise_for_status()
     return response.json()
@@ -580,7 +580,7 @@ def request_case(enrolment_code):
     case_svc = current_app.config['RAS_CASE_SERVICE']
     case_url = f'{case_svc}/cases/iac/{enrolment_code}'
     logger.info('GET URL', url=case_url)
-    response = Requests.get(case_url)
+    response = http().get(case_url)
     logger.info('Case service responded with', status=response.status_code)
     response.raise_for_status()
     return response.json()
@@ -590,7 +590,7 @@ def request_collection_exercise(collection_exercise_id):
     ce_svc = current_app.config['RAS_COLLEX_SERVICE']
     ce_url = f'{ce_svc}/collectionexercises/{collection_exercise_id}'
     logger.info('GET', url=ce_url)
-    response = Requests.get(ce_url)
+    response = http().get(ce_url)
     logger.info('Collection exercise service responded with', status=response.status_code)
     response.raise_for_status()
     return response.json()
@@ -600,7 +600,7 @@ def request_survey(survey_id):
     survey_svc = current_app.config['RAS_SURVEY_SERVICE']
     survey_url = f'{survey_svc}/surveys/{survey_id}'
     logger.info('GET', url=survey_url)
-    response = Requests.get(survey_url)
+    response = http().get(survey_url)
     logger.info('Survey service responded with', status=response.status_code)
     response.raise_for_status()
     return response.json()
@@ -617,7 +617,7 @@ def post_case_event(case_id, party_id, category='Default category message', desc
         'createdBy': 'Party Service'
     }
 
-    response = Requests.post(case_url, json=payload)
+    response = http().post(case_url, json=payload)
     response.raise_for_status()
     logger.debug('Successfully posted case event')
     return response.json()
@@ -626,7 +626,7 @@ def post_case_event(case_id, party_id, category='Default category message', desc
 def request_cases_for_respondent(respondent_id):
     logger.debug('Retrieving cases for respondent', respondent_id=respondent_id)
     url = f'{current_app.config["RAS_CASE_SERVICE"]}/cases/partyid/{respondent_id}'
-    response = Requests.get(url)
+    response = http().get(url)
     response.raise_for_status()
     logger.debug('Successfully retrieved cases for respondent', respondent_id=respondent_id)
     return response.json()
@@ -635,7 +635,7 @@ def request_cases_for_respondent(respondent_id):
 def request_casegroups_for_business(business_id):
     logger.debug('Retrieving casegroups for business', business_id=business_id)
     url = f'{current_app.config["RAS_CASE_SERVICE"]}/casegroups/partyid/{business_id}'
-    response = Requests.get(url)
+    response = http().get(url)
     response.raise_for_status()
     logger.debug('Successfully retrieved casegroups for business', business_id=business_id)
     return response.json()
@@ -644,7 +644,7 @@ def request_casegroups_for_business(business_id):
 def request_collection_exercises_for_survey(survey_id):
     logger.debug('Retrieving collection exercises for survey', survey_id=survey_id)
     url = f'{current_app.config["RAS_COLLEX_SERVICE"]}/collectionexercises/survey/{survey_id}'
-    response = Requests.get(url)
+    response = http().get(url)
     response.raise_for_status()
     logger.debug('Successfully retrieved collection exercises for survey', survey_id=survey_id)
     return response.json()
