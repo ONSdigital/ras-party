@@ -3,9 +3,6 @@ services:
   - docker
 python:
   - "3.6"
-before_install:
-  - docker-compose --verbose build
-  - docker-compose up -d
 install:
     - pip install pipenv
     - pipenv install --dev
@@ -20,4 +17,3 @@ env:
 branches:
   only:
     - master
-
