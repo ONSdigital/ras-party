@@ -13,7 +13,7 @@ flask = "*"
 flask-cors = "*"
 flask-httpauth = "*"
 gunicorn = "*"
-gevent = "*"
+gevent = {version = "*", platform_python_implementation="=='CPython'"}
 itsdangerous = "*"
 jsonschema = "*"
 "psycopg2" = "*"
@@ -23,6 +23,8 @@ retrying = "*"
 sqlalchemy = "*"
 sqlalchemy-utils = "*"
 structlog = "*"
+requestsdefaulter = "*"
+flask-zipkin = "*"
 
 [dev-packages]
 coverage = "*"
