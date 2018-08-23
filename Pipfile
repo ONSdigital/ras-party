@@ -23,6 +23,7 @@ retrying = "*"
 sqlalchemy = "*"
 sqlalchemy-utils = "*"
 structlog = "*"
+flask-zipkin = "*"
 
 [dev-packages]
 coverage = "*"
