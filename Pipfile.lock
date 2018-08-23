@@ -273,11 +273,10 @@
         },
         "requestsdefaulter": {
             "hashes": [
-                "sha256:5e185d9b38f29215c78446188afd70765a8e876244eec6a5f0e71ae437fdb128",
-                "sha256:bb83e7f96009be470d1dea55c270c9dad06fb231dd33dda483ab3d8ffb6b8102"
+                "sha256:5682733d391af907d8e5e95a5470b3b785275f1089a7a7113f1bb288b9d4631a"
             ],
             "index": "pypi",
-            "version": "==0.1.0"
+            "version": "==0.1.1"
         },
         "retrying": {
             "hashes": [
