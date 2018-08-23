@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a240e393fc399fa6732ed06693d3bb05739e312ab74ae14c593a72a71412afba"
+            "sha256": "93d4c23a77d1befb67c0d0bd7d56af9453c394fc28fbedb3541b0b89c39cda8e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -272,8 +272,12 @@
             "version": "==2.19.1"
         },
         "requestsdefaulter": {
-            "editable": true,
-            "git": "https://github.com/ONSdigital/requestsdefaulter.git"
+            "hashes": [
+                "sha256:5e185d9b38f29215c78446188afd70765a8e876244eec6a5f0e71ae437fdb128",
+                "sha256:bb83e7f96009be470d1dea55c270c9dad06fb231dd33dda483ab3d8ffb6b8102"
+            ],
+            "index": "pypi",
+            "version": "==0.1.0"
         },
         "retrying": {
             "hashes": [
