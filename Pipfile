@@ -23,6 +23,7 @@ retrying = "*"
 sqlalchemy = "*"
 sqlalchemy-utils = "*"
 structlog = "*"
+requestsdefaulter = {git = "https://github.com/ONSdigital/requestsdefaulter.git", editable = true}
 flask-zipkin = "*"
 
 [dev-packages]

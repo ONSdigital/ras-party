@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "8132ef336183292bf454c5b4173647cdad6c139f15e7a971940a7df137f13049"
+            "sha256": "a240e393fc399fa6732ed06693d3bb05739e312ab74ae14c593a72a71412afba"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -270,6 +270,10 @@
             ],
             "index": "pypi",
             "version": "==2.19.1"
+        },
+        "requestsdefaulter": {
+            "editable": true,
+            "git": "https://github.com/ONSdigital/requestsdefaulter.git"
         },
         "retrying": {
             "hashes": [
