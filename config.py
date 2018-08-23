@@ -1,5 +1,6 @@
 # flake8: noqa
 import os
+from distutils.util import strtobool
 
 from ras_party.cloud.cloudfoundry import ONSCloudFoundry
 
@@ -38,6 +39,11 @@ class Config(object):
     else:
         DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'partysvc')
         DATABASE_URI = os.getenv('DATABASE_URI', "postgres://postgres:postgres@localhost:6432/postgres")
+
+    # Zipkin
+    ZIPKIN_DISABLE = bool(strtobool(os.getenv("ZIPKIN_DISABLE", "False")))
+    ZIPKIN_DSN = os.getenv("ZIPKIN_DSN", None)
+    ZIPKIN_SAMPLE_RATE = int(os.getenv("ZIPKIN_SAMPLE_RATE", 0))
 
     REQUESTS_GET_TIMEOUT = os.getenv('REQUESTS_GET_TIMEOUT', 20)
     REQUESTS_POST_TIMEOUT = os.getenv('REQUESTS_POST_TIMEOUT', 20)
