@@ -1,42 +1,35 @@
 [[source]]
-
 verify_ssl = true
 name = "pypi"
 url = "https://pypi.python.org/simple"
 
-
 [requires]
-
 python_version = "3.6"
 
-
 [packages]
-
-alembic = "==0.9.6"
-cfenv = "==0.5.3"
-flask = "==0.12.2"
-flask-cors = "==3.0.3"
-flask-httpauth = "==3.2.3"
-gunicorn = "==19.8.1"
-gevent = "==1.3.0"
-itsdangerous = "==0.24"
-jsonschema = "==2.6.0"
-"psycopg2" = "==2.7.1"
-python-dateutil = "==2.6.0"
-requests = "==2.17.3"
-retrying = "==1.3.3"
-sqlalchemy = "==1.1.10"
-sqlalchemy-utils = "==0.32.14"
-structlog = "==17.2.0"
-pycrypto = "*"
-bleach = "*"
-
+alembic = "*"
+cfenv = "*"
+flask = "*"
+flask-cors = "*"
+flask-httpauth = "*"
+gunicorn = "*"
+gevent = {version = "*", platform_python_implementation="=='CPython'"}
+itsdangerous = "*"
+jsonschema = "*"
+"psycopg2" = "*"
+python-dateutil = "*"
+requests = "*"
+retrying = "*"
+sqlalchemy = "*"
+sqlalchemy-utils = "*"
+structlog = "*"
+requestsdefaulter = "*"
+flask-zipkin = "*"
 
 [dev-packages]
-
 coverage = "*"
 "flake8" = "*"
-flask-testing = "==0.6.2"
+flask-testing = "*"
 pytest-cov = "*"
 tox = "*"
 pylint = "*"
