@@ -332,10 +332,11 @@ def change_respondent_account_status(payload, party_id, session):
 @with_db_session
 def put_email_verification(token, tran, session):
     """
-    Verify email address, this method can be reached when registering, adding a new survey or updating email address
+    Verify email address, this method can be reached when registering or updating email address
     :param token:
-    :param session:
-    :return:
+    :param tran:
+    :param session: db session
+    :return: Verified respondent details
     """
     logger.info('Attempting to verify email', token=token)
     try:
@@ -415,6 +416,7 @@ def resend_verification_email(party_uuid, session):
     """
     Check and resend an email verification email
     :param party_uuid: the party uuid
+    :param session: db session
     :return: make_response
     """
     logger.debug('Attempting to resend verification_email', party_uuid=party_uuid)
@@ -437,6 +439,7 @@ def add_new_survey_for_respondent(payload, tran, session):
     """
     Add a survey for an existing respondent
     :param payload: json containing party_id and enrolment_code
+    :param tran:
     :param session: database session
     """
     logger.info("Enrolling existing respondent in survey")
@@ -537,7 +540,8 @@ def enrol_respondent_for_survey(r, sess):
     # Send an enrolment event to the case service
     case_id = pending_enrolment.case_id
     logger.info('Pending enrolment for case_id', case_id=case_id)
-    if count_enrolment_by_survey_business(survey_id=enrolment.survey_id, business_id=enrolment.business_id, session=sess) == 0:
+    if count_enrolment_by_survey_business(survey_id=enrolment.survey_id, business_id=enrolment.business_id,
+                                          session=sess) == 0:
         post_case_event(str(case_id), None, "RESPONDENT_ENROLED", "Respondent enrolled")
     sess.delete(pending_enrolment)
 
