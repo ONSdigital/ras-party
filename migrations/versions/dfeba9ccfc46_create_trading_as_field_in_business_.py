@@ -5,8 +5,9 @@ Revises: 2798b5d5566a
 Create Date: 2018-04-12 12:11:59.813999
 
 """
-from alembic import op
 import json
+
+from alembic import op
 
 
 # revision identifiers, used by Alembic.

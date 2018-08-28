@@ -4,6 +4,7 @@ from flask_httpauth import HTTPBasicAuth
 from ras_party.controllers import party_controller
 from ras_party.support.log_decorator import log_route
 
+
 party_view = Blueprint('party_view', __name__)
 auth = HTTPBasicAuth()
 

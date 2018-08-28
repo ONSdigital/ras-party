@@ -1,9 +1,10 @@
 from flask import Blueprint, current_app, make_response, jsonify, request
 from flask_httpauth import HTTPBasicAuth
 
-from ras_party.exceptions import RasError
 from ras_party.controllers import respondent_controller
+from ras_party.exceptions import RasError
 from ras_party.support.log_decorator import log_route
+
 
 respondent_view = Blueprint('respondent_view', __name__)
 auth = HTTPBasicAuth()

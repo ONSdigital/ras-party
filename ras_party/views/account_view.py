@@ -1,6 +1,6 @@
 import logging
-import structlog
 
+import structlog
 from flask import Blueprint, request, current_app, make_response, jsonify
 from flask_httpauth import HTTPBasicAuth
 
@@ -8,6 +8,7 @@ from ras_party.controllers import account_controller
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import RasError
 from ras_party.support.log_decorator import log_route
+
 
 account_view = Blueprint('account_view', __name__)
 
