@@ -2,7 +2,10 @@ import logging
 from json import loads
 
 import structlog
+import requestsdefaulter
+
 from retrying import RetryError
+from flask_zipkin import Zipkin
 
 from logger_config import logger_initial_config
 from run import create_app, initialise_db
@@ -15,6 +18,11 @@ This is a duplicate of run.py, with minor modifications to support gunicorn exec
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 app = create_app()
+
+# Zipkin
+zipkin = Zipkin(app=app, sample_rate=app.config.get("ZIPKIN_SAMPLE_RATE"))
+requestsdefaulter.default_headers(zipkin.create_http_headers_for_new_span)
+
 with open(app.config['PARTY_SCHEMA']) as io:
     app.config['PARTY_SCHEMA'] = loads(io.read())
 
