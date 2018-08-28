@@ -333,6 +333,14 @@ def change_respondent_account_status(payload, party_id, session):
     if not respondent:
         raise ClientError("Respondent does not exist", respondent_id=party_id,
                           status=404)
+    # Unlock respondents account
+    if status == 'ACTIVE':
+        email_address = respondent.email_address
+        oauth_response = OauthClient().update_account(username=email_address, account_locked='False')
+
+        if oauth_response.status_code != 201:
+            raise RasError('Failed to unlock respondent account', respondent_id=str(respondent.party_uuid))
+
     respondent.status = status
 
 
