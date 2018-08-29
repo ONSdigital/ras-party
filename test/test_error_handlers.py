@@ -1,7 +1,6 @@
-from flask import request
-
 from unittest.mock import patch
 
+from flask import request
 from requests import Request, RequestException, Response
 
 from ras_party.error_handlers import client_error, exception_error, http_error, ras_error

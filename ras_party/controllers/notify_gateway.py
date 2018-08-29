@@ -1,10 +1,11 @@
 import logging
+from urllib import parse as urlparse
 
 import structlog
 
 from ras_party.exceptions import RasNotifyError
 from ras_party.support.requests_wrapper import Requests
-from urllib import parse as urlparse
+
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 

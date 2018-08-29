@@ -1,8 +1,8 @@
 import logging
 
+import structlog
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
-import structlog
 
 from ras_party.exceptions import RasError
 

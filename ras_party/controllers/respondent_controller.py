@@ -1,11 +1,10 @@
 import uuid
 
+from ras_party.controllers.account_controller import change_respondent
 from ras_party.controllers.queries import query_respondent_by_party_uuid, \
     query_respondent_by_email, update_respondent_details, query_respondent_by_party_uuids
-
 from ras_party.exceptions import ClientError
 from ras_party.support.session_decorator import with_db_session
-from ras_party.controllers.account_controller import change_respondent
 
 
 @with_db_session

@@ -1,16 +1,15 @@
 import datetime
 import enum
+import logging
 import uuid
 
-import logging
 import structlog
 from jsonschema import Draft4Validator
-
 from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
-from sqlalchemy.ext.declarative import declarative_base
 
 from ras_party.exceptions import RasError
 from ras_party.models import GUID
@@ -89,7 +88,6 @@ class Business(Base):
             respondent_dict['enrolments'] = []
             for enrolment in enrolments:
                 enrolments_dict = {
-                    "name": enrolment.survey_name,
                     "surveyId": enrolment.survey_id,
                     "enrolmentStatus": EnrolmentStatus(enrolment.status).name
                 }
@@ -251,7 +249,6 @@ class Respondent(Base):
             business_dict['enrolments'] = []
             for enrolment in enrolments:
                 enrolments_dict = {
-                    "name": enrolment.survey_name,
                     "surveyId": enrolment.survey_id,
                     "enrolmentStatus": EnrolmentStatus(enrolment.status).name
                 }
@@ -303,7 +300,6 @@ class Enrolment(Base):
     business_id = Column(GUID, primary_key=True)
     respondent_id = Column(Integer, primary_key=True)
     survey_id = Column(Text, primary_key=True)
-    survey_name = Column(Text)
     status = Column('status', Enum(EnrolmentStatus), default=EnrolmentStatus.PENDING)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 

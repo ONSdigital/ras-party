@@ -5,11 +5,12 @@ Revises: 92464d9a418f
 Create Date: 2018-02-05 16:17:44.240766
 
 """
+import json
 import os
 import sys
-import json
 
 from alembic import op
+
 
 # hack to allow for imports from project directory
 sys.path.append(os.path.abspath(os.getcwd()))

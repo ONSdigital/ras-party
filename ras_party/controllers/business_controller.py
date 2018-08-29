@@ -5,7 +5,6 @@ from flask import current_app
 from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid, \
     query_businesses_by_party_uuids, search_businesses
 from ras_party.controllers.validate import Validator, Exists
-
 from ras_party.exceptions import ClientError
 from ras_party.models.models import Business, BusinessAttributes
 from ras_party.support.session_decorator import with_db_session

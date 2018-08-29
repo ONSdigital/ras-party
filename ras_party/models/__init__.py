@@ -1,7 +1,7 @@
 import uuid
 
-from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.types import TypeDecorator, CHAR
 
 
 json_null = object()

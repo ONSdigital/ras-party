@@ -1,18 +1,18 @@
 import logging
 import uuid
 
+import structlog
 from flask import current_app
 from itsdangerous import SignatureExpired, BadSignature, BadData
 from sqlalchemy import orm
-import structlog
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.notify_gateway import NotifyGateway
+from ras_party.controllers.queries import count_enrolment_by_survey_business
+from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
+from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.queries import query_respondent_by_email, query_respondent_by_pending_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
-from ras_party.controllers.queries import query_business_respondent_by_respondent_id_and_business_id
-from ras_party.controllers.queries import count_enrolment_by_survey_business
-from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import ClientError, RasError, RasNotifyError
 from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
@@ -22,6 +22,7 @@ from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.transactional import transactional
 from ras_party.support.verification import decode_email_token
+
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -82,8 +83,6 @@ def post_respondent(party, tran, session):
 
     try:
         survey_id = collection_exercise['surveyId']
-        survey = request_survey(survey_id)
-        survey_name = survey['longName']
     except KeyError:
         raise ClientError("There is no survey bound for this user", party_uuid=party['party_uuid'])
 
@@ -113,7 +112,6 @@ def post_respondent(party, tran, session):
                                              survey_id=survey_id)
         Enrolment(business_respondent=br,
                   survey_id=survey_id,
-                  survey_name=survey_name,
                   status=EnrolmentStatus.PENDING)
         session.add(respondent)
         session.add(pending_enrolment)
@@ -473,8 +471,6 @@ def add_new_survey_for_respondent(payload, tran, session):
     collection_exercise = request_collection_exercise(collection_exercise_id)
 
     survey_id = collection_exercise['surveyId']
-    survey = request_survey(survey_id)
-    survey_name = survey['longName']
 
     br = query_business_respondent_by_respondent_id_and_business_id(business_id, respondent.id, session)
 
@@ -491,7 +487,6 @@ def add_new_survey_for_respondent(payload, tran, session):
 
     enrolment = Enrolment(business_respondent=br,
                           survey_id=survey_id,
-                          survey_name=survey_name,
                           status=EnrolmentStatus.ENABLED)
     session.add(enrolment)
 
@@ -499,7 +494,6 @@ def add_new_survey_for_respondent(payload, tran, session):
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has enroled to survey for business',
-                                        survey_name=survey_name,
                                         business=business_id))
 
 
