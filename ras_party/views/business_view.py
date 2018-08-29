@@ -1,8 +1,8 @@
 from flask import Blueprint, request, current_app, jsonify
 from flask_httpauth import HTTPBasicAuth
 
-from ras_party.exceptions import RasError
 from ras_party.controllers import business_controller
+from ras_party.exceptions import RasError
 from ras_party.support.log_decorator import log_route
 
 

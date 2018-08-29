@@ -1,5 +1,5 @@
-from json import loads
 import logging
+from json import loads
 
 import structlog
 import requestsdefaulter
@@ -9,6 +9,7 @@ from flask_zipkin import Zipkin
 
 from logger_config import logger_initial_config
 from run import create_app, initialise_db
+
 
 """
 This is a duplicate of run.py, with minor modifications to support gunicorn execution.

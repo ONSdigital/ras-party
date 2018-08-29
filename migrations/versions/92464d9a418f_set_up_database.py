@@ -2,9 +2,10 @@ import datetime
 import os
 import sys
 
+import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB
-import sqlalchemy as sa
+
 
 # hack to allow for imports from project directory
 sys.path.append(os.path.abspath(os.getcwd()))

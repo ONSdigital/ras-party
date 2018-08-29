@@ -3,6 +3,7 @@ from flask import Blueprint, make_response, jsonify
 from ras_party.controllers import info_controller
 from ras_party.support.log_decorator import log_route
 
+
 info_view = Blueprint('info_view', __name__)
 
 

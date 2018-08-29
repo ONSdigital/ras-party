@@ -3,6 +3,7 @@ from functools import wraps
 
 import structlog
 
+
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
