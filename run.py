@@ -2,11 +2,13 @@ import logging
 import os
 from json import loads
 
+import requestsdefaulter
 import structlog
 from alembic import command
 from alembic.config import Config
 from flask import Flask, _app_ctx_stack
 from flask_cors import CORS
+from flask_zipkin import Zipkin
 from retrying import retry, RetryError
 from sqlalchemy import create_engine, column, text
 from sqlalchemy.exc import DatabaseError, ProgrammingError
@@ -14,7 +16,6 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql import exists, select
 
 from logger_config import logger_initial_config
-
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -25,7 +26,9 @@ def create_app(config=None):
     app.name = "ras-party"
     app_config = f"config.{config or os.environ.get('APP_SETTINGS', 'Config')}"
     app.config.from_object(app_config)
-
+    # Zipkin
+    zipkin = Zipkin(app=app, sample_rate=app.config.get("ZIPKIN_SAMPLE_RATE"))
+    requestsdefaulter.default_headers(zipkin.create_http_headers_for_new_span)
     # register view blueprints
     from ras_party.views.party_view import party_view
     from ras_party.views.business_view import business_view
