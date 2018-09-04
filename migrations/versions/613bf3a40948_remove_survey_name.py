@@ -5,6 +5,7 @@ Revises: ac604d2cf763
 Create Date: 2018-08-20 10:16:35.995473
 
 """
+import sqlalchemy as sa
 from alembic import op
 
 
@@ -16,8 +17,12 @@ depends_on = None
 
 
 def upgrade():
-    pass
+    op.drop_column('survey_name', schema='partysvc.enrolment')
 
 
 def downgrade():
-    op.drop_column('survey_name', schema='partysvc.enrolment')
+    op.add_column(
+        'survey_name',
+        sa.Column('survey_name', sa.Text, nullable=True),
+        schema='partysvc.enrolment'
+    )
