@@ -70,8 +70,6 @@ def post_respondent(party, tran, session):
     if not iac.get('active'):
         raise ClientError("Enrolment code is not active", status=400)
 
-    disable_iac(party['enrolmentCode'])
-
     existing = query_respondent_by_email(party['emailAddress'], session)
     if existing:
         raise ClientError("Email address already exists",
@@ -131,7 +129,7 @@ def post_respondent(party, tran, session):
         raise RasError("Error during enrolment process", status=500)
 
     register_user(party, tran)
-
+    disable_iac(enrolment_code=party['enrolmentCode'])
     return respondent.to_respondent_dict()
 
 
