@@ -4,6 +4,7 @@ import uuid
 import structlog
 from flask import current_app
 from itsdangerous import SignatureExpired, BadSignature, BadData
+from requests import HTTPError
 from sqlalchemy import orm
 
 from ras_party.clients.oauth_client import OauthClient
@@ -329,8 +330,21 @@ def change_respondent_account_status(payload, party_id, session):
 
     respondent = query_respondent_by_party_uuid(party_id, session)
     if not respondent:
-        raise ClientError("Respondent does not exist", respondent_id=party_id,
+        raise ClientError('Respondent does not exist', respondent_id=party_id,
                           status=404)
+
+    # Unlock respondents account
+    if status == 'ACTIVE':
+        email_address = respondent.email_address
+        oauth_response = OauthClient().update_account(username=email_address, account_locked='False')
+
+        try:
+            oauth_response.raise_for_status()
+        except HTTPError:
+            raise RasError('Failed to unlock respondent account', respondent_id=str(respondent.party_uuid))
+
+        logger.debug('Respondent account updated', respondent_id=party_id)
+
     respondent.status = status
 
 
