@@ -116,7 +116,7 @@ def post_respondent(party, tran, session):
                   status=EnrolmentStatus.PENDING)
         session.add(respondent)
         session.add(pending_enrolment)
-
+        session.commit()
         _send_email_verification(respondent.party_uuid, party['emailAddress'])
     except (orm.exc.ObjectDeletedError, orm.exc.FlushError, orm.exc.StaleDataError, orm.exc.DetachedInstanceError):
         logger.error('Error updating database for user', party_id=party['id'])
@@ -447,8 +447,6 @@ def add_new_survey_for_respondent(payload, tran, session):
     if not iac.get('active'):
         raise ClientError("Enrolment code is not active", status=400)
 
-    disable_iac(enrolment_code)
-
     respondent = query_respondent_by_party_uuid(respondent_party_id, session)
 
     case_context = request_case(enrolment_code)
@@ -476,6 +474,9 @@ def add_new_survey_for_respondent(payload, tran, session):
                           survey_id=survey_id,
                           status=EnrolmentStatus.ENABLED)
     session.add(enrolment)
+    session.commit()
+
+    disable_iac(enrolment_code)
 
     if count_enrolment_by_survey_business(survey_id, business_id, session) == 0:
         post_case_event(str(case_id), None, "RESPONDENT_ENROLED", "Respondent enroled")
