@@ -258,9 +258,18 @@ def change_respondent_password(token, payload, tran, session):
 
     new_password = payload['new_password']
 
-    oauth_response = OauthClient().update_account(
-        username=email_address,
-        password=new_password)
+    # Check and see if the account is active, if not we can now set to active
+    if respondent.status != RespondentStatus.ACTIVE:
+        # We set the party as ACTIVE in this service
+        respondent.status = RespondentStatus.ACTIVE
+        oauth_response = OauthClient().update_account(
+            username=email_address,
+            password=new_password,
+            account_locked='False')
+    else:
+        oauth_response = OauthClient().update_account(
+            username=email_address,
+            password=new_password)
 
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent password")
@@ -297,28 +306,26 @@ def request_password_change(payload, session):
 
     logger.debug("Requesting password change", party_id=respondent.party_uuid)
 
-    if respondent.status is RespondentStatus.ACTIVE:
+    email_address = respondent.email_address
+    verification_url = PublicWebsite().reset_password_url(email_address)
 
-        email_address = respondent.email_address
-        verification_url = PublicWebsite().reset_password_url(email_address)
+    personalisation = {
+        'RESET_PASSWORD_URL': verification_url,
+        'FIRST_NAME': respondent.first_name
+    }
 
-        personalisation = {
-            'RESET_PASSWORD_URL': verification_url,
-            'FIRST_NAME': respondent.first_name
-        }
+    party_id = str(respondent.party_uuid)
 
-        party_id = str(respondent.party_uuid)
+    logger.info('Reset password url', url=verification_url, party_id=party_id)
 
-        logger.info('Reset password url', url=verification_url, party_id=party_id)
+    try:
+        NotifyGateway(current_app.config).request_password_change(
+            email_address, personalisation, party_id)
+    except RasNotifyError:
+        # Note: intentionally suppresses exception
+        logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
 
-        try:
-            NotifyGateway(current_app.config).request_password_change(
-                email_address, personalisation, party_id)
-        except RasNotifyError:
-            # Note: intentionally suppresses exception
-            logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
-
-        logger.debug('Password reset email successfully sent', party_id=party_id)
+    logger.debug('Password reset email successfully sent', party_id=party_id)
 
     return {'response': "Ok"}
 
