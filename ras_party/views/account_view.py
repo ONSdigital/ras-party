@@ -3,8 +3,9 @@ import logging
 import structlog
 from flask import Blueprint, request, current_app, make_response, jsonify
 from flask_httpauth import HTTPBasicAuth
+from itsdangerous import URLSafeTimedSerializer
 
-from ras_party.controllers import account_controller
+from ras_party.controllers import account_controller, respondent_controller
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import RasError
 from ras_party.support.log_decorator import log_route
@@ -75,7 +76,20 @@ def put_email_verification(token):
 
 @account_view.route('/resend-verification-email/<party_uuid>', methods=['GET'])
 def resend_verification_email(party_uuid):
+
     response = account_controller.resend_verification_email(party_uuid)
+    return make_response(jsonify(response), 200)
+
+
+@account_view.route('/resend-verification-email-expired-token/<token>', methods=['GET'])
+def resend_verification_email_expired_token(token):
+
+    timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+    email_token_salt = current_app.config["EMAIL_TOKEN_SALT"]
+
+    email = timed_serializer.loads(token, salt=email_token_salt, max_age=None)
+    respondent = respondent_controller.get_respondent_by_email(email)
+    response = account_controller.resend_verification_email(respondent['id'])
     return make_response(jsonify(response), 200)
 
 
