@@ -281,8 +281,10 @@ def change_respondent_password(token, payload, tran, session):
     party_id = respondent.party_uuid
 
     try:
-        NotifyGateway(current_app.config).confirm_password_change(
-            email_address, personalisation, str(party_id))
+        NotifyGateway(current_app.config).request_to_notify(email=email_address,
+                                                            template_name='confirm_password_change',
+                                                            personalisation=personalisation,
+                                                            reference=party_id)
     except RasNotifyError:
         logger.error('Error sending notification email', respondent_id=str(party_id))
 
@@ -319,8 +321,10 @@ def request_password_change(payload, session):
     logger.info('Reset password url', url=verification_url, party_id=party_id)
 
     try:
-        NotifyGateway(current_app.config).request_password_change(
-            email_address, personalisation, party_id)
+        NotifyGateway(current_app.config).request_to_notify(email=email_address,
+                                                            template_name='request_password_change',
+                                                            personalisation=personalisation,
+                                                            reference=party_id)
     except RasNotifyError:
         # Note: intentionally suppresses exception
         logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
@@ -718,8 +722,10 @@ def notify_account_lock(payload, session):
     logger.info('Reset password url', url=verification_url, party_id=party_id)
 
     try:
-        NotifyGateway(current_app.config).notify_account_locked(
-            email_address, personalisation, party_id)
+        NotifyGateway(current_app.config).request_to_notify(email=email_address,
+                                                            template_name='account_locked',
+                                                            personalisation=personalisation,
+                                                            reference=party_id)
     except RasNotifyError:
         # Note: intentionally suppresses exception
         logger.error('Error sending request to Notify Gateway', respondent_id=party_id)

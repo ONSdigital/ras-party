@@ -54,6 +54,20 @@ class NotifyGateway:
             raise RasNotifyError("There was a problem sending a notification via Notify-Gateway to GOV.UK Notify",
                                  error=e)
 
+    def request_to_notify(self, email, template_name, personalisation=None, reference=None):
+        template_id = self._get_template(template_name)
+        self._send_message(email, template_id, personalisation, reference)
+
+    def _get_template(self, template_name):
+        templates = {'notify_account_locked': self.notify_account_locked,
+                     'confirm_password_change': self.confirm_password_change_template,
+                     'request_password_change': self.request_password_change_template,
+                     'email_verification': self.email_verification_template}
+        if template_name in templates:
+            return templates[template_name]
+        else:
+            raise KeyError('Template does not exist')
+
     def verify_email(self, email, personalisation=None, reference=None):
         template_id = self.email_verification_template
         self._send_message(email, template_id, personalisation, reference)
