@@ -526,7 +526,10 @@ def _send_email_verification(party_id, email):
     }
 
     try:
-        NotifyGateway(current_app.config).verify_email(email, personalisation, str(party_id))
+        NotifyGateway(current_app.config).request_to_notify(email=email,
+                                                            template_name='email_verification',
+                                                            personalisation=personalisation,
+                                                            reference=str(party_id))
         logger.info('Verification email sent', party_id=str(party_id))
     except RasNotifyError:
         # Note: intentionally suppresses exception
@@ -723,7 +726,7 @@ def notify_account_lock(payload, session):
 
     try:
         NotifyGateway(current_app.config).request_to_notify(email=email_address,
-                                                            template_name='account_locked',
+                                                            template_name='notify_account_locked',
                                                             personalisation=personalisation,
                                                             reference=party_id)
     except RasNotifyError:
