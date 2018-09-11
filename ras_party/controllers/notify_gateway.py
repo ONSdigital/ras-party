@@ -19,6 +19,7 @@ class NotifyGateway:
         self.email_verification_template = config['RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE']
         self.request_password_change_template = config['RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE']
         self.confirm_password_change_template = config['RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE']
+        self.notify_account_locked = config['RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE']
 
     def _send_message(self, email, template_id, personalisation=None, reference=None):
         """
@@ -63,4 +64,8 @@ class NotifyGateway:
 
     def confirm_password_change(self, email, personalisation=None, reference=None):
         template_id = self.confirm_password_change_template
+        self._send_message(email, template_id, personalisation, reference)
+
+    def account_locked(self, email, personalisation=None, reference=None):
+        template_id = self.notify_account_locked
         self._send_message(email, template_id, personalisation, reference)

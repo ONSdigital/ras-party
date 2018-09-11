@@ -24,6 +24,7 @@ pipeline {
                 RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE = credentials('RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE')
                 RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = credentials('RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE')
                 RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = credentials('RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE')
+                RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE = credentials('RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE')
             }
             steps {
                 sh "cf login -a https://${env.CLOUDFOUNDRY_API} --skip-ssl-validation -u ${CF_USER_USR} -p ${CF_USER_PSW} -o rmras -s dev"
@@ -45,6 +46,7 @@ pipeline {
                 sh "cf set-env ras-party-dev RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE ${env.RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE}"
                 sh "cf set-env ras-party-dev RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE ${env.RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE}"
                 sh "cf set-env ras-party-dev RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE ${env.RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE}"
+                sh "cf set-env ras-party-dev RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE ${env.RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE}"
 
                 sh "cf set-env ras-party-dev RAS_IAC_SERVICE_HOST iacsvc-dev.${env.CF_DOMAIN}"
                 sh "cf set-env ras-party-dev RAS_IAC_SERVICE_PORT 80"
@@ -94,6 +96,7 @@ pipeline {
                 RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE = credentials('RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE')
                 RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = credentials('RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE')
                 RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = credentials('RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE')
+                RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE = credentials('RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE')
             }
             steps {
                 sh "cf login -a https://${env.CLOUDFOUNDRY_API} --skip-ssl-validation -u ${CF_USER_USR} -p ${CF_USER_PSW} -o rmras -s ci"
@@ -115,6 +118,8 @@ pipeline {
                 sh "cf set-env ras-party-ci RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE ${env.RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE}"
                 sh "cf set-env ras-party-ci RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE ${env.RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE}"
                 sh "cf set-env ras-party-ci RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE ${env.RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE}"
+                sh "cf set-env ras-party-ci RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE ${env.RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE}"
+
 
                 sh "cf set-env ras-party-ci RAS_IAC_SERVICE_HOST iacsvc-ci.${env.CF_DOMAIN}"
                 sh "cf set-env ras-party-ci RAS_IAC_SERVICE_PORT 80"
@@ -186,6 +191,7 @@ pipeline {
                 RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE = credentials('RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE')
                 RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = credentials('RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE')
                 RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = credentials('RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE')
+                RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE = credentials('RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE')
             }
             steps {
                 sh "cf login -a https://${env.CLOUDFOUNDRY_API} --skip-ssl-validation -u ${CF_USER_USR} -p ${CF_USER_PSW} -o rmras -s test"
@@ -207,6 +213,7 @@ pipeline {
                 sh "cf set-env ras-party-test RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE ${env.RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE}"
                 sh "cf set-env ras-party-test RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE ${env.RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE}"
                 sh "cf set-env ras-party-test RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE ${env.RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE}"
+                sh "cf set-env ras-party-test RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE ${env.RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE}"
 
                 sh "cf set-env ras-party-test RAS_IAC_SERVICE_HOST iacsvc-test.${env.CF_DOMAIN}"
                 sh "cf set-env ras-party-test RAS_IAC_SERVICE_PORT 80"
