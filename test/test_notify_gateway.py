@@ -19,7 +19,7 @@ class TestNotifyGateway(PartyTestClient):
 
         notify = NotifyGateway(current_app.config)
         # When an email is sent
-        notify.verify_email('email')
+        notify.request_to_notify('email', 'email_verification')
         # Then send_email_notification is called
 
         expected_data = {"emailAddress": "email"}
@@ -38,7 +38,8 @@ class TestNotifyGateway(PartyTestClient):
 
         notify = NotifyGateway(current_app.config)
         # When an email is sent
-        notify.request_password_change("email", personalisation="personalised message", reference="reference")
+        notify.request_to_notify("email", 'request_password_change', personalisation="personalised message",
+                                 reference="reference")
         # Then send_email_notification is called
         expected_data = {"emailAddress": "email", "personalisation": "personalised message", "reference": "reference"}
         expected_request = {"auth": (current_app.config['SECURITY_USER_NAME'],
@@ -59,4 +60,4 @@ class TestNotifyGateway(PartyTestClient):
         notify = NotifyGateway(current_app.config)
         # Then a RasNotifyError is raised
         with self.assertRaises(RasNotifyError):
-            notify.confirm_password_change('email')
+            notify.request_to_notify('email', 'request_password_change')

@@ -243,3 +243,11 @@ class PartyTestClient(TestCase):
                                    content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status)
         return response.get_data(as_text=True)
+
+    def notify_account_lock(self, payload, expected_status=200):
+        response = self.client.post('/party-api/v1/respondents/notify-respondent',
+                                    data=json.dumps(payload),
+                                    headers=self.auth_headers,
+                                    content_type='application/vnd.ons.business+json')
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))

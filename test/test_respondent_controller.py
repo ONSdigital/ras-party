@@ -274,7 +274,7 @@ class TestRespondents(PartyTestClient):
         # When the resend verification end point is hit
         self.resend_verification_email(respondent.party_uuid)
         # Verification email is sent
-        self.assertTrue(self.mock_notify.verify_email.called)
+        self.assertTrue(self.mock_notify.request_to_notify.called)
 
     def test_resend_verification_email_responds_with_message(self):
         # Given there is a respondent
@@ -289,7 +289,7 @@ class TestRespondents(PartyTestClient):
         # When the resend verification end point is hit
         response = self.resend_verification_email('3b136c4b-7a14-4904-9e01-13364dd7b972', 404)
         # Then an email is not sent and a message saying there is no respondent is returned
-        self.assertFalse(self.mock_notify.verify_email.called)
+        self.assertFalse(self.mock_notify.request_to_notify.called)
         self.assertIn(account_controller.NO_RESPONDENT_FOR_PARTY_ID, response['errors'])
 
     def test_resend_verification_email_party_id_malformed(self):
@@ -305,10 +305,11 @@ class TestRespondents(PartyTestClient):
         personalisation = {
             'ACCOUNT_VERIFICATION_URL': email
         }
-        self.mock_notify.verify_email.assert_called_once_with(
-            respondent.email_address,
-            personalisation,
-            respondent.party_uuid
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=respondent.email_address,
+            template_name='email_verification',
+            personalisation=personalisation,
+            reference=respondent.party_uuid
         )
 
     def test_resend_verification_email_sends_to_new_email_address(self):
@@ -321,10 +322,11 @@ class TestRespondents(PartyTestClient):
         personalisation = {
             'ACCOUNT_VERIFICATION_URL': pending_email
         }
-        self.mock_notify.verify_email.assert_called_once_with(
-            respondent.pending_email_address,
-            personalisation,
-            respondent.party_uuid
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=respondent.pending_email_address,
+            template_name='email_verification',
+            personalisation=personalisation,
+            reference=respondent.party_uuid
         )
 
     def test_request_password_change_with_valid_email(self):
@@ -343,10 +345,11 @@ class TestRespondents(PartyTestClient):
             'RESET_PASSWORD_URL': PublicWebsite().reset_password_url(respondent.email_address),
             'FIRST_NAME': respondent.first_name
         }
-        self.mock_notify.request_password_change.assert_called_once_with(
-            respondent.email_address,
-            personalisation,
-            respondent.party_uuid
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=respondent.email_address,
+            template_name='request_password_change',
+            personalisation=personalisation,
+            reference=respondent.party_uuid
         )
 
     def test_request_password_change_created_account_doesnt_call_notify_gateway(self):
@@ -383,10 +386,11 @@ class TestRespondents(PartyTestClient):
             'RESET_PASSWORD_URL': PublicWebsite().reset_password_url(respondent.email_address),
             'FIRST_NAME': respondent.first_name
         }
-        self.mock_notify.request_password_change.assert_called_once_with(
-            respondent.email_address,
-            personalisation,
-            respondent.party_uuid
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=respondent.email_address,
+            template_name='request_password_change',
+            personalisation=personalisation,
+            reference=respondent.party_uuid
         )
 
     @staticmethod
@@ -458,10 +462,11 @@ class TestRespondents(PartyTestClient):
         personalisation = {
             'FIRST_NAME': respondent.first_name
         }
-        self.mock_notify.confirm_password_change.assert_called_once_with(
-            respondent.email_address,
-            personalisation,
-            respondent.party_uuid
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=respondent.email_address,
+            template_name='confirm_password_change',
+            personalisation=personalisation,
+            reference=uuid.UUID(respondent.party_uuid)
         )
 
     @staticmethod
@@ -565,10 +570,11 @@ class TestRespondents(PartyTestClient):
         personalisation = {
             'ACCOUNT_VERIFICATION_URL': PublicWebsite().activate_account_url('test@example.test'),
         }
-        self.mock_notify.verify_email.assert_called_once_with(
-            'test@example.test',
-            personalisation,
-            respondent.party_uuid
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email='test@example.test',
+            template_name='email_verification',
+            personalisation=personalisation,
+            reference=respondent.party_uuid
         )
 
     def test_email_verification_activates_a_respondent(self):
@@ -584,7 +590,7 @@ class TestRespondents(PartyTestClient):
     def test_email_verification_url_is_from_config_yml_file(self):
         account_controller._send_email_verification(0, 'test@example.test')
         expected_url = 'http://dummy.ons.gov.uk/register/activate-account/'
-        frontstage_url = self.mock_notify.verify_email.call_args[0][1]['ACCOUNT_VERIFICATION_URL']
+        frontstage_url = self.mock_notify.request_to_notify.call_args[1]['personalisation']['ACCOUNT_VERIFICATION_URL']
         self.assertIn(expected_url, frontstage_url)
 
     def test_email_verification_twice_produces_a_200(self):
@@ -729,10 +735,11 @@ class TestRespondents(PartyTestClient):
         personalisation = {
             'ACCOUNT_VERIFICATION_URL': v_url,
         }
-        self.mock_notify.verify_email.assert_called_once_with(
-            self.mock_respondent['emailAddress'],
-            personalisation,
-            str(respondents()[0].party_uuid)
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=self.mock_respondent['emailAddress'],
+            template_name='email_verification',
+            personalisation=personalisation,
+            reference=str(respondents()[0].party_uuid)
         )
 
     def test_post_respondent_uses_case_insensitive_email_query(self):
