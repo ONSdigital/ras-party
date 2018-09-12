@@ -67,19 +67,3 @@ class NotifyGateway:
             return templates[template_name]
         else:
             raise KeyError('Template does not exist')
-
-    # def verify_email(self, email, personalisation=None, reference=None):
-    #     template_id = self.email_verification_template
-    #     self._send_message(email, template_id, personalisation, reference)
-    #
-    # def request_password_change(self, email, personalisation=None, reference=None):
-    #     template_id = self.request_password_change_template
-    #     self._send_message(email, template_id, personalisation, reference)
-    #
-    # def confirm_password_change(self, email, personalisation=None, reference=None):
-    #     template_id = self.confirm_password_change_template
-    #     self._send_message(email, template_id, personalisation, reference)
-    #
-    # def account_locked(self, email, personalisation=None, reference=None):
-    #     template_id = self.notify_account_locked
-    #     self._send_message(email, template_id, personalisation, reference)

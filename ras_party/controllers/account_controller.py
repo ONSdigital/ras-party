@@ -239,9 +239,7 @@ def verify_token(token, session):
 @transactional
 @with_db_session
 def change_respondent_password(token, payload, tran, session):
-    v = Validator(Exists('new_password'))
-    if not v.validate(payload):
-        raise ClientError(v.errors, 400)
+    _is_valid(payload, attribute='new_password')
 
     try:
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
@@ -296,9 +294,7 @@ def change_respondent_password(token, payload, tran, session):
 
 @with_db_session
 def request_password_change(payload, session):
-    v = Validator(Exists('email_address'))
-    if not v.validate(payload):
-        raise ClientError(v.errors, 400)
+    _is_valid(payload, attribute='email_address')
 
     email_address = payload['email_address']
 
@@ -701,9 +697,7 @@ def get_cases_for_casegroups(casegroup_ids, case_party_id):
 
 @with_db_session
 def notify_account_lock(payload, session):
-    v = Validator(Exists('email_address'))
-    if not v.validate(payload):
-        raise ClientError(v.errors, 400)
+    _is_valid(payload, attribute='email_address')
 
     email_address = payload['email_address']
 
@@ -736,3 +730,10 @@ def notify_account_lock(payload, session):
     logger.debug('Password reset email successfully sent', party_id=party_id)
 
     return {'response': "Ok"}
+
+
+def _is_valid(payload, attribute):
+    v = Validator(Exists(attribute))
+    if v.validate(payload):
+        return True
+    raise ClientError(v.errors, 400)
