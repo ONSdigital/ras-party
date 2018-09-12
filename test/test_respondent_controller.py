@@ -358,7 +358,7 @@ class TestRespondents(PartyTestClient):
         # When the request password end point is hit with an existing email address
         payload = {'email_address': respondent.email_address}
         self.request_password_change(payload)
-        self.mock_notify.request_password_change.assert_not_called()
+        self.mock_notify.request_for_notify.assert_not_called()
 
     def test_request_password_change_with_no_email(self):
         payload = {}
@@ -372,7 +372,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent()
         payload = {'email_address': 'not-mock@example.test'}
         self.request_password_change(payload, expected_status=404)
-        self.assertFalse(self.mock_notify.request_password_change.called)
+        self.assertFalse(self.mock_notify.request_for_notify.called)
 
     def test_request_password_change_with_malformed_email(self):
         payload = {'email_address': 'malformed'}
