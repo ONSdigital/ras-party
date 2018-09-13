@@ -669,3 +669,15 @@ def get_cases_for_casegroups(casegroup_ids, case_party_id):
     logger.debug('Successfully retrieved cases for casegroups',
                  case_party_id=case_party_id)
     return matching_cases
+
+
+@with_db_session
+def resend_verification_email_expired_token(token, session):
+    email_address = decode_email_token(token, duration=None)
+    respondent = query_respondent_by_email(email_address, session)
+
+    if not respondent:
+        raise ClientError("Respondent does not exist", status=404)
+
+    response = resend_verification_email(respondent.party_uuid)
+    return response
