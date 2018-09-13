@@ -115,5 +115,5 @@ def change_respondent_enrolment_status():
 @account_view.route('/respondents/notify-respondent', methods=['GET'])
 def send_respondent_account_locked_email():
     payload = request.get_json() or {}
-    response = account_controller.notify_account_lock(payload)
+    response = account_controller.notify_account_lock(payload=payload)
     return make_response(jsonify(response), 200)

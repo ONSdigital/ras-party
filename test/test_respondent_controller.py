@@ -488,6 +488,11 @@ class TestRespondents(PartyTestClient):
             payload = {'email_address': respondent['emailAddress']}
             self.notify_account_lock(payload, expected_status=200)
 
+    def test_notify_account_lock_with_no_respondent(self):
+        # When the account is locked with no respondents in db
+        payload = {'email_address': 'emailAddress.com'}
+        self.notify_account_lock(payload, expected_status=404)
+
     def test_verify_token_with_bad_secrets(self):
         # Given a respondent exists with an invalid token
         respondent = self.populate_with_respondent()
