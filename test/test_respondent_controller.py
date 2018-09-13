@@ -480,6 +480,14 @@ class TestRespondents(PartyTestClient):
             account_controller.change_respondent_password(token, {'new_password': 'abc'})
             query.assert_called_once_with('test@example.test', db.session())
 
+    def test_notify_account_lock(self):
+        with patch('ras_party.controllers.account_controller.NotifyGateway'), \
+             patch('ras_party.controllers.account_controller.PublicWebsite'), \
+             patch('ras_party.controllers.account_controller.query_respondent_by_email'):
+            respondent = self.mock_respondent
+            payload = {'email_address': respondent['emailAddress']}
+            self.notify_account_lock(payload, expected_status=200)
+
     def test_verify_token_with_bad_secrets(self):
         # Given a respondent exists with an invalid token
         respondent = self.populate_with_respondent()
