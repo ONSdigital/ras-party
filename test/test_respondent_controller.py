@@ -1,6 +1,5 @@
 # pylint: disable=no-value-for-parameter
 
-import time
 import uuid
 from unittest.mock import MagicMock, patch
 
@@ -612,10 +611,8 @@ class TestRespondents(PartyTestClient):
 
     def test_email_verification_expired_token_produces_a_409(self):
         respondent = self.populate_with_respondent()
-        current_app.config['EMAIL_TOKEN_EXPIRY'] = 0
+        current_app.config['EMAIL_TOKEN_EXPIRY'] = -1
         token = self.generate_valid_token_from_email(respondent.email_address)
-        # expire the token
-        time.sleep(1)
         self.put_email_verification(token, 409)
 
     def test_email_verification_unknown_email_produces_a_404(self):
