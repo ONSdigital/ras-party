@@ -422,7 +422,7 @@ def resend_verification_email_by_uuid(party_uuid, session):
     Check and resend an email verification email using the party id
     :param party_uuid: the party uuid
     :param session: database session
-    :return: make_response
+    :return: response
     """
     logger.debug('Attempting to resend verification_email', party_uuid=party_uuid)
 
@@ -440,7 +440,7 @@ def resend_verification_email_expired_token(token, session):
     Check and resend an email verification email using the expired token
     :param token: the expired token
     :param session: database session
-    :return: make_response
+    :return: response
     """
     email_address = decode_email_token(token, duration=None)
     respondent = query_respondent_by_email(email_address, session)

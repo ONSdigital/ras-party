@@ -73,13 +73,13 @@ def put_email_verification(token):
     return make_response(jsonify(response), 200)
 
 
-@account_view.route('/resend-verification-email/<party_uuid>', methods=['GET'])
+@account_view.route('/resend-verification-email/<party_uuid>', methods=['POST'])
 def resend_verification_email(party_uuid):
     response = account_controller.resend_verification_email_by_uuid(party_uuid)
     return make_response(jsonify(response), 200)
 
 
-@account_view.route('/resend-verification-email-expired-token/<token>', methods=['GET'])
+@account_view.route('/resend-verification-email-expired-token/<token>', methods=['POST'])
 def resend_verification_email_expired_token(token):
     response = account_controller.resend_verification_email_expired_token(token)
     return make_response(jsonify(response), 200)

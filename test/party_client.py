@@ -179,14 +179,14 @@ class PartyTestClient(TestCase):
         return json.loads(response.get_data(as_text=True))
 
     def resend_verification_email(self, party_uuid, expected_status=200):
-        response = self.client.get(f'/party-api/v1/resend-verification-email/{party_uuid}',
-                                   headers=self.auth_headers)
+        response = self.client.post(f'/party-api/v1/resend-verification-email/{party_uuid}',
+                                    headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def resend_verification_email_expired_token(self, token, expected_status=200):
-        response = self.client.get(f'/party-api/v1/resend-verification-email-expired-token/{token}',
-                                   headers=self.auth_headers)
+        response = self.client.post(f'/party-api/v1/resend-verification-email-expired-token/{token}',
+                                    headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
