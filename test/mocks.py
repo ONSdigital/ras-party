@@ -42,7 +42,7 @@ class MockRequests:
                         MockResponse(get_casegroups_by_party.response),
                     'http://mockhost:2222/collectionexercises/dab9db7f-3aa0-4866-be20-54d72ee185fb':
                         MockResponse(get_ce_by_id.response),
-                    'http://mockhost:2222/collectionexercises/survey/02b9c366-7397-42f7-942a-76dc5876d86d':
+                    'http://mockhost:2222/collectionexercises/survey/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87':
                         MockResponse(get_ces_by_survey.response),
                     'http://mockhost:3333/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87':
                         MockResponse(get_survey_by_id.response),

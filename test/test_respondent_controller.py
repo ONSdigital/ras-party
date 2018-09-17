@@ -856,7 +856,7 @@ class TestRespondents(PartyTestClient):
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
-            'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
+            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
             'change_flag': 'DISABLED'
         }
         self.put_enrolment_status(request_json, 200)
@@ -877,7 +877,7 @@ class TestRespondents(PartyTestClient):
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
-            'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
+            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
             'change_flag': 'ENABLED'
         }
         self.put_enrolment_status(request_json, 200)
@@ -886,7 +886,7 @@ class TestRespondents(PartyTestClient):
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
-            'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
+            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
             'change_flag': 'ENABLED'
         }
         self.put_enrolment_status(request_json, 404)
@@ -912,7 +912,7 @@ class TestRespondents(PartyTestClient):
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
-            'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
+            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
             'change_flag': 'woafouewbhouGFHEPIW0'
         }
         self.put_enrolment_status(request_json, 500)

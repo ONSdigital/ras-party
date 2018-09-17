@@ -130,7 +130,7 @@ def post_respondent(party, tran, session):
         raise RasError("Error during enrolment process", status=500)
 
     register_user(party, tran)
-    disable_iac(enrolment_code=party['enrolmentCode'])
+    disable_iac(enrolment_code=party['enrolmentCode'], case_id=case_id)
     return respondent.to_respondent_dict()
 
 
@@ -490,10 +490,12 @@ def add_new_survey_for_respondent(payload, tran, session):
     session.add(enrolment)
     session.commit()
 
-    disable_iac(enrolment_code)
+    disable_iac(case_id, enrolment_code)
 
     if count_enrolment_by_survey_business(survey_id, business_id, session) == 0:
-        post_case_event(str(case_id), None, "RESPONDENT_ENROLED", "Respondent enroled")
+        casegroup_ids = get_business_survey_casegroups(survey_id, business_id)
+        for case in get_cases_for_casegroups(casegroup_ids, business_id):
+            post_case_event(str(case['id']), None, "RESPONDENT_ENROLED", "Respondent enroled")
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has enroled to survey for business',
@@ -549,7 +551,9 @@ def enrol_respondent_for_survey(r, sess):
     logger.info('Pending enrolment for case_id', case_id=case_id)
     if count_enrolment_by_survey_business(survey_id=enrolment.survey_id, business_id=enrolment.business_id,
                                           session=sess) == 0:
-        post_case_event(str(case_id), None, "RESPONDENT_ENROLED", "Respondent enrolled")
+        casegroup_ids = get_business_survey_casegroups(pending_enrolment.survey_id, pending_enrolment.business_id)
+        for case in get_cases_for_casegroups(casegroup_ids, pending_enrolment.business_id):
+            post_case_event(str(case['id']), None, "RESPONDENT_ENROLED", "Respondent enrolled")
     sess.delete(pending_enrolment)
 
 
