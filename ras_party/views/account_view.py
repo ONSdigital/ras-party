@@ -75,7 +75,7 @@ def put_email_verification(token):
 
 @account_view.route('/resend-verification-email/<party_uuid>', methods=['GET'])
 def resend_verification_email(party_uuid):
-    response = account_controller.resend_verification_email(party_uuid)
+    response = account_controller.resend_verification_email_by_uuid(party_uuid)
     return make_response(jsonify(response), 200)
 
 
