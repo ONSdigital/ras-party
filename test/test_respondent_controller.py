@@ -482,16 +482,20 @@ class TestRespondents(PartyTestClient):
 
     def test_notify_account_lock(self):
         with patch('ras_party.controllers.account_controller.NotifyGateway'), \
-             patch('ras_party.controllers.account_controller.PublicWebsite'), \
-             patch('ras_party.controllers.account_controller.query_respondent_by_email'):
-            respondent = self.mock_respondent
-            payload = {'email_address': respondent['emailAddress']}
-            self.notify_account_lock(payload, expected_status=200)
+             patch('ras_party.controllers.account_controller.PublicWebsite'):
+            self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
+            party_id = self.mock_respondent_with_id['id']
+            db_respondent = respondents()[0]
+            payload = {'respondent_id': party_id,
+                       'email_address': db_respondent.email_address,
+                       'status_change': 'SUSPENDED'}
+            self.put_respondent_account_status(payload, party_id, expected_status=200)
 
     def test_notify_account_lock_with_no_respondent(self):
         # When the account is locked with no respondents in db
+        party_id = self.mock_respondent_with_id['id']
         payload = {'email_address': 'emailAddress.com'}
-        self.notify_account_lock(payload, expected_status=404)
+        self.put_respondent_account_status(payload, party_id, expected_status=400)
 
     def test_verify_token_with_bad_secrets(self):
         # Given a respondent exists with an invalid token
@@ -937,6 +941,8 @@ class TestRespondents(PartyTestClient):
         self.put_email_verification(token, 200)
         party_id = self.mock_respondent_with_id['id']
         request_json = {
+            'respondent_id': party_id,
+            'email_address': db_respondent.email_address,
             'status_change': 'SUSPENDED'
         }
         self.put_respondent_account_status(request_json, party_id, 200)

@@ -61,3 +61,12 @@ class TestNotifyGateway(PartyTestClient):
         # Then a RasNotifyError is raised
         with self.assertRaises(RasNotifyError):
             notify.request_to_notify('email', 'request_password_change')
+
+    def test_get_template_with_fake_template_name(self):
+        # Given a mocked notify gateway
+        notify = NotifyGateway(current_app.config)
+        # When given a fake template name
+        template_name = 'fake_name'
+        # Then a key error is raised
+        with self.assertRaises(KeyError):
+            notify._get_template_id(template_name)

@@ -331,18 +331,17 @@ def request_password_change(payload, session):
 
 
 @with_db_session
-def change_respondent_account_status(payload, party_id, session):
-
+def notify_change_account_status(payload, party_id, session):
     status = payload['status_change']
 
     respondent = query_respondent_by_party_uuid(party_id, session)
     if not respondent:
         raise ClientError('Respondent does not exist', respondent_id=party_id,
                           status=404)
+    email_address = respondent.email_address
 
     # Unlock respondents account
     if status == 'ACTIVE':
-        email_address = respondent.email_address
         oauth_response = OauthClient().update_account(username=email_address, account_locked='False')
 
         try:
@@ -352,7 +351,30 @@ def change_respondent_account_status(payload, party_id, session):
 
         logger.debug('Respondent account updated', respondent_id=party_id)
 
+    # Lock and notify respondent of account lock
+    elif status == 'SUSPENDED':
+        _is_valid(payload, attribute='email_address')
+        verification_url = PublicWebsite().reset_password_url(email_address)
+        personalisation = {
+            'RESET_PASSWORD_URL': verification_url,
+            'FIRST_NAME': respondent.first_name
+        }
+        logger.info('Unlock account via password reset url', url=verification_url, party_id=party_id)
+
+        try:
+            NotifyGateway(current_app.config).request_to_notify(email=email_address,
+                                                                template_name='notify_account_locked',
+                                                                personalisation=personalisation,
+                                                                reference=party_id)
+        except RasNotifyError:
+            # Note: intentionally suppresses exception
+            logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
+
+        logger.debug('Notification email successfully sent', party_id=party_id)
+
     respondent.status = status
+
+    return {'response': "Ok"}
 
 
 @transactional
@@ -693,43 +715,6 @@ def get_cases_for_casegroups(casegroup_ids, case_party_id):
     logger.debug('Successfully retrieved cases for casegroups',
                  case_party_id=case_party_id)
     return matching_cases
-
-
-@with_db_session
-def notify_account_lock(payload, session):
-    _is_valid(payload, attribute='email_address')
-
-    email_address = payload['email_address']
-
-    respondent = query_respondent_by_email(email_address, session)
-    if not respondent:
-        raise ClientError("Respondent does not exist", status=404)
-
-    logger.debug("Requesting password change", party_id=respondent.party_uuid)
-
-    verification_url = PublicWebsite().reset_password_url(email_address)
-
-    personalisation = {
-        'RESET_PASSWORD_URL': verification_url,
-        'FIRST_NAME': respondent.first_name
-    }
-
-    party_id = str(respondent.party_uuid)
-
-    logger.info('Reset password url', url=verification_url, party_id=party_id)
-
-    try:
-        NotifyGateway(current_app.config).request_to_notify(email=email_address,
-                                                            template_name='notify_account_locked',
-                                                            personalisation=personalisation,
-                                                            reference=party_id)
-    except RasNotifyError:
-        # Note: intentionally suppresses exception
-        logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
-
-    logger.debug('Password reset email successfully sent', party_id=party_id)
-
-    return {'response': "Ok"}
 
 
 def _is_valid(payload, attribute):

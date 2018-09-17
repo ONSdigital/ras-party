@@ -90,17 +90,6 @@ def respondent_add_survey():
     return make_response(jsonify('OK'), 200)
 
 
-@account_view.route('/respondents/edit-account-status/<party_id>', methods=['PUT'])
-def put_respondent_account_status(party_id):
-    payload = request.get_json() or {}
-    v = Validator(Exists('status_change'))
-    if not v.validate(payload):
-        raise RasError(v.errors, 400)
-
-    account_controller.change_respondent_account_status(payload, party_id)
-    return make_response(jsonify('OK'), 200)
-
-
 @account_view.route('/respondents/change_enrolment_status', methods=['PUT'])
 def change_respondent_enrolment_status():
     payload = request.get_json() or {}
@@ -112,8 +101,14 @@ def change_respondent_enrolment_status():
     return make_response(jsonify('OK'), 200)
 
 
-@account_view.route('/respondents/notify-respondent', methods=['GET'])
-def send_respondent_account_locked_email():
+@account_view.route('/respondents/edit-account-status/<party_id>', methods=['PUT'])
+def put_edit_account_status(party_id):
+    # This is the party endpoint to lock and notify respondent when account is locked
+    # This is also the end point for internal user to unlock a respondents account
     payload = request.get_json() or {}
-    response = account_controller.notify_account_lock(payload=payload)
+    v = Validator(Exists('status_change'))
+    if not v.validate(payload):
+        raise RasError(v.errors, 400)
+
+    response = account_controller.notify_change_account_status(payload, party_id)
     return make_response(jsonify(response), 200)
