@@ -130,7 +130,7 @@ def post_respondent(party, tran, session):
         raise RasError("Error during enrolment process", status=500)
 
     register_user(party, tran)
-    disable_iac(enrolment_code=party['enrolmentCode'], case_id=case_id)
+    disable_iac(party['enrolmentCode'], case_id)
     return respondent.to_respondent_dict()
 
 
@@ -490,7 +490,7 @@ def add_new_survey_for_respondent(payload, tran, session):
     session.add(enrolment)
     session.commit()
 
-    disable_iac(case_id, enrolment_code)
+    disable_iac(enrolment_code, case_id)
 
     if count_enrolment_by_survey_business(survey_id, business_id, session) == 0:
         casegroup_ids = get_business_survey_casegroups(survey_id, business_id)
