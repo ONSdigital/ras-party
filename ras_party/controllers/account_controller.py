@@ -296,13 +296,13 @@ def change_respondent_password(token, payload, tran, session):
 def request_password_change(payload, session):
     _is_valid(payload, attribute='email_address')
 
-    email_address = payload['email_address']
-
-    respondent = query_respondent_by_email(email_address, session)
+    respondent = query_respondent_by_email(payload['email_address'], session)
     if not respondent:
         raise ClientError("Respondent does not exist", status=404)
 
     logger.debug("Requesting password change", party_id=respondent.party_uuid)
+
+    email_address = respondent.email_address
 
     verification_url = PublicWebsite().reset_password_url(email_address)
 
