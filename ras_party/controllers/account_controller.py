@@ -304,7 +304,6 @@ def request_password_change(payload, session):
 
     logger.debug("Requesting password change", party_id=respondent.party_uuid)
 
-    email_address = respondent.email_address
     verification_url = PublicWebsite().reset_password_url(email_address)
 
     personalisation = {
