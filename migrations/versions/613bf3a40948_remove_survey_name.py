@@ -17,12 +17,8 @@ depends_on = None
 
 
 def upgrade():
-    op.drop_column('survey_name', schema='partysvc.enrolment')
+    op.drop_column('enrolment', 'survey_name', schema='partysvc')
 
 
 def downgrade():
-    op.add_column(
-        'survey_name',
-        sa.Column('survey_name', sa.Text, nullable=True),
-        schema='partysvc.enrolment'
-    )
+    op.add_column('enrolment', sa.Column('survey_name', sa.Text, nullable=True), schema='partysvc')
