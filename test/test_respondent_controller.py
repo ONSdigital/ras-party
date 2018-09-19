@@ -9,7 +9,7 @@ from itsdangerous import URLSafeTimedSerializer
 from ras_party.controllers import account_controller
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
 from ras_party.exceptions import ClientError
-from ras_party.models.models import BusinessRespondent, Enrolment, RespondentStatus, Respondent
+from ras_party.models.models import BusinessRespondent, Enrolment, RespondentStatus, Respondent, PendingEnrolment
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
@@ -17,7 +17,7 @@ from ras_party.support.transactional import transactional
 from ras_party.support.verification import generate_email_token
 from test.mocks import MockRequests, MockResponse
 from test.party_client import PartyTestClient, respondents, businesses, business_respondent_associations, enrolments
-from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDisabled
+from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDisabled, MockEnrolmentPending
 from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, \
     MockRespondentWithIdActive, MockRespondentWithIdSuspended, MockRespondentWithPendingEmail
 
@@ -37,6 +37,7 @@ class TestRespondents(PartyTestClient):
         self.respondent = None
         self.mock_enrolment_enabled = MockEnrolmentEnabled().attributes().as_enrolment()
         self.mock_enrolment_disabled = MockEnrolmentDisabled().attributes().as_enrolment()
+        self.mock_enrolment_pending = MockEnrolmentPending().attributes().as_enrolment()
 
     @transactional
     @with_db_session
@@ -69,6 +70,21 @@ class TestRespondents(PartyTestClient):
             'created_on': enrolment['created_on']
         }
         self.enrolment = Enrolment(**translated_enrolment)
+        session.add(self.enrolment)
+
+    @with_db_session
+    def populate_with_pending_enrolment(self, session, enrolment=None):
+        if not enrolment:
+            enrolment = self.mock_enrolment_pending
+        translated_enrolment = {
+            'business_id': enrolment['business_id'],
+            'respondent_id': enrolment['respondent_id'],
+            'survey_id': enrolment['survey_id'],
+            'status': enrolment['status'],
+            'case_id': 'f8d7a5db-2b72-4409-b4d2-bc47b358cbda',
+            'created_on': enrolment['created_on']
+        }
+        self.enrolment = PendingEnrolment(**translated_enrolment)
         session.add(self.enrolment)
 
     @with_db_session
@@ -319,7 +335,7 @@ class TestRespondents(PartyTestClient):
         # When the resend verification with expired token endpoint is hit
         self.resend_verification_email_expired_token(token)
         # Then a notification is sent the the respondent's email adddress
-        self.assertTrue(self.mock_notify.verify_email.called)
+        self.assertTrue(self.mock_notify.request_to_notify.called)
 
     def test_resend_verification_email_expired_token_respondent_not_found(self):
         # The token is valid but the respondent doesn't exist
@@ -328,7 +344,7 @@ class TestRespondents(PartyTestClient):
         # When the resend verification with expired token endpoint is hit
         response = self.resend_verification_email_expired_token(token, 404)
         # Then an email is not sent and a message saying there is no respondent is returned
-        self.assertFalse(self.mock_notify.verify_email.called)
+        self.assertFalse(self.mock_notify.request_to_notify.called)
         self.assertIn("Respondent does not exist", response['errors'])
 
     def test_resend_verification_email_sends_to_new_email_address(self):
@@ -974,16 +990,16 @@ class TestRespondents(PartyTestClient):
         self.put_respondent_account_status(request_json, party_id, 200)
 
     def test_put_change_respondent_account_status_active(self):
-        with patch('ras_party.controllers.account_controller._check_enrolment_status_is_enabled', return_value=None):
-            self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
-            db_respondent = respondents()[0]
-            token = self.generate_valid_token_from_email(db_respondent.email_address)
-            self.put_email_verification(token, 200)
-            party_id = self.mock_respondent_with_id_suspended['id']
-            request_json = {
-                'status_change': 'ACTIVE'
-            }
-            self.put_respondent_account_status(request_json, party_id, 200)
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+                                               respondent_id=respondent.party_uuid)
+        enrolment = self.mock_enrolment_pending
+        self.populate_with_enrolment(enrolment=enrolment)
+        request_json = {
+            'status_change': 'ACTIVE'
+        }
+        self.put_respondent_account_status(request_json, respondent.party_uuid, 200)
 
     def test_put_change_respondent_account_status_minus_status_change(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
