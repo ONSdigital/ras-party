@@ -466,11 +466,12 @@ def update_verified_email_address(respondent, tran, session):
 
 
 @with_db_session
-def resend_verification_email(party_uuid, session):
+def resend_verification_email_by_uuid(party_uuid, session):
     """
-    Check and resend an email verification email
+    Check and resend an email verification email using the party id
     :param party_uuid: the party uuid
-    :return: make_response
+    :param session: database session
+    :return: response
     """
     logger.debug('Attempting to resend verification_email', party_uuid=party_uuid)
 
@@ -478,10 +479,33 @@ def resend_verification_email(party_uuid, session):
     if not respondent:
         raise ClientError(NO_RESPONDENT_FOR_PARTY_ID, status=404)
 
+    response = _resend_verification_email(respondent)
+    return response
+
+
+@with_db_session
+def resend_verification_email_expired_token(token, session):
+    """
+    Check and resend an email verification email using the expired token
+    :param token: the expired token
+    :param session: database session
+    :return: response
+    """
+    email_address = decode_email_token(token, duration=None)
+    respondent = query_respondent_by_email(email_address, session)
+
+    if not respondent:
+        raise ClientError("Respondent does not exist", status=404)
+
+    response = _resend_verification_email(respondent)
+    return response
+
+
+def _resend_verification_email(respondent):
     if respondent.pending_email_address:
-        _send_email_verification(party_uuid, respondent.pending_email_address)
+        _send_email_verification(respondent.party_uuid, respondent.pending_email_address)
     else:
-        _send_email_verification(party_uuid, respondent.email_address)
+        _send_email_verification(respondent.party_uuid, respondent.email_address)
 
     return {'message': EMAIL_VERIFICATION_SENT}
 
