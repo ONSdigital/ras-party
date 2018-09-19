@@ -450,24 +450,25 @@ class TestRespondents(PartyTestClient):
         self.change_password(token, payload, expected_status=404)
 
     def test_change_password_with_valid_token(self):
-        # Given a valid token from the respondent
-        respondent = self.populate_with_respondent()
-        token = self.generate_valid_token_from_email(respondent.email_address)
-        payload = {
-            'new_password': 'password',
-            'token': token
-        }
-        # When the password is changed
-        self.change_password(token, payload, expected_status=200)
-        personalisation = {
-            'FIRST_NAME': respondent.first_name
-        }
-        self.mock_notify.request_to_notify.assert_called_once_with(
-            email=respondent.email_address,
-            template_name='confirm_password_change',
-            personalisation=personalisation,
-            reference=uuid.UUID(respondent.party_uuid)
-        )
+        with patch('ras_party.controllers.account_controller._check_enrolment_status_is_enabled', return_value=None):
+            # Given a valid token from the respondent
+            respondent = self.populate_with_respondent()
+            token = self.generate_valid_token_from_email(respondent.email_address)
+            payload = {
+                'new_password': 'password',
+                'token': token
+            }
+            # When the password is changed
+            self.change_password(token, payload, expected_status=200)
+            personalisation = {
+                'FIRST_NAME': respondent.first_name
+            }
+            self.mock_notify.request_to_notify.assert_called_once_with(
+                email=respondent.email_address,
+                template_name='confirm_password_change',
+                personalisation=personalisation,
+                reference=uuid.UUID(respondent.party_uuid)
+            )
 
     @staticmethod
     def test_change_respondent_password_uses_case_insensitive_email_query():
@@ -948,15 +949,16 @@ class TestRespondents(PartyTestClient):
         self.put_respondent_account_status(request_json, party_id, 200)
 
     def test_put_change_respondent_account_status_active(self):
-        self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
-        db_respondent = respondents()[0]
-        token = self.generate_valid_token_from_email(db_respondent.email_address)
-        self.put_email_verification(token, 200)
-        party_id = self.mock_respondent_with_id_suspended['id']
-        request_json = {
-            'status_change': 'ACTIVE'
-        }
-        self.put_respondent_account_status(request_json, party_id, 200)
+        with patch('ras_party.controllers.account_controller._check_enrolment_status_is_enabled', return_value=None):
+            self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
+            db_respondent = respondents()[0]
+            token = self.generate_valid_token_from_email(db_respondent.email_address)
+            self.put_email_verification(token, 200)
+            party_id = self.mock_respondent_with_id_suspended['id']
+            request_json = {
+                'status_change': 'ACTIVE'
+            }
+            self.put_respondent_account_status(request_json, party_id, 200)
 
     def test_put_change_respondent_account_status_minus_status_change(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
