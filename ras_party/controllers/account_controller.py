@@ -259,6 +259,7 @@ def change_respondent_password(token, payload, tran, session):
     # Check and see if the account is active, if not we can now set to active
     if respondent.status != RespondentStatus.ACTIVE:
         # We set the party as ACTIVE in this service
+        _check_enrolment_status(respondent, session=session)
         respondent.status = RespondentStatus.ACTIVE
         oauth_response = OauthClient().update_account(
             username=email_address,
@@ -341,8 +342,9 @@ def notify_change_account_status(payload, party_id, session):
 
     # Unlock respondents account
     if status == 'ACTIVE':
-        oauth_response = OauthClient().update_account(username=email_address, account_locked='False')
+        _check_enrolment_status(respondent, session=session)
 
+        oauth_response = OauthClient().update_account(username=email_address, account_locked='False')
         try:
             oauth_response.raise_for_status()
         except HTTPError:
@@ -721,3 +723,15 @@ def _is_valid(payload, attribute):
     if v.validate(payload):
         return True
     raise ClientError(v.errors, 400)
+
+
+def _check_enrolment_status(respondent, session):
+    idx = respondent.pending_enrolment[0]
+
+    enrolment = query_enrolment_by_survey_business_respondent(respondent_id=idx.respondent_id,
+                                                              business_id=idx.business_id,
+                                                              survey_id=str(idx.survey_id),
+                                                              session=session)
+
+    if enrolment.status == EnrolmentStatus.PENDING:
+        enrolment.status = EnrolmentStatus.ENABLED
