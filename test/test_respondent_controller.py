@@ -312,6 +312,25 @@ class TestRespondents(PartyTestClient):
             respondent.party_uuid
         )
 
+    def test_email_verification_expired_token_sends_calls_notify(self):
+        # Given a token is used that has already been declared to be expired
+        respondent = self.populate_with_respondent()
+        token = self.generate_valid_token_from_email(respondent.email_address)
+        # When the resend verification with expired token endpoint is hit
+        self.resend_verification_email_expired_token(token)
+        # Then a notification is sent the the respondent's email adddress
+        self.assertTrue(self.mock_notify.verify_email.called)
+
+    def test_resend_verification_email_expired_token_respondent_not_found(self):
+        # The token is valid but the respondent doesn't exist
+        current_app.config['EMAIL_TOKEN_EXPIRY'] = -1
+        token = self.generate_valid_token_from_email('invalid@email.com')
+        # When the resend verification with expired token endpoint is hit
+        response = self.resend_verification_email_expired_token(token, 404)
+        # Then an email is not sent and a message saying there is no respondent is returned
+        self.assertFalse(self.mock_notify.verify_email.called)
+        self.assertIn("Respondent does not exist", response['errors'])
+
     def test_resend_verification_email_sends_to_new_email_address(self):
         # Given there is a respondent with a pending email address
         respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_pending_email)
@@ -600,6 +619,12 @@ class TestRespondents(PartyTestClient):
         timed_serializer = URLSafeTimedSerializer(secret_key)
         token = timed_serializer.dumps(self.mock_respondent['emailAddress'], salt='salt')
         self.put_email_verification(token, 404)
+
+    def test_email_verification_expired_token_produces_a_409(self):
+        respondent = self.populate_with_respondent()
+        current_app.config['EMAIL_TOKEN_EXPIRY'] = -1
+        token = self.generate_valid_token_from_email(respondent.email_address)
+        self.put_email_verification(token, 409)
 
     def test_email_verification_unknown_email_produces_a_404(self):
         self.populate_with_respondent()
