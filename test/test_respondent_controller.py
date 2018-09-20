@@ -484,25 +484,24 @@ class TestRespondents(PartyTestClient):
         self.change_password(token, payload, expected_status=404)
 
     def test_change_password_with_valid_token(self):
-        with patch('ras_party.controllers.account_controller._check_enrolment_status_is_enabled', return_value=None):
-            # Given a valid token from the respondent
-            respondent = self.populate_with_respondent()
-            token = self.generate_valid_token_from_email(respondent.email_address)
-            payload = {
-                'new_password': 'password',
-                'token': token
-            }
-            # When the password is changed
-            self.change_password(token, payload, expected_status=200)
-            personalisation = {
-                'FIRST_NAME': respondent.first_name
-            }
-            self.mock_notify.request_to_notify.assert_called_once_with(
-                email=respondent.email_address,
-                template_name='confirm_password_change',
-                personalisation=personalisation,
-                reference=uuid.UUID(respondent.party_uuid)
-            )
+        # Given a valid token from the respondent
+        respondent = self.populate_with_respondent()
+        token = self.generate_valid_token_from_email(respondent.email_address)
+        payload = {
+            'new_password': 'password',
+            'token': token
+        }
+        # When the password is changed
+        self.change_password(token, payload, expected_status=200)
+        personalisation = {
+            'FIRST_NAME': respondent.first_name
+        }
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=respondent.email_address,
+            template_name='confirm_password_change',
+            personalisation=personalisation,
+            reference=uuid.UUID(respondent.party_uuid)
+        )
 
     @staticmethod
     def test_change_respondent_password_uses_case_insensitive_email_query():

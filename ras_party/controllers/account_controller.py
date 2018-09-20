@@ -260,7 +260,8 @@ def change_respondent_password(token, payload, tran, session):
     if respondent.status != RespondentStatus.ACTIVE:
         # Checking enrolment status, if PENDING we will change it to ENABLED
         logger.debug('Checking enrolment status', respondent_id=respondent.party_uuid)
-        _check_enrolment_status_is_enabled(respondent, session=session)
+        if respondent.pending_enrolment:
+            enrol_respondent_for_survey(respondent, session)
 
         # We set the party as ACTIVE in this service
         respondent.status = RespondentStatus.ACTIVE
@@ -347,7 +348,8 @@ def notify_change_account_status(payload, party_id, session):
     if status == 'ACTIVE':
         # Checking enrolment status, if PENDING we will change it to ENABLED
         logger.debug('Checking enrolment status', respondent_id=party_id)
-        _check_enrolment_status_is_enabled(respondent, session=session)
+        if respondent.pending_enrolment:
+            enrol_respondent_for_survey(respondent, session)
 
         oauth_response = OauthClient().update_account(username=email_address, account_locked='False')
         try:
@@ -597,23 +599,23 @@ def set_user_verified(email_address):
         oauth_response.raise_for_status()
 
 
-def enrol_respondent_for_survey(r, sess):
-    pending_enrolment_id = r.pending_enrolment[0].id
-    pending_enrolment = sess.query(PendingEnrolment).filter(
+def enrol_respondent_for_survey(respondent, session):
+    pending_enrolment_id = respondent.pending_enrolment[0].id
+    pending_enrolment = session.query(PendingEnrolment).filter(
         PendingEnrolment.id == pending_enrolment_id).one()
-    enrolment = sess.query(Enrolment) \
+    enrolment = session.query(Enrolment) \
         .filter(Enrolment.business_id == str(pending_enrolment.business_id)) \
         .filter(Enrolment.survey_id == str(pending_enrolment.survey_id)) \
-        .filter(Enrolment.respondent_id == r.id).one()
+        .filter(Enrolment.respondent_id == respondent.id).one()
     enrolment.status = EnrolmentStatus.ENABLED
-    sess.add(enrolment)
-    logger.info('Enabling pending enrolment for respondent', party_uuid=r.party_uuid,
+    session.add(enrolment)
+    logger.info('Enabling pending enrolment for respondent', party_uuid=respondent.party_uuid,
                 survey_id=pending_enrolment.survey_id, business_id=pending_enrolment.business_id)
     # Send an enrolment event to the case service
     case_id = pending_enrolment.case_id
     logger.info('Pending enrolment for case_id', case_id=case_id)
-    post_case_event(str(case_id), str(r.party_uuid), "RESPONDENT_ENROLED", "Respondent enrolled")
-    sess.delete(pending_enrolment)
+    post_case_event(str(case_id), str(respondent.party_uuid), "RESPONDENT_ENROLED", "Respondent enrolled")
+    session.delete(pending_enrolment)
 
 
 def register_user(party, tran):
@@ -752,16 +754,3 @@ def _is_valid(payload, attribute):
     if v.validate(payload):
         return True
     raise ClientError(v.errors, 400)
-
-
-def _check_enrolment_status_is_enabled(respondent, session):
-    idx = respondent.pending_enrolment[0]
-
-    enrolment = query_enrolment_by_survey_business_respondent(respondent_id=idx.respondent_id,
-                                                              business_id=idx.business_id,
-                                                              survey_id=str(idx.survey_id),
-                                                              session=session)
-
-    if enrolment.status == EnrolmentStatus.PENDING:
-        logger.info('Changing enrolment status to ENABLED', respondent_id=respondent.party_uuid)
-        enrolment.status = EnrolmentStatus.ENABLED
