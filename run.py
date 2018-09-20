@@ -2,8 +2,8 @@ import os
 import logging
 from json import loads
 
-
 import structlog
+from ras_party.cloud.cloudfoundry import ONSCloudFoundry
 from alembic.config import Config
 from alembic import command
 from flask import Flask, _app_ctx_stack
@@ -18,9 +18,8 @@ from dogpile.cache import make_region
 
 from logger_config import logger_initial_config
 
-
 logger = structlog.wrap_logger(logging.getLogger(__name__))
-
+cf = ONSCloudFoundry()
 
 def create_app(config=None):
     # create and configure the Flask app
@@ -42,17 +41,31 @@ def create_app(config=None):
     app.register_blueprint(info_view)
     app.register_blueprint(error_handlers.blueprint)
 
+    if cf.detected:
+        logger.info('Cloudfoundry detected, setting service configurations')
+        app.config['REDIS_HOST'] = cf.redis.credentials['host']
+        app.config['REDIS_PORT'] = cf.redis.credentials['port']
+
     CORS(app)
     return app
 
 
-def create_database(db_connection, db_schema, pool_size, max_overflow, pool_recycle):
+def create_database(db_connection, db_schema, pool_size, max_overflow,
+                    pool_recycle, redis_host, redis_port, redis_db):
     from ras_party.models import models
 
     def current_request():
         return _app_ctx_stack.__ident_func__()
 
-    cache_region = make_region().configure('dogpile.cache.memory', expiration_time=300)
+    cache_region = make_region(). \
+        configure('dogpile.cache.redis',
+                  arguments={
+                      'host': redis_host,
+                      'port': redis_port,
+                      'db': redis_db,
+                      'redis_expiration_time': 60 * 60 * 2,  # 2 hours
+                      'distributed_lock': True
+                  })
     regions = {
         "default": cache_region
     }
@@ -108,7 +121,8 @@ def retry_if_database_error(exception):
 def initialise_db(app):
     # TODO: this isn't entirely safe, use a get_db() lazy initializer instead...
     app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'], app.config['DB_POOL_SIZE'],
-                             app.config['DB_MAX_OVERFLOW'], app.config['DB_POOL_RECYCLE'])
+                             app.config['DB_MAX_OVERFLOW'], app.config['DB_POOL_RECYCLE'], app.config['REDIS_HOST'],
+                             app.config['REDIS_PORT'])
 
 
 if __name__ == '__main__':
