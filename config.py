@@ -95,6 +95,10 @@ class Config(object):
     RAS_OAUTH_CLIENT_ID = os.getenv('RAS_OAUTH_CLIENT_ID', 'ons@ons.gov')
     RAS_OAUTH_CLIENT_SECRET = os.getenv('RAS_OAUTH_CLIENT_SECRET', 'password')
 
+    REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+    REDIS_PORT = os.getenv('REDIS_PORT', 6379)
+    REDIS_DB = os.getenv('REDIS_DB', 1)
+
     DEPENDENCIES = [
         'ras-party-db',
         'public-website',
