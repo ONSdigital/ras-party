@@ -116,5 +116,5 @@ def put_edit_account_status(party_id):
     if not v.validate(payload):
         raise RasError(v.errors, 400)
 
-    response = account_controller.notify_change_account_status(payload, party_id)
+    response = account_controller.notify_change_account_status(payload=payload, party_id=party_id)
     return make_response(jsonify(response), 200)
