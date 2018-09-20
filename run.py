@@ -44,8 +44,8 @@ def create_app(config=None):
 
     if cf.detected:
         logger.info('Cloudfoundry detected, setting service configurations')
-        app.config['REDIS_HOST'] = cf.redis.credentials['host']
-        app.config['REDIS_PORT'] = cf.redis.credentials['port']
+        app.config['REDIS_HOST'] = cf.db.credentials['host']
+        app.config['REDIS_PORT'] = cf.db.credentials['port']
 
     CORS(app)
     return app
