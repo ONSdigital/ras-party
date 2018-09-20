@@ -80,7 +80,6 @@ class TestRespondents(PartyTestClient):
             'business_id': enrolment['business_id'],
             'respondent_id': enrolment['respondent_id'],
             'survey_id': enrolment['survey_id'],
-            'status': enrolment['status'],
             'case_id': 'f8d7a5db-2b72-4409-b4d2-bc47b358cbda',
             'created_on': enrolment['created_on']
         }
@@ -996,6 +995,7 @@ class TestRespondents(PartyTestClient):
                                                respondent_id=respondent.party_uuid)
         enrolment = self.mock_enrolment_pending
         self.populate_with_enrolment(enrolment=enrolment)
+        self.populate_with_pending_enrolment(enrolment=enrolment)
         request_json = {
             'status_change': 'ACTIVE'
         }
