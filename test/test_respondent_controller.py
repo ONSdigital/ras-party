@@ -515,6 +515,18 @@ class TestRespondents(PartyTestClient):
             account_controller.change_respondent_password(token, {'new_password': 'abc'})
             query.assert_called_once_with('test@example.test', db.session())
 
+    @staticmethod
+    def test_change_respondent_password_ras_notify_error():
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db,\
+                patch('ras_party.controllers.account_controller.OauthClient') as client,\
+                patch('ras_party.controllers.account_controller.NotifyGateway') as notify:
+            notify.side_effect = RasNotifyError(mock.Mock())
+            token = generate_email_token('test@example.test')
+            client().update_account().status_code = 201
+            account_controller.change_respondent_password(token, {'new_password': 'abc'})
+            query.assert_called_once_with('test@example.test', db.session())
+
     def test_notify_account_lock(self):
         with patch('ras_party.controllers.account_controller.NotifyGateway'), \
              patch('ras_party.controllers.account_controller.PublicWebsite'):
