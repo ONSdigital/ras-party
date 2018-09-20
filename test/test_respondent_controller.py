@@ -1,6 +1,7 @@
 # pylint: disable=no-value-for-parameter
 
 import uuid
+from unittest import mock
 from unittest.mock import MagicMock, patch
 
 from flask import current_app
@@ -8,7 +9,7 @@ from itsdangerous import URLSafeTimedSerializer
 
 from ras_party.controllers import account_controller
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
-from ras_party.exceptions import ClientError
+from ras_party.exceptions import ClientError, RasNotifyError
 from ras_party.models.models import BusinessRespondent, Enrolment, RespondentStatus, Respondent, PendingEnrolment
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
@@ -530,6 +531,22 @@ class TestRespondents(PartyTestClient):
         party_id = self.mock_respondent_with_id['id']
         payload = {'email_address': 'emailAddress.com'}
         self.put_respondent_account_status(payload, party_id, expected_status=400)
+
+    def test_notify_account_ras_notify_error(self):
+        with patch('ras_party.controllers.account_controller.NotifyGateway') as notify,\
+             patch('ras_party.controllers.account_controller.PublicWebsite'):
+            with self.assertLogs() as ctx:
+                notify.side_effect = RasNotifyError(mock.Mock())
+                self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
+                party_id = self.mock_respondent_with_id['id']
+                db_respondent = respondents()[0]
+                payload = {'respondent_id': party_id,
+                           'email_address': db_respondent.email_address,
+                           'status_change': 'SUSPENDED'}
+                self.put_respondent_account_status(payload, party_id)
+                for logs in ctx.records:
+                    if 'ERROR' in logs.levelname:
+                        self.assertIn('Error sending request to Notify Gateway', logs.message)
 
     def test_verify_token_with_bad_secrets(self):
         # Given a respondent exists with an invalid token
