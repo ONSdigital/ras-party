@@ -26,6 +26,7 @@ structlog = "*"
 requestsdefaulter = "*"
 flask-zipkin = "*"
 "dogpile.cache" = "*"
+redis = "*"
 
 [dev-packages]
 coverage = "*"
