@@ -29,7 +29,7 @@ class TestNotifyGateway(PartyTestClient):
                             "timeout": 99, "json": expected_data}
 
         self.mock_requests.post.assert_called_with(
-            "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/email_verification_id",
+            "http://mockhost:5555/emails/email_verification_id",
             expected_request)
 
     def test_notify_sends_notification_with_extended_message(self):
@@ -47,7 +47,7 @@ class TestNotifyGateway(PartyTestClient):
                             "timeout": 99, "json": expected_data}
 
         self.mock_requests.post.assert_called_with(
-            "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/request_password_change_id",
+            "http://mockhost:5555/emails/request_password_change_id",
             expected_request)
 
     def test_notify_exception_is_translated_to_ras_exception(self):

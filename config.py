@@ -142,7 +142,7 @@ class TestingConfig(DevelopmentConfig):
     RAS_OAUTH_SERVICE = 'http://mockhost:4444'
     RAS_OAUTH_CLIENT_ID = 'ons@ons.gov'
     RAS_OAUTH_CLIENT_SECRET = 'password'
-    RAS_NOTIFY_SERVICE_URL = 'http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/'
+    RAS_NOTIFY_SERVICE_URL = 'http://mockhost:5555/emails/'
     RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE = 'email_verification_id'
     RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = 'request_password_change_id'
     RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = 'confirm_password_change_id'
