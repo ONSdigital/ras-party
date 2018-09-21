@@ -85,6 +85,12 @@ def resend_verification_email_expired_token(token):
     return make_response(jsonify(response), 200)
 
 
+@account_view.route('/resend-password-email-expired-token/<token>', methods=['POST'])
+def resend_password_email_expired_token(token):
+    response = account_controller.resend_password_email_expired_token(token)
+    return make_response(jsonify(response), 200)
+
+
 @account_view.route('/respondents/add_survey', methods=['POST'])
 def respondent_add_survey():
     payload = request.get_json() or {}
