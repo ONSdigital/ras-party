@@ -19,6 +19,7 @@ class NotifyGateway:
         self.email_verification_template = config['RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE']
         self.request_password_change_template = config['RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE']
         self.confirm_password_change_template = config['RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE']
+        self.notify_account_locked = config['RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE']
 
     def _send_message(self, email, template_id, personalisation=None, reference=None):
         """
@@ -53,14 +54,16 @@ class NotifyGateway:
             raise RasNotifyError("There was a problem sending a notification via Notify-Gateway to GOV.UK Notify",
                                  error=e)
 
-    def verify_email(self, email, personalisation=None, reference=None):
-        template_id = self.email_verification_template
+    def request_to_notify(self, email, template_name, personalisation=None, reference=None):
+        template_id = self._get_template_id(template_name)
         self._send_message(email, template_id, personalisation, reference)
 
-    def request_password_change(self, email, personalisation=None, reference=None):
-        template_id = self.request_password_change_template
-        self._send_message(email, template_id, personalisation, reference)
-
-    def confirm_password_change(self, email, personalisation=None, reference=None):
-        template_id = self.confirm_password_change_template
-        self._send_message(email, template_id, personalisation, reference)
+    def _get_template_id(self, template_name):
+        templates = {'notify_account_locked': self.notify_account_locked,
+                     'confirm_password_change': self.confirm_password_change_template,
+                     'request_password_change': self.request_password_change_template,
+                     'email_verification': self.email_verification_template}
+        if template_name in templates:
+            return templates[template_name]
+        else:
+            raise KeyError('Template does not exist')

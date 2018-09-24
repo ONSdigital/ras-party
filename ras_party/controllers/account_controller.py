@@ -229,9 +229,7 @@ def verify_token(token, session):
 @transactional
 @with_db_session
 def change_respondent_password(token, payload, tran, session):
-    v = Validator(Exists('new_password'))
-    if not v.validate(payload):
-        raise ClientError(v.errors, 400)
+    _is_valid(payload, attribute='new_password')
 
     try:
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
@@ -248,9 +246,23 @@ def change_respondent_password(token, payload, tran, session):
 
     new_password = payload['new_password']
 
-    oauth_response = OauthClient().update_account(
-        username=email_address,
-        password=new_password)
+    # Check and see if the account is active, if not we can now set to active
+    if respondent.status != RespondentStatus.ACTIVE:
+        # Checking enrolment status, if PENDING we will change it to ENABLED
+        logger.debug('Checking enrolment status', respondent_id=respondent.party_uuid)
+        if respondent.pending_enrolment:
+            enrol_respondent_for_survey(respondent, session)
+
+        # We set the party as ACTIVE in this service
+        respondent.status = RespondentStatus.ACTIVE
+        oauth_response = OauthClient().update_account(
+            username=email_address,
+            password=new_password,
+            account_locked='False')
+    else:
+        oauth_response = OauthClient().update_account(
+            username=email_address,
+            password=new_password)
 
     if oauth_response.status_code != 201:
         raise RasError("Failed to change respondent password")
@@ -262,8 +274,10 @@ def change_respondent_password(token, payload, tran, session):
     party_id = respondent.party_uuid
 
     try:
-        NotifyGateway(current_app.config).confirm_password_change(
-            email_address, personalisation, str(party_id))
+        NotifyGateway(current_app.config).request_to_notify(email=email_address,
+                                                            template_name='confirm_password_change',
+                                                            personalisation=personalisation,
+                                                            reference=party_id)
     except RasNotifyError:
         logger.error('Error sending notification email', respondent_id=str(party_id))
 
@@ -275,59 +289,59 @@ def change_respondent_password(token, payload, tran, session):
 
 @with_db_session
 def request_password_change(payload, session):
-    v = Validator(Exists('email_address'))
-    if not v.validate(payload):
-        raise ClientError(v.errors, 400)
+    _is_valid(payload, attribute='email_address')
 
-    email_address = payload['email_address']
-
-    respondent = query_respondent_by_email(email_address, session)
+    respondent = query_respondent_by_email(payload['email_address'], session)
     if not respondent:
         raise ClientError("Respondent does not exist", status=404)
 
     logger.debug("Requesting password change", party_id=respondent.party_uuid)
 
-    if respondent.status is RespondentStatus.ACTIVE:
+    email_address = respondent.email_address
 
-        email_address = respondent.email_address
-        verification_url = PublicWebsite().reset_password_url(email_address)
+    verification_url = PublicWebsite().reset_password_url(email_address)
 
-        personalisation = {
-            'RESET_PASSWORD_URL': verification_url,
-            'FIRST_NAME': respondent.first_name
-        }
+    personalisation = {
+        'RESET_PASSWORD_URL': verification_url,
+        'FIRST_NAME': respondent.first_name
+    }
 
-        party_id = str(respondent.party_uuid)
+    party_id = str(respondent.party_uuid)
 
-        logger.info('Reset password url', url=verification_url, party_id=party_id)
+    logger.info('Reset password url', url=verification_url, party_id=party_id)
 
-        try:
-            NotifyGateway(current_app.config).request_password_change(
-                email_address, personalisation, party_id)
-        except RasNotifyError:
-            # Note: intentionally suppresses exception
-            logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
+    try:
+        NotifyGateway(current_app.config).request_to_notify(email=email_address,
+                                                            template_name='request_password_change',
+                                                            personalisation=personalisation,
+                                                            reference=party_id)
+    except RasNotifyError:
+        # Note: intentionally suppresses exception
+        logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
 
-        logger.debug('Password reset email successfully sent', party_id=party_id)
+    logger.debug('Password reset email successfully sent', party_id=party_id)
 
     return {'response': "Ok"}
 
 
 @with_db_session
-def change_respondent_account_status(payload, party_id, session):
-
+def notify_change_account_status(payload, party_id, session):
     status = payload['status_change']
 
     respondent = query_respondent_by_party_uuid(party_id, session)
     if not respondent:
         raise ClientError('Respondent does not exist', respondent_id=party_id,
                           status=404)
+    email_address = respondent.email_address
 
     # Unlock respondents account
     if status == 'ACTIVE':
-        email_address = respondent.email_address
-        oauth_response = OauthClient().update_account(username=email_address, account_locked='False')
+        # Checking enrolment status, if PENDING we will change it to ENABLED
+        logger.debug('Checking enrolment status', respondent_id=party_id)
+        if respondent.pending_enrolment:
+            enrol_respondent_for_survey(respondent, session)
 
+        oauth_response = OauthClient().update_account(username=email_address, account_locked='False')
         try:
             oauth_response.raise_for_status()
         except HTTPError:
@@ -335,7 +349,30 @@ def change_respondent_account_status(payload, party_id, session):
 
         logger.debug('Respondent account updated', respondent_id=party_id)
 
+    # Lock and notify respondent of account lock
+    elif status == 'SUSPENDED':
+        _is_valid(payload, attribute='email_address')
+        verification_url = PublicWebsite().reset_password_url(email_address)
+        personalisation = {
+            'RESET_PASSWORD_URL': verification_url,
+            'FIRST_NAME': respondent.first_name
+        }
+        logger.info('Unlock account via password reset url', url=verification_url, party_id=party_id)
+
+        try:
+            NotifyGateway(current_app.config).request_to_notify(email=email_address,
+                                                                template_name='notify_account_locked',
+                                                                personalisation=personalisation,
+                                                                reference=party_id)
+        except RasNotifyError:
+            # Note: intentionally suppresses exception
+            logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
+
+        logger.debug('Notification email successfully sent', party_id=party_id)
+
     respondent.status = status
+
+    return {'response': "Ok"}
 
 
 @transactional
@@ -538,7 +575,10 @@ def _send_email_verification(party_id, email):
     }
 
     try:
-        NotifyGateway(current_app.config).verify_email(email, personalisation, str(party_id))
+        NotifyGateway(current_app.config).request_to_notify(email=email,
+                                                            template_name='email_verification',
+                                                            personalisation=personalisation,
+                                                            reference=str(party_id))
         logger.info('Verification email sent', party_id=str(party_id))
     except RasNotifyError:
         # Note: intentionally suppresses exception
@@ -558,27 +598,27 @@ def set_user_verified(email_address):
         oauth_response.raise_for_status()
 
 
-def enrol_respondent_for_survey(r, sess):
-    pending_enrolment_id = r.pending_enrolment[0].id
-    pending_enrolment = sess.query(PendingEnrolment).filter(
+def enrol_respondent_for_survey(respondent, session):
+    pending_enrolment_id = respondent.pending_enrolment[0].id
+    pending_enrolment = session.query(PendingEnrolment).filter(
         PendingEnrolment.id == pending_enrolment_id).one()
-    enrolment = sess.query(Enrolment) \
+    enrolment = session.query(Enrolment) \
         .filter(Enrolment.business_id == str(pending_enrolment.business_id)) \
         .filter(Enrolment.survey_id == str(pending_enrolment.survey_id)) \
-        .filter(Enrolment.respondent_id == r.id).one()
+        .filter(Enrolment.respondent_id == respondent.id).one()
     enrolment.status = EnrolmentStatus.ENABLED
-    sess.add(enrolment)
-    logger.info('Enabling pending enrolment for respondent', party_uuid=r.party_uuid,
+    session.add(enrolment)
+    logger.info('Enabling pending enrolment for respondent', party_uuid=respondent.party_uuid,
                 survey_id=pending_enrolment.survey_id, business_id=pending_enrolment.business_id)
     # Send an enrolment event to the case service
     case_id = pending_enrolment.case_id
     logger.info('Pending enrolment for case_id', case_id=case_id)
     if count_enrolment_by_survey_business(survey_id=enrolment.survey_id, business_id=enrolment.business_id,
-                                          session=sess) == 0:
+                                          session=session) == 0:
         casegroup_ids = get_business_survey_casegroups(pending_enrolment.survey_id, pending_enrolment.business_id)
         for case in get_cases_for_casegroups(casegroup_ids, pending_enrolment.business_id):
             post_case_event(str(case['id']), None, "RESPONDENT_ENROLED", "Respondent enrolled")
-    sess.delete(pending_enrolment)
+    session.delete(pending_enrolment)
 
 
 def register_user(party, tran):
@@ -698,3 +738,10 @@ def get_cases_for_casegroups(casegroup_ids, case_party_id):
     logger.debug('Successfully retrieved cases for casegroups',
                  case_party_id=case_party_id)
     return matching_cases
+
+
+def _is_valid(payload, attribute):
+    v = Validator(Exists(attribute))
+    if v.validate(payload):
+        return True
+    raise ClientError(v.errors, 400)
