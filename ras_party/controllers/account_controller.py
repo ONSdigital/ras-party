@@ -171,7 +171,6 @@ def change_respondent_enrolment_status(payload, session):
         logger.info('No active enrolments', business_id=business_id, survey_id=survey_id)
         for case in get_cases_for_casegroups(casegroup_ids, business_id):
             post_case_event(case['id'],
-                            party_id=None,
                             category='NO_ACTIVE_ENROLMENTS',
                             desc='No active enrolments remaining for case')
 
@@ -556,7 +555,7 @@ def add_new_survey_for_respondent(payload, tran, session):
     if count_enrolment_by_survey_business(survey_id, business_id, session) == 0:
         casegroup_ids = get_business_survey_casegroups(survey_id, business_id)
         for case in get_cases_for_casegroups(casegroup_ids, business_id):
-            post_case_event(str(case['id']), None, "RESPONDENT_ENROLED", "Respondent enroled")
+            post_case_event(case['id'], "RESPONDENT_ENROLED", "Respondent enroled")
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has enroled to survey for business',
@@ -617,7 +616,7 @@ def enrol_respondent_for_survey(respondent, session):
                                           session=session) == 0:
         casegroup_ids = get_business_survey_casegroups(pending_enrolment.survey_id, pending_enrolment.business_id)
         for case in get_cases_for_casegroups(casegroup_ids, pending_enrolment.business_id):
-            post_case_event(str(case['id']), None, "RESPONDENT_ENROLED", "Respondent enrolled")
+            post_case_event(case['id'], "RESPONDENT_ENROLED", "Respondent enrolled")
     session.delete(pending_enrolment)
 
 
@@ -669,14 +668,13 @@ def request_survey(survey_id):
     return response.json()
 
 
-def post_case_event(case_id, party_id, category='Default category message', desc='Default description message'):
-    logger.debug('Posting case event', case_id=case_id, party_id=party_id)
+def post_case_event(case_id, category='Default category message', desc='Default description message'):
+    logger.debug('Posting case event', case_id=case_id)
     case_svc = current_app.config['RAS_CASE_SERVICE']
     case_url = f'{case_svc}/cases/{case_id}/events'
     payload = {
         'description': desc,
         'category': category,
-        'partyId': party_id,
         'createdBy': 'Party Service'
     }
 
