@@ -522,7 +522,7 @@ class TestRespondents(PartyTestClient):
         # When the resend password with expired token endpoint is hit
         self.resend_password_email_expired_token(token)
         # Then a notification is sent the the respondent's email adddress
-        self.assertTrue(self.mock_notify.request_password_change.called)
+        self.assertTrue(self.mock_notify.request_to_notify.called)
 
     def test_resend_password_email_expired_token_respondent_not_found(self):
         # The token is valid but the respondent doesn't exist
@@ -530,7 +530,7 @@ class TestRespondents(PartyTestClient):
         # When the resend verification with expired token endpoint is hit
         response = self.resend_password_email_expired_token(token, 404)
         # Then an email is not sent and a message saying there is no respondent is returned
-        self.assertFalse(self.mock_notify.request_password_change.called)
+        self.assertFalse(self.mock_notify.request_to_notify.called)
         self.assertIn("Respondent does not exist", response['errors'])
 
     @staticmethod

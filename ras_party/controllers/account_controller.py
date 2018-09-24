@@ -335,7 +335,6 @@ def request_password_change(payload, session):
 
 
 @with_db_session
-
 def resend_password_email_expired_token(token, session):
     """
     Check and resend an email verification email using the expired token
