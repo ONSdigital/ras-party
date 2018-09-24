@@ -7,7 +7,7 @@ lint:
 	pipenv run flake8 ./ras_party ./test
 	pipenv check ./ras_party ./test
 
-test: lint
+test:
 	pipenv run tox
 
 start:
