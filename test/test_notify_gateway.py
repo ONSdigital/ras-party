@@ -19,7 +19,7 @@ class TestNotifyGateway(PartyTestClient):
 
         notify = NotifyGateway(current_app.config)
         # When an email is sent
-        notify.verify_email('email')
+        notify.request_to_notify('email', 'email_verification')
         # Then send_email_notification is called
 
         expected_data = {"emailAddress": "email"}
@@ -29,7 +29,7 @@ class TestNotifyGateway(PartyTestClient):
                             "timeout": 99, "json": expected_data}
 
         self.mock_requests.post.assert_called_with(
-            "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/email_verification_id",
+            "http://mockhost:5555/emails/email_verification_id",
             expected_request)
 
     def test_notify_sends_notification_with_extended_message(self):
@@ -38,7 +38,8 @@ class TestNotifyGateway(PartyTestClient):
 
         notify = NotifyGateway(current_app.config)
         # When an email is sent
-        notify.request_password_change("email", personalisation="personalised message", reference="reference")
+        notify.request_to_notify("email", 'request_password_change', personalisation="personalised message",
+                                 reference="reference")
         # Then send_email_notification is called
         expected_data = {"emailAddress": "email", "personalisation": "personalised message", "reference": "reference"}
         expected_request = {"auth": (current_app.config['SECURITY_USER_NAME'],
@@ -46,7 +47,7 @@ class TestNotifyGateway(PartyTestClient):
                             "timeout": 99, "json": expected_data}
 
         self.mock_requests.post.assert_called_with(
-            "http://notifygatewaysvc-dev.apps.devtest.onsclofo.uk/emails/request_password_change_id",
+            "http://mockhost:5555/emails/request_password_change_id",
             expected_request)
 
     def test_notify_exception_is_translated_to_ras_exception(self):
@@ -59,4 +60,13 @@ class TestNotifyGateway(PartyTestClient):
         notify = NotifyGateway(current_app.config)
         # Then a RasNotifyError is raised
         with self.assertRaises(RasNotifyError):
-            notify.confirm_password_change('email')
+            notify.request_to_notify('email', 'request_password_change')
+
+    def test_get_template_with_fake_template_name(self):
+        # Given a mocked notify gateway
+        notify = NotifyGateway(current_app.config)
+        # When given a fake template name
+        template_name = 'fake_name'
+        # Then a key error is raised
+        with self.assertRaises(KeyError):
+            notify._get_template_id(template_name)

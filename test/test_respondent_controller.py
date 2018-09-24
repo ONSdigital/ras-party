@@ -1,6 +1,7 @@
 # pylint: disable=no-value-for-parameter
 
 import uuid
+from unittest import mock
 from unittest.mock import MagicMock, patch
 
 from flask import current_app
@@ -8,8 +9,8 @@ from itsdangerous import URLSafeTimedSerializer
 
 from ras_party.controllers import account_controller
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
-from ras_party.exceptions import ClientError
-from ras_party.models.models import BusinessRespondent, Enrolment, RespondentStatus, Respondent
+from ras_party.exceptions import ClientError, RasNotifyError
+from ras_party.models.models import BusinessRespondent, Enrolment, RespondentStatus, Respondent, PendingEnrolment
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
@@ -17,7 +18,7 @@ from ras_party.support.transactional import transactional
 from ras_party.support.verification import generate_email_token
 from test.mocks import MockRequests, MockResponse
 from test.party_client import PartyTestClient, respondents, businesses, business_respondent_associations, enrolments
-from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDisabled
+from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDisabled, MockEnrolmentPending
 from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, \
     MockRespondentWithIdActive, MockRespondentWithIdSuspended, MockRespondentWithPendingEmail
 
@@ -37,6 +38,7 @@ class TestRespondents(PartyTestClient):
         self.respondent = None
         self.mock_enrolment_enabled = MockEnrolmentEnabled().attributes().as_enrolment()
         self.mock_enrolment_disabled = MockEnrolmentDisabled().attributes().as_enrolment()
+        self.mock_enrolment_pending = MockEnrolmentPending().attributes().as_enrolment()
 
     @transactional
     @with_db_session
@@ -69,6 +71,20 @@ class TestRespondents(PartyTestClient):
             'created_on': enrolment['created_on']
         }
         self.enrolment = Enrolment(**translated_enrolment)
+        session.add(self.enrolment)
+
+    @with_db_session
+    def populate_with_pending_enrolment(self, session, enrolment=None):
+        if not enrolment:
+            enrolment = self.mock_enrolment_pending
+        translated_enrolment = {
+            'business_id': enrolment['business_id'],
+            'respondent_id': enrolment['respondent_id'],
+            'survey_id': enrolment['survey_id'],
+            'case_id': 'f8d7a5db-2b72-4409-b4d2-bc47b358cbda',
+            'created_on': enrolment['created_on']
+        }
+        self.enrolment = PendingEnrolment(**translated_enrolment)
         session.add(self.enrolment)
 
     @with_db_session
@@ -274,7 +290,7 @@ class TestRespondents(PartyTestClient):
         # When the resend verification end point is hit
         self.resend_verification_email(respondent.party_uuid)
         # Verification email is sent
-        self.assertTrue(self.mock_notify.verify_email.called)
+        self.assertTrue(self.mock_notify.request_to_notify.called)
 
     def test_resend_verification_email_responds_with_message(self):
         # Given there is a respondent
@@ -289,7 +305,7 @@ class TestRespondents(PartyTestClient):
         # When the resend verification end point is hit
         response = self.resend_verification_email('3b136c4b-7a14-4904-9e01-13364dd7b972', 404)
         # Then an email is not sent and a message saying there is no respondent is returned
-        self.assertFalse(self.mock_notify.verify_email.called)
+        self.assertFalse(self.mock_notify.request_to_notify.called)
         self.assertIn(account_controller.NO_RESPONDENT_FOR_PARTY_ID, response['errors'])
 
     def test_resend_verification_email_party_id_malformed(self):
@@ -305,10 +321,11 @@ class TestRespondents(PartyTestClient):
         personalisation = {
             'ACCOUNT_VERIFICATION_URL': email
         }
-        self.mock_notify.verify_email.assert_called_once_with(
-            respondent.email_address,
-            personalisation,
-            respondent.party_uuid
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=respondent.email_address,
+            template_name='email_verification',
+            personalisation=personalisation,
+            reference=respondent.party_uuid
         )
 
     def test_email_verification_expired_token_sends_calls_notify(self):
@@ -318,7 +335,7 @@ class TestRespondents(PartyTestClient):
         # When the resend verification with expired token endpoint is hit
         self.resend_verification_email_expired_token(token)
         # Then a notification is sent the the respondent's email adddress
-        self.assertTrue(self.mock_notify.verify_email.called)
+        self.assertTrue(self.mock_notify.request_to_notify.called)
 
     def test_resend_verification_email_expired_token_respondent_not_found(self):
         # The token is valid but the respondent doesn't exist
@@ -327,7 +344,7 @@ class TestRespondents(PartyTestClient):
         # When the resend verification with expired token endpoint is hit
         response = self.resend_verification_email_expired_token(token, 404)
         # Then an email is not sent and a message saying there is no respondent is returned
-        self.assertFalse(self.mock_notify.verify_email.called)
+        self.assertFalse(self.mock_notify.request_to_notify.called)
         self.assertIn("Respondent does not exist", response['errors'])
 
     def test_resend_verification_email_sends_to_new_email_address(self):
@@ -340,10 +357,11 @@ class TestRespondents(PartyTestClient):
         personalisation = {
             'ACCOUNT_VERIFICATION_URL': pending_email
         }
-        self.mock_notify.verify_email.assert_called_once_with(
-            respondent.pending_email_address,
-            personalisation,
-            respondent.party_uuid
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=respondent.pending_email_address,
+            template_name='email_verification',
+            personalisation=personalisation,
+            reference=respondent.party_uuid
         )
 
     def test_request_password_change_with_valid_email(self):
@@ -362,10 +380,11 @@ class TestRespondents(PartyTestClient):
             'RESET_PASSWORD_URL': PublicWebsite().reset_password_url(respondent.email_address),
             'FIRST_NAME': respondent.first_name
         }
-        self.mock_notify.request_password_change.assert_called_once_with(
-            respondent.email_address,
-            personalisation,
-            respondent.party_uuid
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=respondent.email_address,
+            template_name='request_password_change',
+            personalisation=personalisation,
+            reference=respondent.party_uuid
         )
 
     def test_request_password_change_created_account_doesnt_call_notify_gateway(self):
@@ -374,7 +393,7 @@ class TestRespondents(PartyTestClient):
         # When the request password end point is hit with an existing email address
         payload = {'email_address': respondent.email_address}
         self.request_password_change(payload)
-        self.mock_notify.request_password_change.assert_not_called()
+        self.mock_notify.request_for_notify.assert_not_called()
 
     def test_request_password_change_with_no_email(self):
         payload = {}
@@ -388,7 +407,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent()
         payload = {'email_address': 'not-mock@example.test'}
         self.request_password_change(payload, expected_status=404)
-        self.assertFalse(self.mock_notify.request_password_change.called)
+        self.assertFalse(self.mock_notify.request_for_notify.called)
 
     def test_request_password_change_with_malformed_email(self):
         payload = {'email_address': 'malformed'}
@@ -402,10 +421,11 @@ class TestRespondents(PartyTestClient):
             'RESET_PASSWORD_URL': PublicWebsite().reset_password_url(respondent.email_address),
             'FIRST_NAME': respondent.first_name
         }
-        self.mock_notify.request_password_change.assert_called_once_with(
-            respondent.email_address,
-            personalisation,
-            respondent.party_uuid
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=respondent.email_address,
+            template_name='request_password_change',
+            personalisation=personalisation,
+            reference=respondent.party_uuid
         )
 
     @staticmethod
@@ -477,10 +497,11 @@ class TestRespondents(PartyTestClient):
         personalisation = {
             'FIRST_NAME': respondent.first_name
         }
-        self.mock_notify.confirm_password_change.assert_called_once_with(
-            respondent.email_address,
-            personalisation,
-            respondent.party_uuid
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=respondent.email_address,
+            template_name='confirm_password_change',
+            personalisation=personalisation,
+            reference=uuid.UUID(respondent.party_uuid)
         )
 
     @staticmethod
@@ -511,6 +532,51 @@ class TestRespondents(PartyTestClient):
         # Then an email is not sent and a message saying there is no respondent is returned
         self.assertFalse(self.mock_notify.request_password_change.called)
         self.assertIn("Respondent does not exist", response['errors'])
+
+    @staticmethod
+    def test_change_respondent_password_ras_notify_error():
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
+                patch('ras_party.support.session_decorator.current_app.db') as db,\
+                patch('ras_party.controllers.account_controller.OauthClient') as client,\
+                patch('ras_party.controllers.account_controller.NotifyGateway') as notify:
+            notify.side_effect = RasNotifyError(mock.Mock())
+            token = generate_email_token('test@example.test')
+            client().update_account().status_code = 201
+            account_controller.change_respondent_password(token, {'new_password': 'abc'})
+            query.assert_called_once_with('test@example.test', db.session())
+
+    def test_notify_account_lock(self):
+        with patch('ras_party.controllers.account_controller.NotifyGateway'), \
+             patch('ras_party.controllers.account_controller.PublicWebsite'):
+            self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
+            party_id = self.mock_respondent_with_id['id']
+            db_respondent = respondents()[0]
+            payload = {'respondent_id': party_id,
+                       'email_address': db_respondent.email_address,
+                       'status_change': 'SUSPENDED'}
+            self.put_respondent_account_status(payload, party_id, expected_status=200)
+
+    def test_notify_account_lock_with_no_respondent(self):
+        # When the account is locked with no respondents in db
+        party_id = self.mock_respondent_with_id['id']
+        payload = {'email_address': 'emailAddress.com'}
+        self.put_respondent_account_status(payload, party_id, expected_status=400)
+
+    def test_notify_account_ras_notify_error(self):
+        with patch('ras_party.controllers.account_controller.NotifyGateway') as notify,\
+             patch('ras_party.controllers.account_controller.PublicWebsite'):
+            with self.assertLogs() as ctx:
+                notify.side_effect = RasNotifyError(mock.Mock())
+                self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
+                party_id = self.mock_respondent_with_id['id']
+                db_respondent = respondents()[0]
+                payload = {'respondent_id': party_id,
+                           'email_address': db_respondent.email_address,
+                           'status_change': 'SUSPENDED'}
+                self.put_respondent_account_status(payload, party_id)
+                for logs in ctx.records:
+                    if 'ERROR' in logs.levelname:
+                        self.assertIn('Error sending request to Notify Gateway', logs.message)
 
     def test_verify_token_with_bad_secrets(self):
         # Given a respondent exists with an invalid token
@@ -602,10 +668,11 @@ class TestRespondents(PartyTestClient):
         personalisation = {
             'ACCOUNT_VERIFICATION_URL': PublicWebsite().activate_account_url('test@example.test'),
         }
-        self.mock_notify.verify_email.assert_called_once_with(
-            'test@example.test',
-            personalisation,
-            respondent.party_uuid
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email='test@example.test',
+            template_name='email_verification',
+            personalisation=personalisation,
+            reference=respondent.party_uuid
         )
 
     def test_email_verification_activates_a_respondent(self):
@@ -621,7 +688,7 @@ class TestRespondents(PartyTestClient):
     def test_email_verification_url_is_from_config_yml_file(self):
         account_controller._send_email_verification(0, 'test@example.test')
         expected_url = 'http://dummy.ons.gov.uk/register/activate-account/'
-        frontstage_url = self.mock_notify.verify_email.call_args[0][1]['ACCOUNT_VERIFICATION_URL']
+        frontstage_url = self.mock_notify.request_to_notify.call_args[1]['personalisation']['ACCOUNT_VERIFICATION_URL']
         self.assertIn(expected_url, frontstage_url)
 
     def test_email_verification_twice_produces_a_200(self):
@@ -772,10 +839,11 @@ class TestRespondents(PartyTestClient):
         personalisation = {
             'ACCOUNT_VERIFICATION_URL': v_url,
         }
-        self.mock_notify.verify_email.assert_called_once_with(
-            self.mock_respondent['emailAddress'],
-            personalisation,
-            str(respondents()[0].party_uuid)
+        self.mock_notify.request_to_notify.assert_called_once_with(
+            email=self.mock_respondent['emailAddress'],
+            template_name='email_verification',
+            personalisation=personalisation,
+            reference=str(respondents()[0].party_uuid)
         )
 
     def test_post_respondent_uses_case_insensitive_email_query(self):
@@ -960,20 +1028,24 @@ class TestRespondents(PartyTestClient):
         self.put_email_verification(token, 200)
         party_id = self.mock_respondent_with_id['id']
         request_json = {
+            'respondent_id': party_id,
+            'email_address': db_respondent.email_address,
             'status_change': 'SUSPENDED'
         }
         self.put_respondent_account_status(request_json, party_id, 200)
 
     def test_put_change_respondent_account_status_active(self):
-        self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
-        db_respondent = respondents()[0]
-        token = self.generate_valid_token_from_email(db_respondent.email_address)
-        self.put_email_verification(token, 200)
-        party_id = self.mock_respondent_with_id_suspended['id']
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+                                               respondent_id=respondent.party_uuid)
+        enrolment = self.mock_enrolment_pending
+        self.populate_with_enrolment(enrolment=enrolment)
+        self.populate_with_pending_enrolment(enrolment=enrolment)
         request_json = {
             'status_change': 'ACTIVE'
         }
-        self.put_respondent_account_status(request_json, party_id, 200)
+        self.put_respondent_account_status(request_json, respondent.party_uuid, 200)
 
     def test_put_change_respondent_account_status_minus_status_change(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
