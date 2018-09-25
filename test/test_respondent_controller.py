@@ -515,6 +515,24 @@ class TestRespondents(PartyTestClient):
             account_controller.change_respondent_password(token, {'new_password': 'abc'})
             query.assert_called_once_with('test@example.test', db.session())
 
+    def test_resend_password_email_expired_token_calls_notify(self):
+        # Given a token is used that has already been declared to be expired
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
+        token = self.generate_valid_token_from_email(respondent.email_address)
+        # When the resend password with expired token endpoint is hit
+        self.resend_password_email_expired_token(token)
+        # Then a notification is sent the the respondent's email adddress
+        self.assertTrue(self.mock_notify.request_to_notify.called)
+
+    def test_resend_password_email_expired_token_respondent_not_found(self):
+        # The token is valid but the respondent doesn't exist
+        token = self.generate_valid_token_from_email('invalid@email.com')
+        # When the resend verification with expired token endpoint is hit
+        response = self.resend_password_email_expired_token(token, 404)
+        # Then an email is not sent and a message saying there is no respondent is returned
+        self.assertFalse(self.mock_notify.request_to_notify.called)
+        self.assertIn("Respondent does not exist", response['errors'])
+
     @staticmethod
     def test_change_respondent_password_ras_notify_error():
         with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
