@@ -10,8 +10,8 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
+from werkzeug.exceptions import NotFound
 
-from ras_party.exceptions import RasError
 from ras_party.models import GUID
 from ras_party.support.util import filter_falsey_values, partition_dict
 
@@ -157,9 +157,8 @@ class Business(Base):
         try:
             return next((attributes for attributes in self.attributes if attributes.collection_exercise))
         except StopIteration:
-            logger.error("No active attributes for business", party_id=self.party_uuid)
-            raise RasError("Business with reference does not have any active attributes.", reference=self.business_ref,
-                           status=404)
+            logger.error("No active attributes for business", reference=self.business_ref, status=404)
+            raise NotFound("Business with reference does not have any active attributes.")
 
 
 class BusinessAttributes(Base):

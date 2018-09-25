@@ -1,13 +1,18 @@
 import uuid
+import logging
 
+import structlog
 from flask import current_app
+from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid, \
     query_businesses_by_party_uuids, search_businesses
 from ras_party.controllers.validate import Validator, Exists
-from ras_party.exceptions import ClientError
 from ras_party.models.models import Business, BusinessAttributes
 from ras_party.support.session_decorator import with_db_session
+
+
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 @with_db_session
@@ -24,7 +29,7 @@ def get_business_by_ref(ref, session, verbose=False):
     """
     business = query_business_by_ref(ref, session)
     if not business:
-        raise ClientError("Business with reference does not exist", reference=ref, status=404)
+        return None
 
     if verbose:
         return business.to_business_dict()
@@ -38,7 +43,8 @@ def get_businesses_by_ids(party_uuids, session):
         try:
             uuid.UUID(party_uuid)
         except ValueError:
-            raise ClientError(f"'{party_uuid}' is not a valid UUID format for property 'id'", status=400)
+            logger.debug("Invalid party uuid value", party_uuid=party_uuid)
+            raise BadRequest(f"'{party_uuid}' is not a valid UUID format for property 'id'")
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
     return [business.to_business_summary_dict() for business in businesses]
@@ -62,11 +68,13 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
     try:
         uuid.UUID(party_uuid)
     except ValueError:
-        raise ClientError(f"'{party_uuid}' is not a valid UUID format for property 'id'", status=400)
+        logger.debug("Invalid party uuid value", party_uuid=party_uuid)
+        raise BadRequest(f"'{party_uuid}' is not a valid UUID format for property 'id'")
 
     business = query_business_by_party_uuid(party_uuid, session)
     if not business:
-        raise ClientError("Business with party id does not exist", party_uuid=party_uuid, status=404)
+        logger.debug("Business with id does not exist", party_uuid=party_uuid)
+        raise NotFound("Business with party id does not exist")
 
     if verbose:
         return business.to_business_dict(collection_exercise_id=collection_exercise_id)
@@ -88,7 +96,9 @@ def businesses_post(business_data, session):
     # FIXME: this is incorrect, it doesn't make sense to require sampleUnitType for the concrete endpoints
     errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
     if errors:
-        raise ClientError([e.split('\n')[0] for e in errors], status=400)
+        errors = [e.split('\n')[0] for e in errors]
+        logger.debug(errors)
+        raise BadRequest(errors)
 
     business = query_business_by_ref(party_data['sampleUnitRef'], session)
     if business:
@@ -113,7 +123,8 @@ def businesses_sample_ce_link(sample, ce_data, session):
 
     v = Validator(Exists('collectionExerciseId'))
     if not v.validate(ce_data):
-        raise ClientError(v.errors, 400)
+        logger.debug(v.errors)
+        raise BadRequest(v.errors)
 
     collection_exercise_id = ce_data['collectionExerciseId']
 
