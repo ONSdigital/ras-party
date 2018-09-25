@@ -324,6 +324,26 @@ def request_password_change(payload, session):
 
 
 @with_db_session
+def resend_password_email_expired_token(token, session):
+    """
+    Check and resend an email verification email using the expired token
+    :param token: the expired token
+    :param session: database session
+    :return: response
+    """
+    email_address = decode_email_token(token, duration=None)
+    respondent = query_respondent_by_email(email_address, session)
+
+    if not respondent:
+        raise ClientError("Respondent does not exist", status=404)
+
+    payload = {'email_address': email_address}
+
+    response = request_password_change(payload)
+    return response
+
+
+@with_db_session
 def notify_change_account_status(payload, party_id, session):
     status = payload['status_change']
 
