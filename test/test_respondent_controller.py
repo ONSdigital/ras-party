@@ -7,10 +7,12 @@ from unittest.mock import MagicMock, patch
 
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
+from requests import Response
+from werkzeug.exceptions import BadRequest, InternalServerError
 
 from ras_party.controllers import account_controller
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
-from ras_party.exceptions import ClientError, RasNotifyError
+from ras_party.exceptions import RasNotifyError
 from ras_party.models.models import BusinessRespondent, Enrolment, RespondentStatus, Respondent, PendingEnrolment
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
@@ -182,7 +184,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent()
         party_uuid = "gibberish"
         response = self.get_respondents_by_ids([party_uuid], expected_status=400)
-        self.assertEquals(response['errors'][0], """'gibberish' is not a valid UUID format for property 'id'""")
+        self.assertEquals(response['description'], """'gibberish' is not a valid UUID format for property 'id'""")
 
     def test_get_respondent_by_ids_with_an_unknown_id_still_returns_correct_representation_for_other_ids(self):
         respondent_1 = MockRespondent()
@@ -307,7 +309,7 @@ class TestRespondents(PartyTestClient):
         response = self.resend_verification_email('3b136c4b-7a14-4904-9e01-13364dd7b972', 404)
         # Then an email is not sent and a message saying there is no respondent is returned
         self.assertFalse(self.mock_notify.request_to_notify.called)
-        self.assertIn(account_controller.NO_RESPONDENT_FOR_PARTY_ID, response['errors'])
+        self.assertIn(account_controller.NO_RESPONDENT_FOR_PARTY_ID, response['description'])
 
     def test_resend_verification_email_party_id_malformed(self):
         self.resend_verification_email('malformed', 500)
@@ -346,7 +348,7 @@ class TestRespondents(PartyTestClient):
         response = self.resend_verification_email_expired_token(token, 404)
         # Then an email is not sent and a message saying there is no respondent is returned
         self.assertFalse(self.mock_notify.request_to_notify.called)
-        self.assertIn("Respondent does not exist", response['errors'])
+        self.assertIn("Respondent does not exist", response['description'])
 
     def test_resend_verification_email_sends_to_new_email_address(self):
         # Given there is a respondent with a pending email address
@@ -532,7 +534,7 @@ class TestRespondents(PartyTestClient):
         response = self.resend_password_email_expired_token(token, 404)
         # Then an email is not sent and a message saying there is no respondent is returned
         self.assertFalse(self.mock_notify.request_to_notify.called)
-        self.assertIn("Respondent does not exist", response['errors'])
+        self.assertIn("Respondent does not exist", response['description'])
 
     @staticmethod
     def test_change_respondent_password_ras_notify_error():
@@ -729,9 +731,9 @@ class TestRespondents(PartyTestClient):
         self.populate_with_business()
         self.post_to_respondents(self.mock_respondent, 200)
 
-    def test_post_respondent_without_business_returns_404(self):
+    def test_post_respondent_without_business_returns_500(self):
         self.assertEqual(len(businesses()), 0)
-        self.post_to_respondents(self.mock_respondent, 404)
+        self.post_to_respondents(self.mock_respondent, 500)
 
     def test_post_respondent_with_no_payload_returns_400(self):
         self.post_to_respondents(None, 400)
@@ -747,7 +749,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_business()
         self.post_to_respondents(self.mock_respondent, 200)
         response = self.post_to_respondents(self.mock_respondent, 400)
-        self.assertIn('Email address already exists', response['errors'][0])
+        self.assertIn('Email address already exists', response['description'])
 
     def test_post_respondent_twice_different_email(self):
         self.populate_with_business()
@@ -867,7 +869,7 @@ class TestRespondents(PartyTestClient):
             with open('test/test_data/get_updated_iac.json') as fp:
                 updated_iac.return_value = json.load(fp)
             query('test@example.test', db.session()).return_value = None
-            with self.assertRaises(ClientError):
+            with self.assertRaises(BadRequest):
                 account_controller.post_respondent(payload)
             query.assert_called_once_with('test@example.test', db.session())
 
@@ -907,7 +909,7 @@ class TestRespondents(PartyTestClient):
             'enrolment_code': self.mock_respondent_with_id['enrolment_code']
         }
         response = self.add_survey(request_json, 400)
-        self.assertTrue(response['errors'] == ["Required key 'party_id' is missing."])
+        self.assertTrue(response['description'] == ["Required key 'party_id' is missing."])
 
     def test_post_add_new_survey_missing_enrolment_code_returns_error(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
@@ -922,7 +924,7 @@ class TestRespondents(PartyTestClient):
         }
 
         response = self.add_survey(request_json, 400)
-        self.assertTrue(response['errors'] == ["Required key 'enrolment_code' is missing."])
+        self.assertTrue(response['description'] == ["Required key 'enrolment_code' is missing."])
 
     def test_post_add_survey_inactive_enrolment_code(self):
         # Set IAC code to be inactive
@@ -941,7 +943,7 @@ class TestRespondents(PartyTestClient):
 
         self.add_survey(request_json, 400)
 
-    def test_post_add_survey_no_business_raise_ras_error(self):
+    def test_post_add_survey_no_business_raise_Internal_server_error(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         db_respondent = respondents()[0]
         token = self.generate_valid_token_from_email(db_respondent.email_address)
@@ -950,7 +952,7 @@ class TestRespondents(PartyTestClient):
             'party_id': self.mock_respondent_with_id['id'],
             'enrolment_code': self.mock_respondent_with_id['enrolment_code']
         }
-        self.add_survey(request_json, 404)
+        self.add_survey(request_json, 500)
 
     def test_put_change_respondent_enrolment_status_disabled_success(self):
         def mock_put_iac(*args, **kwargs):
@@ -1081,5 +1083,32 @@ class TestRespondents(PartyTestClient):
         request_json = {
             'status_change': 'ACTIVE'
         }
-        with patch('ras_party.clients.oauth_client.OauthClient.update_account', return_value=401):
+
+        response = Response()
+        response.status_code = 401
+        with patch('ras_party.clients.oauth_client.OauthClient.update_account', return_value=response):
             self.put_respondent_account_status(request_json, party_id, 500)
+
+    def test_change_respondent_password_bad_auth_response(self):
+        with patch('ras_party.controllers.account_controller.decode_email_token'), \
+             patch('ras_party.controllers.account_controller.current_app'), \
+             patch('ras_party.support.session_decorator.current_app.db'), \
+             patch('ras_party.controllers.account_controller.enrol_respondent_for_survey'), \
+             patch('ras_party.controllers.account_controller.NotifyGateway'), \
+             patch('ras_party.controllers.account_controller.OauthClient') as auth, \
+             patch('ras_party.controllers.account_controller.Requests'):
+            payload = {
+                'new_password': 'password'
+            }
+
+            auth().update_account().status_code.return_value = 500
+            with self.assertRaises(InternalServerError):
+                account_controller.change_respondent_password('token', payload)
+
+    def test_update_verified_email_address_bad_auth_response(self):
+        with patch('ras_party.controllers.account_controller.OauthClient') as auth:
+            respondent = Respondent()
+
+            auth().update_account().status_code.return_value = 500
+            with self.assertRaises(InternalServerError):
+                account_controller.update_verified_email_address(respondent, None, None)

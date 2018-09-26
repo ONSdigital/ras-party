@@ -104,7 +104,7 @@ class TestParties(PartyTestClient):
     def test_get_business_by_ids_fails_if_id_is_not_uuid(self):
         party_uuid = "gibberish"
         response = self.get_businesses_by_ids([party_uuid], expected_status=400)
-        self.assertEquals(response['errors'][0], """'gibberish' is not a valid UUID format for property 'id'""")
+        self.assertEquals(response['description'], """'gibberish' is not a valid UUID format for property 'id'""")
 
     def test_get_business_by_id_with_no_active_attributes_returns_404(self):
         mock_business = MockBusiness() \

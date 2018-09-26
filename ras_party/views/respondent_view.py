@@ -1,11 +1,15 @@
+import logging
+
+import structlog
 from flask import Blueprint, current_app, make_response, jsonify, request
 from flask_httpauth import HTTPBasicAuth
+from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import respondent_controller
-from ras_party.exceptions import RasError
 from ras_party.support.log_decorator import log_route
 
 
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 respondent_view = Blueprint('respondent_view', __name__)
 auth = HTTPBasicAuth()
 
@@ -33,7 +37,8 @@ def get_respondents():
         # pylint: disable=no-value-for-parameter
         response = respondent_controller.get_respondent_by_ids(ids)
     else:
-        raise RasError("The parameter id is required.", status=400)
+        logger.debug("The parameter id is required.", url=request.url)
+        raise BadRequest("The parameter id is required.")
 
     return jsonify(response)
 

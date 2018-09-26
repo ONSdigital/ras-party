@@ -1,11 +1,15 @@
+import logging
+
+import structlog
 from flask import Blueprint, request, current_app, jsonify
 from flask_httpauth import HTTPBasicAuth
+from werkzeug.exceptions import NotFound, BadRequest
 
 from ras_party.controllers import business_controller
-from ras_party.exceptions import RasError
 from ras_party.support.log_decorator import log_route
 
 
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 business_view = Blueprint('business_view', __name__)
 auth = HTTPBasicAuth()
 
@@ -40,7 +44,8 @@ def get_businesses():
         # pylint: disable=no-value-for-parameter
         response = business_controller.get_businesses_by_ids(ids)
     else:
-        raise RasError("The parameter id is required.", status=400)
+        logger.debug("The parameter id is required.", url=request.url)
+        raise BadRequest("The parameter id is required.")
 
     return jsonify(response)
 
@@ -60,8 +65,13 @@ def get_business_by_ref(ref):
     verbose = request.args.get('verbose', '')
     verbose = True if verbose and verbose.lower() == 'true' else False
 
-    response = business_controller.get_business_by_ref(ref, verbose=verbose)
-    return jsonify(response)
+    business = business_controller.get_business_by_ref(ref, verbose=verbose)
+
+    if not business:
+        logger.info("Business with reference does not exist", reference=ref, url=request.url, status=404)
+        raise NotFound(description="Business with reference does not exist")
+
+    return jsonify(business)
 
 
 @business_view.route('/businesses/sample/link/<sample>', methods=['PUT'])
