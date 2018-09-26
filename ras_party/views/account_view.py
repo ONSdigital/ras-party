@@ -3,10 +3,10 @@ import logging
 import structlog
 from flask import Blueprint, request, current_app, make_response, jsonify
 from flask_httpauth import HTTPBasicAuth
+from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import account_controller
 from ras_party.controllers.validate import Exists, Validator
-from ras_party.exceptions import RasError
 from ras_party.support.log_decorator import log_route
 
 
@@ -96,7 +96,8 @@ def respondent_add_survey():
     payload = request.get_json() or {}
     v = Validator(Exists('party_id', 'enrolment_code'))
     if not v.validate(payload):
-        raise RasError(v.errors, 400)
+        logger.debug(v.errors, url=request.url)
+        raise BadRequest(v.errors)
 
     account_controller.add_new_survey_for_respondent(payload)
     return make_response(jsonify('OK'), 200)
@@ -107,7 +108,8 @@ def change_respondent_enrolment_status():
     payload = request.get_json() or {}
     v = Validator(Exists('respondent_id', 'business_id', 'survey_id', 'change_flag'))
     if not v.validate(payload):
-        raise RasError(v.errors, 400)
+        logger.debug(v.errors, url=request.url)
+        raise BadRequest(v.errors)
     account_controller.change_respondent_enrolment_status(payload)
 
     return make_response(jsonify('OK'), 200)
@@ -120,7 +122,8 @@ def put_edit_account_status(party_id):
     payload = request.get_json() or {}
     v = Validator(Exists('status_change'))
     if not v.validate(payload):
-        raise RasError(v.errors, 400)
+        logger.debug(v.errors, url=request.url)
+        raise BadRequest(v.errors)
 
     response = account_controller.notify_change_account_status(payload=payload, party_id=party_id)
     return make_response(jsonify(response), 200)

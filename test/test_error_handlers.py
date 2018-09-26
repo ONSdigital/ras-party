@@ -2,47 +2,13 @@ from unittest.mock import patch
 
 from flask import request
 from requests import Request, RequestException, Response
+from werkzeug.exceptions import NotFound
 
-from ras_party.error_handlers import client_error, exception_error, http_error, ras_error
-from ras_party.exceptions import ClientError, RasError
+from ras_party.error_handlers import http_error, http_exception_handler, exception_error
 from test.party_client import PartyTestClient
 
 
 class TestErrorHandlers(PartyTestClient):
-
-    @staticmethod
-    def test_uncaught_client_error_handler_will_log_exception():
-        # Given
-        error = ClientError(errors=['some error'], status=400, )
-
-        with patch('ras_party.error_handlers.logger') as logger:
-            # When
-            client_error(error)
-            # Then
-            logger.info.assert_called_once_with('Client error', errors={'errors': ['some error']},
-                                                status=400, url=request.url)
-
-    def test_uncaught_ras_error_handler(self):
-        # Given
-        error = RasError(errors=['some error'], status=418)
-        # When
-        response = ras_error(error)
-
-        # Then
-        self.assertEqual(response.status_code, 418)
-
-    def test_uncaught_ras_error_handler_will_log_exception(self):
-        # Given
-        error = RasError(errors=['some error'], status=418)
-
-        with patch('ras_party.error_handlers.logger') as logger:
-            # When
-            ras_error(error)
-
-            # Then
-            logger.exception.assert_called_once_with('Uncaught exception', errors={'errors': ['some error']},
-                                                     status=418,
-                                                     url=request.url)
 
     def test_uncaught_request_exception_handler(self):
         # Given
@@ -64,10 +30,20 @@ class TestErrorHandlers(PartyTestClient):
             http_error(error)
 
             # Then
-            logger.exception.assert_called_once_with('Uncaught exception',
+            logger.exception.assert_called_once_with('Error requesting another service',
                                                      errors={'errors': {'method': 'GET', 'url': 'http://localhost'}},
                                                      status=500,
                                                      url=request.url)
+
+    def test_uncaught_http_exception_handler(self):
+        # Given
+        error = NotFound("test NotFound raised")
+        # When
+        response = http_exception_handler(error)
+
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual("test NotFound raised", response.json['description'])
 
     def test_uncaught_exception_handler(self):
         # Given
