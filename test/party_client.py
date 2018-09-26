@@ -190,6 +190,12 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
+    def resend_password_email_expired_token(self, token, expected_status=200):
+        response = self.client.post(f'/party-api/v1/resend-password-email-expired-token/{token}',
+                                    headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
     def request_password_change(self, payload, expected_status=200):
         response = self.client.post('/party-api/v1/respondents/request_password_change',
                                     data=json.dumps(payload),
