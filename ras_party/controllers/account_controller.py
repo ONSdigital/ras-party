@@ -426,7 +426,7 @@ def put_email_verification(token, tran, session):
         respondent = query_respondent_by_pending_email(email_address, session)
 
         if respondent:
-            update_verified_email_address(respondent, tran, session)
+            update_verified_email_address(respondent, tran)
         else:
             logger.info("Unable to find respondent by pending email")
             raise NotFound("Unable to find user while checking email verification token")
@@ -448,7 +448,7 @@ def put_email_verification(token, tran, session):
     return respondent.to_respondent_dict()
 
 
-def update_verified_email_address(respondent, tran, _):
+def update_verified_email_address(respondent, tran):
 
     logger.info('Attempting to update verified email address')
 

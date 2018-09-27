@@ -1111,4 +1111,4 @@ class TestRespondents(PartyTestClient):
 
             auth().update_account().status_code.return_value = 500
             with self.assertRaises(InternalServerError):
-                account_controller.update_verified_email_address(respondent, None, None)
+                account_controller.update_verified_email_address(respondent, None)
