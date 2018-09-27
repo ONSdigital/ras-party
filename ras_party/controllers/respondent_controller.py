@@ -1,10 +1,16 @@
+import logging
 import uuid
+
+import structlog
+from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers.account_controller import change_respondent
 from ras_party.controllers.queries import query_respondent_by_party_uuid, \
     query_respondent_by_email, update_respondent_details, query_respondent_by_party_uuids
-from ras_party.exceptions import ClientError
 from ras_party.support.session_decorator import with_db_session
+
+
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 @with_db_session
@@ -21,30 +27,33 @@ def get_respondent_by_ids(ids, session):
         try:
             uuid.UUID(party_id)
         except ValueError:
-            raise ClientError(f"'{party_id}' is not a valid UUID format for property 'id'", status=400)
+            logger.debug("party_id value is not a valid UUID", party_id=party_id)
+            raise BadRequest(f"'{party_id}' is not a valid UUID format for property 'id'")
 
     respondents = query_respondent_by_party_uuids(ids, session)
     return [respondent.to_respondent_dict() for respondent in respondents]
 
 
 @with_db_session
-def get_respondent_by_id(id, session):
+def get_respondent_by_id(respondent_id, session):
     """
     Get a Respondent by its Party ID
     Returns a single Party
-    :param id: ID of Respondent to return
-    :type id: str
+    :param respondent_id: ID of Respondent to return
+    :type respondent_id: str
 
     :rtype: Respondent
     """
     try:
-        uuid.UUID(id)
+        uuid.UUID(respondent_id)
     except ValueError:
-        raise ClientError(f"'{id}' is not a valid UUID format for property 'id'", status=400)
+        logger.debug("respondent_id value is not a valid UUID", respondent_id=respondent_id)
+        raise BadRequest(f"'{respondent_id}' is not a valid UUID format for property 'id'")
 
-    respondent = query_respondent_by_party_uuid(id, session)
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
-        raise ClientError("Respondent with party id does not exist", respondent_id=id, status=404)
+        logger.debug("Respondent with party id does not exist", respondent_id=respondent_id)
+        raise NotFound("Respondent with party id does not exist")
 
     return respondent.to_respondent_dict()
 
@@ -61,7 +70,8 @@ def get_respondent_by_email(email, session):
     """
     respondent = query_respondent_by_email(email, session)
     if not respondent:
-        raise ClientError("Respondent does not exist", status=404)
+        logger.debug("Respondent does not exist")
+        raise NotFound("Respondent does not exist")
 
     return respondent.to_respondent_dict()
 
@@ -77,7 +87,8 @@ def change_respondent_details(respondent_data, respondent_id, session):
 
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
-        raise ClientError("Respondent id does not exist", respondent_id=respondent_id, status=404)
+        logger.debug("Respondent with party id does not exist", respondent_id=respondent_id)
+        raise NotFound("Respondent id does not exist")
 
     # This function updates the name and number of a respondent
     update_respondent_details(respondent_data, respondent_id, session)

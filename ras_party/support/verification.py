@@ -3,8 +3,7 @@ import logging
 import structlog
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
-
-from ras_party.exceptions import RasError
+from werkzeug.exceptions import InternalServerError
 
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -18,7 +17,7 @@ def generate_email_token(email):
     if secret_key is None or email_token_salt is None:
         msg = "SECRET_KEY or EMAIL_TOKEN_SALT are not configured."
         logger.error(msg)
-        raise RasError(msg)
+        raise InternalServerError(msg)
 
     timed_serializer = URLSafeTimedSerializer(secret_key)
     return timed_serializer.dumps(email, salt=email_token_salt)
