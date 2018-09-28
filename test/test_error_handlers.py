@@ -56,11 +56,11 @@ class TestErrorHandlers(PartyTestClient):
 
     def test_uncaught_exception_handler_will_log_exception(self):
         # Given
-        error = Exception()
+        error = Exception("Test exception raised")
 
         with patch('ras_party.error_handlers.logger') as logger:
             # When
             exception_error(error)
 
             # Then
-            logger.exception.assert_called_once_with('Uncaught exception', status=500)
+            logger.exception.assert_called_once_with('Uncaught exception', exc_info=error, status=500)
