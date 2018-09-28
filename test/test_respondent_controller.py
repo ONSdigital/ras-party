@@ -1,5 +1,6 @@
 # pylint: disable=no-value-for-parameter
 
+import json
 import uuid
 from unittest import mock
 from unittest.mock import MagicMock, patch
@@ -850,9 +851,11 @@ class TestRespondents(PartyTestClient):
 
     def test_post_respondent_uses_case_insensitive_email_query(self):
         with patch('ras_party.controllers.queries.query_respondent_by_email') as query,\
-                patch('ras_party.support.session_decorator.current_app.db') as db,\
-                patch('ras_party.controllers.account_controller.NotifyGateway'),\
-                patch('ras_party.controllers.account_controller.Requests'):
+             patch('ras_party.support.session_decorator.current_app.db') as db,\
+             patch('ras_party.controllers.account_controller.NotifyGateway'),\
+             patch('ras_party.controllers.account_controller.Requests'),\
+             patch('ras_party.controllers.account_controller.request_iac') as requested_iac,\
+             patch('ras_party.controllers.account_controller.disable_iac') as updated_iac:
             payload = {
                 'emailAddress': 'test@example.test',
                 'firstName': 'Joe',
@@ -861,6 +864,10 @@ class TestRespondents(PartyTestClient):
                 'telephone': '111',
                 'enrolmentCode': 'abc'
             }
+            with open('test/test_data/get_active_iac.json') as fp:
+                requested_iac.return_value = json.load(fp)
+            with open('test/test_data/get_updated_iac.json') as fp:
+                updated_iac.return_value = json.load(fp)
             query('test@example.test', db.session()).return_value = None
             with self.assertRaises(BadRequest):
                 account_controller.post_respondent(payload)
@@ -962,7 +969,7 @@ class TestRespondents(PartyTestClient):
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
-            'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
+            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
             'change_flag': 'DISABLED'
         }
         self.put_enrolment_status(request_json, 200)
@@ -983,7 +990,7 @@ class TestRespondents(PartyTestClient):
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
-            'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
+            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
             'change_flag': 'ENABLED'
         }
         self.put_enrolment_status(request_json, 200)
@@ -992,7 +999,7 @@ class TestRespondents(PartyTestClient):
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
-            'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
+            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
             'change_flag': 'ENABLED'
         }
         self.put_enrolment_status(request_json, 404)
@@ -1018,7 +1025,7 @@ class TestRespondents(PartyTestClient):
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
-            'survey_id': '02b9c366-7397-42f7-942a-76dc5876d86d',
+            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
             'change_flag': 'woafouewbhouGFHEPIW0'
         }
         self.put_enrolment_status(request_json, 500)
@@ -1104,4 +1111,4 @@ class TestRespondents(PartyTestClient):
 
             auth().update_account().status_code.return_value = 500
             with self.assertRaises(InternalServerError):
-                account_controller.update_verified_email_address(respondent, None, None)
+                account_controller.update_verified_email_address(respondent, None)
