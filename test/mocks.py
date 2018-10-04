@@ -47,7 +47,9 @@ class MockRequests:
                     'http://mockhost:3333/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87':
                         MockResponse(get_survey_by_id.response),
                     'http://mockhost:6666/iacs/fb747cq725lj':
-                        MockResponse(get_iac.response)
+                        MockResponse(get_iac.response),
+                    'http://mockhost:1111/cases/casegroupid/612f5c34-7e11-4740-8e24-cb321a86a917':
+                        MockResponse(get_cases_by_party.response)
                 }[uri]
             except KeyError:
                 raise Exception(f"MockRequests doesn't know about route {uri}")
