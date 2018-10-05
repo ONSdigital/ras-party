@@ -148,7 +148,8 @@ def change_respondent_enrolment_status(payload, session):
     # then send NO_ACTIVE_ENROLMENTS case event
     enrolment_count = count_enrolment_by_survey_business(business_id, survey_id, session)
     if not enrolment_count:
-        logger.info("Informing case service of no active enrolments", survey_id=survey_id, business_id=business_id)
+        logger.info("Informing case service of no active enrolments", survey_id=survey_id,
+                    business_id=business_id, respondent_id=respondent.party_uuid)
         post_case_event(case_id=get_case_id_for_business_survey(survey_id, business_id),
                         category='NO_ACTIVE_ENROLMENTS',
                         desc='No active enrolments remaining for case')
@@ -574,7 +575,8 @@ def add_new_survey_for_respondent(payload, tran, session):
     disable_iac(enrolment_code, case_id)
 
     if count_enrolment_by_survey_business(survey_id, business_id, session) == 0:
-        logger.info("Informing case of respondent enrolled", survey_id=survey_id, business_id=business_id)
+        logger.info("Informing case of respondent enrolled", survey_id=survey_id, business_id=business_id,
+                    respondent_id=respondent.party_uuid)
         post_case_event(case_id=case_id, category="RESPONDENT_ENROLED", desc="Respondent enroled")
 
     # This ensures the log message is only written once the DB transaction is committed
@@ -635,7 +637,7 @@ def enrol_respondent_for_survey(respondent, session):
     if count_enrolment_by_survey_business(survey_id=enrolment.survey_id, business_id=enrolment.business_id,
                                           session=session) == 0:
         logger.info("Informing case of respondent enrolled", survey_id=enrolment.survey_id,
-                    business_id=enrolment.business_id)
+                    business_id=enrolment.business_id, respondent_id=respondent.party_uuid)
         post_case_event(case_id=case_id, category="RESPONDENT_ENROLED", desc="Respondent enrolled")
     session.delete(pending_enrolment)
 
