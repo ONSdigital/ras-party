@@ -37,19 +37,11 @@ EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 @with_db_session
 def post_respondent(party, tran, session):
     """
-    This function is quite complicated, as it performs a number of steps to complete a new respondent enrolment:
-    1. Validate the enrolment code and email address
-    2. Register the respondent as a new user with the remote OAuth2 service.
-    3. Lookup the case context from the case service
-    4. Lookup the collection exercise from the collection exercise service
-    5. Lookup the survey from the survey service
-    6. Generate an email verification token, and an email verification url
-    7. Invoke the email verification
-    8. Update the database with the new respondent, establishing an association to the business, and an entry
-       in the enrolment table (along with the survey id / survey name)
-    9. Post a case event to the case service to notify that a new respondent has been created
-    10. If something goes wrong after step 1, attempt to perform a compensating action to remove the OAuth2 user
-       (this is currently mocked out as the OAuth2 server doesn't implement an endpoint to achieve this)
+    Register respondent and set up pending enrolment before account verification
+    :param party: respondent to be created details
+    :param tran
+    :param session
+    :return: created respondent
     """
 
     # Validation, curation and checks
@@ -156,9 +148,10 @@ def change_respondent_enrolment_status(payload, session):
     # then send NO_ACTIVE_ENROLMENTS case event
     enrolment_count = count_enrolment_by_survey_business(business_id, survey_id, session)
     if not enrolment_count:
-            post_case_event(get_case_id_for_business_survey(survey_id, business_id),
-                            category='NO_ACTIVE_ENROLMENTS',
-                            desc='No active enrolments remaining for case')
+        logger.info("Informing case service of no active enrolments", survey_id=survey_id, business_id=business_id)
+        post_case_event(case_id=get_case_id_for_business_survey(survey_id, business_id),
+                        category='NO_ACTIVE_ENROLMENTS',
+                        desc='No active enrolments remaining for case')
 
 
 @with_db_session
@@ -581,7 +574,8 @@ def add_new_survey_for_respondent(payload, tran, session):
     disable_iac(enrolment_code, case_id)
 
     if count_enrolment_by_survey_business(survey_id, business_id, session) == 0:
-        post_case_event(case_id, "RESPONDENT_ENROLED", "Respondent enroled")
+        logger.info("Informing case of respondent enrolled", survey_id=survey_id, business_id=business_id)
+        post_case_event(case_id=case_id, category="RESPONDENT_ENROLED", desc="Respondent enroled")
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has enroled to survey for business',
@@ -640,7 +634,9 @@ def enrol_respondent_for_survey(respondent, session):
     logger.info('Pending enrolment for case_id', case_id=case_id)
     if count_enrolment_by_survey_business(survey_id=enrolment.survey_id, business_id=enrolment.business_id,
                                           session=session) == 0:
-        post_case_event(case_id, "RESPONDENT_ENROLED", "Respondent enrolled")
+        logger.info("Informing case of respondent enrolled", survey_id=enrolment.survey_id,
+                    business_id=enrolment.business_id)
+        post_case_event(case_id=case_id, category="RESPONDENT_ENROLED", desc="Respondent enrolled")
     session.delete(pending_enrolment)
 
 
