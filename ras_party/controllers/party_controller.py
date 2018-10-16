@@ -100,7 +100,7 @@ def get_business_with_respondents_filtered_by_survey(sample_unit_type, id, surve
     return business
 
 
-def filter_enrolments(existing_enrolments, survey_id, enrolment_status):
+def filter_enrolments(existing_enrolments, survey_id, enrolment_status=None):
     filtered_enrolments = []
     for enrolment in existing_enrolments:
         if enrolment['surveyId'] == survey_id:
