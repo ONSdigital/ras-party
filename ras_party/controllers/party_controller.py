@@ -81,7 +81,7 @@ def get_party_by_id(sample_unit_type, id, session):
         raise BadRequest(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']")
 
 
-def get_business_with_respondents_filtered_by_survey(sample_unit_type, id, survey_id):
+def get_business_with_respondents_filtered_by_survey(sample_unit_type, id, survey_id, enrolment_status=None):
     business = get_party_by_id(sample_unit_type, id)
 
     filtered_associations = []
@@ -89,7 +89,7 @@ def get_business_with_respondents_filtered_by_survey(sample_unit_type, id, surve
 
         filtered_association = {'partyId': association['partyId']}
 
-        filtered_enrolments = filter_enrolments(association['enrolments'], survey_id)
+        filtered_enrolments = filter_enrolments(association['enrolments'], survey_id, enrolment_status)
 
         if filtered_enrolments:
             filtered_association['enrolments'] = filtered_enrolments
@@ -100,9 +100,14 @@ def get_business_with_respondents_filtered_by_survey(sample_unit_type, id, surve
     return business
 
 
-def filter_enrolments(existing_enrolments, survey_id):
+def filter_enrolments(existing_enrolments, survey_id, enrolment_status):
     filtered_enrolments = []
     for enrolment in existing_enrolments:
         if enrolment['surveyId'] == survey_id:
             filtered_enrolments.append(enrolment)
+
+    if enrolment_status:
+        for enrolment in filtered_enrolments:
+            if enrolment['enrolmentStatus'] not in enrolment_status:
+                filtered_enrolments.remove(enrolment)
     return filtered_enrolments
