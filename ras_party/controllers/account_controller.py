@@ -8,6 +8,7 @@ from requests import HTTPError
 from werkzeug.exceptions import BadRequest, Conflict, InternalServerError,  NotFound
 
 from ras_party.clients.oauth_client import OauthClient
+from ras_party.controllers.case_controller import get_cases_for_casegroup, post_case_event
 from ras_party.controllers.iac_controller import disable_iac, request_iac
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import count_enrolment_by_survey_business
@@ -36,19 +37,11 @@ EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 @with_db_session
 def post_respondent(party, tran, session):
     """
-    This function is quite complicated, as it performs a number of steps to complete a new respondent enrolment:
-    1. Validate the enrolment code and email address
-    2. Register the respondent as a new user with the remote OAuth2 service.
-    3. Lookup the case context from the case service
-    4. Lookup the collection exercise from the collection exercise service
-    5. Lookup the survey from the survey service
-    6. Generate an email verification token, and an email verification url
-    7. Invoke the email verification
-    8. Update the database with the new respondent, establishing an association to the business, and an entry
-       in the enrolment table (along with the survey id / survey name)
-    9. Post a case event to the case service to notify that a new respondent has been created
-    10. If something goes wrong after step 1, attempt to perform a compensating action to remove the OAuth2 user
-       (this is currently mocked out as the OAuth2 server doesn't implement an endpoint to achieve this)
+    Register respondent and set up pending enrolment before account verification
+    :param party: respondent to be created details
+    :param tran
+    :param session
+    :return: created respondent
     """
 
     # Validation, curation and checks
@@ -152,15 +145,14 @@ def change_respondent_enrolment_status(payload, session):
     session.commit()
 
     # If no enrolments are remaining for business/survey
-    # then send NO_ACTIVE_ENROLMENTS case event for each relevant B case
-    casegroup_ids = get_business_survey_casegroups(survey_id, business_id)
+    # then send NO_ACTIVE_ENROLMENTS case event
     enrolment_count = count_enrolment_by_survey_business(business_id, survey_id, session)
     if not enrolment_count:
-        logger.info('No active enrolments', business_id=business_id, survey_id=survey_id)
-        for case in get_cases_for_casegroups(casegroup_ids, business_id):
-            post_case_event(case['id'],
-                            category='NO_ACTIVE_ENROLMENTS',
-                            desc='No active enrolments remaining for case')
+        logger.info("Informing case service of no active enrolments", survey_id=survey_id,
+                    business_id=business_id, respondent_id=respondent.party_uuid)
+        post_case_event(case_id=get_case_id_for_business_survey(survey_id, business_id),
+                        category='NO_ACTIVE_ENROLMENTS',
+                        desc='No active enrolments remaining for case')
 
 
 @with_db_session
@@ -583,9 +575,9 @@ def add_new_survey_for_respondent(payload, tran, session):
     disable_iac(enrolment_code, case_id)
 
     if count_enrolment_by_survey_business(survey_id, business_id, session) == 0:
-        casegroup_ids = get_business_survey_casegroups(survey_id, business_id)
-        for case in get_cases_for_casegroups(casegroup_ids, business_id):
-            post_case_event(case['id'], "RESPONDENT_ENROLED", "Respondent enroled")
+        logger.info("Informing case of respondent enrolled", survey_id=survey_id, business_id=business_id,
+                    respondent_id=respondent.party_uuid)
+        post_case_event(case_id=case_id, category="RESPONDENT_ENROLED", desc="Respondent enroled")
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has enroled to survey for business',
@@ -644,9 +636,9 @@ def enrol_respondent_for_survey(respondent, session):
     logger.info('Pending enrolment for case_id', case_id=case_id)
     if count_enrolment_by_survey_business(survey_id=enrolment.survey_id, business_id=enrolment.business_id,
                                           session=session) == 0:
-        casegroup_ids = get_business_survey_casegroups(pending_enrolment.survey_id, pending_enrolment.business_id)
-        for case in get_cases_for_casegroups(casegroup_ids, pending_enrolment.business_id):
-            post_case_event(case['id'], "RESPONDENT_ENROLED", "Respondent enrolled")
+        logger.info("Informing case of respondent enrolled", survey_id=enrolment.survey_id,
+                    business_id=enrolment.business_id, respondent_id=respondent.party_uuid)
+        post_case_event(case_id=case_id, category="RESPONDENT_ENROLED", desc="Respondent enrolled")
     session.delete(pending_enrolment)
 
 
@@ -698,31 +690,6 @@ def request_survey(survey_id):
     return response.json()
 
 
-def post_case_event(case_id, category='Default category message', desc='Default description message'):
-    logger.debug('Posting case event', case_id=case_id)
-    case_svc = current_app.config['RAS_CASE_SERVICE']
-    case_url = f'{case_svc}/cases/{case_id}/events'
-    payload = {
-        'description': desc,
-        'category': category,
-        'createdBy': 'Party Service'
-    }
-
-    response = Requests.post(case_url, json=payload)
-    response.raise_for_status()
-    logger.debug('Successfully posted case event')
-    return response.json()
-
-
-def request_cases_for_respondent(respondent_id):
-    logger.debug('Retrieving cases for respondent', respondent_id=respondent_id)
-    url = f'{current_app.config["RAS_CASE_SERVICE"]}/cases/partyid/{respondent_id}'
-    response = Requests.get(url)
-    response.raise_for_status()
-    logger.debug('Successfully retrieved cases for respondent', respondent_id=respondent_id)
-    return response.json()
-
-
 def request_casegroups_for_business(business_id):
     logger.debug('Retrieving casegroups for business', business_id=business_id)
     url = f'{current_app.config["RAS_CASE_SERVICE"]}/casegroups/partyid/{business_id}'
@@ -756,16 +723,14 @@ def get_business_survey_casegroups(survey_id, business_id):
     return ce_casegroup_ids
 
 
-def get_cases_for_casegroups(casegroup_ids, case_party_id):
-    logger.debug('Retrieving cases for casegroups', case_party_id=case_party_id)
+def get_case_id_for_business_survey(survey_id, business_id):
+    logger.debug('Retrieving case for survey and business', survey_id=survey_id, business_id=business_id)
 
-    cases = request_cases_for_respondent(case_party_id)
-    # Filtering cases by survey/business
-    matching_cases = [case for case in cases
-                      if case['caseGroup']['id'] in casegroup_ids]
-    logger.debug('Successfully retrieved cases for casegroups',
-                 case_party_id=case_party_id)
-    return matching_cases
+    case_group_ids = get_business_survey_casegroups(survey_id, business_id)
+
+    cases = get_cases_for_casegroup(case_group_ids[0])
+
+    return cases[0]['id']
 
 
 def _is_valid(payload, attribute):
