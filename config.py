@@ -81,11 +81,6 @@ class Config(object):
                                                             'confirm_password_change_id')
     RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE = os.getenv('RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE', 'account_locked_id')
 
-    RAS_API_GATEWAY_PROTOCOL = os.getenv('RAS_API_GATEWAY_PROTOCOL', 'http')
-    RAS_API_GATEWAY_HOST = os.getenv('RAS_API_GATEWAY_HOST', 'localhost')
-    RAS_API_GATEWAY_PORT = os.getenv('RAS_API_GATEWAY_PORT', 8083)
-    RAS_API_GATEWAY = f'{RAS_API_GATEWAY_PROTOCOL}://{RAS_API_GATEWAY_HOST}:{RAS_API_GATEWAY_PORT}'
-
     RAS_IAC_SERVICE_PROTOCOL = os.getenv('RAS_IAC_SERVICE_PROTOCOL', 'http')
     RAS_IAC_SERVICE_HOST = os.getenv('RAS_IAC_SERVICE_HOST', 'localhost')
     RAS_IAC_SERVICE_PORT = os.getenv('RAS_IAC_SERVICE_PORT', 8121)
@@ -105,7 +100,6 @@ class Config(object):
         'collectionexercise-service',
         'survey-service',
         'notify-service',
-        'api-gateway',
         'iac-service',
         'oauth2-service',
     ]
