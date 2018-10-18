@@ -81,8 +81,8 @@ def get_party_by_id(sample_unit_type, id, session):
         raise BadRequest(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']")
 
 
-def get_business_with_respondents_filtered_by_survey(sample_unit_type, id, survey_id, enrolment_status=None):
-    business = get_party_by_id(sample_unit_type, id)
+def get_party_with_enrolments_filtered_by_survey(sample_unit_type, party_id, survey_id, enrolment_status=None):
+    business = get_party_by_id(sample_unit_type, party_id)
 
     filtered_associations = []
     for association in business['associations']:
