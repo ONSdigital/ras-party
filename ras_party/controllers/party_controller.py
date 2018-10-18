@@ -82,10 +82,10 @@ def get_party_by_id(sample_unit_type, id, session):
 
 
 def get_party_with_enrolments_filtered_by_survey(sample_unit_type, party_id, survey_id, enrolment_status=None):
-    business = get_party_by_id(sample_unit_type, party_id)
+    party = get_party_by_id(sample_unit_type, party_id)
 
     filtered_associations = []
-    for association in business['associations']:
+    for association in party['associations']:
 
         filtered_association = {'partyId': association['partyId']}
 
@@ -95,9 +95,9 @@ def get_party_with_enrolments_filtered_by_survey(sample_unit_type, party_id, sur
             filtered_association['enrolments'] = filtered_enrolments
             filtered_associations.append(filtered_association)
 
-    business['associations'] = filtered_associations
+    party['associations'] = filtered_associations
 
-    return business
+    return party
 
 
 def filter_enrolments(existing_enrolments, survey_id, enrolment_status=None):
