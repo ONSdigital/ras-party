@@ -1,9 +1,16 @@
 import uuid
 
+from ras_party.controllers import account_controller
+from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
+from ras_party.models.models import BusinessRespondent, Enrolment, Respondent, RespondentStatus
 from ras_party.support.requests_wrapper import Requests
+from ras_party.support.session_decorator import with_db_session
+from ras_party.support.transactional import transactional
 from test.mocks import MockRequests
 from test.party_client import PartyTestClient, businesses
 from test.test_data.mock_business import MockBusiness
+from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, MockRespondentWithIdActive
+from test.test_data.mock_enrolment import MockEnrolmentDisabled, MockEnrolmentEnabled, MockEnrolmentPending
 
 
 class TestParties(PartyTestClient):
@@ -11,6 +18,55 @@ class TestParties(PartyTestClient):
     def setUp(self):
         self.mock_requests = MockRequests()
         Requests._lib = self.mock_requests
+        self.mock_respondent = MockRespondent().attributes().as_respondent()
+        self.mock_respondent_with_id = MockRespondentWithId().attributes().as_respondent()
+        self.mock_respondent_with_id_active = MockRespondentWithIdActive().attributes().as_respondent()
+        self.respondent = None
+        self.mock_enrolment_enabled = MockEnrolmentEnabled().attributes().as_enrolment()
+        self.mock_enrolment_disabled = MockEnrolmentDisabled().attributes().as_enrolment()
+        self.mock_enrolment_pending = MockEnrolmentPending().attributes().as_enrolment()
+
+    @transactional
+    @with_db_session
+    def populate_with_respondent(self, tran, session, respondent=None):
+        if not respondent:
+            respondent = self.mock_respondent
+        translated_party = {
+            'party_uuid': respondent.get('id') or str(uuid.uuid4()),
+            'email_address': respondent['emailAddress'],
+            'pending_email_address': respondent.get('pendingEmailAddress'),
+            'first_name': respondent['firstName'],
+            'last_name': respondent['lastName'],
+            'telephone': respondent['telephone'],
+            'status': respondent.get('status') or RespondentStatus.CREATED
+        }
+        self.respondent = Respondent(**translated_party)
+        session.add(self.respondent)
+        account_controller.register_user(respondent, tran)
+        return self.respondent
+
+    @with_db_session
+    def populate_with_enrolment(self, session, enrolment=None):
+        if not enrolment:
+            enrolment = self.mock_enrolment_enabled
+        translated_enrolment = {
+            'business_id': enrolment['business_id'],
+            'respondent_id': enrolment['respondent_id'],
+            'survey_id': enrolment['survey_id'],
+            'status': enrolment['status'],
+            'created_on': enrolment['created_on']
+        }
+        self.enrolment = Enrolment(**translated_enrolment)
+        session.add(self.enrolment)
+
+    @with_db_session
+    def associate_business_and_respondent(self, business_id, respondent_id, session):
+        business = query_business_by_party_uuid(business_id, session)
+        respondent = query_respondent_by_party_uuid(respondent_id, session)
+
+        br = BusinessRespondent(business=business, respondent=respondent)
+
+        session.add(br)
 
     def _make_business_attributes_active(self, mock_business):
         sample_id = mock_business['sampleSummaryId']
@@ -278,6 +334,36 @@ class TestParties(PartyTestClient):
 
     def test_get_party_with_nonexistent_ref(self):
         self.get_party_by_ref('B', '123', 404)
+
+    def test_get_party_by_survey_id_and_enrolment_statuses_with_valid_enrolment(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
+        mock_business = MockBusiness() \
+            .attributes(source='test_get_business_by_id_returns_correct_representation') \
+            .as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(business_id=mock_business['id'],
+                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.populate_with_enrolment()  # NOQA
+        self.get_party_by_id_filtered_by_survey_and_enrolment('B', mock_business['id'],
+                                                              'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
+                                                              ['ENABLED', 'PENDING'])
+
+    def test_get_party_by_survey_id_and_enrolment_statuses_with_invalid_enrolment(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        mock_business = MockBusiness() \
+            .attributes(source='test_get_business_by_id_returns_correct_representation') \
+            .as_business()
+        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(business_id=mock_business['id'],
+                                               respondent_id=self.mock_respondent_with_id['id'])
+        self.populate_with_enrolment(enrolment=self.mock_enrolment_disabled)  # NOQA
+        self.get_party_by_id_filtered_by_survey_and_enrolment('B', mock_business['id'],
+                                                              'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
+                                                              ['ENABLED', 'PENDING'])
 
 
 if __name__ == '__main__':
