@@ -105,14 +105,14 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def get_party_by_ref(self, party_type, ref, expected_status=200):
-        response = self.client.get(f'/party-api/v1/parties/type/{party_type}/ref/{ref}',
+    def get_party_by_ref(self, ref, expected_status=200):
+        response = self.client.get(f'/party-api/v1/parties/ref/{ref}',
                                    headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def get_party_by_id(self, party_type, id, expected_status=200):
-        response = self.client.get(f'/party-api/v1/parties/type/{party_type}/id/{id}',
+    def get_party_by_id(self, id, expected_status=200):
+        response = self.client.get(f'/party-api/v1/parties/id/{id}',
                                    headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
@@ -250,9 +250,9 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status)
         return response.get_data(as_text=True)
 
-    def get_party_by_id_filtered_by_survey_and_enrolment(self, party_type, id,
+    def get_party_by_id_filtered_by_survey_and_enrolment(self, id,
                                                          survey_id, enrolment_statuses, expected_status=200):
-        response = self.client.get(f'/party-api/v1/parties/type/{party_type}/id/{id}?'
+        response = self.client.get(f'/party-api/v1/parties/id/{id}?'
                                    f'survey_id={survey_id}&enrolment_status={enrolment_statuses}',
                                    headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))

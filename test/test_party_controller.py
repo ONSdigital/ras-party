@@ -249,7 +249,7 @@ class TestParties(PartyTestClient):
         party_id_b = self.post_to_parties(mock_party_b, 200)['id']
         self._make_business_attributes_active(mock_party_b)
 
-        response = self.get_party_by_id('B', party_id_b)
+        response = self.get_party_by_id(party_id_b)
 
         del mock_party_b['sampleSummaryId']
         for x in mock_party_b:
@@ -261,7 +261,7 @@ class TestParties(PartyTestClient):
             .as_party()
         party_id_b = self.post_to_parties(mock_party_b, 200)['id']
 
-        self.get_party_by_id('B', party_id_b, 404)
+        self.get_party_by_id(party_id_b, 404)
 
     def test_get_party_by_ref_returns_correct_representation(self):
         mock_party_b = MockBusiness() \
@@ -269,7 +269,7 @@ class TestParties(PartyTestClient):
             .as_party()
         self.post_to_parties(mock_party_b, 200)
         self._make_business_attributes_active(mock_party_b)
-        response = self.get_party_by_ref('B', mock_party_b['sampleUnitRef'])
+        response = self.get_party_by_ref(mock_party_b['sampleUnitRef'])
 
         del mock_party_b['sampleSummaryId']
         for x in mock_party_b:
@@ -328,12 +328,8 @@ class TestParties(PartyTestClient):
         del mock_party['sampleUnitRef']
         self.post_to_parties(mock_party, 400)
 
-    def test_get_party_with_invalid_unit_type(self):
-        self.get_party_by_id('XX', '123', 400)
-        self.get_party_by_ref('XX', '123', 400)
-
     def test_get_party_with_nonexistent_ref(self):
-        self.get_party_by_ref('B', '123', 404)
+        self.get_party_by_ref('123', 404)
 
     def test_get_party_by_survey_id_and_enrolment_statuses_with_valid_enrolment(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
@@ -346,7 +342,7 @@ class TestParties(PartyTestClient):
         self.associate_business_and_respondent(business_id=mock_business['id'],
                                                respondent_id=self.mock_respondent_with_id['id'])  # NOQA
         self.populate_with_enrolment()  # NOQA
-        self.get_party_by_id_filtered_by_survey_and_enrolment('B', mock_business['id'],
+        self.get_party_by_id_filtered_by_survey_and_enrolment(mock_business['id'],
                                                               'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
                                                               ['ENABLED', 'PENDING'])
 
@@ -361,7 +357,7 @@ class TestParties(PartyTestClient):
         self.associate_business_and_respondent(business_id=mock_business['id'],
                                                respondent_id=self.mock_respondent_with_id['id'])
         self.populate_with_enrolment(enrolment=self.mock_enrolment_disabled)  # NOQA
-        self.get_party_by_id_filtered_by_survey_and_enrolment('B', mock_business['id'],
+        self.get_party_by_id_filtered_by_survey_and_enrolment(mock_business['id'],
                                                               'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
                                                               ['ENABLED', 'PENDING'])
 

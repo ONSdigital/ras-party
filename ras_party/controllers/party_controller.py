@@ -42,18 +42,14 @@ def parties_post(party_data, session):
 
 
 @with_db_session
-def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
+def get_party_by_ref(sample_unit_ref, session):
     """
     Get a Party by its unique reference (ruref / uprn)
     Returns a single Party
-    :param sample_unit_ref: Reference of the Party to return
     :type sample_unit_ref: str
-
+    :param session session passed in by decorator
     :rtype: Party
     """
-    if sample_unit_type != Business.UNIT_TYPE:
-        logger.debug("Wrong sampleUnitType", type=sample_unit_type)
-        raise BadRequest(f'sampleUnitType must be of type {Business.UNIT_TYPE}')
     business = query_business_by_ref(sample_unit_ref, session)
     if not business:
         logger.debug("Business with reference does not exist.", reference=sample_unit_ref, status=404)
@@ -63,26 +59,16 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
 
 
 @with_db_session
-def get_party_by_id(sample_unit_type, id, session):
-    if sample_unit_type == Business.UNIT_TYPE:
-        business = query_business_by_party_uuid(id, session)
-        if not business:
-            logger.debug("Business with id does not exist", business_id=id, status=404)
-            raise NotFound("Business with id does not exist")
-        return business.to_party_dict()
-    elif sample_unit_type == Respondent.UNIT_TYPE:
-        respondent = query_respondent_by_party_uuid(id, session)
-        if not respondent:
-            logger.debug("Respondent with id does not exist", respondent_id=id, status=404)
-            raise NotFound("Respondent with id does not exist")
-        return respondent.to_party_dict()
-    else:
-        logger.debug("Invalid sample unit type", type=sample_unit_type)
-        raise BadRequest(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']")
+def get_party_by_id(id, session):
+    business = query_business_by_party_uuid(id, session)
+    if not business:
+        logger.debug("Business with id does not exist", business_id=id, status=404)
+        raise NotFound("Business with id does not exist")
+    return business.to_party_dict()
 
 
-def get_party_with_enrolments_filtered_by_survey(sample_unit_type, party_id, survey_id, enrolment_status=None):
-    party = get_party_by_id(sample_unit_type, party_id)
+def get_party_with_enrolments_filtered_by_survey(party_id, survey_id, enrolment_status=None):
+    party = get_party_by_id(party_id)
 
     filtered_associations = []
     for association in party['associations']:

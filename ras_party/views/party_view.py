@@ -31,21 +31,20 @@ def post_party():
     return jsonify(response)
 
 
-@party_view.route('/parties/type/<sample_unit_type>/ref/<sample_unit_ref>', methods=['GET'])
-def get_party_by_ref(sample_unit_type, sample_unit_ref):
-    response = party_controller.get_party_by_ref(sample_unit_type, sample_unit_ref)
+@party_view.route('/parties/ref/<sample_unit_ref>', methods=['GET'])
+def get_party_by_ref(sample_unit_ref):
+    response = party_controller.get_party_by_ref(sample_unit_ref)
     return jsonify(response)
 
 
-@party_view.route('/parties/type/<sample_unit_type>/id/<id>', methods=['GET'])
-def get_party_by_id(sample_unit_type, id):
+@party_view.route('/parties/id/<id>', methods=['GET'])
+def get_party_by_id(id):
     survey_id = request.args.get('survey_id')
     enrolment_status = request.args.get('enrolment_status')
 
     if survey_id:
-        response = party_controller.get_party_with_enrolments_filtered_by_survey(
-            sample_unit_type, id, survey_id, enrolment_status)
+        response = party_controller.get_party_with_enrolments_filtered_by_survey(id, survey_id, enrolment_status)
     else:
-        response = party_controller.get_party_by_id(sample_unit_type, id)
+        response = party_controller.get_party_by_id(id)
 
     return jsonify(response)

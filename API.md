@@ -8,10 +8,9 @@
   
 This page documents the Party service API endpoints. All endpoints return an `HTTP 200 OK` status code except where noted otherwise.
 
-* `GET /parties/type/B/ref/499000011335`
-* `GET /parties/type/B/id/d826818e-179e-467b-9936-6a8603dc8b46`
+* `GET /parties/ref/499000011335`
+* `GET /parties/id/d826818e-179e-467b-9936-6a8603dc8b46`
 
-&mdash; When generic party type 'B' (business) is requested this returns a generic party representation of the business resource. This representation will include any respondents associated with the business and any survey enrolments they have.
 
 ### Example JSON Response
 ```json
@@ -191,9 +190,7 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 ```
 
 
-* `GET /parties/type/BI/id/3b136c4b-7a14-4904-9e01-13364dd7b972`
-
-&mdash; When generic party type 'BI' (respondent) is requested this returns a generic party representation of the respondent resource. This representation will include any businesses associated with the respondent and any survey enrolments they have.
+* `GET /parties/id/3b136c4b-7a14-4904-9e01-13364dd7b972`
 
 ### Example JSON Response
 ```json
