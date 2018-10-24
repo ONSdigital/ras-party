@@ -40,7 +40,7 @@ def get_party_by_ref(sample_unit_ref):
 @party_view.route('/parties/id/<id>', methods=['GET'])
 def get_party_by_id(id):
     survey_id = request.args.get('survey_id')
-    enrolment_status = request.args.get('enrolment_status')
+    enrolment_status = request.args.getlist('enrolment_status')
 
     if survey_id:
         response = party_controller.get_party_with_enrolments_filtered_by_survey(id, survey_id, enrolment_status)
