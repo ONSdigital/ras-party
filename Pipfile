@@ -16,7 +16,6 @@ gunicorn = "*"
 gevent = {version = "*", platform_python_implementation="=='CPython'"}
 itsdangerous = "*"
 jsonschema = "*"
-"psycopg2" = "*"
 python-dateutil = "*"
 requests = "*"
 retrying = "*"
@@ -25,6 +24,7 @@ sqlalchemy-utils = "*"
 structlog = "*"
 requestsdefaulter = "*"
 flask-zipkin = "*"
+"psycopg2-binary" = "*"
 
 [dev-packages]
 coverage = "*"
