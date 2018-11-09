@@ -270,7 +270,6 @@ def change_respondent_password(token, payload, tran, session):
     except RasNotifyError as ras_error:
         logger.error(ras_error)
 
-
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has changed their password', respondent_id=party_id))
 
