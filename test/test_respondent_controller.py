@@ -504,7 +504,7 @@ class TestRespondents(PartyTestClient):
             email=respondent.email_address,
             template_name='confirm_password_change',
             personalisation=personalisation,
-            reference=uuid.UUID(respondent.party_uuid)
+            reference=respondent.party_uuid
         )
 
     @staticmethod
