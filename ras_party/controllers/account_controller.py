@@ -266,9 +266,9 @@ def change_respondent_password(token, payload, tran, session):
         NotifyGateway(current_app.config).request_to_notify(email=email_address,
                                                             template_name='confirm_password_change',
                                                             personalisation=personalisation,
-                                                            reference=party_id)
-    except RasNotifyError:
-        logger.error('Error sending notification email', respondent_id=str(party_id))
+                                                            reference=str(party_id))
+    except RasNotifyError as ras_error:
+        logger.error(ras_error)
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info('Respondent has changed their password', respondent_id=party_id))
