@@ -1,10 +1,10 @@
-# Party Service API
+### Party Service API
 
-### The implemented API for this serivce can be found at /swagger/party/party-api.yaml
+#### The implemented API for this serivce can be found at /swagger/party/party-api.yaml
 
-### CAVEAT: This page is subject to change while the Party service is being developed.
+###### CAVEAT: This page is subject to change while the Party service is being developed.
 
-### Please contact the RAS development team before committing to these endpoints.
+#### Please contact the RAS development team before committing to these endpoints.
   
 This page documents the Party service API endpoints. All endpoints return an `HTTP 200 OK` status code except where noted otherwise.
 
@@ -13,7 +13,7 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 
 &mdash; When generic party type 'B' (business) is requested this returns a generic party representation of the business resource. This representation will include any respondents associated with the business and any survey enrolments they have.
 
-### Example JSON Response
+#### Example JSON Response
 ```json
 {
     "associations": [
@@ -68,7 +68,7 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 
 &mdash; When a business is requested this returns a concrete representation of the business party. This representation will include any respondents associated with the business and any survey enrolments they have.
 
-### Example JSON Response
+#### Example JSON Response
 
 ```json
 {
@@ -95,7 +95,7 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 
 &mdash; Verbose concrete representation of the business party.
 
-### Example JSON Response
+#### Example JSON Response
 
 ```json
 {
@@ -149,7 +149,7 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 
 &mdash; When multiple businesses are requested this returns a concrete representation of the business parties. This representation will include any respondents associated with the business and any survey enrolments they have.
 
-### Example JSON Response
+#### Example JSON Response
 
 ```json
 [{
@@ -195,7 +195,7 @@ This page documents the Party service API endpoints. All endpoints return an `HT
 
 &mdash; When generic party type 'BI' (respondent) is requested this returns a generic party representation of the respondent resource. This representation will include any businesses associated with the respondent and any survey enrolments they have.
 
-### Example JSON Response
+#### Example JSON Response
 ```json
 {
     "associations": [
@@ -230,7 +230,7 @@ The pendingEmailAddress field holds the unverified email address when it is bein
 
 &mdash; When a respondent is requested this returns a concrete representation of the respondent party. This representation will include any businesses associated with the respondent and any survey enrolments they have.
 
-### Example JSON Response
+#### Example JSON Response
 ```json
 {
     "associations": [
@@ -260,7 +260,7 @@ The pendingEmailAddress field holds the unverified email address when it is bein
 
 &mdash; When multiple respondents are requested this returns a concrete representation of the respondent parties. This representation will include any businesses associated with the respondent and any survey enrolments they have.
 
-### Example JSON Response
+#### Example JSON Response
 ```json
 [{
     "associations": [
@@ -310,7 +310,7 @@ The pendingEmailAddress field holds the unverified email address when it is bein
 ```
 
 * `PUT /respondents/email`
-### Example JSON DATA for the put
+#### Example JSON DATA for the put
 ```json
 {
    "email_address": "old@email.com",
@@ -319,7 +319,7 @@ The pendingEmailAddress field holds the unverified email address when it is bein
 ```
 &mdash; This endpoint will update a respondent's email in the ras-party database and the oauth2 server. This email will need verified again so it will also set the user as unverified in the oauth server and will send a new verification email to the respondent.
 
-### Example JSON Response
+#### Example JSON Response
 ```json
 {
    "emailAddress": "testtest@test.test",
@@ -333,7 +333,7 @@ The pendingEmailAddress field holds the unverified email address when it is bein
 ```
 
 * `PUT /businesses/sample/link/<sampleSummaryId>`
-### Example JSON DATA for the put
+#### Example JSON DATA for the put
 ```json
 {
    "collectionExerciseId": "aCollectionExerciseId"
@@ -341,7 +341,7 @@ The pendingEmailAddress field holds the unverified email address when it is bein
 ```
 &mdash; This endpoint will update all businesses' attributes associated collection exercise id for given sample.
 
-### Example JSON Response
+#### Example JSON Response
 ```json
 {
     "collectionExerciseId": "aCollectionExerciseId",
@@ -351,7 +351,7 @@ The pendingEmailAddress field holds the unverified email address when it is bein
 
 * `POST /respondents/add-survey`
 
-### Example JSON data for post
+#### Example JSON data for post
 ```json
 {
     "party_id": "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
@@ -363,7 +363,7 @@ The pendingEmailAddress field holds the unverified email address when it is bein
 
 * `PUT /respondents/edit-account-status/<respondent_party_id>`
 
-### Example JSON data for put
+#### Example JSON data for put
 ```json
 {
     "status_change": "SUSPENDED"
@@ -374,7 +374,7 @@ The pendingEmailAddress field holds the unverified email address when it is bein
 
 * `PUT /respondents/change_respondent_details/<respondent_id>`
 
-### Example JSON data for put
+#### Example JSON data for put
 ```json
 {
      " party_id": "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
