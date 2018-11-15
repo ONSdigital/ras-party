@@ -559,22 +559,82 @@
 <hr>
 
 * `GET /respondents`
+    * Uses party_uuid from respondent table
+    * `/respondents?id=9d3012a1-4a03-4de8-af4e-242504401b67`
+    * Must be prefaced with `/party-api/v1/` in url string (or current version).
+    
+#####Example JSON Response
+```json
+[
+    {
+        "associations": [
+            {
+                "businessRespondentStatus": "ACTIVE",
+                "enrolments": [
+                    {
+                        "enrolmentStatus": "ENABLED",
+                        "surveyId": "02b9c366-7397-42f7-942a-76dc5876d86d"
+                    },
+                    {
+                        "enrolmentStatus": "ENABLED",
+                        "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                    }
+                ],
+                "partyId": "2559088f-e5e3-4a7b-8c09-32197612b1ab",
+                "sampleUnitRef": "49900000008"
+            },
+            {
+                "businessRespondentStatus": "ACTIVE",
+                "enrolments": [
+                    {
+                        "enrolmentStatus": "ENABLED",
+                        "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                    }
+                ],
+                "partyId": "49d28188-f295-4d87-b8a3-c8c2bcceaaa9",
+                "sampleUnitRef": "49900000007"
+            },
+            {
+                "businessRespondentStatus": "ACTIVE",
+                "enrolments": [
+                    {
+                        "enrolmentStatus": "ENABLED",
+                        "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                    }
+                ],
+                "partyId": "13f799e7-4ac6-4415-8358-6721d7bb3e60",
+                "sampleUnitRef": "49900000006"
+            },
+            {
+                "businessRespondentStatus": "ACTIVE",
+                "enrolments": [
+                    {
+                        "enrolmentStatus": "ENABLED",
+                        "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                    }
+                ],
+                "partyId": "fa6eb819-6de8-405e-ab94-9279a01d2ddd",
+                "sampleUnitRef": "49900000001"
+            }
+        ],
+        "emailAddress": "example@example.com",
+        "firstName": "first_name",
+        "id": "9d3012a1-4a03-4de8-af4e-242504401b67",
+        "lastName": "last_name",
+        "sampleUnitType": "BI",
+        "status": "ACTIVE",
+        "telephone": "0987654321"
+    }
+]
+```
 
 <hr>
 
 * `GET /respondents/id/<id>`
+    * Uses the party_uuid from the respondent table.
+    * Must be prefaced with `/party-api/v1/` in url string (or current version).
 
-<hr>
-
-* `GET /respondents/email`
-
-<hr>
-
-* `PUT /respondents/id/<respondent_id>`
-    * Uses the party_uuid ID from the respondent table.
-    * Must be prefaced with `/party-api/v1/` in url string (or current version). Must be prefaced with `/party-api/v1/` in url string (or current version).
-
-####Example JSON Response
+#####Example JSON Response
 ```json
 {
     "associations": [
@@ -637,8 +697,40 @@
 }
 ```
 
+
+<hr>
+
+* `GET /respondents/email`
+    * Must be sent `'email'` parameter in the body of the request.
+    * If email is not found returns a `404`
+    * Must be prefaced with `/party-api/v1/` in url string (or current version). 
+#####Example JSON Response
+```json
+    "emailAddress": "example@example.com",
+    "firstName": "first_name",
+    "id": "9d3012a1-4a03-4de8-af4e-242504401b67",
+    "lastName": "last_name",
+    "sampleUnitType": "BI",
+    "status": "ACTIVE",
+    "telephone": "0987654321"
+```
+
+<hr>
+
+* `PUT /respondents/id/<respondent_id>`
+
 <hr>
 
 ####Info Endpoints
 
 * `GET /info`
+    * Doesn't require any parameters.
+    * Doesn't require `/party-api/v1/` prefix.
+
+#####Example JSON Response
+```json
+{
+    "name": "ras-party",
+    "version": "1.4.0"
+}
+```
