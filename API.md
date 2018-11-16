@@ -422,6 +422,7 @@
 <hr>
 
 * `POST /respondents/add-survey`
+    * Enrolls a respondent on a survey (discerned from enrolment code)
     * Must be prefaced with `/party-api/v1/` in url string (or current version).
 
 ##### Example JSON data for post
@@ -436,6 +437,7 @@
 <hr>
 
 * `PUT /respondents/edit-account-status/<respondent_party_id>`
+    * Allows internal users to lock/unlock a users account.
     * Must be prefaced with `/party-api/v1/` in url string (or current version).
 
 ##### Example JSON data for put
@@ -450,6 +452,7 @@
 
 ####Respondent Endpoints
 * `GET /tokens/verify/<token>`
+    * Verifies a users email address when provided with a valid token.
     * Must be prefaced with `/party-api/v1/` in url string (or current version).
     
 &mdash; Endpoint to verify a users email address using a token sent to them.
@@ -481,6 +484,7 @@
 <hr>
 
 * `GET /respondents/change_password/<token>`
+    * Lets a user change their login password with a valid token.
     * Must be prefaced with `/party-api/v1/` in url string (or current version).
     
 &mdash; 
@@ -512,27 +516,105 @@
 <hr>
 
 * `POST /respondents/request_password_change`
+    * Sends password reset link to the provided email address.
+    * Raises an error if email not found in DB.
+    * Requires `email_address` param.
 
+#####Example JSON Payload
+```json
+[
+  {
+  "email_address" : "a@z.com"
+  }
+]
+```
+
+#####Example JSON Response
+```json
+{
+  "response" : "ok"
+}
+```
 <hr>
 
 * `POST /respondents`
+    * Posts a respondent to the database and generates their `sampleUnitRef`, `partyID` and `enrolments`.
+    * If passed an `id` parameter it will use this instead of generating a new UUID.
+    * Sets `businessRespondentStatus` to 'CREATED'.
 
+#####Example JSON Payload
+```json
+[
+  {
+    "emailAddress" : "example@example.com",
+    "firstName" : "Bob",
+    "lastName" : "Dabilder",
+    "password" : "password",
+    "telephone" : "01234567890",
+    "enrolmentCode" : "b2hry55yr55n",
+    "sampleUnitType" : "BI"
+  }
+]
+
+```
 <hr>
 
 * `PUT /emailverifcation/<token>`
+    * Verifies the users email address.
+    * Example token: `'ImFAei5jb20i.W-7Ovg.hFZ7nhkzq8e7i76EXSwgvJQXAjs'`
+    
+#####Example JSON Response
+```json
+{
+  "id": "ef7737df-2097-4a73-a530-e98dba7bfe43",
+  "sampleUnitType": "BI",
+  "pendingEmailAddress": "",
+  "emailAddress": "a@z.com",
+  "firstName": "Hollie",
+  "lastName": "Day",
+  "telephone": "01234567890",
+  "status": "ACTIVE",
+  "associations": [
+        {
+        "enrolments": [
+            {
+                "enrolmentStatus": "ENABLED",
+                "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+            }
+        ],
+        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233",
+        "businessRespondentStatus": "ACTIVE"
+        }
+    ]
+        }
+```
 
 <hr>
 
 * `POST /resend-verification-email/<party_uuid>`
-
-<hr>
-
-* `POST /resend-verification-email/<party_uuid>`
+    * Example `party-uuid`: `ef7737df-2097-4a73-a530-e98dba7bfe43`
+    * Sends another email containing a verification token.
+    * Raises an error if email is not found in DB.
+    
+#####Example JSON Response
+```json
+{
+  "message": "A new verification email has been sent"
+}
+```
 
 <hr>
 
 * `POST /resend-verification-email-expired-token/<token>`
+    * Allows an internal user to send another verification email to respondent.
+    * Example token `'ImFAei5jb20i.W-7bQQ.AenYvU8iv5eK0drYapuk1SHX6Ig'`
 
+#####Example JSON Response
+```json
+{
+  "message": "A new verification email has been sent"
+}
+```
 <hr>
 
 * `POST /resend-password-email-expired-token/<token>`
@@ -706,6 +788,8 @@
     * Must be prefaced with `/party-api/v1/` in url string (or current version). 
 #####Example JSON Response
 ```json
+ [
+  {
     "emailAddress": "example@example.com",
     "firstName": "first_name",
     "id": "9d3012a1-4a03-4de8-af4e-242504401b67",
@@ -713,6 +797,8 @@
     "sampleUnitType": "BI",
     "status": "ACTIVE",
     "telephone": "0987654321"
+    }
+ ]
 ```
 
 <hr>
