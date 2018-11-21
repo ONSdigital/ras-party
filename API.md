@@ -5,13 +5,13 @@
 
 ####Business Endpoints:
 
-* `POST /businesses`
-    * Must be provided all data outside of the `attributes` field, as well as `runame1`, `runame2` and `runname3` from within `attributes`, other fields are not required.
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
-
-#####Example JSON Response (jsonify'd)
+* `POST /party-api/v1/businesses`
+    * In the case of a new business, stores the new business data. 
+    * In the case of a known business then it adds the versioned attributes.
+    * Input data is validated against `party_schema.json` which mandates that `sampleUnitRef`, `sampleUnitType` and `sampleSummaryId` are mandatory.
+    * If attributes are provided then `runname1`,`runname2` and `runname3` are mandatory 
+#####Example JSON Response
 ```json
-{
 {
   "associations": [
     
@@ -59,11 +59,8 @@
 ```
 <hr>
 
-* `GET /businesses?id=d826818e-179e-467b-9936-6a8603dc8b46&id=623435fa-708e-49c0-8f90-507ac862a540`
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
-    
-&mdash; When multiple businesses are requested this returns a concrete representation of the business parties. This representation will include any respondents associated with the business and any survey enrolments they have.
-
+* `GET /party-api/v1/businesses?id=d826818e-179e-467b-9936-6a8603dc8b46&id=623435fa-708e-49c0-8f90-507ac862a540`
+    * Returns details about a list of business by id. Returns a concrete representation of the business parties. This representation will include any respondents associated with the business and any survey enrolments they have.
 #### Example JSON Response
 
 ```json
@@ -108,11 +105,10 @@
 <hr>
 
 * `GET /businesses/ref/49900000001`                        
-
-    * Must be provided a **valid** business reference in the url string.
-    * An invalid reference will return a `404`.
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
-    * **May** be provided with the `?verbose=true` suffix (or passed through the body) for some additional information (see below).
+    * Gets business information from reference number.
+    * Must be provided a **known** business reference in the url string.
+    * An **unknown** reference will return a `404`.
+    * **Optional attribute:** `?verbose=true` also returns `attributes`, see below.
 
 #####Example JSON Response
 
@@ -180,12 +176,11 @@
     
 <hr>
     
-* `GET /businesses/id/1f5a785e-706d-433d-8a56-9d2090fb480f`
-
-    * Must be provided a **valid** business id
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
-    * **May** be provided with the `?verbose=true` suffix (or passed through the body) for some additional information (see below).
-
+* `GET /party-api/v1/businesses/id/1f5a785e-706d-433d-8a56-9d2090fb480f`
+    * Provides business details from business ID.
+    * Must be provided a **known** business id.
+    * **Optional attribute:** `?verbose=true` also returns `attributes`, see below.
+    
 #####Example JSON Response
 
 ```json
@@ -215,6 +210,8 @@
 ```
 #####Additional JSON with Verbose
 ```json
+{
+
 "birthdate": "01/09/1993",
     "cellNo": 0,
     "checkletter": "F",
@@ -248,19 +245,21 @@
     "tradstyle1": "TOTAL UK ACTIVITY",
     "tradstyle2": "",
     "tradstyle3": ""
+    }
  ```
  
 <hr>
 
-* `PUT /businesses/sample/link/<sampleSummaryId>`
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
+* `PUT /party-api/v1/businesses/sample/link/<sampleSummaryId>`
+    * Stores an association between a business, collection exercise and a sample
+    * the sample data is passed in the body
+
 #### Example JSON DATA for the put
 ```json
 {
    "collectionExerciseId": "aCollectionExerciseId"
 }
 ```
-&mdash; This endpoint will update all businesses' attributes associated collection exercise id for given sample.
 
 #### Example JSON Response
 ```json
@@ -271,10 +270,14 @@
 ```
 <hr>
 
-* `GET /businesses/search?query=bricks`
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
+* `GET /party-api/v1/businesses/search?query=bricks`
+    * Returns `name`, `ruref` and `trading as` for those businesses which match the `query_params`.
+    * `query_params` is a list of search words.
+    * Matches are found if the business `name`, `trading` as or `business_ref` contains the param. 
+        * All Params in `query_params` must be matched.
+        
+##### Example JSON Query
 
-&mdash; This endpoint will search the database for business names that contain the `query` being passed.
 ##### Example JSON Response
 ```json
 {
@@ -286,9 +289,9 @@
 <hr>
 
 ####Parties Endpoints
-* `POST /parties`
-
-&mdash; Posts a new party (with sampleUnitType 'B')
+* `POST /party-api/v1/parties`
+    * Posts a new party (with sampleUnitType 'B')
+    
 ##### Example JSON Schema
 ```json
 {
@@ -335,11 +338,10 @@
 ```
 <hr>
 
-* `GET /parties/type/B/ref/499000011335`
-* `GET /parties/type/B/id/d826818e-179e-467b-9936-6a8603dc8b46`
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
-
-&mdash; When generic party type 'B' (business) is requested this returns a generic party representation of the business resource. This representation will include any respondents associated with the business and any survey enrolments they have.
+* `GET /party-api/v1/parties/type/B/ref/499000011335`
+    * When generic party type 'B' (business) is requested this returns a generic party representation of the business resource. This representation will include any respondents associated with the business and any survey enrolments they have.
+* `GET /party-api/v1/parties/type/B/id/d826818e-179e-467b-9936-6a8603dc8b46`
+    * Same response as above but requires a `party_uuid` rather than a ref.
 
 ##### Example JSON Response
 ```json
@@ -394,10 +396,12 @@
 <hr>
 
 #####Respondents Endpoints
-* `PUT /respondents/email`
-* `PUT /respondents/change_email`
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
+* `PUT /party-api/v1/respondents/email`
+* `PUT /party-api/v1/respondents/change_email`
+    * Changes a respondents old email address to a new provided one.
+        * Both the current email '`email_address`' and the '`new_email_address`' are to be provided in the body.
     * Both URLs are linked to the same endpoint.
+    * This endpoint will update a respondent's email in the ras-party database and the oauth2 server. This email will need verified again so it will also set the user as unverified in the oauth server and will send a new verification email to the respondent.
 ##### Example JSON DATA for the put
 ```json
 {
@@ -405,7 +409,7 @@
    "new_email_address": "new@email.com"
 }
 ```
-&mdash; This endpoint will update a respondent's email in the ras-party database and the oauth2 server. This email will need verified again so it will also set the user as unverified in the oauth server and will send a new verification email to the respondent.
+
 
 ##### Example JSON Response
 ```json
@@ -421,9 +425,8 @@
 ```
 <hr>
 
-* `POST /respondents/add-survey`
-    * Enrolls a respondent on a survey (discerned from enrolment code)
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
+* `POST /party-api/v1/respondents/add-survey`
+    * This endpoint will enrol a respondent in a survey and associate with business if not already associated.
 
 ##### Example JSON data for post
 ```json
@@ -431,14 +434,13 @@
     "party_id": "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
     "enrolment_code": "fb747cq725lj"
 }
-```
-&mdash; This endpoint will enrol a respondent in a survey and associate with business if not already associated.
+``` 
 
 <hr>
 
-* `PUT /respondents/edit-account-status/<respondent_party_id>`
+* `PUT /party-api/v1/respondents/edit-account-status/<respondent_party_id>`
+    * This endpoint will change a respondent's account status based on status_change variable.
     * Allows internal users to lock/unlock a users account.
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
 
 ##### Example JSON data for put
 ```json
@@ -446,16 +448,14 @@
     "status_change": "SUSPENDED"
 }
 ```
-&mdash; This endpoint will change a respondent's account status based on status_change variable.
 
 <hr>
 
 ####Respondent Endpoints
-* `GET /tokens/verify/<token>`
-    * Verifies a users email address when provided with a valid token.
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
+* `GET /party-api/v1/tokens/verify/<token>`
+    * Verifies a users email address when provided with a **known** token.
+        * Token will have been sent to them via email.   
     
-&mdash; Endpoint to verify a users email address using a token sent to them.
 ##### Example JSON Response
 ###### Invalid Token
 ```json
@@ -483,11 +483,10 @@
 ```
 <hr>
 
-* `GET /respondents/change_password/<token>`
-    * Lets a user change their login password with a valid token.
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
+* `GET /party-api/v1/respondents/change_password/<token>`
+    * Lets a user change their login password with a **known** token.
+        * Token will have been sent to them via email.
     
-&mdash; 
 ##### Example JSON Response
 ###### Invalid Token
 ```json
@@ -515,7 +514,7 @@
 ```
 <hr>
 
-* `POST /respondents/request_password_change`
+* `POST /party-api/v1/respondents/request_password_change`
     * Sends password reset link to the provided email address.
     * Raises an error if email not found in DB.
     * Requires `email_address` param.
@@ -537,7 +536,7 @@
 ```
 <hr>
 
-* `POST /respondents`
+* `POST /party-api/v1/respondents`
     * Posts a respondent to the database and generates their `sampleUnitRef`, `partyID` and `enrolments`.
     * If passed an `id` parameter it will use this instead of generating a new UUID.
     * Sets `businessRespondentStatus` to 'CREATED'.
@@ -560,7 +559,7 @@
 <hr>
 
 * `PUT /emailverifcation/<token>`
-    * Verifies the users email address.
+    * Verifies the users email address against a provided token.
     * Example token: `'ImFAei5jb20i.W-7Ovg.hFZ7nhkzq8e7i76EXSwgvJQXAjs'`
     
 #####Example JSON Response
@@ -592,8 +591,8 @@
 <hr>
 
 * `POST /resend-verification-email/<party_uuid>`
-    * Example `party-uuid`: `ef7737df-2097-4a73-a530-e98dba7bfe43`
     * Sends another email containing a verification token.
+    * Example `party-uuid`: `ef7737df-2097-4a73-a530-e98dba7bfe43`
     * Raises an error if email is not found in DB.
     
 #####Example JSON Response
@@ -618,32 +617,67 @@
 <hr>
 
 * `POST /resend-password-email-expired-token/<token>`
+    * Sends the respondent another email verification URL containing a token.
+#####Example JSON for Post
+```json
+{
+  "email_address" : "a@b.com"
+}
+```
+#####Example JSON Response
+```json
+{
+  "response":"ok"
+}
+```
+<hr>
+
+* `POST /party-api/v1/respondents/add_survey`
+    * Adds a survey to an existing respondent.
+#####Example JSON for Post
+```json
+{
+  "party_id":"438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
+  "enrolment_code":"fb747cq725lj"
+}
+```
 
 <hr>
 
-* `POST /respondents/add_survey`
-
+* `PUT /party-api/v1/respondents/change_enrolment_status`
+    * Allows a user to change the enrolment status of a respondent.
+        * Typically 'ENABLED' or 'DISABLED' although not enforced.
+        * Changed by `change_flag`
+        
+#####Example JSON for Put
+```json
+{
+ "respondent_id" : "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
+ "business_id" : "3b136c4b-7a14-4904-9e01-13364dd7b972",
+ "survey_id" : "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
+ "change_flag": "DISABLED"
+  }
+```
 <hr>
 
-* `PUT /respondents/change_enrolment_status`
-
-<hr>
-
-* `PUT /respondents/edit-account-status/<party_id>`
+* `PUT /party-api/v1/respondents/edit-account-status/<party_id>`
+    * This endpoint will change a respondent's account status based on `status_change` variable.
 ##### Example JSON data for put
 ```json
 {
     "status_change": "SUSPENDED"
 }
 ```
-&mdash; This endpoint will change a respondent's account status based on status_change variable.
+
 
 <hr>
 
-* `GET /respondents`
-    * Uses party_uuid from respondent table
+* `GET /party-api/v1/respondents`
+    * Returns respondent info based on a `partyId` key.
+    * Uses party_uuid from respondent table.
+    * The endpoint uses variable name `id` instead of `partyId`.
     * `/respondents?id=9d3012a1-4a03-4de8-af4e-242504401b67`
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
+   
     
 #####Example JSON Response
 ```json
@@ -712,9 +746,10 @@
 
 <hr>
 
-* `GET /respondents/id/<id>`
+* `GET /party-api/v1/respondents/id/<id>`
+    * Returns respondent by the the ID provided.
     * Uses the party_uuid from the respondent table.
-    * Must be prefaced with `/party-api/v1/` in url string (or current version).
+   
 
 #####Example JSON Response
 ```json
@@ -782,10 +817,10 @@
 
 <hr>
 
-* `GET /respondents/email`
+* `GET /party-api/v1/respondents/email`
+    * Returns respondent information with an `emailAddress` key.
     * Must be sent `'email'` parameter in the body of the request.
-    * If email is not found returns a `404`
-    * Must be prefaced with `/party-api/v1/` in url string (or current version). 
+    * If email is not found returns a `404` 
 #####Example JSON Response
 ```json
  [
@@ -803,13 +838,25 @@
 
 <hr>
 
-* `PUT /respondents/id/<respondent_id>`
-
+* `PUT /party-api/v1/respondents/id/<respondent_id>`
+    * Updates a respondents details (first name, last name, telephone and email) based on `party_uuid` from the respondents table.
+    
+#####Example JSON for Put
+```json
+{
+  "firstName":"John",
+  "lastName":"Snow",
+  "telephone":"0783720942",
+  "email_address":"a@b.com",
+  "new_email_address":"john.snow@thisemail.com"
+}
+```
 <hr>
 
 ####Info Endpoints
 
 * `GET /info`
+    * Returns service information.
     * Doesn't require any parameters.
     * Doesn't require `/party-api/v1/` prefix.
 
