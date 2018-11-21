@@ -6,6 +6,7 @@
 
 ## Business Endpoints:
 
+### Create or Update a Business.
 * `POST /party-api/v1/businesses`
     * In the case of a new business, stores the new business data. 
     * In the case of a known business then it adds the versioned attributes.
@@ -59,8 +60,8 @@
 }
 ```
 ---
-
-* `GET /party-api/v1/businesses?id=d826818e-179e-467b-9936-6a8603dc8b46&id=623435fa-708e-49c0-8f90-507ac862a540`
+### Get Business details by ID (Query String).
+* `GET /party-api/v1/businesses?id=<id>`
     * Returns details about a list of business by id. Returns a concrete representation of the business parties. This representation will include any respondents associated with the business and any survey enrolments they have.
 ### Example JSON Response
 
@@ -104,8 +105,8 @@
 ```
 
 ---
-
-* `GET /businesses/ref/49900000001`                        
+### Get Business Details by Reference Number.
+* `GET /businesses/ref/<ref>`                        
     * Gets business information from reference number.
     * Must be provided a **known** business reference in the url string.
     * An **unknown** reference will return a `404`.
@@ -176,8 +177,8 @@
 ```
     
 ---
-    
-* `GET /party-api/v1/businesses/id/1f5a785e-706d-433d-8a56-9d2090fb480f`
+### Get Business Details by ID (URL)    
+* `GET /party-api/v1/businesses/id/<id>`
     * Provides business details from business ID.
     * Must be provided a **known** business id.
     * **Optional attribute:** `?verbose=true` also returns `attributes`, see below.
@@ -250,7 +251,7 @@
  ```
  
 ---
-
+### Store Association Between Business, Collection & Sample.
 * `PUT /party-api/v1/businesses/sample/link/<sampleSummaryId>`
     * Stores an association between a business, collection exercise and a sample
     * the sample data is passed in the body
@@ -290,11 +291,12 @@
     "name": "RED BRICKS LTD",
     "ruref": "49900000008",
     "trading_as": ""
-},
+}
 ```
 ---
 
 ## Parties Endpoints
+### Post a New Party
 * `POST /party-api/v1/parties`
     * Posts a new party (with sampleUnitType 'B')
     
@@ -343,10 +345,10 @@
 }
 ```
 ---
-
-* `GET /party-api/v1/parties/type/B/ref/499000011335`
+### Get Party Details
+* `GET /party-api/v1/parties/type/B/ref/<ref>`
     * When generic party type 'B' (business) is requested this returns a generic party representation of the business resource. This representation will include any respondents associated with the business and any survey enrolments they have.
-* `GET /party-api/v1/parties/type/B/id/d826818e-179e-467b-9936-6a8603dc8b46`
+* `GET /party-api/v1/parties/type/B/id/<id>`
     * Same response as above but requires a `party_uuid` rather than a ref.
 
 ### Example JSON Response
@@ -402,12 +404,13 @@
 ---
 
 ## Respondents Endpoints
+### Change a Respondents Email
 * `PUT /party-api/v1/respondents/email`
 * `PUT /party-api/v1/respondents/change_email`
     * Changes a respondents old email address to a new provided one.
         * Both the current email '`email_address`' and the '`new_email_address`' are to be provided in the body.
     * Both URLs are linked to the same endpoint.
-    * This endpoint will update a respondent's email in the ras-party database and the oauth2 server. This email will need verified again so it will also set the user as unverified in the oauth server and will send a new verification email to the respondent.
+    * This endpoint will update a respondent's email in the ras-party database and will send a new verification email to the respondent.
 ### Example JSON DATA for the put
 ```json
 {
