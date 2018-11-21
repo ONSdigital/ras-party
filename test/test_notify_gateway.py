@@ -53,7 +53,8 @@ class TestNotifyGateway(PartyTestClient):
     def test_notify_exception_is_translated_to_ras_exception(self):
         # Given a mocked gov.uk notify and exception
         def mock_post_notify(*args, **kwargs):
-            return Exception
+            raise Exception("Generic Error")
+
         self.mock_requests.post = mock_post_notify
 
         # When an email is sent
