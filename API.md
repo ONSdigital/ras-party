@@ -448,8 +448,9 @@
 ---
 
 ## Respondent Endpoints
+### Verify  Token
 * `GET /party-api/v1/tokens/verify/<token>`
-    * Verifies a users email address when provided with a **known** token.
+    * Verifies a users token when provided with a **known** token.
         * Token will have been sent to them via email.   
     
 ### Example JSON Response
@@ -478,7 +479,7 @@
 }
 ```
 ---
-
+### Respondent Change Password
 * `GET /party-api/v1/respondents/change_password/<token>`
     * Lets a user change their login password with a **known** token.
         * Token will have been sent to them via email.
@@ -509,7 +510,7 @@
 }
 ```
 ---
-
+### Respondent Request Password Change
 * `POST /party-api/v1/respondents/request_password_change`
     * Sends password reset link to the provided email address.
     * Raises an error if email not found in DB.
@@ -531,7 +532,7 @@
 }
 ```
 ---
-
+### Create New Party
 * `POST /party-api/v1/respondents`
     * Posts a respondent to the database and generates their `sampleUnitRef`, `partyID` and `enrolments`.
     * If passed an `id` parameter it will use this instead of generating a new UUID.
@@ -553,7 +554,7 @@
 
 ```
 ---
-
+### Verify Email Address with Token
 * `PUT /emailverification/<token>`
     * Verifies the users email address against a provided token.
     * Example token: `'ImFAei5jb20i.W-7Ovg.hFZ7nhkzq8e7i76EXSwgvJQXAjs'`
@@ -585,7 +586,7 @@
 ```
 
 ---
-
+### Re-send Verification Email
 * `POST /resend-verification-email/<party_uuid>`
     * Sends another email containing a verification token.
     * Example `party-uuid`: `ef7737df-2097-4a73-a530-e98dba7bfe43`
@@ -599,7 +600,7 @@
 ```
 
 ---
-
+### Re-send Verification Email (Token Expired)
 * `POST /resend-verification-email-expired-token/<token>`
     * Allows an internal user to send another verification email to respondent.
     * Example token `'ImFAei5jb20i.W-7bQQ.AenYvU8iv5eK0drYapuk1SHX6Ig'`
@@ -611,9 +612,9 @@
 }
 ```
 ---
-
+### Re-send Password Email (Token Expired)
 * `POST /resend-password-email-expired-token/<token>`
-    * Sends the respondent another email verification URL containing a token.
+    * Sends the respondent another password verification URL containing a token via email.
 ### Example JSON for Post
 ```json
 {
@@ -627,7 +628,7 @@
 }
 ```
 ---
-
+### Add Survey to Respondent
 * `POST /party-api/v1/respondents/add_survey`
     * Adds a survey to an existing respondent.
 ### Example JSON for Post
@@ -639,7 +640,7 @@
 ```
 
 ---
-
+### Change Respondent Enrolment Status
 * `PUT /party-api/v1/respondents/change_enrolment_status`
     * Allows a user to change the enrolment status of a respondent.
         * Typically 'ENABLED' or 'DISABLED' although not enforced.
@@ -655,7 +656,7 @@
   }
 ```
 ---
-
+### Respondent Edit Account Status
 * `PUT /party-api/v1/respondents/edit-account-status/<party_id>`
     * This endpoint will change a respondent's account status based on `status_change` variable.
     * Currently used status values: `ACTIVE` `SUSPENDED`.
@@ -668,7 +669,7 @@
 
 
 ---
-
+### Get Respondent Info
 * `GET /party-api/v1/respondents`
     * Returns respondent info based on a `partyId` key.
     * Uses party_uuid from respondent table.
@@ -742,7 +743,7 @@
 ```
 
 ---
-
+### Get Respondent Info by ID
 * `GET /party-api/v1/respondents/id/<id>`
     * Returns respondent by the the ID provided.
     * Uses the party_uuid from the respondent table.
@@ -813,7 +814,7 @@
 
 
 ---
-
+### Get Respondent Info by Email
 * `GET /party-api/v1/respondents/email`
     * Returns respondent information with an `emailAddress` key.
     * Must be sent `'email'` parameter in the body of the request.
@@ -834,7 +835,7 @@
 ```
 
 ---
-
+### Update Respondent Info
 * `PUT /party-api/v1/respondents/id/<respondent_id>`
     * Updates a respondents details (first name, last name, telephone and email) based on `party_uuid` from the respondents table.
     
@@ -851,7 +852,7 @@
 ---
 
 ##Info Endpoints
-
+### Get Service Information
 * `GET /info`
     * Returns service information.
     * Doesn't require any parameters.
