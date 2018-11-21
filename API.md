@@ -1,16 +1,16 @@
-###Party Service API
+# Party Service API
 
-######*Acceptance tests can be run to populate a local version with test data.*
+###### *Acceptance tests can be run to populate a local version with test data.*
 <hr>
 
-####Business Endpoints:
+## Business Endpoints:
 
 * `POST /party-api/v1/businesses`
     * In the case of a new business, stores the new business data. 
     * In the case of a known business then it adds the versioned attributes.
     * Input data is validated against `party_schema.json` which mandates that `sampleUnitRef`, `sampleUnitType` and `sampleSummaryId` are mandatory.
     * If attributes are provided then `runname1`,`runname2` and `runname3` are mandatory 
-#####Example JSON Response
+##### Example JSON Response
 ```json
 {
   "associations": [
@@ -110,7 +110,7 @@
     * An **unknown** reference will return a `404`.
     * **Optional attribute:** `?verbose=true` also returns `attributes`, see below.
 
-#####Example JSON Response
+##### Example JSON Response
 
 ```json
 {
@@ -137,7 +137,7 @@
         ],
          ...ETC
 ```
-#####Additional JSON with Verbose
+##### Additional JSON with Verbose
 ```json
     "birthdate": "01/09/1993",
     "cellNo": 0,
@@ -181,7 +181,7 @@
     * Must be provided a **known** business id.
     * **Optional attribute:** `?verbose=true` also returns `attributes`, see below.
     
-#####Example JSON Response
+##### Example JSON Response
 
 ```json
 {
@@ -208,7 +208,7 @@
         },
         ...ETC
 ```
-#####Additional JSON with Verbose
+##### Additional JSON with Verbose
 ```json
 {
 
@@ -254,14 +254,14 @@
     * Stores an association between a business, collection exercise and a sample
     * the sample data is passed in the body
 
-#### Example JSON DATA for the put
+##### Example JSON DATA for the put
 ```json
 {
    "collectionExerciseId": "aCollectionExerciseId"
 }
 ```
 
-#### Example JSON Response
+##### Example JSON Response
 ```json
 {
     "collectionExerciseId": "aCollectionExerciseId",
@@ -288,7 +288,7 @@
 ```
 <hr>
 
-####Parties Endpoints
+## Parties Endpoints
 * `POST /party-api/v1/parties`
     * Posts a new party (with sampleUnitType 'B')
     
@@ -395,7 +395,7 @@
 ```
 <hr>
 
-#####Respondents Endpoints
+##### Respondents Endpoints
 * `PUT /party-api/v1/respondents/email`
 * `PUT /party-api/v1/respondents/change_email`
     * Changes a respondents old email address to a new provided one.
@@ -451,7 +451,7 @@
 
 <hr>
 
-####Respondent Endpoints
+#### Respondent Endpoints
 * `GET /party-api/v1/tokens/verify/<token>`
     * Verifies a users email address when provided with a **known** token.
         * Token will have been sent to them via email.   
@@ -519,7 +519,7 @@
     * Raises an error if email not found in DB.
     * Requires `email_address` param.
 
-#####Example JSON Payload
+##### Example JSON Payload
 ```json
 [
   {
@@ -528,7 +528,7 @@
 ]
 ```
 
-#####Example JSON Response
+##### Example JSON Response
 ```json
 {
   "response" : "ok"
@@ -541,7 +541,7 @@
     * If passed an `id` parameter it will use this instead of generating a new UUID.
     * Sets `businessRespondentStatus` to 'CREATED'.
 
-#####Example JSON Payload
+##### Example JSON Payload
 ```json
 [
   {
@@ -562,7 +562,7 @@
     * Verifies the users email address against a provided token.
     * Example token: `'ImFAei5jb20i.W-7Ovg.hFZ7nhkzq8e7i76EXSwgvJQXAjs'`
     
-#####Example JSON Response
+##### Example JSON Response
 ```json
 {
   "id": "ef7737df-2097-4a73-a530-e98dba7bfe43",
@@ -595,7 +595,7 @@
     * Example `party-uuid`: `ef7737df-2097-4a73-a530-e98dba7bfe43`
     * Raises an error if email is not found in DB.
     
-#####Example JSON Response
+##### Example JSON Response
 ```json
 {
   "message": "A new verification email has been sent"
@@ -608,7 +608,7 @@
     * Allows an internal user to send another verification email to respondent.
     * Example token `'ImFAei5jb20i.W-7bQQ.AenYvU8iv5eK0drYapuk1SHX6Ig'`
 
-#####Example JSON Response
+##### Example JSON Response
 ```json
 {
   "message": "A new verification email has been sent"
@@ -618,13 +618,13 @@
 
 * `POST /resend-password-email-expired-token/<token>`
     * Sends the respondent another email verification URL containing a token.
-#####Example JSON for Post
+##### Example JSON for Post
 ```json
 {
   "email_address" : "a@b.com"
 }
 ```
-#####Example JSON Response
+##### Example JSON Response
 ```json
 {
   "response":"ok"
@@ -634,7 +634,7 @@
 
 * `POST /party-api/v1/respondents/add_survey`
     * Adds a survey to an existing respondent.
-#####Example JSON for Post
+##### Example JSON for Post
 ```json
 {
   "party_id":"438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
@@ -649,7 +649,7 @@
         * Typically 'ENABLED' or 'DISABLED' although not enforced.
         * Changed by `change_flag`
         
-#####Example JSON for Put
+##### Example JSON for Put
 ```json
 {
  "respondent_id" : "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
@@ -679,7 +679,7 @@
     * `/respondents?id=9d3012a1-4a03-4de8-af4e-242504401b67`
    
     
-#####Example JSON Response
+##### Example JSON Response
 ```json
 [
     {
@@ -751,7 +751,7 @@
     * Uses the party_uuid from the respondent table.
    
 
-#####Example JSON Response
+##### Example JSON Response
 ```json
 {
     "associations": [
@@ -821,7 +821,7 @@
     * Returns respondent information with an `emailAddress` key.
     * Must be sent `'email'` parameter in the body of the request.
     * If email is not found returns a `404` 
-#####Example JSON Response
+##### Example JSON Response
 ```json
  [
   {
@@ -853,7 +853,7 @@
 ```
 <hr>
 
-####Info Endpoints
+##Info Endpoints
 
 * `GET /info`
     * Returns service information.
