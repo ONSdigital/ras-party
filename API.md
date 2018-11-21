@@ -136,8 +136,7 @@
                 }
             ],
             "partyId": "f81a1c00-9445-47b8-8b21-62322e9ad331"
-        ],
-         ...ETC
+                    ],
 ```
 ### Additional JSON with Verbose
 ```json
