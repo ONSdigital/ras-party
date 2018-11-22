@@ -615,12 +615,8 @@
 ### Re-send Password Email (Token Expired)
 * `POST /resend-password-email-expired-token/<token>`
     * Sends the respondent another password verification URL containing a token via email.
-### Example JSON for Post
-```json
-{
-  "email_address" : "a@b.com"
-}
-```
+    * Gets the email address from the token.
+
 ### Example JSON Response
 ```json
 {
@@ -670,7 +666,7 @@
 
 ---
 ### Get Respondent Info
-* `GET /party-api/v1/respondents?=id=<id>`
+* `GET /party-api/v1/respondents?id=<id>`
     * Returns respondent info based on a `partyId` key.
     * Uses party_uuid from respondent table.
     * The endpoint uses parameter name `id` instead of `partyId`.
