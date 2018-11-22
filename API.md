@@ -51,10 +51,10 @@
      "tradstyle2": "Tradstyle-2",
      "tradstyle3": "Tradstyle-3"
     },
-  "id": "42e08c51-1d78-4524-bf39-c6523d4c0939",
+  "id": "<id>",
   "name": "Runame-1 Runame-2 Runame-3",
-  "sampleSummaryId": "831078087",
-  "sampleUnitRef": "831078087",
+  "sampleSummaryId": "<sampleSummaryId>",
+  "sampleUnitRef": "<sampleUnitRef>",
   "sampleUnitType": "B",
   "trading_as": "Tradstyle-1 Tradstyle-2 Tradstyle-3"
 }
@@ -72,16 +72,16 @@
         "enrolments": [
             {
                 "enrolmentStatus": "ENABLED",
-                "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+                "surveyId": "<surveyId>"
             }
         ],
-        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233",
+        "partyId": "<partyId>",
         "businessRespondentStatus": "ACTIVE"
         }
     ],
     "name": "Bolts and Ratchets Ltd",
-    "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
-    "sampleUnitRef": "50012345678",
+    "id": "<id>",
+    "sampleUnitRef": "<sampleUnitRef>",
     "sampleUnitType": "B"
 },
 {
@@ -90,16 +90,16 @@
         "enrolments": [
             {
                 "enrolmentStatus": "ENABLED",
-                "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+                "surveyId": "<surveyId>"
             }
         ],
-        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233",
+        "partyId": "<partyId>",
         "businessRespondentStatus": "ACTIVE"
         }
     ],
     "name": "Example Ltd",
-    "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
-    "sampleUnitRef": "50012345678",
+    "id": "<id>",
+    "sampleUnitRef": "<sampleUnitRef>",
     "sampleUnitType": "B"
 }]
 ```
@@ -122,24 +122,26 @@
             "enrolments": [
                 {
                     "enrolmentStatus": "ENABLED",
-                    "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                    "surveyId": "<surveyId>"
                 }
             ],
-            "partyId": "931e8c5a-8ed8-4ce8-a86e-e1d7693a7d65"
+            "partyId": "<partyId>"
         },
         {
             "businessRespondentStatus": "ACTIVE",
             "enrolments": [
                 {
                     "enrolmentStatus": "ENABLED",
-                    "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                    "surveyId": "<surveyId>"
                 }
             ],
-            "partyId": "f81a1c00-9445-47b8-8b21-62322e9ad331"
+            "partyId": "<partyId>"
                     ],
 ```
 ### Additional JSON with Verbose
 ```json
+ {
+ 
     "birthdate": "01/09/1993",
     "cellNo": 0,
     "checkletter": "F",
@@ -154,7 +156,7 @@
     "frosic2007": "45320",
     "frosic92": "50300",
     "frotover": 7,
-    "id": "1f5a785e-706d-433d-8a56-9d2090fb480f",
+    "id": "<id>",
     "inclexcl": "D",
     "legalstatus": "1",
     "name": "RUNAME1_COMPANY1 RUNNAME2_COMPANY1",
@@ -164,15 +166,16 @@
     "runame3": "",
     "rusic2007": "45320",
     "rusic92": "50300",
-    "sampleSummaryId": "f67aedfb-e136-4aab-ba13-bbb9b6042564",
-    "sampleUnitId": "d3b56391-fe47-4988-a40f-6afd06fb89b9",
-    "sampleUnitRef": "49900000001",
+    "sampleSummaryId": "<sampleSummaryId>",
+    "sampleUnitId": "<sampleUnitId>",
+    "sampleUnitRef": "<sampleUnitRef>",
     "sampleUnitType": "B",
     "seltype": "C",
     "trading_as": "TOTAL UK ACTIVITY",
     "tradstyle1": "TOTAL UK ACTIVITY",
     "tradstyle2": "",
     "tradstyle3": ""
+}
 ```
     
 ---
@@ -192,20 +195,20 @@
             "enrolments": [
                 {
                     "enrolmentStatus": "ENABLED",
-                    "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                    "surveyId": "<surveyId>"
                 }
             ],
-            "partyId": "931e8c5a-8ed8-4ce8-a86e-e1d7693a7d65"
+            "partyId": "<partyId>"
         },
         {
             "businessRespondentStatus": "ACTIVE",
             "enrolments": [
                 {
                     "enrolmentStatus": "ENABLED",
-                    "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                    "surveyId": "<surveyId>"
                 }
             ],
-            "partyId": "f81a1c00-9445-47b8-8b21-62322e9ad331"
+            "partyId": "<partyId>"
         },
         ...ETC
 ```
@@ -227,7 +230,7 @@
     "frosic2007": "45320",
     "frosic92": "50300",
     "frotover": 7,
-    "id": "1f5a785e-706d-433d-8a56-9d2090fb480f",
+    "id": "<id>",
     "inclexcl": "D",
     "legalstatus": "1",
     "name": "RUNAME1_COMPANY1 RUNNAME2_COMPANY1",
@@ -237,9 +240,9 @@
     "runame3": "",
     "rusic2007": "45320",
     "rusic92": "50300",
-    "sampleSummaryId": "f67aedfb-e136-4aab-ba13-bbb9b6042564",
-    "sampleUnitId": "d3b56391-fe47-4988-a40f-6afd06fb89b9",
-    "sampleUnitRef": "49900000001",
+    "sampleSummaryId": "<sampleSummaryId>",
+    "sampleUnitId": "<sampleUnitId>",
+    "sampleUnitRef": "<sampleUnitRef>",
     "sampleUnitType": "B",
     "seltype": "C",
     "trading_as": "TOTAL UK ACTIVITY",
@@ -288,7 +291,7 @@
 ```json
 {
     "name": "RED BRICKS LTD",
-    "ruref": "49900000008",
+    "ruref": "<ruref>",
     "trading_as": ""
 }
 ```
@@ -358,15 +361,15 @@
         "enrolments": [
             {
                 "enrolmentStatus": "ENABLED",
-                "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+                "surveyId": "<surveyId>"
             }
         ],
-        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233",
+        "partyId": "<partyId>",
         "businessRespondentStatus": "ACTIVE"
         }
     ],
     "attributes": {
-        "ruref": "50012345678",
+        "ruref": "<ruref>",
         "checkletter": "A",
         "frosic92": "11111",
         "rusic92": "11111",
@@ -394,8 +397,8 @@
         "formtype": "0001",
         "currency": "H",
     },
-    "id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
-    "sampleUnitRef": "50012345678",
+    "id": "<id>",
+    "sampleUnitRef": "<sampleUnitRef>",
     "sampleUnitType": "B",
     "name": "Bolts and Ratchets Ltd"
 }
@@ -424,7 +427,7 @@
 {
    "emailAddress": "testtest@test.test",
    "firstName": "Test",
-   "id": "ef7737df-2097-4a73-a530-e98dba7bfe43",
+   "id": "<id>",
    "lastName": "tseT",
    "sampleUnitType": "BI",
    "status": "ACTIVE",
@@ -439,8 +442,8 @@
 ### Example JSON data for post
 ```json
 {
-    "party_id": "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
-    "enrolment_code": "fb747cq725lj"
+    "party_id": "<party_id>",
+    "enrolment_code": "<enrolment_code>"
 }
 ``` 
 
@@ -546,7 +549,7 @@
     "lastName" : "Dabilder",
     "password" : "password",
     "telephone" : "01234567890",
-    "enrolmentCode" : "b2hry55yr55n",
+    "enrolmentCode" : "<enrolmentCode>",
     "sampleUnitType" : "BI"
   }
 ]
@@ -561,7 +564,7 @@
 ### Example JSON Response
 ```json
 {
-  "id": "ef7737df-2097-4a73-a530-e98dba7bfe43",
+  "id": "<id>",
   "sampleUnitType": "BI",
   "pendingEmailAddress": "",
   "emailAddress": "a@z.com",
@@ -574,10 +577,10 @@
         "enrolments": [
             {
                 "enrolmentStatus": "ENABLED",
-                "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+                "surveyId": "<surveyId>"
             }
         ],
-        "partyId": "cd592e0f-8d07-407b-b75d-e01fbdae8233",
+        "partyId": "<partyId>",
         "businessRespondentStatus": "ACTIVE"
         }
     ]
@@ -588,7 +591,6 @@
 ### Re-send Verification Email
 * `POST /resend-verification-email/<party_uuid>`
     * Sends another email containing a verification token.
-    * Example `party-uuid`: `ef7737df-2097-4a73-a530-e98dba7bfe43`
     * Raises an error if email is not found in DB.
     
 ### Example JSON Response
@@ -602,7 +604,6 @@
 ### Re-send Verification Email (Token Expired)
 * `POST /resend-verification-email-expired-token/<token>`
     * Allows an internal user to send another verification email to respondent.
-    * Example token `'ImFAei5jb20i.W-7bQQ.AenYvU8iv5eK0drYapuk1SHX6Ig'`
 
 ### Example JSON Response
 ```json
@@ -633,8 +634,8 @@
 ### Example JSON for Post
 ```json
 {
-  "party_id":"438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
-  "enrolment_code":"fb747cq725lj"
+  "party_id": "<party_id>",
+  "enrolment_code": "<enrolment_code>"
 }
 ```
 
@@ -648,16 +649,16 @@
 ### Example JSON for Put
 ```json
 {
- "respondent_id" : "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3",
- "business_id" : "3b136c4b-7a14-4904-9e01-13364dd7b972",
- "survey_id" : "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
+ "respondent_id" : "<respondent_id>",
+ "business_id" : "<business_id>",
+ "survey_id" : "<survey_id>",
  "change_flag": "DISABLED"
   }
 ```
 ---
 ### Respondent Edit Account Status
 * `PUT /party-api/v1/respondents/edit-account-status/<party_id>`
-    * This endpoint will change a respondent's account status based on `status_change` variable.
+    * This endpoint will change a respondent's account status based on `status_change` parameter.
     * Currently used status values: `ACTIVE` `SUSPENDED`.
 ### Example JSON data for put
 ```json
@@ -669,11 +670,10 @@
 
 ---
 ### Get Respondent Info
-* `GET /party-api/v1/respondents`
+* `GET /party-api/v1/respondents?=id=<id>`
     * Returns respondent info based on a `partyId` key.
     * Uses party_uuid from respondent table.
-    * The endpoint uses variable name `id` instead of `partyId`.
-    * `/respondents?id=9d3012a1-4a03-4de8-af4e-242504401b67`
+    * The endpoint uses parameter name `id` instead of `partyId`.
    
     
 ### Example JSON Response
@@ -686,53 +686,53 @@
                 "enrolments": [
                     {
                         "enrolmentStatus": "ENABLED",
-                        "surveyId": "02b9c366-7397-42f7-942a-76dc5876d86d"
+                        "surveyId": "<surveyId>"
                     },
                     {
                         "enrolmentStatus": "ENABLED",
-                        "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                        "surveyId": "<surveyId>"
                     }
                 ],
-                "partyId": "2559088f-e5e3-4a7b-8c09-32197612b1ab",
-                "sampleUnitRef": "49900000008"
+                "partyId": "<partyId>",
+                "sampleUnitRef": "<sampleUnitRef>"
             },
             {
                 "businessRespondentStatus": "ACTIVE",
                 "enrolments": [
                     {
                         "enrolmentStatus": "ENABLED",
-                        "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                        "surveyId": "<surveyId>"
                     }
                 ],
-                "partyId": "49d28188-f295-4d87-b8a3-c8c2bcceaaa9",
-                "sampleUnitRef": "49900000007"
+                "partyId": "<partyId>",
+                "sampleUnitRef": "<sampleUnitRef>"
             },
             {
                 "businessRespondentStatus": "ACTIVE",
                 "enrolments": [
                     {
                         "enrolmentStatus": "ENABLED",
-                        "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                        "surveyId": "<surveyId>"
                     }
                 ],
-                "partyId": "13f799e7-4ac6-4415-8358-6721d7bb3e60",
-                "sampleUnitRef": "49900000006"
+                "partyId": "<partyId>",
+                "sampleUnitRef": "<sampleUnitRef>"
             },
             {
                 "businessRespondentStatus": "ACTIVE",
                 "enrolments": [
                     {
                         "enrolmentStatus": "ENABLED",
-                        "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                        "surveyId": "<surveyId>"
                     }
                 ],
-                "partyId": "fa6eb819-6de8-405e-ab94-9279a01d2ddd",
-                "sampleUnitRef": "49900000001"
+                "partyId": "<partyId>",
+                "sampleUnitRef": "<sampleUnitRef>"
             }
         ],
         "emailAddress": "example@example.com",
         "firstName": "first_name",
-        "id": "9d3012a1-4a03-4de8-af4e-242504401b67",
+        "id": "<id>",
         "lastName": "last_name",
         "sampleUnitType": "BI",
         "status": "ACTIVE",
@@ -757,53 +757,53 @@
             "enrolments": [
                 {
                     "enrolmentStatus": "ENABLED",
-                    "surveyId": "02b9c366-7397-42f7-942a-76dc5876d86d"
+                    "surveyId": "<surveyId>"
                 },
                 {
                     "enrolmentStatus": "ENABLED",
-                    "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                    "surveyId": "<surveyId>"
                 }
             ],
-            "partyId": "2559088f-e5e3-4a7b-8c09-32197612b1ab",
-            "sampleUnitRef": "49900000008"
+            "partyId": "<partyId>",
+            "sampleUnitRef": "<sampleUnitRef>"
         },
         {
             "businessRespondentStatus": "ACTIVE",
             "enrolments": [
                 {
                     "enrolmentStatus": "ENABLED",
-                    "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                    "surveyId": "<surveyId>"
                 }
             ],
-            "partyId": "49d28188-f295-4d87-b8a3-c8c2bcceaaa9",
-            "sampleUnitRef": "49900000007"
+            "partyId": "<partyId>",
+            "sampleUnitRef": "<sampleUnitRef>"
         },
         {
             "businessRespondentStatus": "ACTIVE",
             "enrolments": [
                 {
                     "enrolmentStatus": "ENABLED",
-                    "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                    "surveyId": "<surveyId>"
                 }
             ],
-            "partyId": "13f799e7-4ac6-4415-8358-6721d7bb3e60",
-            "sampleUnitRef": "49900000006"
+            "partyId": "<partyId>",
+            "sampleUnitRef": "<sampleUnitRef>"
         },
         {
             "businessRespondentStatus": "ACTIVE",
             "enrolments": [
                 {
                     "enrolmentStatus": "ENABLED",
-                    "surveyId": "cb8accda-6118-4d3b-85a3-149e28960c54"
+                    "surveyId": "<surveyId>"
                 }
             ],
-            "partyId": "fa6eb819-6de8-405e-ab94-9279a01d2ddd",
-            "sampleUnitRef": "49900000001"
+            "partyId": "<partyId>",
+            "sampleUnitRef": "<sampleUnitRef>"
         }
     ],
     "emailAddress": "example@example.com",
     "firstName": "first_name",
-    "id": "9d3012a1-4a03-4de8-af4e-242504401b67",
+    "id": "<id>",
     "lastName": "last_name",
     "sampleUnitType": "BI",
     "status": "ACTIVE",
@@ -824,7 +824,7 @@
   {
     "emailAddress": "example@example.com",
     "firstName": "first_name",
-    "id": "9d3012a1-4a03-4de8-af4e-242504401b67",
+    "id": "<id>",
     "lastName": "last_name",
     "sampleUnitType": "BI",
     "status": "ACTIVE",
@@ -850,7 +850,7 @@
 ```
 ---
 
-##Info Endpoints
+## Info Endpoints
 ### Get Service Information
 * `GET /info`
     * Returns service information.
