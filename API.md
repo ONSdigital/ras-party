@@ -136,7 +136,9 @@
                 }
             ],
             "partyId": "<partyId>"
-                    ],
+        }
+                     ]
+}                    
 ```
 ### Additional JSON with Verbose
 ```json
@@ -209,8 +211,9 @@
                 }
             ],
             "partyId": "<partyId>"
-        },
-        ...ETC
+        }
+                  ]
+}
 ```
 ### Additional JSON with Verbose
 ```json
