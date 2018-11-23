@@ -1,10 +1,10 @@
-FROM python:3.6
-MAINTAINER Joseph Walton
+FROM python:3.6-slim
 
 WORKDIR /app
 COPY . /app
 EXPOSE 8081
-RUN pip3 install pipenv==8.3.1 && pipenv install --deploy --system
+RUN apt-get update -y && apt-get install -y python-pip && apt-get update -y && apt-get install -y curl
+RUN pip3 install pipenv && pipenv install --deploy --system
 
 ENTRYPOINT ["python3"]
 CMD ["run.py"]
