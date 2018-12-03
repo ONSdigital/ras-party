@@ -29,8 +29,8 @@ class Config(object):
     EMAIL_TOKEN_EXPIRY = int(os.getenv('EMAIL_TOKEN_EXPIRY', 306000))
     PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
 
-    DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', 15))
-    DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', 10))
+    DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', 20))
+    DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', 20))
     DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', -1))
 
     if cf.detected:
@@ -41,7 +41,7 @@ class Config(object):
         DATABASE_URI = os.getenv('DATABASE_URI', "postgres://postgres:postgres@localhost:6432/postgres")
 
     # Zipkin
-    ZIPKIN_DISABLE = bool(strtobool(os.getenv("ZIPKIN_DISABLE", "False")))
+    ZIPKIN_DISABLE = bool(strtobool(os.getenv("ZIPKIN_DISABLE", "True")))
     ZIPKIN_DSN = os.getenv("ZIPKIN_DSN", None)
     ZIPKIN_SAMPLE_RATE = int(os.getenv("ZIPKIN_SAMPLE_RATE", 0))
 
