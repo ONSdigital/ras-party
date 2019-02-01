@@ -30,7 +30,7 @@ class Business(Base):
     business_ref = Column(Text, unique=True)
     respondents = relationship('BusinessRespondent', back_populates='business')
     attributes = relationship('BusinessAttributes', backref='business',
-                              order_by='desc(BusinessAttributes.created_on)', lazy='joined')
+                              order_by='desc(BusinessAttributes.created_on)', lazy='subquery')
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
     @staticmethod
