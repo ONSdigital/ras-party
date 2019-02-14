@@ -30,3 +30,7 @@ When another change has been made to the database and you require another versio
 ```
 alembic revision -m "create account table"
 ```
+
+### Use of ORM
+Sql Alchemy will quite happily modify the tables via  models.Base.metadata.create_all(engine) (in run.py)  in
+this project. So an alembic script

@@ -1,6 +1,7 @@
 import logging
-
 import structlog
+import uuid
+
 from flask import Blueprint, current_app, make_response, jsonify, request
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.exceptions import BadRequest
@@ -31,16 +32,61 @@ def get_pw(username):
 
 @respondent_view.route('/respondents', methods=['GET'])
 def get_respondents():
+
     ids = request.args.getlist("id")
+    first_name = request.args.get("firstName")
+    last_name = request.args.get("lastName")
+    email = request.args.get("emailAddress")
+    page = int(request.args.get("page", default=1))
+    limit = int(request.args.get("limit", default=10))
+
+    _validate_get_respondent_params(ids, first_name, last_name, email)
+
     if ids:
         # with_db_session function wrapper automatically injects the session parameter
         # pylint: disable=no-value-for-parameter
         response = respondent_controller.get_respondent_by_ids(ids)
     else:
-        logger.debug("The parameter id is required.", url=request.url)
-        raise BadRequest("The parameter id is required.")
-
+        response = respondent_controller.get_respondents_by_name_and_email(first_name, last_name, email, page, limit)
     return jsonify(response)
+
+
+def _validate_get_respondent_params(ids, first_name, last_name, email):
+    """
+    Validates the combination of parameters for get respondents
+    :param ids:
+    :param first_name:
+    :param last_name:
+    :param email:
+    """
+
+    if not (ids or first_name or last_name or email):
+        logger.debug("Invalid params: either id , first_name or last_name or email are required")
+        raise BadRequest(f"id , first_name or last_name or email are required")
+
+    if ids and (first_name or last_name or email):
+        logger.debug("Invalid params: id not valid with first_name or last_name or email")
+        raise BadRequest("id not valid with first_name or last_name or email")
+
+    if ids:
+        for party_id in ids:
+            try:
+                uuid.UUID(party_id)
+            except ValueError:
+                logger.debug("Invalid params: party_id value is not a valid UUID", party_id=party_id)
+                raise BadRequest(f"'{party_id}' is not a valid UUID format for property 'id'")
+
+    if first_name and len(first_name.strip()) == 0:
+        logger.debug("Invalid params: first_name zero length")
+        raise BadRequest(f"zero length first_name")
+
+    if last_name and len(last_name.strip()) == 0:
+        logger.debug("Invalid params: last_name zero length")
+        raise BadRequest(f"zero length last_name")
+
+    if email and len(email.strip()) == 0:
+        logger.debug("Invalid params: email zero length")
+        raise BadRequest(f"zero length email")
 
 
 @respondent_view.route('/respondents/id/<id>', methods=['GET'])

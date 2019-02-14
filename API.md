@@ -669,11 +669,27 @@
 
 ---
 ### Get Respondent Info
-* `GET /party-api/v1/respondents?id=<id>`
-    * Returns respondent info based on a `partyId` key.
-    * Uses party_uuid from respondent table.
-    * The endpoint uses parameter name `id` instead of `partyId`.
-   
+* `GET /party-api/v1/respondents?id=<id>&firstname=<firstname>&lastname=<lastname>&email=<email>`
+    * Returns respondents info based on passed in params.
+    * id is the party ids of a list of respondents . 
+        * Uses party_uuid from respondent table.
+        * The endpoint uses parameter name `id` instead of `partyId`.
+        * id is mutually exclusive to username an email . if id is present and either username 
+        or email then a 400 will be returned
+        * Each id must be a uuid 
+    * firstName . A first name or part first name of a respondent. If present will restrict the returned results 
+    to those respondents whose first name starts with the <firstName> value, case insensitive. 
+        * If present and zero length then 400 returned
+    * lastName . A last name or part last name of a respondent. If present will restrict the returned results 
+    to those respondents whose last name starts with the <lastName> value, case insensitive.  
+        * If present and zero length then 400 returned        
+    * emailAddress . An email address or partial email address . If present it will restrict respondents 
+    to those that contain the <emailAddress> value, case insensitive. 
+        *If present and zero length then 400 returned
+    * page . The page of data to return ( 1 based) . If not supplied defaults to 1
+    * limit . The maximum number of rows to return . If not supplied, defaults to 10
+    
+       
     
 ### Example JSON Response
 ```json

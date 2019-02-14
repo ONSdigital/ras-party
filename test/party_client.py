@@ -141,17 +141,39 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def get_respondents(self, expected_status=200):
-        response = self.client.get(f'/party-api/v1/respondents', headers=self.auth_headers)
-        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
-        return json.loads(response.get_data(as_text=True))
-
     def get_respondents_by_ids(self, ids, expected_status=200):
         url_params = tuple(("id", id_param) for id_param in ids)
         url = "/party-api/v1/respondents?"
         url += urlencode(url_params)
         response = self.client.get(url, headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def get_respondents_by_name_email(self, first_name, last_name, email, page=1, limit=10, expected_status=200):
+
+        url_params = {}
+
+        url = "/party-api/v1/respondents?"
+        if first_name:
+            url_params["firstName"] = first_name
+
+        if last_name:
+            url_params["lastName"] = last_name
+
+        if email:
+            url_params["emailAddress"] = email
+
+        if page:
+            url_params["page"] = page
+
+        if limit:
+            url_params["limit"] = limit
+
+        url += urlencode(url_params)
+
+        response = self.client.get(url, headers=self.auth_headers)
+        if expected_status:
+            self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def get_respondent_by_id(self, id, expected_status=200):

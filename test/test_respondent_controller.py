@@ -186,6 +186,371 @@ class TestRespondents(PartyTestClient):
         response = self.get_respondents_by_ids([party_uuid], expected_status=400)
         self.assertEquals(response['description'], """'gibberish' is not a valid UUID format for property 'id'""")
 
+    def test_get_respondents_using_complete_email_returns_respondent(self):
+        self.populate_with_respondent()
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="a@z.com",
+                                                      expected_status=200)
+        self.assertEquals(response[0]['emailAddress'], 'a@z.com')
+
+    def test_get_respondents_using_partial_in_address_email_returns_respondent(self):
+        self.populate_with_respondent()
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="@", expected_status=200)
+        self.assertEquals(response[0]['emailAddress'], 'a@z.com')
+
+    def test_get_respondents_using_partial_starting_address_email_returns_respondent(self):
+        self.populate_with_respondent()
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="a", expected_status=200)
+        self.assertEquals(response[0]['emailAddress'], 'a@z.com')
+
+    def test_get_respondents_using_partial_ending_address_email_returns_respondent(self):
+        self.populate_with_respondent()
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="m", expected_status=200)
+        self.assertEquals(response[0]['emailAddress'], 'a@z.com')
+
+    def test_get_respondents_using_unknown_address_email_returns_no_respondent(self):
+        self.populate_with_respondent()
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="xx@yy.com",
+                                                      expected_status=200)
+        self.assertEquals(len(response), 0)
+
+    def test_get_respondents_using_complete_firstname_returns_respondent(self):
+        self.populate_with_respondent()
+        response = self.get_respondents_by_name_email(first_name="A", last_name=None, email=None, expected_status=200)
+        self.assertEquals(response[0]['firstName'], 'A')
+
+    def test_get_respondents_using_incorrect_case_complete_firstname_returns_respondent(self):
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(firstName='Andrew')
+        self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+        response = self.get_respondents_by_name_email(first_name="andrew", last_name=None, email=None,
+                                                      expected_status=200)
+        self.assertEquals(response[0]['firstName'], 'Andrew')
+
+    def test_get_respondents_using_beginning_of_firstname_returns_respondent(self):
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(firstName='Andrew')
+        self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+        response = self.get_respondents_by_name_email(first_name="Andr", last_name=None, email=None,
+                                                      expected_status=200)
+        self.assertEquals(response[0]['firstName'], 'Andrew')
+
+    def test_get_respondents_using_wildcard_in_firstname_returns_respondent(self):
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(firstName='Andrew')
+        self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+        response = self.get_respondents_by_name_email(first_name="An%ew", last_name=None, email=None,
+                                                      expected_status=200)
+        self.assertEquals(response[0]['firstName'], 'Andrew')
+
+    def test_get_respondents_using_end_of_firstname_does_not_return_respondent(self):
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(firstName='Andrew')
+        self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+        response = self.get_respondents_by_name_email(first_name="rew", last_name=None, email=None,
+                                                      expected_status=200)
+        self.assertEquals(len(response), 0)
+
+    def test_get_respondents_using_complete_lastname_returns_respondent(self):
+        self.populate_with_respondent()
+        response = self.get_respondents_by_name_email(first_name=None, last_name="Z", email=None, expected_status=200)
+        self.assertEquals(response[0]['lastName'], 'Z')
+
+    def test_get_respondents_using_beginning_of_lastname_returns_respondent(self):
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(lastName='Torrance')
+        self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+        response = self.get_respondents_by_name_email(first_name=None, last_name="Torr", email=None,
+                                                      expected_status=200)
+        self.assertEquals(response[0]['lastName'], 'Torrance')
+
+    def test_get_respondents_using_wildcard_in_lastname_returns_respondent(self):
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(lastName='Torrance')
+        self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+        response = self.get_respondents_by_name_email(first_name=None, last_name="To%ce", email=None,
+                                                      expected_status=200)
+        self.assertEquals(response[0]['lastName'], 'Torrance')
+
+    def test_get_respondents_using_beginning_of_lastname_incorrect_case_returns_respondent(self):
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(lastName='Torrance')
+        self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+        response = self.get_respondents_by_name_email(first_name=None, last_name="ToRr", email=None,
+                                                      expected_status=200)
+        self.assertEquals(response[0]['lastName'], 'Torrance')
+
+    def test_get_respondents_using_end_of_lastname_does_not_return_respondent(self):
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(lastName='Torrance')
+        self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+        response = self.get_respondents_by_name_email(first_name=None, last_name="nce", email=None,
+                                                      expected_status=200)
+        self.assertEquals(len(response), 0)
+
+    def test_get_respondents_using_first_and_last_name_only_returns_matching_respondent(self):
+        mock_respondent1 = MockRespondent()
+        mock_respondent1.attributes(firstName="Andrew", lastName='Torrance',
+                                    emailAddress='Andrew.Torrance@something.com')
+        self.populate_with_respondent(respondent=mock_respondent1.as_respondent())
+
+        mock_respondent2 = MockRespondent()
+        mock_respondent2.attributes(firstName="Andrew", lastName='Smith', emailAddress='Andrew.Smith@something.com')
+        self.populate_with_respondent(respondent=mock_respondent2.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name="Andrew", last_name="Tor", email=None,
+                                                      expected_status=200)
+
+        self.assertEquals(response[0]['firstName'], 'Andrew')
+        self.assertEquals(response[0]['lastName'], 'Torrance')
+        self.assertEquals(len(response), 1)
+
+    def test_get_respondents_using_matching_first_and_not_matching_last_name_returns_no_respondent(self):
+        mock_respondent1 = MockRespondent()
+        mock_respondent1.attributes(firstName="Andrew", lastName='Torrance',
+                                    emailAddress='Andrew.Torrance@something.com')
+        self.populate_with_respondent(respondent=mock_respondent1.as_respondent())
+
+        mock_respondent2 = MockRespondent()
+        mock_respondent2.attributes(firstName="Andrew", lastName='Smith', emailAddress='Andrew.Smith@something.com')
+        self.populate_with_respondent(respondent=mock_respondent2.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name="Andrew", last_name="Williams", email=None,
+                                                      expected_status=200)
+        self.assertEquals(len(response), 0)
+
+    def test_get_respondents_using_matching_email_returns_respondent(self):
+        mock_respondent1 = MockRespondent()
+        mock_respondent1.attributes(firstName="Andrew", lastName='Torrance',
+                                    emailAddress='Andrew.Torrance@something.com')
+        self.populate_with_respondent(respondent=mock_respondent1.as_respondent())
+
+        mock_respondent2 = MockRespondent()
+        mock_respondent2.attributes(firstName="Andrew", lastName='Smith', emailAddress='Andrew.Smith@something.com')
+        self.populate_with_respondent(respondent=mock_respondent2.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None,
+                                                      email="Andrew.Smith@something.com", expected_status=200)
+        self.assertEquals(len(response), 1)
+        self.assertEquals(response[0]['firstName'], 'Andrew')
+        self.assertEquals(response[0]['lastName'], 'Smith')
+
+    def test_get_respondents_using_non_matching_email_returns_no_respondent(self):
+        mock_respondent1 = MockRespondent()
+        mock_respondent1.attributes(firstName="Andrew", lastName='Torrance',
+                                    emailAddress='Andrew.Torrance@something.com')
+        self.populate_with_respondent(respondent=mock_respondent1.as_respondent())
+
+        mock_respondent2 = MockRespondent()
+        mock_respondent2.attributes(firstName="Andrew", lastName='Smith', emailAddress='Andrew.Smith@something.com')
+        self.populate_with_respondent(respondent=mock_respondent2.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None,
+                                                      email="Andrew.Williams@something.com", expected_status=200)
+        self.assertEquals(len(response), 0)
+
+    def test_get_respondents_using_matching_email_incorrect_case_returns_respondent(self):
+        mock_respondent1 = MockRespondent()
+        mock_respondent1.attributes(firstName="Andrew", lastName='Torrance',
+                                    emailAddress='Andrew.Torrance@something.com')
+        self.populate_with_respondent(respondent=mock_respondent1.as_respondent())
+
+        mock_respondent2 = MockRespondent()
+        mock_respondent2.attributes(firstName="Andrew", lastName='Smith', emailAddress='Andrew.Smith@something.com')
+        self.populate_with_respondent(respondent=mock_respondent2.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None,
+                                                      email="AnDREW.SmITH@Something.com", expected_status=200)
+        self.assertEquals(len(response), 1)
+        self.assertEquals(response[0]['firstName'], 'Andrew')
+        self.assertEquals(response[0]['lastName'], 'Smith')
+
+    def test_get_respondents_using_partial_email_returns_respondent(self):
+        mock_respondent1 = MockRespondent()
+        mock_respondent1.attributes(firstName="Andrew", lastName='Torrance',
+                                    emailAddress='Andrew.Torrance@something.com')
+        self.populate_with_respondent(respondent=mock_respondent1.as_respondent())
+
+        mock_respondent2 = MockRespondent()
+        mock_respondent2.attributes(firstName="Andrew", lastName='Smith', emailAddress='Andrew.Smith@something.com')
+        self.populate_with_respondent(respondent=mock_respondent2.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="Smith",
+                                                      expected_status=200)
+        self.assertEquals(len(response), 1)
+        self.assertEquals(response[0]['firstName'], 'Andrew')
+        self.assertEquals(response[0]['lastName'], 'Smith')
+
+    def test_get_respondents_using_wildcards_email_returns_respondent(self):
+        mock_respondent1 = MockRespondent()
+        mock_respondent1.attributes(firstName="Andrew", lastName='Torrance',
+                                    emailAddress='Andrew.Torrance@something.com')
+        self.populate_with_respondent(respondent=mock_respondent1.as_respondent())
+
+        mock_respondent2 = MockRespondent()
+        mock_respondent2.attributes(firstName="Andrew", lastName='Smith', emailAddress='Andrew.Smith@something.com')
+        self.populate_with_respondent(respondent=mock_respondent2.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="And%Smith",
+                                                      expected_status=200)
+        self.assertEquals(len(response), 1)
+        self.assertEquals(response[0]['firstName'], 'Andrew')
+        self.assertEquals(response[0]['lastName'], 'Smith')
+
+    def test_get_respondents_using_non_matching_wildcards_email_does_not_return_respondent(self):
+        mock_respondent1 = MockRespondent()
+        mock_respondent1.attributes(firstName="Andrew", lastName='Torrance',
+                                    emailAddress='Andrew.Torrance@something.com')
+        self.populate_with_respondent(respondent=mock_respondent1.as_respondent())
+
+        mock_respondent2 = MockRespondent()
+        mock_respondent2.attributes(firstName="Andrew", lastName='Smith', emailAddress='Andrew.Smith@something.com')
+        self.populate_with_respondent(respondent=mock_respondent2.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="And%Will",
+                                                      expected_status=200)
+        self.assertEquals(len(response), 0)
+
+    def test_get_respondents_using_name_and_email_returns_only_the_respondent_that_match_all_params(self):
+        mock_respondent1 = MockRespondent()
+        mock_respondent1.attributes(firstName="Andrew", lastName='Torrance',
+                                    emailAddress='Andrew.Torrance@something.com')
+        self.populate_with_respondent(respondent=mock_respondent1.as_respondent())
+
+        mock_respondent2 = MockRespondent()
+        mock_respondent2.attributes(firstName="Andrew", lastName='Smith', emailAddress='Andrew.Smith@something.com')
+        self.populate_with_respondent(respondent=mock_respondent2.as_respondent())
+
+        mock_respondent3 = MockRespondent()
+        mock_respondent3.attributes(firstName="Andrew", lastName='Williams',
+                                    emailAddress='Andrew.Williamsh@something.com')
+        self.populate_with_respondent(respondent=mock_respondent3.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name="Andrew", last_name="Sm", email="Andrew",
+                                                      expected_status=200)
+        self.assertEquals(len(response), 1)
+        self.assertEquals(response[0]['firstName'], 'Andrew')
+        self.assertEquals(response[0]['lastName'], 'Smith')
+
+    def test_get_respondents_using_name_and_email_returns_all_respondents_that_match(self):
+        mock_respondent1 = MockRespondent()
+        mock_respondent1.attributes(firstName="Andrew", lastName='Torrance',
+                                    emailAddress='Andrew.Torrance@something.com')
+        self.populate_with_respondent(respondent=mock_respondent1.as_respondent())
+
+        mock_respondent2 = MockRespondent()
+        mock_respondent2.attributes(firstName="Andrew", lastName='Smith', emailAddress='Andrew.Smith@something.com')
+        self.populate_with_respondent(respondent=mock_respondent2.as_respondent())
+
+        mock_respondent3 = MockRespondent()
+        mock_respondent3.attributes(firstName="Andrew", lastName='Thomas', emailAddress='Andrew.Thomas@something.com')
+        self.populate_with_respondent(respondent=mock_respondent3.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name="Andrew", last_name="%T", email="Andrew",
+                                                      expected_status=200)
+        self.assertEquals(len(response), 3)
+
+    def test_get_respondents_using_name_and_email_returns_respondents_ordered_by_last_name_asc(self):
+        mock_respondent1 = MockRespondent()
+        mock_respondent1.attributes(firstName="Andrew", lastName='Gamma',
+                                    emailAddress='Andrew.Torrance@something.com')
+        self.populate_with_respondent(respondent=mock_respondent1.as_respondent())
+
+        mock_respondent2 = MockRespondent()
+        mock_respondent2.attributes(firstName="Andrew", lastName='Alpha', emailAddress='Andrew.Smith@something.com')
+        self.populate_with_respondent(respondent=mock_respondent2.as_respondent())
+
+        mock_respondent3 = MockRespondent()
+        mock_respondent3.attributes(firstName="Andrew", lastName='Beta', emailAddress='Andrew.Thomas@something.com')
+        self.populate_with_respondent(respondent=mock_respondent3.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name="Andrew", last_name=None, email="Andrew",
+                                                      expected_status=200)
+        self.assertEquals(len(response), 3)
+        self.assertEquals(response[0]['lastName'], 'Alpha')
+        self.assertEquals(response[1]['lastName'], 'Beta')
+        self.assertEquals(response[2]['lastName'], 'Gamma')
+
+    def test_get_respondents_limit_returns_the_selected_number_of_respondents(self):
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(firstName="Andrew", lastName='Torrance',
+                                   emailAddress='Andrew.Torrance@something.com')
+        for i in range(0, 10):
+            mock_respondent.attributes(lastName=f"Torrance_{i}", emailAddress=f"Andrew_{i}.Torrance@something.com")
+
+            self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name="Andrew", last_name=None, email="Andrew",
+                                                      page=1, limit=6, expected_status=200)
+
+        self.assertEquals(len(response), 6)
+        self.assertEquals(response[0]['lastName'], 'Torrance_0')
+        self.assertEquals(response[5]['lastName'], 'Torrance_5')
+
+    def test_get_respondents_limit_returns_the_available_respondents_if_less_than_limit(self):
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(firstName="Andrew", lastName='Torrance',
+                                   emailAddress='Andrew.Torrance@something.com')
+        for i in range(0, 3):
+            mock_respondent.attributes(lastName=f"Torrance_{i}", emailAddress=f"Andrew_{i}.Torrance@something.com")
+
+            self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name="Andrew", last_name=None, email="Andrew",
+                                                      page=1, limit=6, expected_status=200)
+        self.assertEquals(len(response), 3)
+
+    def test_get_respondents_page_returns_the_expected_respondents(self):
+        respondents_last_name = [f"{chr(i)}_Torrance" for i in range(ord('a'), ord('z') + 1)]
+
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(firstName="Andrew", lastName='Torrance',
+                                   emailAddress='Andrew.Torrance@something.com')
+        for i in range(0, 26):
+            mock_respondent.attributes(firstName="Andrew", lastName=respondents_last_name[i],
+                                       emailAddress=f"Andrew_{i}.Torrance@something.com")
+
+            self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="Andrew",
+                                                      page=3, limit=6, expected_status=200)
+        self.assertEquals(len(response), 6)
+        self.assertEquals(response[0]['lastName'], 'm_Torrance')
+        self.assertEquals(response[5]['lastName'], 'r_Torrance')
+
+    def test_get_respondents_page_returns_remaining_respondents_on_last_page(self):
+        respondents_last_name = [f"{chr(i)}_Torrance" for i in range(ord('a'), ord('z') + 1)]
+
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(firstName="Andrew", lastName='Torrance',
+                                   emailAddress='Andrew.Torrance@something.com')
+        for i in range(0, 26):
+            mock_respondent.attributes(firstName="Andrew", lastName=respondents_last_name[i],
+                                       emailAddress=f"Andrew_{i}.Torrance@something.com")
+
+            self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="Andrew",
+                                                      page=3, limit=12, expected_status=200)
+        self.assertEquals(len(response), 2)
+        self.assertEquals(response[0]['lastName'], 'y_Torrance')
+        self.assertEquals(response[1]['lastName'], 'z_Torrance')
+
+    def test_get_respondents_page_returns_zero_respondents_if_none_on_requested_page(self):
+        respondents_last_name = [f"{chr(i)}_Torrance" for i in range(ord('a'), ord('z') + 1)]
+
+        mock_respondent = MockRespondent()
+        mock_respondent.attributes(firstName="Andrew", lastName='Torrance',
+                                   emailAddress='Andrew.Torrance@something.com')
+        for i in range(0, 26):
+            mock_respondent.attributes(firstName="Andrew", lastName=respondents_last_name[i],
+                                       emailAddress=f"Andrew_{i}.Torrance@something.com")
+
+            self.populate_with_respondent(respondent=mock_respondent.as_respondent())
+
+        response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="Andrew",
+                                                      page=22, limit=12, expected_status=200)
+        self.assertEquals(len(response), 0)
+
     def test_get_respondent_by_ids_with_an_unknown_id_still_returns_correct_representation_for_other_ids(self):
         respondent_1 = MockRespondent()
         respondent_1.attributes(emailAddress='res1@example.com')
