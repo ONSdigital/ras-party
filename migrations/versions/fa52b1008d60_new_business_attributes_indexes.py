@@ -5,7 +5,7 @@ Revises: 613bf3a40948
 Create Date: 2019-01-22 16:07:45.195360
 
 """
-from alembic import op
+from migrations.migration_utilities import try_add_index, try_remove_index
 
 # revision identifiers, used by Alembic.
 revision = 'fa52b1008d60'
@@ -16,52 +16,74 @@ depends_on = None
 
 def upgrade():
     # Business attributes table
-    op.create_index(index_name='attributes_business_idx', schema='partysvc', table_name='business_attributes',
-                    columns=['business_id'])
-    op.create_index(index_name='attributes_sample_summary_idx', schema='partysvc', table_name='business_attributes',
-                    columns=['sample_summary_id'])
-    op.create_index(index_name='attributes_business_sample_idx', schema='partysvc', table_name='business_attributes',
-                    columns=['business_id', 'sample_summary_id'])
-    op.create_index(index_name='attributes_collection_exercise_idx', schema='partysvc',
-                    table_name='business_attributes', columns=['collection_exercise'])
-    op.create_index(index_name='attributes_created_on_idx', schema='partysvc', table_name='business_attributes',
-                    columns=['created_on'])
+    _try_add_business_attributes_index('attributes_business_idx', ['business_id'])
+    _try_add_business_attributes_index('attributes_sample_summary_idx', ['sample_summary_id'])
+    _try_add_business_attributes_index('attributes_business_sample_idx',
+                                       ['business_id', 'sample_summary_id'])
+    _try_add_business_attributes_index('attributes_collection_exercise_idx', ['collection_exercise'])
+    _try_add_business_attributes_index('attributes_created_on_idx', ['created_on'])
 
     # Enrolment table
-    op.create_index(index_name='enrolment_business_idx', schema='partysvc', table_name='enrolment',
-                    columns=['business_id'])
-    op.create_index(index_name='enrolment_respondent_idx', schema='partysvc', table_name='enrolment',
-                    columns=['respondent_id'])
-    op.create_index(index_name='enrolment_survey_idx', schema='partysvc', table_name='enrolment',
-                    columns=['survey_id'])
-    op.create_index(index_name='enrolment_status_idx', schema='partysvc', table_name='enrolment',
-                    columns=['status'])
+    _try_add_enrolment_index('enrolment_business_idx', ['business_id'])
+    _try_add_enrolment_index('enrolment_respondent_idx', ['respondent_id'])
+    _try_add_enrolment_index('enrolment_survey_idx', ['survey_id'])
+    _try_add_enrolment_index('enrolment_status_idx', ['status'])
 
     # Pending Enrolment table
-    op.create_index(index_name='pending_enrolment_case_idx', schema='partysvc', table_name='pending_enrolment',
-                    columns=['case_id'])
+    _try_add_pending_enrolment_index('pending_enrolment_case_idx', columns=['case_id'])
 
     # Business respondent table
-    op.create_index(index_name='business_respondent_idx', schema='partysvc',
-                    table_name='business_respondent', columns=['respondent_id'])
+    _try_add_business_respondent_index('business_respondent_idx', ['respondent_id'])
 
 
 def downgrade():
     # Business attributes table
-    op.drop_index(index_name='attributes_business_idx', schema='partysvc', table_name='business_attributes')
-    op.drop_index(index_name='attributes_sample_summary_idx', schema='partysvc', table_name='business_attributes')
-    op.drop_index(index_name='attributes_business_sample_idx', schema='partysvc', table_name='business_attributes')
-    op.drop_index(index_name='attributes_collection_exercise_idx', schema='partysvc', table_name='business_attributes')
-    op.drop_index(index_name='attributes_created_on_idx', schema='partysvc', table_name='business_attributes')
+    _try_remove_business_attributes_index('attributes_business_idx')
+    _try_remove_business_attributes_index('attributes_sample_summary_idx')
+    _try_remove_business_attributes_index('attributes_business_sample_idx')
+    _try_remove_business_attributes_index('attributes_collection_exercise_idx')
+    _try_remove_business_attributes_index('attributes_created_on_idx')
 
     # Enrolment table
-    op.drop_index(index_name='enrolment_business_idx', schema='partysvc', table_name='enrolment')
-    op.drop_index(index_name='enrolment_respondent_idx', schema='partysvc', table_name='enrolment')
-    op.drop_index(index_name='enrolment_survey_idx', schema='partysvc', table_name='enrolment')
-    op.drop_index(index_name='enrolment_status_idx', schema='partysvc', table_name='enrolment')
+    _try_remove_enrolment_index('enrolment_business_idx')
+    _try_remove_enrolment_index('enrolment_respondent_idx')
+    _try_remove_enrolment_index('enrolment_survey_idx')
+    _try_remove_enrolment_index('enrolment_status_idx')
 
     # Pending Enrolment table
-    op.drop_index(index_name='pending_enrolment_case_idx', schema='partysvc', table_name='pending_enrolment')
+    _try_remove_pending_enrolment_index('pending_enrolment_case_idx')
 
     # Business respondent table
-    op.drop_index(index_name='business_respondent_idx', schema='partysvc', table_name='business_respondent')
+    _try_remove_business_respondent_index('business_respondent_idx')
+
+
+def _try_add_business_attributes_index(index_name, columns):
+    try_add_index(index_name=index_name, columns=columns, schema='partysvc', table='business_attributes')
+
+
+def _try_remove_business_attributes_index(name):
+    try_remove_index(index_name=name, schema='partysvc', table='business_attributes')
+
+
+def _try_add_enrolment_index(index_name, columns):
+    try_add_index(index_name=index_name, columns=columns, schema='partysvc', table='enrolment')
+
+
+def _try_remove_enrolment_index(name):
+    try_remove_index(index_name=name, schema='partysvc', table='enrolment')
+
+
+def _try_add_pending_enrolment_index(index_name, columns):
+    try_add_index(index_name=index_name, columns=columns, schema='partysvc', table='pending_enrolment')
+
+
+def _try_remove_pending_enrolment_index(name):
+    try_remove_index(index_name=name, schema='partysvc', table='pending_enrolment')
+
+
+def _try_add_business_respondent_index(index_name, columns):
+    try_add_index(index_name=index_name, columns=columns, schema='partysvc', table='business_respondent')
+
+
+def _try_remove_business_respondent_index(name):
+    try_remove_index(index_name=name, schema='partysvc', table='business_respondent')

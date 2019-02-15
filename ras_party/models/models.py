@@ -5,7 +5,7 @@ import uuid
 
 import structlog
 from jsonschema import Draft4Validator
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint, Index
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -170,6 +170,11 @@ class BusinessAttributes(Base):
     collection_exercise = Column(Text)
     attributes = Column(JSONB)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
+    Index('attributes_business_idx', business_id)
+    Index('attributes_sample_summary_idx', sample_summary_id)
+    Index('attributes_business_sample_idx', business_id, sample_summary_id)
+    Index('attributes_collection_exercise_idx', collection_exercise)
+    Index('attributes_created_on_idx', created_on)
 
 
 class BusinessRespondentStatus(enum.IntEnum):
@@ -192,6 +197,7 @@ class BusinessRespondent(Base):
     business = relationship('Business', back_populates='respondents', lazy='joined')
     respondent = relationship('Respondent', back_populates='businesses', lazy='joined')
     enrolment = relationship('Enrolment', back_populates='business_respondent')
+    Index('business_respondent_idx', respondent_id )
 
 
 class RespondentStatus(enum.IntEnum):
@@ -211,6 +217,7 @@ class PendingEnrolment(Base):
 
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
     respondent = relationship('Respondent')
+    Index('pending_enrolment_case_idx', case_id)
 
     __table_args__ = (
         ForeignKeyConstraint(['respondent_id'],
@@ -234,6 +241,11 @@ class Respondent(Base):
     telephone = Column(Text)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
     pending_enrolment = relationship('PendingEnrolment', back_populates='respondent')
+    Index('respondent_first_name_idx', first_name)
+    Index('respondent_last_name_idx', last_name)
+    Index('respondent_email_idx', email_address)
+
+
 
     @staticmethod
     def _get_business_associations(businesses):
@@ -303,6 +315,12 @@ class Enrolment(Base):
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
 
     business_respondent = relationship('BusinessRespondent', back_populates='enrolment', lazy='joined')
+    Index('enrolment_business_idx', business_id)
+    Index('enrolment_respondent_idx', respondent_id)
+    Index('enrolment_survey_idx', survey_id)
+    Index('enrolment_status_idx', status)
+
+
 
     __table_args__ = (
         ForeignKeyConstraint(['business_id', 'respondent_id'],
