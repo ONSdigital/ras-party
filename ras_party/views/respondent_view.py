@@ -34,9 +34,9 @@ def get_pw(username):
 def get_respondents():
 
     ids = request.args.getlist("id")
-    first_name = request.args.get("firstName")
-    last_name = request.args.get("lastName")
-    email = request.args.get("emailAddress")
+    first_name = request.args.get("firstName", default="").strip()
+    last_name = request.args.get("lastName", default="").strip()
+    email = request.args.get("emailAddress", default="").strip()
     page = int(request.args.get("page", default=1))
     limit = int(request.args.get("limit", default=10))
 
@@ -75,18 +75,6 @@ def _validate_get_respondent_params(ids, first_name, last_name, email):
             except ValueError:
                 logger.debug("Invalid params: party_id value is not a valid UUID", party_id=party_id)
                 raise BadRequest(f"'{party_id}' is not a valid UUID format for property 'id'")
-
-    if first_name and len(first_name.strip()) == 0:
-        logger.debug("Invalid params: first_name zero length")
-        raise BadRequest(f"zero length first_name")
-
-    if last_name and len(last_name.strip()) == 0:
-        logger.debug("Invalid params: last_name zero length")
-        raise BadRequest(f"zero length last_name")
-
-    if email and len(email.strip()) == 0:
-        logger.debug("Invalid params: email zero length")
-        raise BadRequest(f"zero length email")
 
 
 @respondent_view.route('/respondents/id/<id>', methods=['GET'])

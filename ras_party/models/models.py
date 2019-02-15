@@ -197,7 +197,7 @@ class BusinessRespondent(Base):
     business = relationship('Business', back_populates='respondents', lazy='joined')
     respondent = relationship('Respondent', back_populates='businesses', lazy='joined')
     enrolment = relationship('Enrolment', back_populates='business_respondent')
-    Index('business_respondent_idx', respondent_id )
+    Index('business_respondent_idx', respondent_id)
 
 
 class RespondentStatus(enum.IntEnum):
@@ -244,8 +244,6 @@ class Respondent(Base):
     Index('respondent_first_name_idx', first_name)
     Index('respondent_last_name_idx', last_name)
     Index('respondent_email_idx', email_address)
-
-
 
     @staticmethod
     def _get_business_associations(businesses):
@@ -319,8 +317,6 @@ class Enrolment(Base):
     Index('enrolment_respondent_idx', respondent_id)
     Index('enrolment_survey_idx', survey_id)
     Index('enrolment_status_idx', status)
-
-
 
     __table_args__ = (
         ForeignKeyConstraint(['business_id', 'respondent_id'],
