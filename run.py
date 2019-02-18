@@ -82,25 +82,6 @@ def create_database(db_connection, db_schema, pool_size, max_overflow, pool_recy
         else:
             logger.info("Schema exists.", schema=db_schema)
 
-            # START 15-Feb-2019 Bug Fix 751
-
-            # running alembic script disabled
-            #logger.info("Running Alembic database upgrade")
-            #command.upgrade(alembic_cfg, "head")
-
-            #
-            # Alembic is unreliable when run simultaneously from multiple sources (e.g service instances)
-            # It does not leave the db in a predictable state , and several error modes have been seen
-            # Including service not starting and erroring
-            # The root cause is this simultaneous running. To get around this it is proposed that the upgrade
-            # script be wrapped in a locking mechanism . Until that locking mechanism is available then running alembic
-            # scripts is disabled
-
-            # Remove when Alembic is reinstated
-            logger.info("Alembic upgrade currently disabled - scripts not run ")
-
-            # END 15-Feb-2019 Bug Fix 751
-
     else:
         logger.info("Creating database tables.")
         models.Base.metadata.create_all(engine)
