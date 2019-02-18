@@ -15,6 +15,7 @@ depends_on = None
 
 # upgrade and downgrade left in atm as I dont know at what state db / alembic/ redis will be at release time
 
+
 def upgrade():
     return
     _try_add_party_respondent_index('respondent_first_name_idx', ['first_name'])
