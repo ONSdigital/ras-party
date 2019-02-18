@@ -85,8 +85,8 @@ def create_database(db_connection, db_schema, pool_size, max_overflow, pool_recy
             # START 15-Feb-2019 Bug Fix 751
 
             # running alembic script disabled
-            #logger.info("Running Alembic database upgrade")
-            #command.upgrade(alembic_cfg, "head")
+            # logger.info("Running Alembic database upgrade")
+            # command.upgrade(alembic_cfg, "head")
 
             #
             # Alembic is unreliable when run simultaneously from multiple sources (e.g service instances)
@@ -99,6 +99,7 @@ def create_database(db_connection, db_schema, pool_size, max_overflow, pool_recy
             # Remove when Alembic is reinstated
             logger.info("Alembic upgrade currently disabled - scripts not run ")
 
+            # See also test_create_database
             # END 15-Feb-2019 Bug Fix 751
     else:
         logger.info("Creating database tables.")
