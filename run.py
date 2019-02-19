@@ -3,8 +3,6 @@ import os
 from json import loads
 
 import structlog
-from alembic import command
-from alembic.config import Config
 from flask import Flask, _app_ctx_stack
 from flask_cors import CORS
 from retrying import retry, RetryError
@@ -56,9 +54,6 @@ def create_database(db_connection, db_schema, pool_size, max_overflow, pool_recy
     session.configure(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
     # TODO: change this
     engine.session = session
-
-    alembic_cfg = Config("alembic.ini")
-    alembic_cfg.attributes['configure_logger'] = False
 
     logger.info("Creating database")
 
