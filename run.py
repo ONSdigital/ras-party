@@ -71,7 +71,6 @@ def create_database(db_connection, db_schema, pool_size, max_overflow, pool_recy
 
             logger.info("Creating database tables.")
             models.Base.metadata.create_all(engine)
-
         else:
             logger.info("Schema exists.", schema=db_schema)
 
