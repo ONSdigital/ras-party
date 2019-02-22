@@ -44,14 +44,11 @@ def get_respondents():
     limit = int(request.args.get("limit", default=10))
 
     _validate_get_respondent_params(ids, first_name, last_name, email)
-
+    # with_db_session function wrapper automatically injects the session parameter
+    # pylint: disable=no-value-for-parameter
     if ids:
-        # with_db_session function wrapper automatically injects the session parameter
-        # pylint: disable=no-value-for-parameter
         response = respondent_controller.get_respondent_by_ids(ids)
     else:
-        # with_db_session function wrapper automatically injects the session parameter
-        # pylint: disable=no-value-for-parameter
         response = respondent_controller.get_respondents_by_name_and_email(first_name, last_name, email, page, limit)
     return jsonify(response)
 
