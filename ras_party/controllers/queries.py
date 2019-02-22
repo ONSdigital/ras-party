@@ -89,8 +89,8 @@ def query_respondent_by_pending_email(email, session):
 def query_business_respondent_by_respondent_id_and_business_id(business_id, respondent_id, session):
     """
     Query to return respondent business associations based on respondent id
-    :param business_id,
-    :param respondent_id,
+    :param business_id
+    :param respondent_id
     :param session
     :return: business associations for respondent
     """

@@ -15,7 +15,7 @@ class TestCreateDatabase(TestCase):
         db_connection = 'postgres://postgres:postgres@localhost:5432/postgres'
         db_schema = 'partysvc'
 
-        with patch('run.create_engine'), patch('run.scoped_session'), patch('run.command.upgrade') as upgrade:
+        with patch('run.create_engine'), patch('run.scoped_session') as upgrade:
             create_database(db_connection, db_schema, 5, 10, -1)
 
         upgrade.assert_called_once()
@@ -24,8 +24,6 @@ class TestCreateDatabase(TestCase):
         db_connection = 'postgres://postgres:postgres@localhost:5432/postgres'
         db_schema = 'partysvc'
 
-        with patch('run.create_engine'), patch('run.scoped_session') as session, patch('run.command.stamp') as stamp:
+        with patch('run.create_engine'), patch('run.scoped_session') as session:
             session()().query().scalar.return_value = None
             create_database(db_connection, db_schema, 5, 10, -1)
-
-        stamp.assert_called_once()

@@ -3,8 +3,6 @@ import os
 from json import loads
 
 import structlog
-from alembic import command
-from alembic.config import Config
 from flask import Flask, _app_ctx_stack
 from flask_cors import CORS
 from retrying import retry, RetryError
@@ -57,9 +55,6 @@ def create_database(db_connection, db_schema, pool_size, max_overflow, pool_recy
     # TODO: change this
     engine.session = session
 
-    alembic_cfg = Config("alembic.ini")
-    alembic_cfg.attributes['configure_logger'] = False
-
     logger.info("Creating database")
 
     if db_connection.startswith('postgres'):
@@ -76,14 +71,9 @@ def create_database(db_connection, db_schema, pool_size, max_overflow, pool_recy
 
             logger.info("Creating database tables.")
             models.Base.metadata.create_all(engine)
-
-            logger.info("Alembic table stamped")
-            command.stamp(alembic_cfg, "head")
         else:
             logger.info("Schema exists.", schema=db_schema)
 
-            logger.info("Running Alembic database upgrade")
-            command.upgrade(alembic_cfg, "head")
     else:
         logger.info("Creating database tables.")
         models.Base.metadata.create_all(engine)
