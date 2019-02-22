@@ -689,9 +689,10 @@
     * page . The page of data to return ( 1 based) . If not supplied defaults to 1
     * limit . The maximum number of rows to return . If not supplied, defaults to 10
     
-       
+Note: The returned data for get by id end points does not return the total record count. The get by name and emails does.
+This is to ease pagination in the ui
     
-### Example JSON Response
+### Example JSON Response Get by id  
 ```json
 [
     {
@@ -756,6 +757,75 @@
 ]
 ```
 
+### Example JSON Response Get by firstName, lastName and emailAddress
+Note use of data and total elements . Where total is the total number of records satisfying the filter criteria.
+To get the total number of pages divide total by limit and round up . E.g there are 27 records matching a 
+search crietria , but we have page set to 3 and limit set to 5 . Then there would be 5 records in data but
+total would be 27
+```json
+{"data":[
+    {
+        "associations": [
+            {
+                "businessRespondentStatus": "ACTIVE",
+                "enrolments": [
+                    {
+                        "enrolmentStatus": "ENABLED",
+                        "surveyId": "<surveyId>"
+                    },
+                    {
+                        "enrolmentStatus": "ENABLED",
+                        "surveyId": "<surveyId>"
+                    }
+                ],
+                "partyId": "<partyId>",
+                "sampleUnitRef": "<sampleUnitRef>"
+            },
+            {
+                "businessRespondentStatus": "ACTIVE",
+                "enrolments": [
+                    {
+                        "enrolmentStatus": "ENABLED",
+                        "surveyId": "<surveyId>"
+                    }
+                ],
+                "partyId": "<partyId>",
+                "sampleUnitRef": "<sampleUnitRef>"
+            },
+            {
+                "businessRespondentStatus": "ACTIVE",
+                "enrolments": [
+                    {
+                        "enrolmentStatus": "ENABLED",
+                        "surveyId": "<surveyId>"
+                    }
+                ],
+                "partyId": "<partyId>",
+                "sampleUnitRef": "<sampleUnitRef>"
+            },
+            {
+                "businessRespondentStatus": "ACTIVE",
+                "enrolments": [
+                    {
+                        "enrolmentStatus": "ENABLED",
+                        "surveyId": "<surveyId>"
+                    }
+                ],
+                "partyId": "<partyId>",
+                "sampleUnitRef": "<sampleUnitRef>"
+            }
+        ],
+        "emailAddress": "example@example.com",
+        "firstName": "first_name",
+        "id": "<id>",
+        "lastName": "last_name",
+        "sampleUnitType": "BI",
+        "status": "ACTIVE",
+        "telephone": "0987654321"
+    }], total:389
+}
+
+```
 ---
 ### Get Respondent Info by ID
 * `GET /party-api/v1/respondents/id/<id>`

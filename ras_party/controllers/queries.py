@@ -79,8 +79,11 @@ def query_respondent_by_names_and_emails(first_name, last_name, email, page, lim
 
     offset = (page-1) * limit
 
-    return session.query(Respondent).filter(and_(*conditions)).order_by(Respondent.last_name.asc())\
-        .offset(offset).limit(limit)
+    filtered_records = session.query(Respondent).filter(and_(*conditions))
+
+    total_count = filtered_records.count()
+
+    return filtered_records.order_by(Respondent.last_name.asc()).offset(offset).limit(limit), total_count
 
 
 def query_respondent_by_party_uuid(party_uuid, session):

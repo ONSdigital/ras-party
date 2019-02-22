@@ -31,7 +31,7 @@ def get_respondent_by_ids(ids, session):
 @with_db_session
 def get_respondents_by_name_and_email(first_name, last_name, email, page, limit, session):
     """
-    Get respondents that match the provided parmeters
+    Get respondents that match the provided parameters
     :param first_name: only return respondents whose first name starts with this first_name
     :param last_name: only return respondents whose last name starts with this last_name
     :param email: only return respondents whose email address contains starts with this email
@@ -40,8 +40,8 @@ def get_respondents_by_name_and_email(first_name, last_name, email, page, limit,
     :param session:
     :return: Respondents
     """
-    respondents = query_respondent_by_names_and_emails(first_name, last_name, email, page, limit, session)
-    return [respondent.to_respondent_dict() for respondent in respondents]
+    respondents, record_count = query_respondent_by_names_and_emails(first_name, last_name, email, page, limit, session)
+    return {'data': [respondent.to_respondent_dict() for respondent in respondents], 'total': record_count}
 
 
 @with_db_session

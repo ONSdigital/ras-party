@@ -32,6 +32,9 @@ def get_pw(username):
 
 @respondent_view.route('/respondents', methods=['GET'])
 def get_respondents():
+    """Get respondents by id or a combination of firstName, lastName and EmailAddress
+    Note, result set for names and email includes total record count to support pagination, get by id does not
+    """
 
     ids = request.args.getlist("id")
     first_name = request.args.get("firstName", default="").strip()
