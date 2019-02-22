@@ -64,7 +64,7 @@ def _validate_get_respondent_params(ids, first_name, last_name, email):
 
     if not (ids or first_name or last_name or email):
         logger.debug("Invalid params: either id , first_name or last_name or email are required")
-        raise BadRequest(f"id , first_name or last_name or email are required")
+        raise BadRequest("id or one of first_name, last_name and email are required")
 
     if ids and (first_name or last_name or email):
         logger.debug("Invalid params: id not valid with first_name or last_name or email")
