@@ -5,7 +5,7 @@ import uuid
 
 import structlog
 from jsonschema import Draft4Validator
-from sqlalchemy import Column, Integer, Index, Text, DateTime, ForeignKey, ForeignKeyConstraint
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint, Index
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -241,6 +241,9 @@ class Respondent(Base):
     telephone = Column(Text)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
     pending_enrolment = relationship('PendingEnrolment', back_populates='respondent')
+    Index('respondent_first_name_idx', first_name)
+    Index('respondent_last_name_idx', last_name)
+    Index('respondent_email_idx', email_address)
 
     @staticmethod
     def _get_business_associations(businesses):

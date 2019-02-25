@@ -53,6 +53,39 @@ def query_respondent_by_party_uuids(party_uuids, session):
     return session.query(Respondent).filter(Respondent.party_uuid.in_(party_uuids))
 
 
+def query_respondent_by_names_and_emails(first_name, last_name, email, page, limit, session):
+    """
+    returns respondents which match first_name, last_name and email, ignoring case in all cases
+    if any parameter is empty then it is ignored
+    :param first_name: only return respondents whose first name starts with this first_name
+    :param last_name: only return respondents whose last name starts with this last_name
+    :param email: only return respondents whose email address contains starts with this email
+    :param page: return this page of a result set
+    :param limit: max number of records per page
+    :param session:
+    """
+
+    logger.debug('Querying respondents by names , email', first_name=first_name, last_name=last_name,
+                 email=email, page=page, limit=limit)
+
+    conditions = []
+
+    if first_name:
+        conditions.append(Respondent.first_name.ilike(f"{first_name}%"))
+    if last_name:
+        conditions.append(Respondent.last_name.ilike(f"{last_name}%"))
+    if email:
+        conditions.append(Respondent.email_address.ilike(f"%{email}%"))
+
+    offset = (page-1) * limit
+
+    filtered_records = session.query(Respondent).filter(and_(*conditions))
+
+    total_count = filtered_records.count()
+
+    return filtered_records.order_by(Respondent.last_name.asc()).offset(offset).limit(limit), total_count
+
+
 def query_respondent_by_party_uuid(party_uuid, session):
     """
     Query to return respondent based on party uuid

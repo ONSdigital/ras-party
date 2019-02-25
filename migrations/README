@@ -1,3 +1,11 @@
+# Use of alembic/sql scripts 22/2/2019
+Alembic has been removed until such a time as it can cope with multiple instances starting together, which currently
+happens on preprod and prod and leaves the db state as unknown. A solution has been proposed. For now
+alembic does NOT run automatically , sql scripts should be manually run on deploy to existing DBS
+
+
+
+
 Generic single-database configuration.
 
 ## Upgrade
@@ -30,3 +38,7 @@ When another change has been made to the database and you require another versio
 ```
 alembic revision -m "create account table"
 ```
+
+### Use of ORM
+Sql Alchemy will quite happily create the tables via  models.Base.metadata.create_all(engine) (in run.py)  in
+this project which is ran if no schema detected
