@@ -12,7 +12,7 @@ class TestCreateDatabase(TestCase):
             t.schema = None
 
     def test_postgres_database_schema_exists(self):
-        db_connection = 'postgres://postgres:postgres@localhost:5432/postgres'
+        db_connection = 'postgresql://postgres:postgres@localhost:5432/postgres'
         db_schema = 'partysvc'
 
         with patch('run.create_engine'), patch('run.scoped_session') as upgrade:
@@ -21,7 +21,7 @@ class TestCreateDatabase(TestCase):
         upgrade.assert_called_once()
 
     def test_postgres_database_schema_does_not_exists(self):
-        db_connection = 'postgres://postgres:postgres@localhost:5432/postgres'
+        db_connection = 'postgresql://postgres:postgres@localhost:5432/postgres'
         db_schema = 'partysvc'
 
         with patch('run.create_engine'), patch('run.scoped_session') as session:
