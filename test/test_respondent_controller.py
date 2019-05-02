@@ -130,7 +130,7 @@ class TestRespondents(PartyTestClient):
         ids = [respondent.party_uuid]
         response = self.get_respondents_by_ids(ids)
         # Then the response matches the posted respondent
-        self.assertEquals(len(response), 1)
+        self.assertEqual(len(response), 1)
         self.assertEqual(response[0]['emailAddress'], self.mock_respondent['emailAddress'])
         self.assertEqual(response[0]['firstName'], self.mock_respondent['firstName'])
         self.assertEqual(response[0]['lastName'], self.mock_respondent['lastName'])
@@ -150,7 +150,7 @@ class TestRespondents(PartyTestClient):
         ids = [respondent_1.party_uuid, respondent_2.party_uuid]
         response = self.get_respondents_by_ids(ids)
 
-        self.assertEquals(len(response), 2)
+        self.assertEqual(len(response), 2)
 
         self.assertTrue('id' in response[0])
 
@@ -171,52 +171,52 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_ids([respondent_1.party_uuid])
 
-        self.assertEquals(len(response), 1)
+        self.assertEqual(len(response), 1)
         self.assertEqual(res_dict[respondent_1.party_uuid]['emailAddress'], 'res1@example.com')
 
     def test_get_respondent_by_ids_with_only_unknown_id_returns_none(self):
         self.populate_with_respondent()
         party_uuid = str(uuid.uuid4())
         response = self.get_respondents_by_ids([party_uuid])
-        self.assertEquals(len(response), 0)
+        self.assertEqual(len(response), 0)
 
     def test_get_respondent_by_ids_fails_if_id_is_not_uuid(self):
         self.populate_with_respondent()
         party_uuid = "gibberish"
         response = self.get_respondents_by_ids([party_uuid], expected_status=400)
-        self.assertEquals(response['description'], """'gibberish' is not a valid UUID format for property 'id'""")
+        self.assertEqual(response['description'], """'gibberish' is not a valid UUID format for property 'id'""")
 
     def test_get_respondents_using_complete_email_returns_respondent(self):
         self.populate_with_respondent()
         response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="a@z.com",
                                                       expected_status=200)
-        self.assertEquals(response['data'][0]['emailAddress'], 'a@z.com')
+        self.assertEqual(response['data'][0]['emailAddress'], 'a@z.com')
 
     def test_get_respondents_using_partial_in_address_email_returns_respondent(self):
         self.populate_with_respondent()
         response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="@", expected_status=200)
-        self.assertEquals(response['data'][0]['emailAddress'], 'a@z.com')
+        self.assertEqual(response['data'][0]['emailAddress'], 'a@z.com')
 
     def test_get_respondents_using_partial_starting_address_email_returns_respondent(self):
         self.populate_with_respondent()
         response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="a", expected_status=200)
-        self.assertEquals(response['data'][0]['emailAddress'], 'a@z.com')
+        self.assertEqual(response['data'][0]['emailAddress'], 'a@z.com')
 
     def test_get_respondents_using_partial_ending_address_email_returns_respondent(self):
         self.populate_with_respondent()
         response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="m", expected_status=200)
-        self.assertEquals(response['data'][0]['emailAddress'], 'a@z.com')
+        self.assertEqual(response['data'][0]['emailAddress'], 'a@z.com')
 
     def test_get_respondents_using_unknown_address_email_returns_no_respondent(self):
         self.populate_with_respondent()
         response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="xx@yy.com",
                                                       expected_status=200)
-        self.assertEquals(len(response['data']), 0)
+        self.assertEqual(len(response['data']), 0)
 
     def test_get_respondents_using_complete_firstname_returns_respondent(self):
         self.populate_with_respondent()
         response = self.get_respondents_by_name_email(first_name="A", last_name=None, email=None, expected_status=200)
-        self.assertEquals(response['data'][0]['firstName'], 'A')
+        self.assertEqual(response['data'][0]['firstName'], 'A')
 
     def test_get_respondents_using_incorrect_case_complete_firstname_returns_respondent(self):
         mock_respondent = MockRespondent()
@@ -224,7 +224,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent(respondent=mock_respondent.as_respondent())
         response = self.get_respondents_by_name_email(first_name="andrew", last_name=None, email=None,
                                                       expected_status=200)
-        self.assertEquals(response['data'][0]['firstName'], 'Andrew')
+        self.assertEqual(response['data'][0]['firstName'], 'Andrew')
 
     def test_get_respondents_using_beginning_of_firstname_returns_respondent(self):
         mock_respondent = MockRespondent()
@@ -232,7 +232,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent(respondent=mock_respondent.as_respondent())
         response = self.get_respondents_by_name_email(first_name="Andr", last_name=None, email=None,
                                                       expected_status=200)
-        self.assertEquals(response['data'][0]['firstName'], 'Andrew')
+        self.assertEqual(response['data'][0]['firstName'], 'Andrew')
 
     def test_get_respondents_using_wildcard_in_firstname_returns_respondent(self):
         mock_respondent = MockRespondent()
@@ -240,7 +240,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent(respondent=mock_respondent.as_respondent())
         response = self.get_respondents_by_name_email(first_name="An%ew", last_name=None, email=None,
                                                       expected_status=200)
-        self.assertEquals(response['data'][0]['firstName'], 'Andrew')
+        self.assertEqual(response['data'][0]['firstName'], 'Andrew')
 
     def test_get_respondents_using_end_of_firstname_does_not_return_respondent(self):
         mock_respondent = MockRespondent()
@@ -248,12 +248,12 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent(respondent=mock_respondent.as_respondent())
         response = self.get_respondents_by_name_email(first_name="rew", last_name=None, email=None,
                                                       expected_status=200)
-        self.assertEquals(len(response['data']), 0)
+        self.assertEqual(len(response['data']), 0)
 
     def test_get_respondents_using_complete_lastname_returns_respondent(self):
         self.populate_with_respondent()
         response = self.get_respondents_by_name_email(first_name=None, last_name="Z", email=None, expected_status=200)
-        self.assertEquals(response['data'][0]['lastName'], 'Z')
+        self.assertEqual(response['data'][0]['lastName'], 'Z')
 
     def test_get_respondents_using_beginning_of_lastname_returns_respondent(self):
         mock_respondent = MockRespondent()
@@ -261,7 +261,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent(respondent=mock_respondent.as_respondent())
         response = self.get_respondents_by_name_email(first_name=None, last_name="Torr", email=None,
                                                       expected_status=200)
-        self.assertEquals(response['data'][0]['lastName'], 'Torrance')
+        self.assertEqual(response['data'][0]['lastName'], 'Torrance')
 
     def test_get_respondents_using_wildcard_in_lastname_returns_respondent(self):
         mock_respondent = MockRespondent()
@@ -269,7 +269,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent(respondent=mock_respondent.as_respondent())
         response = self.get_respondents_by_name_email(first_name=None, last_name="To%ce", email=None,
                                                       expected_status=200)
-        self.assertEquals(response['data'][0]['lastName'], 'Torrance')
+        self.assertEqual(response['data'][0]['lastName'], 'Torrance')
 
     def test_get_respondents_using_beginning_of_lastname_incorrect_case_returns_respondent(self):
         mock_respondent = MockRespondent()
@@ -277,7 +277,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent(respondent=mock_respondent.as_respondent())
         response = self.get_respondents_by_name_email(first_name=None, last_name="ToRr", email=None,
                                                       expected_status=200)
-        self.assertEquals(response['data'][0]['lastName'], 'Torrance')
+        self.assertEqual(response['data'][0]['lastName'], 'Torrance')
 
     def test_get_respondents_using_end_of_lastname_does_not_return_respondent(self):
         mock_respondent = MockRespondent()
@@ -285,7 +285,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent(respondent=mock_respondent.as_respondent())
         response = self.get_respondents_by_name_email(first_name=None, last_name="nce", email=None,
                                                       expected_status=200)
-        self.assertEquals(len(response['data']), 0)
+        self.assertEqual(len(response['data']), 0)
 
     def test_get_respondents_using_first_and_last_name_only_returns_matching_respondent(self):
         mock_respondent1 = MockRespondent()
@@ -300,9 +300,9 @@ class TestRespondents(PartyTestClient):
         response = self.get_respondents_by_name_email(first_name="Andrew", last_name="Tor", email=None,
                                                       expected_status=200)
 
-        self.assertEquals(response['data'][0]['firstName'], 'Andrew')
-        self.assertEquals(response['data'][0]['lastName'], 'Torrance')
-        self.assertEquals(len(response['data']), 1)
+        self.assertEqual(response['data'][0]['firstName'], 'Andrew')
+        self.assertEqual(response['data'][0]['lastName'], 'Torrance')
+        self.assertEqual(len(response['data']), 1)
 
     def test_get_respondents_using_matching_first_and_not_matching_last_name_returns_no_respondent(self):
         mock_respondent1 = MockRespondent()
@@ -316,7 +316,7 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name="Andrew", last_name="Williams", email=None,
                                                       expected_status=200)
-        self.assertEquals(len(response['data']), 0)
+        self.assertEqual(len(response['data']), 0)
 
     def test_get_respondents_using_matching_email_returns_respondent(self):
         mock_respondent1 = MockRespondent()
@@ -330,9 +330,9 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name=None, last_name=None,
                                                       email="Andrew.Smith@something.com", expected_status=200)
-        self.assertEquals(len(response['data']), 1)
-        self.assertEquals(response['data'][0]['firstName'], 'Andrew')
-        self.assertEquals(response['data'][0]['lastName'], 'Smith')
+        self.assertEqual(len(response['data']), 1)
+        self.assertEqual(response['data'][0]['firstName'], 'Andrew')
+        self.assertEqual(response['data'][0]['lastName'], 'Smith')
 
     def test_get_respondents_using_non_matching_email_returns_no_respondent(self):
         mock_respondent1 = MockRespondent()
@@ -346,7 +346,7 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name=None, last_name=None,
                                                       email="Andrew.Williams@something.com", expected_status=200)
-        self.assertEquals(len(response['data']), 0)
+        self.assertEqual(len(response['data']), 0)
 
     def test_get_respondents_using_matching_email_incorrect_case_returns_respondent(self):
         mock_respondent1 = MockRespondent()
@@ -360,9 +360,9 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name=None, last_name=None,
                                                       email="AnDREW.SmITH@Something.com", expected_status=200)
-        self.assertEquals(len(response['data']), 1)
-        self.assertEquals(response['data'][0]['firstName'], 'Andrew')
-        self.assertEquals(response['data'][0]['lastName'], 'Smith')
+        self.assertEqual(len(response['data']), 1)
+        self.assertEqual(response['data'][0]['firstName'], 'Andrew')
+        self.assertEqual(response['data'][0]['lastName'], 'Smith')
 
     def test_get_respondents_using_partial_email_returns_respondent(self):
         mock_respondent1 = MockRespondent()
@@ -376,9 +376,9 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="Smith",
                                                       expected_status=200)
-        self.assertEquals(len(response['data']), 1)
-        self.assertEquals(response['data'][0]['firstName'], 'Andrew')
-        self.assertEquals(response['data'][0]['lastName'], 'Smith')
+        self.assertEqual(len(response['data']), 1)
+        self.assertEqual(response['data'][0]['firstName'], 'Andrew')
+        self.assertEqual(response['data'][0]['lastName'], 'Smith')
 
     def test_get_respondents_using_wildcards_email_returns_respondent(self):
         mock_respondent1 = MockRespondent()
@@ -392,9 +392,9 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="And%Smith",
                                                       expected_status=200)
-        self.assertEquals(len(response['data']), 1)
-        self.assertEquals(response['data'][0]['firstName'], 'Andrew')
-        self.assertEquals(response['data'][0]['lastName'], 'Smith')
+        self.assertEqual(len(response['data']), 1)
+        self.assertEqual(response['data'][0]['firstName'], 'Andrew')
+        self.assertEqual(response['data'][0]['lastName'], 'Smith')
 
     def test_get_respondents_using_non_matching_wildcards_email_does_not_return_respondent(self):
         mock_respondent1 = MockRespondent()
@@ -408,7 +408,7 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="And%Will",
                                                       expected_status=200)
-        self.assertEquals(len(response['data']), 0)
+        self.assertEqual(len(response['data']), 0)
 
     def test_get_respondents_using_name_and_email_returns_only_the_respondent_that_match_all_params(self):
         mock_respondent1 = MockRespondent()
@@ -427,9 +427,9 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name="Andrew", last_name="Sm", email="Andrew",
                                                       expected_status=200)
-        self.assertEquals(len(response['data']), 1)
-        self.assertEquals(response['data'][0]['firstName'], 'Andrew')
-        self.assertEquals(response['data'][0]['lastName'], 'Smith')
+        self.assertEqual(len(response['data']), 1)
+        self.assertEqual(response['data'][0]['firstName'], 'Andrew')
+        self.assertEqual(response['data'][0]['lastName'], 'Smith')
 
     def test_get_respondents_using_name_and_email_returns_all_respondents_that_match(self):
         mock_respondent1 = MockRespondent()
@@ -447,7 +447,7 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name="Andrew", last_name="%T", email="Andrew",
                                                       expected_status=200)
-        self.assertEquals(len(response['data']), 3)
+        self.assertEqual(len(response['data']), 3)
 
     def test_get_respondents_using_name_and_email_returns_respondents_ordered_by_last_name_asc(self):
         mock_respondent1 = MockRespondent()
@@ -465,10 +465,10 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name="Andrew", last_name=None, email="Andrew",
                                                       expected_status=200)
-        self.assertEquals(len(response['data']), 3)
-        self.assertEquals(response['data'][0]['lastName'], 'Alpha')
-        self.assertEquals(response['data'][1]['lastName'], 'Beta')
-        self.assertEquals(response['data'][2]['lastName'], 'Gamma')
+        self.assertEqual(len(response['data']), 3)
+        self.assertEqual(response['data'][0]['lastName'], 'Alpha')
+        self.assertEqual(response['data'][1]['lastName'], 'Beta')
+        self.assertEqual(response['data'][2]['lastName'], 'Gamma')
 
     def test_get_respondents_limit_returns_the_selected_number_of_respondents(self):
         mock_respondent = MockRespondent()
@@ -482,9 +482,9 @@ class TestRespondents(PartyTestClient):
         response = self.get_respondents_by_name_email(first_name="Andrew", last_name=None, email="Andrew",
                                                       page=1, limit=6, expected_status=200)
 
-        self.assertEquals(len(response['data']), 6)
-        self.assertEquals(response['data'][0]['lastName'], 'Torrance_0')
-        self.assertEquals(response['data'][5]['lastName'], 'Torrance_5')
+        self.assertEqual(len(response['data']), 6)
+        self.assertEqual(response['data'][0]['lastName'], 'Torrance_0')
+        self.assertEqual(response['data'][5]['lastName'], 'Torrance_5')
 
     def test_get_respondents_limit_returns_the_available_respondents_if_less_than_limit(self):
         mock_respondent = MockRespondent()
@@ -497,7 +497,7 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name="Andrew", last_name=None, email="Andrew",
                                                       page=1, limit=6, expected_status=200)
-        self.assertEquals(len(response['data']), 3)
+        self.assertEqual(len(response['data']), 3)
 
     def test_get_respondents_page_returns_the_expected_respondents(self):
         respondents_last_name = [f"{chr(i)}_Torrance" for i in range(ord('a'), ord('z') + 1)]
@@ -513,9 +513,9 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="Andrew",
                                                       page=3, limit=6, expected_status=200)
-        self.assertEquals(len(response['data']), 6)
-        self.assertEquals(response['data'][0]['lastName'], 'm_Torrance')
-        self.assertEquals(response['data'][5]['lastName'], 'r_Torrance')
+        self.assertEqual(len(response['data']), 6)
+        self.assertEqual(response['data'][0]['lastName'], 'm_Torrance')
+        self.assertEqual(response['data'][5]['lastName'], 'r_Torrance')
 
     def test_get_respondents_page_returns_remaining_respondents_on_last_page(self):
         respondents_last_name = [f"{chr(i)}_Torrance" for i in range(ord('a'), ord('z') + 1)]
@@ -531,9 +531,9 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="Andrew",
                                                       page=3, limit=12, expected_status=200)
-        self.assertEquals(len(response['data']), 2)
-        self.assertEquals(response['data'][0]['lastName'], 'y_Torrance')
-        self.assertEquals(response['data'][1]['lastName'], 'z_Torrance')
+        self.assertEqual(len(response['data']), 2)
+        self.assertEqual(response['data'][0]['lastName'], 'y_Torrance')
+        self.assertEqual(response['data'][1]['lastName'], 'z_Torrance')
 
     def test_get_respondents_total_represents_total_matching_records(self):
         respondents_last_name = [f"{chr(i)}_Torrance" for i in range(ord('a'), ord('z') + 1)]
@@ -550,8 +550,8 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name="fifthAndrew", last_name=None, email=None,
                                                       page=3, limit=2, expected_status=200)
-        self.assertEquals(len(response['data']), 2)
-        self.assertEquals(response['total'], 6)     # 0, 5, 10, 15, 20 and 25 should be 'fifthAndrew'
+        self.assertEqual(len(response['data']), 2)
+        self.assertEqual(response['total'], 6)     # 0, 5, 10, 15, 20 and 25 should be 'fifthAndrew'
 
     def test_get_respondents_page_returns_zero_respondents_if_none_on_requested_page(self):
         respondents_last_name = [f"{chr(i)}_Torrance" for i in range(ord('a'), ord('z') + 1)]
@@ -567,7 +567,7 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_name_email(first_name=None, last_name=None, email="Andrew",
                                                       page=22, limit=12, expected_status=200)
-        self.assertEquals(len(response['data']), 0)
+        self.assertEqual(len(response['data']), 0)
 
     def test_get_respondent_by_ids_with_an_unknown_id_still_returns_correct_representation_for_other_ids(self):
         respondent_1 = MockRespondent()
@@ -581,7 +581,7 @@ class TestRespondents(PartyTestClient):
 
         response = self.get_respondents_by_ids([respondent_1.party_uuid, respondent_2.party_uuid, str(uuid.uuid4())])
 
-        self.assertEquals(len(response), 2)
+        self.assertEqual(len(response), 2)
 
         self.assertTrue('id' in response[0])
 
