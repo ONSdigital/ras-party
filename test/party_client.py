@@ -11,6 +11,7 @@ from ras_party.support.session_decorator import with_db_session
 from run import create_app, create_database
 from test.fixtures import party_schema
 from test.test_data.mock_business import MockBusiness
+from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID
 
 
 @with_db_session
@@ -51,7 +52,7 @@ class PartyTestClient(TestCase):
 
     def populate_with_business(self):
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        mock_business['id'] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
 
     @property
@@ -279,3 +280,15 @@ class PartyTestClient(TestCase):
                                    headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
+
+    def validate_respondent_claim(self, respondent_id, bus_id, survey_id, expected_status, expected_result=None):
+        url_params = {"respondent_id": respondent_id, "bus_id": bus_id, "survey_id": survey_id}
+
+        url = '/party-api/v1/respondents/claim?'
+        url += urlencode(url_params)
+        response = self.client.get(url, headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        response_data = response.get_data().decode("utf-8")
+        if expected_result:
+            self.assertEquals(response_data, expected_result)
+        return response_data

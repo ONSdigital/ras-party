@@ -919,6 +919,21 @@ total would be 27
 ```
 
 ---
+### Get Respondent Claim
+* 'GET /party-api/v1/respondents/claim'
+    * respondent_id required param
+    * bus_id required param 
+    * survey_id required param
+    
+    Validates if the specific respondent has a claim on a specific business and survey.
+    Uses returned data to determine validity rather than hijack http status code 
+    (Not a restful endpoint: status code 200/403 is alternative)
+    Returns 
+        * 200 if the state of the users claim is known.
+            returns "Valid" or "Invalid" in body
+        * 400 if incorrect parameters
+    
+ 
 ### Update Respondent Info
 * `PUT /party-api/v1/respondents/id/<respondent_id>`
     * Updates a respondents details (first name, last name, telephone and email) based on `party_uuid` from the respondents table.

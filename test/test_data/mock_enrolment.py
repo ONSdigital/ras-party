@@ -1,9 +1,12 @@
+from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID
+
+
 class MockEnrolmentEnabled:
     def __init__(self):
         self._attributes = {
-            'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
+            'business_id': DEFAULT_BUSINESS_UUID,
             'respondent_id': '1',
-            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
+            'survey_id': DEFAULT_SURVEY_UUID,
             'status': 'ENABLED',
             'created_on': "2017-12-01 13:40:55.495895"
         }
@@ -19,9 +22,9 @@ class MockEnrolmentEnabled:
 class MockEnrolmentDisabled:
     def __init__(self):
         self._attributes = {
-            'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
+            'business_id': DEFAULT_BUSINESS_UUID,
             'respondent_id': '1',
-            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
+            'survey_id': DEFAULT_SURVEY_UUID,
             'status': 'DISABLED',
             'created_on': "2017-12-01 13:40:55.495895"
         }
@@ -37,9 +40,9 @@ class MockEnrolmentDisabled:
 class MockEnrolmentPending:
     def __init__(self):
         self._attributes = {
-            'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
+            'business_id': DEFAULT_BUSINESS_UUID,
             'respondent_id': '1',
-            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
+            'survey_id': DEFAULT_SURVEY_UUID,
             'status': 'PENDING',
             'created_on': "2017-12-01 13:40:55.495895",
 

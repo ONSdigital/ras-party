@@ -98,3 +98,27 @@ def change_respondent_details(respondent_id):
     payload = request.get_json()
     respondent_controller.change_respondent_details(payload, respondent_id)
     return make_response('Successfully updated respondent details', 200)
+
+
+@respondent_view.route('/respondents/claim')
+def validate_respondent_claim():
+    """Validates if the respondent has a claim on a specific business and survey
+    Both valid and invalid claims return 200 with the difference being indicated in the response body.
+
+    Not RESTFUL style more like RPC, but the alternative is for duplication of business logic
+    in client services. There is an argument to use a 403 on invalid claims , but that should be a status on the
+    resource not the state of the returned data and so that's stretching the use of http status codes somewhat
+    """
+    respondent_id = request.args.get("respondent_id", default="").strip()
+    bus_id = request.args.get("bus_id", default="").strip()
+    survey_id = request.args.get("survey_id", default="").strip()
+
+    if not bus_id or not survey_id or not respondent_id:
+        logger.debug("either respondent id, business id or survey id are missing",
+                     respondent_id=respondent_id, bus_id=bus_id, survey_id=survey_id)
+        raise BadRequest("respondent id and business id and survey id are required")
+
+    if respondent_controller.does_user_have_claim(respondent_id, bus_id, survey_id):
+        return make_response('Valid', 200)
+
+    return make_response('Invalid', 200)

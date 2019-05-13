@@ -11,6 +11,7 @@ from test.party_client import PartyTestClient, businesses
 from test.test_data.mock_business import MockBusiness
 from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, MockRespondentWithIdActive
 from test.test_data.mock_enrolment import MockEnrolmentDisabled, MockEnrolmentEnabled, MockEnrolmentPending
+from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID
 
 
 class TestParties(PartyTestClient):
@@ -340,14 +341,14 @@ class TestParties(PartyTestClient):
         mock_business = MockBusiness() \
             .attributes(source='test_get_business_by_id_returns_correct_representation') \
             .as_business()
-        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        mock_business['id'] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
         self.associate_business_and_respondent(business_id=mock_business['id'],
                                                respondent_id=self.mock_respondent_with_id['id'])  # NOQA
         self.populate_with_enrolment()  # NOQA
         self.get_party_by_id_filtered_by_survey_and_enrolment('B', mock_business['id'],
-                                                              'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
+                                                              DEFAULT_SURVEY_UUID,
                                                               ['ENABLED', 'PENDING'])
 
     def test_get_party_by_survey_id_and_enrolment_statuses_with_invalid_enrolment(self):
@@ -355,14 +356,14 @@ class TestParties(PartyTestClient):
         mock_business = MockBusiness() \
             .attributes(source='test_get_business_by_id_returns_correct_representation') \
             .as_business()
-        mock_business['id'] = '3b136c4b-7a14-4904-9e01-13364dd7b972'
+        mock_business['id'] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
         self.associate_business_and_respondent(business_id=mock_business['id'],
                                                respondent_id=self.mock_respondent_with_id['id'])
         self.populate_with_enrolment(enrolment=self.mock_enrolment_disabled)  # NOQA
         self.get_party_by_id_filtered_by_survey_and_enrolment('B', mock_business['id'],
-                                                              'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
+                                                              DEFAULT_SURVEY_UUID,
                                                               ['ENABLED', 'PENDING'])
 
 
