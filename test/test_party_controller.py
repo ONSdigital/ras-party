@@ -115,7 +115,7 @@ class TestParties(PartyTestClient):
         self._make_business_attributes_active(mock_business_1)
         self._make_business_attributes_active(mock_business_2)
         response = self.get_businesses_by_ids([party_id_1, party_id_2])
-        self.assertEquals(len(response), 2)
+        self.assertEqual(len(response), 2)
 
         res_dict = {res['id']: res for res in response}
 
@@ -142,7 +142,7 @@ class TestParties(PartyTestClient):
         self._make_business_attributes_active(mock_business_1)
 
         response = self.get_businesses_by_ids([party_id_1, party_id_2, str(uuid.uuid4())])
-        self.assertEquals(len(response), 2)
+        self.assertEqual(len(response), 2)
 
         res_dict = {res['id']: res for res in response}
 
@@ -156,12 +156,12 @@ class TestParties(PartyTestClient):
 
     def test_get_business_by_ids_with_only_an_unknown_id_returns_nothing(self):
         response = self.get_businesses_by_ids([str(uuid.uuid4())])
-        self.assertEquals(len(response), 0)
+        self.assertEqual(len(response), 0)
 
     def test_get_business_by_ids_fails_if_id_is_not_uuid(self):
         party_uuid = "gibberish"
         response = self.get_businesses_by_ids([party_uuid], expected_status=400)
-        self.assertEquals(response['description'], """'gibberish' is not a valid UUID format for property 'id'""")
+        self.assertEqual(response['description'], """'gibberish' is not a valid UUID format for property 'id'""")
 
     def test_get_business_by_id_with_no_active_attributes_returns_404(self):
         mock_business = MockBusiness() \
