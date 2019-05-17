@@ -281,8 +281,8 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def validate_respondent_claim(self, respondent_id, bus_id, survey_id, expected_status, expected_result=None):
-        url_params = {"respondent_id": respondent_id, "bus_id": bus_id, "survey_id": survey_id}
+    def validate_respondent_claim(self, respondent_id, business_id, survey_id, expected_status, expected_result=None):
+        url_params = {"respondent_id": respondent_id, "business_id": business_id, "survey_id": survey_id}
 
         url = '/party-api/v1/respondents/claim?'
         url += urlencode(url_params)

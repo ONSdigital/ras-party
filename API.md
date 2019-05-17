@@ -922,7 +922,7 @@ total would be 27
 ### Get Respondent Claim
 * 'GET /party-api/v1/respondents/claim'
     * respondent_id required param
-    * bus_id required param 
+    * business_id required param 
     * survey_id required param
     
     Validates if the specific respondent has a claim on a specific business and survey.

@@ -1522,7 +1522,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_enrolment(enrolment=enrolment)
 
         self.validate_respondent_claim(respondent_id=DEFAULT_RESPONDENT_UUID,
-                                       bus_id=DEFAULT_BUSINESS_UUID,
+                                       business_id=DEFAULT_BUSINESS_UUID,
                                        survey_id=DEFAULT_SURVEY_UUID,
                                        expected_status=200,
                                        expected_result="Valid")
@@ -1536,7 +1536,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_enrolment(enrolment=enrolment)
 
         self.validate_respondent_claim(respondent_id=DEFAULT_RESPONDENT_UUID,
-                                       bus_id=DEFAULT_BUSINESS_UUID,
+                                       business_id=DEFAULT_BUSINESS_UUID,
                                        survey_id="ADifferentSurvey",
                                        expected_status=200,
                                        expected_result="Invalid")
@@ -1550,7 +1550,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_enrolment(enrolment=enrolment)
 
         self.validate_respondent_claim(respondent_id=DEFAULT_RESPONDENT_UUID,
-                                       bus_id="ADifferentBusiness",
+                                       business_id="ADifferentBusiness",
                                        survey_id=DEFAULT_SURVEY_UUID,
                                        expected_status=200,
                                        expected_result="Invalid")
@@ -1565,7 +1565,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_enrolment(enrolment=enrolment)
 
         self.validate_respondent_claim(respondent_id=DEFAULT_RESPONDENT_UUID,
-                                       bus_id=DEFAULT_BUSINESS_UUID,
+                                       business_id=DEFAULT_BUSINESS_UUID,
                                        survey_id=DEFAULT_SURVEY_UUID,
                                        expected_status=200,
                                        expected_result="Invalid")
@@ -1580,7 +1580,7 @@ class TestRespondents(PartyTestClient):
         self.populate_with_enrolment(enrolment=enrolment)
 
         self.validate_respondent_claim(respondent_id=DEFAULT_RESPONDENT_UUID,
-                                       bus_id=DEFAULT_BUSINESS_UUID,
+                                       business_id=DEFAULT_BUSINESS_UUID,
                                        survey_id=DEFAULT_SURVEY_UUID,
                                        expected_status=200,
                                        expected_result="Invalid")

@@ -107,17 +107,17 @@ def change_respondent_details(respondent_data, respondent_id, session):
     change_respondent(respondent_data)
 
 
-def does_user_have_claim(user_id, bus_id, survey_id):
+def does_user_have_claim(user_id, business_id, survey_id):
     user_details = get_respondent_by_id(user_id)
     associations = user_details['associations']
-    is_enrolled = _is_user_enrolled_on_survey(associations, bus_id, survey_id)
+    is_enrolled = _is_user_enrolled_on_survey(associations, business_id, survey_id)
     return user_details['status'] == 'ACTIVE' and is_enrolled
 
 
-def _is_user_enrolled_on_survey(associations, bus_id, survey_id):
+def _is_user_enrolled_on_survey(associations, business_id, survey_id):
     for association in associations:
         surveys = [v['surveyId'] for v in association['enrolments'] if v['enrolmentStatus'] == 'ENABLED']
-        if survey_id in surveys and str(association['partyId']) == bus_id:
+        if survey_id in surveys and str(association['partyId']) == business_id:
             return True
 
     return False
