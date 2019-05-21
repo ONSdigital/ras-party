@@ -1,4 +1,5 @@
 from ras_party.support.util import partition_dict
+from test.test_data.default_test_values import DEFAULT_RESPONDENT_UUID
 
 
 class MockRespondent:
@@ -29,7 +30,7 @@ class MockRespondent:
 class MockRespondentWithId:
     def __init__(self):
         self._attributes = {
-            'id': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
+            'id': DEFAULT_RESPONDENT_UUID,
             'sampleUnitType': 'BI',
             'firstName': 'A',
             'lastName': 'Z',
@@ -55,7 +56,7 @@ class MockRespondentWithId:
 class MockRespondentWithIdSuspended:
     def __init__(self):
         self._attributes = {
-            'id': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
+            'id': DEFAULT_RESPONDENT_UUID,
             'sampleUnitType': 'BI',
             'firstName': 'A',
             'lastName': 'Z',
@@ -82,7 +83,7 @@ class MockRespondentWithIdSuspended:
 class MockRespondentWithIdActive:
     def __init__(self):
         self._attributes = {
-            'id': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
+            'id': DEFAULT_RESPONDENT_UUID,
             'sampleUnitType': 'BI',
             'firstName': 'A',
             'lastName': 'Z',
@@ -109,7 +110,7 @@ class MockRespondentWithIdActive:
 class MockRespondentWithPendingEmail:
     def __init__(self):
         self._attributes = {
-            'id': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
+            'id': DEFAULT_RESPONDENT_UUID,
             'sampleUnitType': 'BI',
             'firstName': 'A',
             'lastName': 'Z',

@@ -13,7 +13,8 @@ from werkzeug.exceptions import BadRequest, InternalServerError
 from ras_party.controllers import account_controller
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
 from ras_party.exceptions import RasNotifyError
-from ras_party.models.models import BusinessRespondent, Enrolment, RespondentStatus, Respondent, PendingEnrolment
+from ras_party.models.models import Business, BusinessRespondent, Enrolment, RespondentStatus, Respondent, \
+    PendingEnrolment
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
@@ -24,6 +25,7 @@ from test.party_client import PartyTestClient, respondents, businesses, business
 from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDisabled, MockEnrolmentPending
 from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, \
     MockRespondentWithIdActive, MockRespondentWithIdSuspended, MockRespondentWithPendingEmail
+from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID, DEFAULT_RESPONDENT_UUID
 
 
 class TestRespondents(PartyTestClient):
@@ -75,6 +77,11 @@ class TestRespondents(PartyTestClient):
         }
         self.enrolment = Enrolment(**translated_enrolment)
         session.add(self.enrolment)
+
+    @with_db_session
+    def populate_business(self, session, business):
+        self.business = Business(**business)
+        session.add(self.business)
 
     @with_db_session
     def populate_with_pending_enrolment(self, session, enrolment=None):
@@ -689,7 +696,7 @@ class TestRespondents(PartyTestClient):
     def test_resend_verification_email_party_id_not_found(self):
         # Given the party_id sent doesn't exist
         # When the resend verification end point is hit
-        response = self.resend_verification_email('3b136c4b-7a14-4904-9e01-13364dd7b972', 404)
+        response = self.resend_verification_email(DEFAULT_BUSINESS_UUID, 404)
         # Then an email is not sent and a message saying there is no respondent is returned
         self.assertFalse(self.mock_notify.request_to_notify.called)
         self.assertIn(account_controller.NO_RESPONDENT_FOR_PARTY_ID, response['description'])
@@ -1180,7 +1187,7 @@ class TestRespondents(PartyTestClient):
         assoc = business_respondent_associations()[0]
         business_id = assoc.business_id
         respondent_id = assoc.respondent.party_uuid
-        self.assertEqual(str(business_id), '3b136c4b-7a14-4904-9e01-13364dd7b972')
+        self.assertEqual(str(business_id), DEFAULT_BUSINESS_UUID)
         self.assertEqual(str(respondent_id), created_respondent['id'])
 
     def test_post_respondent_creates_the_enrolment(self):
@@ -1194,19 +1201,19 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(len(enrolments()), 1)
         enrolment = enrolments()[0]
         # And the enrolment contains the survey id given in the survey fixture
-        self.assertEqual(str(enrolment.survey_id), 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87')
+        self.assertEqual(str(enrolment.survey_id), DEFAULT_SURVEY_UUID)
         # And is linked to the created respondent
         self.assertEqual(str(enrolment.business_respondent.respondent.party_uuid),
                          created_respondent['id'])
         # And is linked to the given business
         self.assertEqual(str(enrolment.business_respondent.business.party_uuid),
-                         '3b136c4b-7a14-4904-9e01-13364dd7b972')
+                         DEFAULT_BUSINESS_UUID)
 
     def test_associations_populated_when_respondent_created(self):
         # Given there is a respondent associated with a business
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
-        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
                                                respondent_id=self.mock_respondent_with_id['id'])
 
         # When we GET the respondent
@@ -1271,7 +1278,7 @@ class TestRespondents(PartyTestClient):
     def test_post_add_new_survey_respondent_business_association(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
-        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
                                                respondent_id=self.mock_respondent_with_id['id'])
         db_respondent = respondents()[0]
         token = self.generate_valid_token_from_email(db_respondent.email_address)
@@ -1297,7 +1304,7 @@ class TestRespondents(PartyTestClient):
     def test_post_add_new_survey_missing_enrolment_code_returns_error(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
-        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
                                                respondent_id=self.mock_respondent_with_id['id'])
         db_respondent = respondents()[0]
         token = self.generate_valid_token_from_email(db_respondent.email_address)
@@ -1343,7 +1350,7 @@ class TestRespondents(PartyTestClient):
         self.mock_requests.put = mock_put_iac
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
-        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
                                                respondent_id=self.mock_respondent_with_id['id'])
         self.populate_with_enrolment()
         db_respondent = respondents()[0]
@@ -1351,8 +1358,8 @@ class TestRespondents(PartyTestClient):
         self.put_email_verification(token, 200)
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
-            'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
-            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
+            'business_id': DEFAULT_BUSINESS_UUID,
+            'survey_id': DEFAULT_SURVEY_UUID,
             'change_flag': 'DISABLED'
         }
         self.put_enrolment_status(request_json, 200)
@@ -1363,7 +1370,7 @@ class TestRespondents(PartyTestClient):
         self.mock_requests.put = mock_put_iac
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
-        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
                                                respondent_id=self.mock_respondent_with_id['id'])
         enrolment = self.mock_enrolment_disabled
         self.populate_with_enrolment(enrolment=enrolment)
@@ -1372,8 +1379,8 @@ class TestRespondents(PartyTestClient):
         self.put_email_verification(token, 200)
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
-            'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
-            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
+            'business_id': DEFAULT_BUSINESS_UUID,
+            'survey_id': DEFAULT_SURVEY_UUID,
             'change_flag': 'ENABLED'
         }
         self.put_enrolment_status(request_json, 200)
@@ -1381,8 +1388,8 @@ class TestRespondents(PartyTestClient):
     def test_put_change_respondent_enrolment_status_no_respondent(self):
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
-            'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
-            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
+            'business_id': DEFAULT_BUSINESS_UUID,
+            'survey_id': DEFAULT_SURVEY_UUID,
             'change_flag': 'ENABLED'
         }
         self.put_enrolment_status(request_json, 404)
@@ -1399,7 +1406,7 @@ class TestRespondents(PartyTestClient):
         self.mock_requests.put = mock_put_iac
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
-        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
                                                respondent_id=self.mock_respondent_with_id['id'])
         self.populate_with_enrolment()
         db_respondent = respondents()[0]
@@ -1407,8 +1414,8 @@ class TestRespondents(PartyTestClient):
         self.put_email_verification(token, 200)
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
-            'business_id': '3b136c4b-7a14-4904-9e01-13364dd7b972',
-            'survey_id': 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87',
+            'business_id': DEFAULT_BUSINESS_UUID,
+            'survey_id': DEFAULT_SURVEY_UUID,
             'change_flag': 'woafouewbhouGFHEPIW0'
         }
         self.put_enrolment_status(request_json, 500)
@@ -1429,7 +1436,7 @@ class TestRespondents(PartyTestClient):
     def test_put_change_respondent_account_status_active(self):
         respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
-        self.associate_business_and_respondent(business_id='3b136c4b-7a14-4904-9e01-13364dd7b972',
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
                                                respondent_id=respondent.party_uuid)
         enrolment = self.mock_enrolment_pending
         self.populate_with_enrolment(enrolment=enrolment)
@@ -1495,3 +1502,85 @@ class TestRespondents(PartyTestClient):
             auth().update_account().status_code.return_value = 500
             with self.assertRaises(InternalServerError):
                 account_controller.update_verified_email_address(respondent, None)
+
+    def test_validate_claim_returns_400_if_bus_id_missing(self):
+        self.validate_respondent_claim("", "", "SomeSurveyId", expected_status=400)
+
+    def test_validate_claim_returns_400_if_survey_id_missing(self):
+        self.validate_respondent_claim("", "SomeBusId", "", expected_status=400)
+
+    def test_validate_claim_returns_400_if_respondent_id_missing(self):
+        self.validate_respondent_claim("", "SomeBusId", "SomeSurveyId", expected_status=400)
+
+    def test_validate_claim_returns_200_if_respondent_has_a_claim(self):
+
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
+                                               respondent_id=DEFAULT_RESPONDENT_UUID)
+        enrolment = self.mock_enrolment_enabled
+        self.populate_with_enrolment(enrolment=enrolment)
+
+        self.validate_respondent_claim(respondent_id=DEFAULT_RESPONDENT_UUID,
+                                       business_id=DEFAULT_BUSINESS_UUID,
+                                       survey_id=DEFAULT_SURVEY_UUID,
+                                       expected_status=200,
+                                       expected_result="Valid")
+
+    def test_validate_claim_returns_invalid_if_respondent_does_not_have_a_claim_on_specific_survey(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
+                                               respondent_id=DEFAULT_RESPONDENT_UUID)
+        enrolment = self.mock_enrolment_enabled
+        self.populate_with_enrolment(enrolment=enrolment)
+
+        self.validate_respondent_claim(respondent_id=DEFAULT_RESPONDENT_UUID,
+                                       business_id=DEFAULT_BUSINESS_UUID,
+                                       survey_id="ADifferentSurvey",
+                                       expected_status=200,
+                                       expected_result="Invalid")
+
+    def test_validate_claim_returns_invalid_if_respondent_does_not_have_a_claim_on_specific_business(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
+                                               respondent_id=DEFAULT_RESPONDENT_UUID)
+        enrolment = self.mock_enrolment_enabled
+        self.populate_with_enrolment(enrolment=enrolment)
+
+        self.validate_respondent_claim(respondent_id=DEFAULT_RESPONDENT_UUID,
+                                       business_id="ADifferentBusiness",
+                                       survey_id=DEFAULT_SURVEY_UUID,
+                                       expected_status=200,
+                                       expected_result="Invalid")
+
+    def test_validate_claim_returns_invalid_if_respondent_not_active(self):
+
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
+                                               respondent_id=DEFAULT_RESPONDENT_UUID)
+        enrolment = self.mock_enrolment_enabled
+        self.populate_with_enrolment(enrolment=enrolment)
+
+        self.validate_respondent_claim(respondent_id=DEFAULT_RESPONDENT_UUID,
+                                       business_id=DEFAULT_BUSINESS_UUID,
+                                       survey_id=DEFAULT_SURVEY_UUID,
+                                       expected_status=200,
+                                       expected_result="Invalid")
+
+    def test_validate_claim_returns_invalid_if_enrolment_not_enabled(self):
+
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
+                                               respondent_id=DEFAULT_RESPONDENT_UUID)
+        enrolment = self.mock_enrolment_disabled
+        self.populate_with_enrolment(enrolment=enrolment)
+
+        self.validate_respondent_claim(respondent_id=DEFAULT_RESPONDENT_UUID,
+                                       business_id=DEFAULT_BUSINESS_UUID,
+                                       survey_id=DEFAULT_SURVEY_UUID,
+                                       expected_status=200,
+                                       expected_result="Invalid")
