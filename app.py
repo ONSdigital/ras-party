@@ -26,7 +26,7 @@ requestsdefaulter.default_headers(zipkin.create_http_headers_for_new_span)
 with open(app.config['PARTY_SCHEMA']) as io:
     app.config['PARTY_SCHEMA'] = loads(io.read())
 
-logger_initial_config(service_name='ras-party', log_level=app.config['LOGGING_LEVEL'])
+logger_initial_config(log_level=app.config['LOGGING_LEVEL'])
 
 logger.debug("Created Flask app.")
 

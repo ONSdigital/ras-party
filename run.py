@@ -98,7 +98,7 @@ if __name__ == '__main__':
     with open(app.config['PARTY_SCHEMA']) as io:
         app.config['PARTY_SCHEMA'] = loads(io.read())
 
-    logger_initial_config(service_name='ras-party', log_level=app.config['LOGGING_LEVEL'])
+    logger_initial_config(log_level=app.config['LOGGING_LEVEL'])
 
     try:
         initialise_db(app)

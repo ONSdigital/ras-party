@@ -13,7 +13,7 @@ if Path('git_info').exists():
 
 def get_info():
     info = {
-        "name": current_app.config['NAME'],
+        "name": 'ras-party',
         "version": current_app.config['VERSION'],
     }
     info = dict(_health_check, **info)

@@ -16,9 +16,7 @@ def _is_true(value):
 
 
 class Config(object):
-
-    NAME = os.getenv('RAS-PARTY', 'ras-party')
-    VERSION = os.getenv('VERSION', '1.7.2')
+    VERSION = '1.7.2'
     SCHEME = os.getenv('http')
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = os.getenv('PORT', 8081)
@@ -26,12 +24,12 @@ class Config(object):
     LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'INFO')
     SECRET_KEY = os.getenv('SECRET_KEY', 'aardvark')
     EMAIL_TOKEN_SALT = os.getenv('EMAIL_TOKEN_SALT', 'aardvark')
-    EMAIL_TOKEN_EXPIRY = int(os.getenv('EMAIL_TOKEN_EXPIRY', 306000))
+    EMAIL_TOKEN_EXPIRY = int(os.getenv('EMAIL_TOKEN_EXPIRY', '306000'))
     PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
 
-    DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', 5))
-    DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', 10))
-    DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', -1))
+    DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', '5'))
+    DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', '10'))
+    DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', '-1'))
 
     if cf.detected:
         DATABASE_SCHEMA = 'partysvc'
@@ -43,7 +41,7 @@ class Config(object):
     # Zipkin
     ZIPKIN_DISABLE = bool(strtobool(os.getenv("ZIPKIN_DISABLE", "False")))
     ZIPKIN_DSN = os.getenv("ZIPKIN_DSN", None)
-    ZIPKIN_SAMPLE_RATE = int(os.getenv("ZIPKIN_SAMPLE_RATE", 0))
+    ZIPKIN_SAMPLE_RATE = int(os.getenv("ZIPKIN_SAMPLE_RATE", '0'))
 
     REQUESTS_GET_TIMEOUT = os.getenv('REQUESTS_GET_TIMEOUT', 20)
     REQUESTS_POST_TIMEOUT = os.getenv('REQUESTS_POST_TIMEOUT', 20)

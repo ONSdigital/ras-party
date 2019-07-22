@@ -39,7 +39,7 @@ class PartyTestClient(TestCase):
     @staticmethod
     def create_app():
         app = create_app('TestingConfig')
-        logger_initial_config(service_name='ras-party', log_level=app.config['LOGGING_LEVEL'])
+        logger_initial_config(log_level=app.config['LOGGING_LEVEL'])
         app.config['PARTY_SCHEMA'] = party_schema.schema
         app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'], app.config['DB_POOL_SIZE'],
                                  app.config['DB_MAX_OVERFLOW'], app.config['DB_POOL_RECYCLE'])
