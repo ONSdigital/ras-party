@@ -16,7 +16,7 @@ def _is_true(value):
 
 
 class Config(object):
-    VERSION = '1.7.2'
+    VERSION = '1.7.3'
     SCHEME = os.getenv('http')
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = os.getenv('PORT', 8081)
