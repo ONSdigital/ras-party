@@ -63,11 +63,11 @@ def _validate_get_respondent_params(ids, first_name, last_name, email):
     """
 
     if not (ids or first_name or last_name or email):
-        logger.debug("Invalid params: either id , first_name or last_name or email are required")
+        logger.info("Invalid params: either id , first_name or last_name or email are required")
         raise BadRequest("id or one of first_name, last_name and email are required")
 
     if ids and (first_name or last_name or email):
-        logger.debug("Invalid params: id not valid with first_name or last_name or email")
+        logger.info("Invalid params: id not valid with first_name or last_name or email")
         raise BadRequest("id not valid with first_name or last_name or email")
 
     if ids:
@@ -75,7 +75,7 @@ def _validate_get_respondent_params(ids, first_name, last_name, email):
             try:
                 uuid.UUID(party_id)
             except ValueError:
-                logger.debug("Invalid params: party_id value is not a valid UUID", party_id=party_id)
+                logger.info("Invalid params: party_id value is not a valid UUID", party_id=party_id)
                 raise BadRequest(f"'{party_id}' is not a valid UUID format for property 'id'")
 
 
@@ -114,7 +114,7 @@ def validate_respondent_claim():
     survey_id = request.args.get("survey_id", default="").strip()
 
     if not business_id or not survey_id or not respondent_id:
-        logger.debug("either respondent id, business id or survey id are missing",
+        logger.info("either respondent id, business id or survey id are missing",
                      respondent_id=respondent_id, business_id=business_id, survey_id=survey_id)
         raise BadRequest("respondent id and business id and survey id are required")
 

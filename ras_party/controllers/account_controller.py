@@ -51,11 +51,11 @@ def post_respondent(party, tran, session):
     if 'id' in party:
         # Note: there's not strictly a requirement to be able to pass in a UUID, this is currently supported to
         # aid with testing.
-        logger.debug("'id' in respondent post message")
+        logger.info("'id' in respondent post message")
         try:
             uuid.UUID(party['id'])
         except ValueError:
-            logger.debug("Invalid respondent id type", respondent_id=party['id'])
+            logger.info("Invalid respondent id type", respondent_id=party['id'])
             raise BadRequest(f"'{party['id']}' is not a valid UUID format for property 'id'")
 
     if not v.validate(party):
@@ -64,12 +64,12 @@ def post_respondent(party, tran, session):
 
     iac = request_iac(party['enrolmentCode'])
     if not iac.get('active'):
-        logger.debug("Inactive enrolment code")
+        logger.info("Inactive enrolment code")
         raise BadRequest("Enrolment code is not active")
 
     existing = query_respondent_by_email(party['emailAddress'], session)
     if existing:
-        logger.debug("Email already exists", party_uuid=str(existing.party_uuid))
+        logger.info("Email already exists", party_uuid=str(existing.party_uuid))
         raise BadRequest("Email address already exists")
 
     case_context = request_case(party['enrolmentCode'])
@@ -134,7 +134,7 @@ def change_respondent_enrolment_status(payload, session):
                 status=change_flag)
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
-        logger.debug("Respondent does not exist", respondent_id=respondent_id)
+        logger.info("Respondent does not exist", respondent_id=respondent_id)
         raise NotFound("Respondent does not exist")
 
     enrolment = query_enrolment_by_survey_business_respondent(respondent_id=respondent.id,
@@ -171,7 +171,7 @@ def change_respondent(payload, session):
     respondent = query_respondent_by_email(email_address, session)
 
     if not respondent:
-        logger.debug("Respondent does not exist")
+        logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
     if new_email_address == email_address:
@@ -179,7 +179,7 @@ def change_respondent(payload, session):
 
     respondent_with_new_email = query_respondent_by_email(new_email_address, session)
     if respondent_with_new_email:
-        logger.debug("Respondent with email already exists")
+        logger.info("Respondent with email already exists")
         raise Conflict("New email address already taken")
 
     respondent.pending_email_address = new_email_address
@@ -205,7 +205,7 @@ def verify_token(token, session):
 
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
-        logger.debug("Respondent with Email from token does not exist")
+        logger.info("Respondent with Email from token does not exist")
         raise NotFound("Respondent does not exist")
 
     return {'response': "Ok"}
@@ -228,7 +228,7 @@ def change_respondent_password(token, payload, tran, session):
 
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
-        logger.debug("Respondent with Email from token does not exist")
+        logger.info("Respondent with email from token does not exist")
         raise NotFound("Respondent does not exist")
 
     new_password = payload['new_password']
@@ -236,7 +236,7 @@ def change_respondent_password(token, payload, tran, session):
     # Check and see if the account is active, if not we can now set to active
     if respondent.status != RespondentStatus.ACTIVE:
         # Checking enrolment status, if PENDING we will change it to ENABLED
-        logger.debug('Checking enrolment status', respondent_id=respondent.party_uuid)
+        logger.info('Checking enrolment status', respondent_id=respondent.party_uuid)
         if respondent.pending_enrolment:
             enrol_respondent_for_survey(respondent, session)
 
@@ -282,10 +282,10 @@ def request_password_change(payload, session):
 
     respondent = query_respondent_by_email(payload['email_address'], session)
     if not respondent:
-        logger.debug("Respondent does not exist")
+        logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
-    logger.debug("Requesting password change", party_id=respondent.party_uuid)
+    logger.info("Requesting password change", party_id=respondent.party_uuid)
 
     email_address = respondent.email_address
 
@@ -309,7 +309,7 @@ def request_password_change(payload, session):
         # Note: intentionally suppresses exception
         logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
 
-    logger.debug('Password reset email successfully sent', party_id=party_id)
+    logger.info('Password reset email successfully sent', party_id=party_id)
 
     return {'response': "Ok"}
 
@@ -326,7 +326,7 @@ def resend_password_email_expired_token(token, session):
     respondent = query_respondent_by_email(email_address, session)
 
     if not respondent:
-        logger.debug("Respondent does not exist")
+        logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
     payload = {'email_address': email_address}
@@ -341,7 +341,7 @@ def notify_change_account_status(payload, party_id, session):
 
     respondent = query_respondent_by_party_uuid(party_id, session)
     if not respondent:
-        logger.debug("Respondent does not exist")
+        logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
     email_address = respondent.email_address
@@ -349,7 +349,7 @@ def notify_change_account_status(payload, party_id, session):
     # Unlock respondents account
     if status == 'ACTIVE':
         # Checking enrolment status, if PENDING we will change it to ENABLED
-        logger.debug('Checking enrolment status', respondent_id=party_id)
+        logger.info('Checking enrolment status', respondent_id=party_id)
         if respondent.pending_enrolment:
             enrol_respondent_for_survey(respondent, session)
 
@@ -361,7 +361,7 @@ def notify_change_account_status(payload, party_id, session):
                          respondent_id=str(respondent.party_uuid), status=oauth_response.status_code)
             raise InternalServerError('Failed to unlock respondent account')
 
-        logger.debug('Respondent account updated', respondent_id=party_id)
+        logger.info('Respondent account updated', respondent_id=party_id)
 
     # Lock and notify respondent of account lock
     elif status == 'SUSPENDED':
@@ -382,7 +382,7 @@ def notify_change_account_status(payload, party_id, session):
             # Note: intentionally suppresses exception
             logger.error('Error sending request to Notify Gateway', respondent_id=party_id)
 
-        logger.debug('Notification email successfully sent', party_id=party_id)
+        logger.info('Notification email successfully sent', party_id=party_id)
 
     respondent.status = status
 
@@ -486,7 +486,7 @@ def resend_verification_email_by_uuid(party_uuid, session):
     :return: response
 
     """
-    logger.debug('Attempting to resend verification_email', party_uuid=party_uuid)
+    logger.info('Attempting to resend verification_email', party_uuid=party_uuid)
 
     respondent = query_respondent_by_party_uuid(party_uuid, session)
     if not respondent:
@@ -508,7 +508,7 @@ def resend_verification_email_expired_token(token, session):
     respondent = query_respondent_by_email(email_address, session)
 
     if not respondent:
-        logger.debug("Respondent does not exist")
+        logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
     response = _resend_verification_email(respondent)
@@ -540,7 +540,7 @@ def add_new_survey_for_respondent(payload, tran, session):
 
     iac = request_iac(enrolment_code)
     if not iac.get('active'):
-        logger.debug("Inactive enrolment code")
+        logger.info("Inactive enrolment code")
         raise BadRequest("Enrolment code is not active")
 
     respondent = query_respondent_by_party_uuid(respondent_party_id, session)
@@ -691,26 +691,26 @@ def request_survey(survey_id):
 
 
 def request_casegroups_for_business(business_id):
-    logger.debug('Retrieving casegroups for business', business_id=business_id)
+    logger.info('Retrieving casegroups for business', business_id=business_id)
     url = f'{current_app.config["RAS_CASE_SERVICE"]}/casegroups/partyid/{business_id}'
     response = Requests.get(url)
     response.raise_for_status()
-    logger.debug('Successfully retrieved casegroups for business', business_id=business_id)
+    logger.info('Successfully retrieved casegroups for business', business_id=business_id)
     return response.json()
 
 
 def request_collection_exercises_for_survey(survey_id):
-    logger.debug('Retrieving collection exercises for survey', survey_id=survey_id)
+    logger.info('Retrieving collection exercises for survey', survey_id=survey_id)
     url = f'{current_app.config["RAS_COLLEX_SERVICE"]}/collectionexercises/survey/{survey_id}'
     response = Requests.get(url)
     response.raise_for_status()
-    logger.debug('Successfully retrieved collection exercises for survey', survey_id=survey_id)
+    logger.info('Successfully retrieved collection exercises for survey', survey_id=survey_id)
     return response.json()
 
 
 def get_business_survey_casegroups(survey_id, business_id):
-    logger.debug('Retrieving casegroups for business and survey',
-                 survey_id=survey_id, business_id=business_id)
+    logger.info('Retrieving casegroups for business and survey',
+                survey_id=survey_id, business_id=business_id)
     collection_exercise_ids = [ce['id']
                                for ce in request_collection_exercises_for_survey(survey_id)]
     casegroups = request_casegroups_for_business(business_id)
@@ -718,13 +718,13 @@ def get_business_survey_casegroups(survey_id, business_id):
     # Filtering casegroups by collection exercise ids
     ce_casegroup_ids = [casegroup['id'] for casegroup in casegroups
                         if casegroup['collectionExerciseId'] in collection_exercise_ids]
-    logger.debug('Successfully retrieved casegroups for business and survey',
-                 survey_id=survey_id, business_id=business_id)
+    logger.info('Successfully retrieved casegroups for business and survey',
+                survey_id=survey_id, business_id=business_id)
     return ce_casegroup_ids
 
 
 def get_case_id_for_business_survey(survey_id, business_id):
-    logger.debug('Retrieving case for survey and business', survey_id=survey_id, business_id=business_id)
+    logger.info('Retrieving case for survey and business', survey_id=survey_id, business_id=business_id)
 
     case_group_ids = get_business_survey_casegroups(survey_id, business_id)
 

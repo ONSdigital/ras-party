@@ -44,7 +44,7 @@ def get_businesses():
         # pylint: disable=no-value-for-parameter
         response = business_controller.get_businesses_by_ids(ids)
     else:
-        logger.debug("The parameter id is required.", url=request.url)
+        logger.info("The parameter id is required.", url=request.url)
         raise BadRequest("The parameter id is required.")
 
     return jsonify(response)

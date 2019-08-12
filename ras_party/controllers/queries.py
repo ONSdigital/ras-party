@@ -16,7 +16,7 @@ def query_businesses_by_party_uuids(party_uuids, session):
     :param party_uuids: a list of party uuids
     :return: the businesses
     """
-    logger.debug('Querying businesses by party_uuids', party_uuids=party_uuids)
+    logger.info('Querying businesses by party_uuids', party_uuids=party_uuids)
     return session.query(Business).filter(Business.party_uuid.in_(party_uuids))
 
 
@@ -26,7 +26,7 @@ def query_business_by_party_uuid(party_uuid, session):
     :param party_uuid: the party uuid
     :return: business or none
     """
-    logger.debug('Querying businesses by party_uuid', party_uuid=party_uuid)
+    logger.info('Querying businesses by party_uuid', party_uuid=party_uuid)
 
     return session.query(Business).filter(Business.party_uuid == party_uuid).first()
 
@@ -37,7 +37,7 @@ def query_business_by_ref(business_ref, session):
     :param business_ref: the business ref
     :return: business or none
     """
-    logger.debug('Querying businesses by business_ref', business_ref=business_ref)
+    logger.info('Querying businesses by business_ref', business_ref=business_ref)
 
     return session.query(Business).filter(Business.business_ref == business_ref).first()
 
@@ -48,8 +48,7 @@ def query_respondent_by_party_uuids(party_uuids, session):
     :param party_uuids: the party uuids
     :return: respondents or empty list
     """
-    logger.debug('Querying respondents by party_uuids', party_uuids=party_uuids)
-
+    logger.info('Querying respondents by party_uuids', party_uuids=party_uuids)
     return session.query(Respondent).filter(Respondent.party_uuid.in_(party_uuids))
 
 
@@ -65,8 +64,8 @@ def query_respondent_by_names_and_emails(first_name, last_name, email, page, lim
     :param session:
     """
 
-    logger.debug('Querying respondents by names , email', first_name=first_name, last_name=last_name,
-                 email=email, page=page, limit=limit)
+    logger.info('Querying respondents by names , email', first_name=first_name, last_name=last_name,
+                email=email, page=page, limit=limit)
 
     conditions = []
 
@@ -92,8 +91,7 @@ def query_respondent_by_party_uuid(party_uuid, session):
     :param party_uuid: the party uuid
     :return: respondent or none
     """
-    logger.debug('Querying respondents by party_uuid', party_uuid=party_uuid)
-
+    logger.info('Querying respondents by party_uuid', party_uuid=party_uuid)
     return session.query(Respondent).filter(Respondent.party_uuid == party_uuid).first()
 
 
@@ -103,8 +101,7 @@ def query_respondent_by_email(email, session):
     :param email: the party uuid
     :return: respondent or none
     """
-    logger.debug('Querying respondents by email')
-
+    logger.info('Querying respondents by email')
     return session.query(Respondent).filter(func.lower(Respondent.email_address) == email.lower()).first()
 
 
@@ -114,8 +111,7 @@ def query_respondent_by_pending_email(email, session):
     :param email: the party uuid
     :return: respondent or none
     """
-    logger.debug('Querying respondents by pending email address')
-
+    logger.info('Querying respondents by pending email address')
     return session.query(Respondent).filter(func.lower(Respondent.pending_email_address) == email.lower()).first()
 
 
@@ -127,7 +123,7 @@ def query_business_respondent_by_respondent_id_and_business_id(business_id, resp
     :param session
     :return: business associations for respondent
     """
-    logger.debug('Querying business respondent', respondent_id=respondent_id)
+    logger.info('Querying business respondent', respondent_id=respondent_id)
 
     response = session.query(BusinessRespondent).filter(and_(BusinessRespondent.business_id == business_id,
                                                              BusinessRespondent.respondent_id == respondent_id)).first()
@@ -145,8 +141,7 @@ def update_respondent_details(respondent_data, respondent_id, session):
     :param session
     """
 
-    logger.debug('Updating respondent details', respondent_id=respondent_id)
-
+    logger.info('Updating respondent details', respondent_id=respondent_id)
     respondent_details = query_respondent_by_party_uuid(respondent_id, session)
 
     if respondent_details.first_name != respondent_data['firstName'] or respondent_details.last_name != \
@@ -167,7 +162,7 @@ def search_businesses(search_query, session):
     :param search_query: the search query
     :return: list of businesses
     """
-    logger.debug('Searching businesses by name with search query', search_query=search_query)
+    logger.info('Searching businesses by name with search query', search_query=search_query)
     filters = list()
     name_filters = list()
     trading_as_filters = list()
@@ -198,7 +193,7 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
     :return: enrolment for survey and business for respondent
     """
 
-    logger.debug('Querying enrolment', respondent_id=respondent_id, business_id=business_id, survey_id=survey_id)
+    logger.info('Querying enrolment', respondent_id=respondent_id, business_id=business_id, survey_id=survey_id)
 
     response = session.query(Enrolment).filter(and_(Enrolment.respondent_id == respondent_id,
                                                     Enrolment.business_id == business_id,
@@ -213,7 +208,7 @@ def count_enrolment_by_survey_business(business_id, survey_id, session):
     :param survey_id
     :return: Integer count of number of enrolments
     """
-    logger.debug('Querying enrolment', business_id=business_id, survey_id=survey_id)
+    logger.info('Querying enrolment', business_id=business_id, survey_id=survey_id)
     response = session.query(Enrolment).filter(and_(Enrolment.business_id == business_id,
                                                     Enrolment.survey_id == survey_id,
                                                     Enrolment.status == EnrolmentStatus.ENABLED)).count()

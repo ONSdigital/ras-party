@@ -43,7 +43,7 @@ def get_businesses_by_ids(party_uuids, session):
         try:
             uuid.UUID(party_uuid)
         except ValueError:
-            logger.debug("Invalid party uuid value", party_uuid=party_uuid)
+            logger.info("Invalid party uuid value", party_uuid=party_uuid)
             raise BadRequest(f"'{party_uuid}' is not a valid UUID format for property 'id'")
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
@@ -68,12 +68,12 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
     try:
         uuid.UUID(party_uuid)
     except ValueError:
-        logger.debug("Invalid party uuid value", party_uuid=party_uuid)
+        logger.info("Invalid party uuid value", party_uuid=party_uuid)
         raise BadRequest(f"'{party_uuid}' is not a valid UUID format for property 'id'")
 
     business = query_business_by_party_uuid(party_uuid, session)
     if not business:
-        logger.debug("Business with id does not exist", party_uuid=party_uuid)
+        logger.info("Business with id does not exist", party_uuid=party_uuid)
         raise NotFound("Business with party id does not exist")
 
     if verbose:

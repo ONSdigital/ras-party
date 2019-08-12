@@ -23,11 +23,11 @@ def parties_post(party_data, session):
     """
     errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
     if errors:
-        logger.debug("party schema validation failed", errors=[e.split('\n')[0] for e in errors])
+        logger.info("party schema validation failed", errors=[e.split('\n')[0] for e in errors])
         raise BadRequest([e.split('\n')[0] for e in errors])
 
     if party_data['sampleUnitType'] != Business.UNIT_TYPE:
-        logger.debug("Wrong sampleUnitType", type=party_data['sampleUnitType'])
+        logger.info("Wrong sampleUnitType", type=party_data['sampleUnitType'])
         raise BadRequest(f'sampleUnitType must be of type {Business.UNIT_TYPE}')
 
     business = query_business_by_ref(party_data['sampleUnitRef'], session)
@@ -52,11 +52,11 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
     :rtype: Party
     """
     if sample_unit_type != Business.UNIT_TYPE:
-        logger.debug("Wrong sampleUnitType", type=sample_unit_type)
+        logger.info("Wrong sampleUnitType", type=sample_unit_type)
         raise BadRequest(f'sampleUnitType must be of type {Business.UNIT_TYPE}')
     business = query_business_by_ref(sample_unit_ref, session)
     if not business:
-        logger.debug("Business with reference does not exist.", reference=sample_unit_ref, status=404)
+        logger.info("Business with reference does not exist.", reference=sample_unit_ref, status=404)
         raise NotFound("Business with reference does not exist.")
 
     return business.to_party_dict()
@@ -67,17 +67,17 @@ def get_party_by_id(sample_unit_type, id, session):
     if sample_unit_type == Business.UNIT_TYPE:
         business = query_business_by_party_uuid(id, session)
         if not business:
-            logger.debug("Business with id does not exist", business_id=id, status=404)
+            logger.info("Business with id does not exist", business_id=id, status=404)
             raise NotFound("Business with id does not exist")
         return business.to_party_dict()
     elif sample_unit_type == Respondent.UNIT_TYPE:
         respondent = query_respondent_by_party_uuid(id, session)
         if not respondent:
-            logger.debug("Respondent with id does not exist", respondent_id=id, status=404)
+            logger.info("Respondent with id does not exist", respondent_id=id, status=404)
             raise NotFound("Respondent with id does not exist")
         return respondent.to_party_dict()
     else:
-        logger.debug("Invalid sample unit type", type=sample_unit_type)
+        logger.info("Invalid sample unit type", type=sample_unit_type)
         raise BadRequest(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']")
 
 
