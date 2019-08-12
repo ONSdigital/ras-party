@@ -115,7 +115,7 @@ def validate_respondent_claim():
 
     if not business_id or not survey_id or not respondent_id:
         logger.info("either respondent id, business id or survey id are missing",
-                     respondent_id=respondent_id, business_id=business_id, survey_id=survey_id)
+                    respondent_id=respondent_id, business_id=business_id, survey_id=survey_id)
         raise BadRequest("respondent id and business id and survey id are required")
 
     if respondent_controller.does_user_have_claim(respondent_id, business_id, survey_id):
