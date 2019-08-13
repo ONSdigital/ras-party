@@ -57,12 +57,12 @@ def get_respondent_by_id(respondent_id, session):
     try:
         uuid.UUID(respondent_id)
     except ValueError:
-        logger.debug("respondent_id value is not a valid UUID", respondent_id=respondent_id)
+        logger.info("respondent_id value is not a valid UUID", respondent_id=respondent_id)
         raise BadRequest(f"'{respondent_id}' is not a valid UUID format for property 'id'")
 
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
-        logger.debug("Respondent with party id does not exist", respondent_id=respondent_id)
+        logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
         raise NotFound("Respondent with party id does not exist")
 
     return respondent.to_respondent_dict()
@@ -80,7 +80,7 @@ def get_respondent_by_email(email, session):
     """
     respondent = query_respondent_by_email(email, session)
     if not respondent:
-        logger.debug("Respondent does not exist")
+        logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
     return respondent.to_respondent_dict()
@@ -97,7 +97,7 @@ def change_respondent_details(respondent_data, respondent_id, session):
 
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
-        logger.debug("Respondent with party id does not exist", respondent_id=respondent_id)
+        logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
         raise NotFound("Respondent id does not exist")
 
     # This function updates the name and number of a respondent
