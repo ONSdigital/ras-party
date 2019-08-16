@@ -106,8 +106,8 @@ def post_respondent(party, session):
 def _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id, translated_party):
     """Create and persist new party entities and attempt to register with auth service.
     Auth fails lead to party entities being rolled back.
+    The Contxet manager commits to session, If db fails after that and before main commit then db state is unknown
     """
-    session.begin_nested()  # Create a transaction SAVEPOINT
     try:
         with session.begin_nested():
 
@@ -143,7 +143,6 @@ def _add_enrolment_and_auth(business, business_id, case_id, party, session, surv
             session.rollback()  # Rollback to SAVEPOINT
             oauth_response.raise_for_status()
 
-        session.commit()  # Commits to sub transaction
         session.commit()  # Full session commit
 
     logger.info("New user has been registered via the auth-service")
