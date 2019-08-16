@@ -93,8 +93,8 @@ def post_respondent(party, session):
         'status': RespondentStatus.CREATED
     }
 
-    respondent = _try_commit_party_and_auth(business, business_id, case_id, party, session, survey_id,
-                                            translated_party)
+    respondent = _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id,
+                                         translated_party)
 
     disable_iac(party['enrolmentCode'], case_id)  # calls raise for status
 
@@ -103,7 +103,7 @@ def post_respondent(party, session):
     return respondent.to_respondent_dict()
 
 
-def _try_commit_party_and_auth(business, business_id, case_id, party, session, survey_id, translated_party):
+def _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id, translated_party):
     """Create and persist new party entities and attempt to register with auth service.
     Auth fails lead to party entities being rolled back.
     """
