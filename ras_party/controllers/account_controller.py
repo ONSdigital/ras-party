@@ -5,6 +5,7 @@ import structlog
 from flask import current_app
 from itsdangerous import SignatureExpired, BadSignature, BadData
 from requests import HTTPError
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, Conflict, InternalServerError,  NotFound
 
 from ras_party.clients.oauth_client import OauthClient
@@ -106,7 +107,8 @@ def post_respondent(party, session):
 def _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id, translated_party):
     """Create and persist new party entities and attempt to register with auth service.
     Auth fails lead to party entities being rolled back.
-    The Contxet manager commits to session, If db fails after that and before main commit then db state is unknown
+    The context manager commits to sub session.
+    If final commit fails an account will be in auth not party, this circumstance is unlikely but possible
     """
     try:
         with session.begin_nested():
@@ -129,9 +131,8 @@ def _add_enrolment_and_auth(business, business_id, case_id, party, session, surv
             session.add(respondent)
             session.add(pending_enrolment)
 
-    except Exception as exception:
-        logger.error('Party service db post respondent caused exception', party_uuid=translated_party['party_uuid'],
-                     error=exception)
+    except SQLAlchemyError:
+        logger.exception('Party service db post respondent caused exception', party_uuid=translated_party['party_uuid'])
         raise  # re raise the exception aimed at the generic handler
     else:
         # Register user to auth server after successful commit
