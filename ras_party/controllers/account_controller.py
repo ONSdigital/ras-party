@@ -5,6 +5,7 @@ import structlog
 from flask import current_app
 from itsdangerous import SignatureExpired, BadSignature, BadData
 from requests import HTTPError
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, Conflict, InternalServerError,  NotFound
 
 from ras_party.clients.oauth_client import OauthClient
@@ -33,13 +34,11 @@ NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
 EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 
 
-@transactional
 @with_db_session
-def post_respondent(party, tran, session):
+def post_respondent(party, session):
     """
     Register respondent and set up pending enrolment before account verification
     :param party: respondent to be created details
-    :param tran
     :param session
     :return: created respondent
     """
@@ -95,24 +94,60 @@ def post_respondent(party, tran, session):
         'status': RespondentStatus.CREATED
     }
 
-    #  Create the enrolment respondent-business-survey associations
-    respondent = Respondent(**translated_party)
-    br = BusinessRespondent(business=business, respondent=respondent)
-    pending_enrolment = PendingEnrolment(case_id=case_id,
-                                         respondent=respondent,
-                                         business_id=business_id,
-                                         survey_id=survey_id)
-    Enrolment(business_respondent=br,
-              survey_id=survey_id,
-              status=EnrolmentStatus.PENDING)
-    session.add(respondent)
-    session.add(pending_enrolment)
-    session.commit()
+    respondent = _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id,
+                                         translated_party)
+
+    disable_iac(party['enrolmentCode'], case_id)  # calls raise for status
+
     _send_email_verification(respondent.party_uuid, party['emailAddress'])
 
-    register_user(party, tran)
-    disable_iac(party['enrolmentCode'], case_id)
     return respondent.to_respondent_dict()
+
+
+def _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id, translated_party):
+    """Create and persist new party entities and attempt to register with auth service.
+    Auth fails lead to party entities being rolled back.
+    The context manager commits to sub session.
+    If final commit fails an account will be in auth not party, this circumstance is unlikely but possible
+    """
+    try:
+        with session.begin_nested():
+
+            # Use a sub transaction to store party data
+            # Context manager will manage commits/rollback
+
+            # Create the enrolment respondent-business-survey associations
+
+            respondent = Respondent(**translated_party)
+            br = BusinessRespondent(business=business, respondent=respondent)
+            pending_enrolment = PendingEnrolment(case_id=case_id,
+                                                 respondent=respondent,
+                                                 business_id=business_id,
+                                                 survey_id=survey_id)
+            Enrolment(business_respondent=br,
+                      survey_id=survey_id,
+                      status=EnrolmentStatus.PENDING)
+
+            session.add(respondent)
+            session.add(pending_enrolment)
+
+    except SQLAlchemyError:
+        logger.exception('Party service db post respondent caused exception', party_uuid=translated_party['party_uuid'])
+        raise  # re raise the exception aimed at the generic handler
+    else:
+        # Register user to auth server after successful commit
+        oauth_response = OauthClient().create_account(party['emailAddress'], party['password'])
+        if not oauth_response.status_code == 201:
+            logger.info('Registering respondent auth service responded with', status=oauth_response.status_code,
+                        content=oauth_response.content)
+
+            session.rollback()  # Rollback to SAVEPOINT
+            oauth_response.raise_for_status()
+
+        session.commit()  # Full session commit
+
+    logger.info("New user has been registered via the auth-service")
+    return respondent
 
 
 @with_db_session
@@ -642,7 +677,7 @@ def enrol_respondent_for_survey(respondent, session):
     session.delete(pending_enrolment)
 
 
-def register_user(party, tran):
+def register_user(party):
     oauth_response = OauthClient().create_account(
         party['emailAddress'], party['password'])
     if not oauth_response.status_code == 201:
@@ -650,13 +685,6 @@ def register_user(party, tran):
                     content=oauth_response.content)
         oauth_response.raise_for_status()
 
-    def dummy_compensating_action():
-        # TODO: Undo the user registration.
-
-        logger.info("Placeholder for deleting the user from oauth server")
-
-    # Add a compensating action to try and avoid an exception leaving the user in an invalid state.
-    tran.compensate(dummy_compensating_action)
     logger.info("New user has been registered via the oauth2-service")
 
 

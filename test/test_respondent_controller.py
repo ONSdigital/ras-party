@@ -18,7 +18,6 @@ from ras_party.models.models import Business, BusinessRespondent, Enrolment, Res
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
-from ras_party.support.transactional import transactional
 from ras_party.support.verification import generate_email_token
 from test.mocks import MockRequests, MockResponse
 from test.party_client import PartyTestClient, respondents, businesses, business_respondent_associations, enrolments
@@ -29,6 +28,8 @@ from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID, DEFAULT_SU
 
 
 class TestRespondents(PartyTestClient):
+    """Tests Respondent functionality , use respondent controller and account controller
+    Python file name not changed so as to maintain git history"""
 
     def setUp(self):
         self.mock_requests = MockRequests()
@@ -45,9 +46,8 @@ class TestRespondents(PartyTestClient):
         self.mock_enrolment_disabled = MockEnrolmentDisabled().attributes().as_enrolment()
         self.mock_enrolment_pending = MockEnrolmentPending().attributes().as_enrolment()
 
-    @transactional
     @with_db_session
-    def populate_with_respondent(self, tran, session, respondent=None):
+    def populate_with_respondent(self, session, respondent=None):
         if not respondent:
             respondent = self.mock_respondent
         translated_party = {
@@ -61,7 +61,7 @@ class TestRespondents(PartyTestClient):
         }
         self.respondent = Respondent(**translated_party)
         session.add(self.respondent)
-        account_controller.register_user(respondent, tran)
+        account_controller.register_user(respondent)
         return self.respondent
 
     @with_db_session
@@ -1584,3 +1584,18 @@ class TestRespondents(PartyTestClient):
                                        survey_id=DEFAULT_SURVEY_UUID,
                                        expected_status=200,
                                        expected_result="Invalid")
+
+    def test_account_view_auth_error_calls_rollback(self):
+        # Given the database contains no enrolments
+        self.assertEqual(len(enrolments()), 0)
+        # And there is a business (related to the IAC code case context)
+        self.populate_with_business()
+
+        with patch('ras_party.controllers.account_controller.OauthClient') as auth,\
+                patch('ras_party.controllers.account_controller.logger') as logger:
+            auth().create_account().status_code = 500
+            auth().create_account().content = {}
+
+            # When a new respondent is posted
+            self.post_to_respondents(self.mock_respondent, 200)
+            logger.info.assert_any_call('Registering respondent auth service responded with', content={}, status=500)

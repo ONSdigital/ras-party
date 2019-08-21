@@ -5,7 +5,6 @@ from ras_party.controllers.queries import query_respondent_by_party_uuid, query_
 from ras_party.models.models import BusinessRespondent, Enrolment, Respondent, RespondentStatus
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
-from ras_party.support.transactional import transactional
 from test.mocks import MockRequests
 from test.party_client import PartyTestClient, businesses
 from test.test_data.mock_business import MockBusiness
@@ -27,9 +26,8 @@ class TestParties(PartyTestClient):
         self.mock_enrolment_disabled = MockEnrolmentDisabled().attributes().as_enrolment()
         self.mock_enrolment_pending = MockEnrolmentPending().attributes().as_enrolment()
 
-    @transactional
     @with_db_session
-    def populate_with_respondent(self, tran, session, respondent=None):
+    def populate_with_respondent(self, session, respondent=None):
         if not respondent:
             respondent = self.mock_respondent
         translated_party = {
@@ -43,7 +41,7 @@ class TestParties(PartyTestClient):
         }
         self.respondent = Respondent(**translated_party)
         session.add(self.respondent)
-        account_controller.register_user(respondent, tran)
+        account_controller.register_user(respondent)
         return self.respondent
 
     @with_db_session
