@@ -10,6 +10,11 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def generate_email_token(email):
+    """Creates a token based on a provided email address
+
+    :param email: email address of the respondent
+    :return: A serialised string containing the email address
+    """
     secret_key = current_app.config["SECRET_KEY"]
     email_token_salt = current_app.config["EMAIL_TOKEN_SALT"]
 
@@ -23,10 +28,19 @@ def generate_email_token(email):
     return timed_serializer.dumps(email, salt=email_token_salt)
 
 
-def decode_email_token(token, duration):
-    logger.info('Checking email verification token', token=token)
+def decode_email_token(token, duration=None):
+    """Decodes a token and returns the result
+
+    :param token: A serialised string
+    :param duration: The amount of time in seconds the token is valid for.  If the token is older
+    then this number, an exception will be thrown. Default is None.
+    :return: The contents of the deserialised token
+    """
+    logger.info('Decoding email verification token', token=token)
 
     timed_serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
     email_token_salt = current_app.config["EMAIL_TOKEN_SALT"]
 
-    return timed_serializer.loads(token, salt=email_token_salt, max_age=duration)
+    result = timed_serializer.loads(token, salt=email_token_salt, max_age=duration)
+    logger.info('Successfully decoded email verification token', token=token)
+    return result
