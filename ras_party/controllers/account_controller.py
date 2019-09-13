@@ -357,7 +357,7 @@ def resend_password_email_expired_token(token, session):
     :param session: database session
     :return: response
     """
-    email_address = decode_email_token(token, duration=None)
+    email_address = decode_email_token(token)
     respondent = query_respondent_by_email(email_address, session)
 
     if not respondent:
@@ -521,13 +521,15 @@ def resend_verification_email_by_uuid(party_uuid, session):
     :return: response
 
     """
-    logger.info('Attempting to resend verification_email', party_uuid=party_uuid)
+    logger.info('Attempting to resend verification email', party_uuid=party_uuid)
 
     respondent = query_respondent_by_party_uuid(party_uuid, session)
     if not respondent:
+        logger.info(NO_RESPONDENT_FOR_PARTY_ID, party_uuid=party_uuid)
         raise NotFound(NO_RESPONDENT_FOR_PARTY_ID)
 
     response = _resend_verification_email(respondent)
+    logger.info('Verification email successfully resent', party_uuid=party_uuid)
     return response
 
 
@@ -539,14 +541,16 @@ def resend_verification_email_expired_token(token, session):
     :param session: database session
     :return: response
     """
-    email_address = decode_email_token(token, duration=None)
+    logger.info('Attempting to resend verification email with expired token', token=token)
+    email_address = decode_email_token(token)
     respondent = query_respondent_by_email(email_address, session)
 
     if not respondent:
-        logger.info("Respondent does not exist")
+        logger.info("Respondent does not exist", token=token)
         raise NotFound("Respondent does not exist")
 
     response = _resend_verification_email(respondent)
+    logger.info('Successfully resent verification email with expired token', token=token)
     return response
 
 

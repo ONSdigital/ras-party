@@ -290,5 +290,5 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         response_data = response.get_data().decode("utf-8")
         if expected_result:
-            self.assertEquals(response_data, expected_result)
+            self.assertEqual(response_data, expected_result)
         return response_data
