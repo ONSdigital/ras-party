@@ -8,7 +8,7 @@ lint:
 	pipenv check ./ras_party ./test
 
 test: lint
-	pipenv run tox
+	APP_SETTINGS=TestingConfig pipenv run pytest test --cov ras_party --cov-report term-missing
 
 start:
 	pipenv run python3 run.py

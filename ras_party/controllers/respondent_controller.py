@@ -5,6 +5,7 @@ import structlog
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers.account_controller import change_respondent
+from ras_party.models.models import Enrolment, BusinessRespondent, PendingEnrolment, Respondent
 from ras_party.controllers.queries import query_respondent_by_party_uuid, \
     query_respondent_by_email, update_respondent_details, query_respondent_by_names_and_emails, \
     query_respondent_by_party_uuids
@@ -66,6 +67,37 @@ def get_respondent_by_id(respondent_id, session):
         raise NotFound("Respondent with party id does not exist")
 
     return respondent.to_respondent_dict()
+
+
+@with_db_session
+def delete_respondent_by_id(party_uuid, session):
+    """
+    Delete a Respondent by its Party ID
+    On success it returns None, on failure will raise one of many different exceptions
+    :param party_uuid: Id of Respondent to delete
+    :type party_uuid: str
+    """
+    logger.info("Starting to delete respondent", party_uuid=party_uuid)
+    try:
+        uuid.UUID(party_uuid)
+    except ValueError:
+        logger.info("party_uuid value is not a valid UUID", party_uuid=party_uuid)
+        raise BadRequest(f"'{party_uuid}' is not a valid UUID format for property 'party_uuid'")
+
+    # First, get the respondent, we need to make note of the id, party_uuid and email address.
+    respondent = query_respondent_by_party_uuid(party_uuid, session)
+    if not respondent:
+        logger.info("Respondent with party_uuid does not exist", party_uuid=party_uuid)
+        raise NotFound("Respondent with party_uuid does not exist")
+
+    logger.info("Found respondent", party_uuid=str(respondent.party_uuid), id=respondent.id)
+
+    session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
+    session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
+    session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
+    session.query(Respondent).filter(Respondent.party_uuid == party_uuid).delete()
+
+    logger.info("Deleted user, about to commit", party_uuid=str(respondent.party_uuid), id=respondent.id)
 
 
 @with_db_session
