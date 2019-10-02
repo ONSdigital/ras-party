@@ -84,7 +84,8 @@ def delete_respondent_by_id(party_uuid, session):
         logger.info("party_uuid value is not a valid UUID", party_uuid=party_uuid)
         raise BadRequest(f"'{party_uuid}' is not a valid UUID format for property 'party_uuid'")
 
-    # First, get the respondent, we need to make note of the id, party_uuid and email address.
+    # We need to get the respondent to make sure they exist, but also because the id (not the party_uuid...for
+    # some reason) of the respondent is needed for the later deletion steps.
     respondent = query_respondent_by_party_uuid(party_uuid, session)
     if not respondent:
         logger.info("Respondent with party_uuid does not exist", party_uuid=party_uuid)
