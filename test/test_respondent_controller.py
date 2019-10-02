@@ -1613,8 +1613,6 @@ class TestRespondents(PartyTestClient):
             respondent_controller.delete_respondent_by_id('024ad853-7b74-4297-8f1c-a87bca73c736')
 
     def test_delete_respondent_by_id_sqlalchemyerror_on_commit(self):
-        """If a SQLAlchemyError is raised on commit, verify that rollback is called so the data isn't put into
-        a bad, half deleted state if something goes wrong"""
         with patch("ras_party.controllers.queries.query_respondent_by_party_uuid") as query,\
              patch('ras_party.support.session_decorator.current_app.db') as db:
             query.return_value = {
@@ -1635,8 +1633,6 @@ class TestRespondents(PartyTestClient):
                 db.rollback.assert_called_once()
 
     def test_delete_respondent_by_id_exception_on_commit(self):
-        """If an Exception is raised on commit, verify that rollback is called so the data isn't put into
-        a bad, half deleted state if something goes wrong"""
         with patch("ras_party.controllers.queries.query_respondent_by_party_uuid") as query,\
              patch('ras_party.support.session_decorator.current_app.db') as db:
             query.return_value = {

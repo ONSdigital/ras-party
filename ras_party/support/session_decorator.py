@@ -21,19 +21,19 @@ def handle_session(f, args, kwargs):
         session.commit()
         return result
     except SQLAlchemyError as exc:
-        logger.info(f"Rolling back database session due to {exc.__class__.__name__}",
-                    pool_size=current_app.db.engine.pool.size(),
-                    connections_in_pool=current_app.db.engine.pool.checkedin(),
-                    connections_checked_out=current_app.db.engine.pool.checkedout(),
-                    current_overflow=current_app.db.engine.pool.overflow())
+        logger.exception(f"Rolling back database session due to {exc.__class__.__name__}",
+                         pool_size=current_app.db.engine.pool.size(),
+                         connections_in_pool=current_app.db.engine.pool.checkedin(),
+                         connections_checked_out=current_app.db.engine.pool.checkedout(),
+                         current_overflow=current_app.db.engine.pool.overflow())
         session.rollback()
         raise SQLAlchemyError(f"{exc.__class__.__name__} occurred when committing to database", code=exc.code)
     except Exception:
-        logger.info("Rolling back database session due to uncaught exception",
-                    pool_size=current_app.db.engine.pool.size(),
-                    connections_in_pool=current_app.db.engine.pool.checkedin(),
-                    connections_checked_out=current_app.db.engine.pool.checkedout(),
-                    current_overflow=current_app.db.engine.pool.overflow())
+        logger.exception("Rolling back database session due to uncaught exception",
+                         pool_size=current_app.db.engine.pool.size(),
+                         connections_in_pool=current_app.db.engine.pool.checkedin(),
+                         connections_checked_out=current_app.db.engine.pool.checkedout(),
+                         current_overflow=current_app.db.engine.pool.overflow())
         session.rollback()
         raise
     finally:
