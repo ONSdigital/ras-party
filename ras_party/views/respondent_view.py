@@ -1,7 +1,7 @@
 import logging
-import structlog
 import uuid
 
+import structlog
 from flask import Blueprint, current_app, make_response, jsonify, request
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.exceptions import BadRequest
@@ -79,10 +79,16 @@ def _validate_get_respondent_params(ids, first_name, last_name, email):
                 raise BadRequest(f"'{party_id}' is not a valid UUID format for property 'id'")
 
 
-@respondent_view.route('/respondents/id/<id>', methods=['GET'])
-def get_respondent_by_id(id):
-    response = respondent_controller.get_respondent_by_id(id)
+@respondent_view.route('/respondents/id/<respondent_id>', methods=['GET'])
+def get_respondent_by_id(respondent_id):
+    response = respondent_controller.get_respondent_by_id(respondent_id)
     return jsonify(response)
+
+
+@respondent_view.route('/respondents/id/<party_uuid>', methods=['DELETE'])
+def delete_respondent_by_id(party_uuid):
+    respondent_controller.delete_respondent_by_id(party_uuid)
+    return '', 204
 
 
 @respondent_view.route('/respondents/email', methods=['GET'])

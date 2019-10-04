@@ -58,6 +58,8 @@ To test the service is up:
 curl http://localhost:8081/info
 ```
 
+Note: Acceptance tests can be run to populate a local version with test data
+
 ## Tests
 
 Ensure dev dependencies have been installed
@@ -66,10 +68,10 @@ Ensure dev dependencies have been installed
 pipenv install --dev
 ```
 
-Run tests with tox
+Run tests with makefile
 
 ```bash
-pipenv run tox
+make test
 ```
 
 ## Database
@@ -78,5 +80,4 @@ The database will automatically be created when starting the application
 Alembic is used for database migrations
 See [README.md](https://github.com/ONSdigital/ras-party/blob/master/migrations/README.md) for alembic documentation
 
-[Confluence]: https://digitaleq.atlassian.net/wiki/display/RASB/Party
-[tox]: https://tox.readthedocs.io/en/latest/
+See [Confluence](https://digitaleq.atlassian.net/wiki/display/RASB/Party) for additional information.
