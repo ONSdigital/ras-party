@@ -85,18 +85,28 @@ def get_respondent_by_id(respondent_id):
     return jsonify(response)
 
 
-@respondent_view.route('/respondents/id/<party_uuid>', methods=['DELETE'])
-def delete_respondent_by_id(party_uuid):
-    respondent_controller.delete_respondent_by_id(party_uuid)
-    return '', 204
-
-
 @respondent_view.route('/respondents/email', methods=['GET'])
 def get_respondent_by_email():
     payload = request.get_json()
     email = payload['email']
     response = respondent_controller.get_respondent_by_email(email)
     return jsonify(response)
+
+
+@respondent_view.route('/respondents/email', methods=['DELETE'])
+def delete_respondent_by_email():
+    try:
+        email = request.get_json()['email']
+    except TypeError:
+        raise BadRequest('JSON payload not provided')
+    except KeyError:
+        raise BadRequest("Email key must be provided in the JSON payload")
+
+    if not email:
+        raise BadRequest("Email cannot be empty")
+
+    respondent_controller.delete_respondent_by_email(email)
+    return '', 204
 
 
 @respondent_view.route('/respondents/id/<respondent_id>', methods=['PUT'])

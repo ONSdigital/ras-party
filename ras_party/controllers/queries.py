@@ -98,11 +98,22 @@ def query_respondent_by_party_uuid(party_uuid, session):
 def query_respondent_by_email(email, session):
     """
     Query to return respondent based on email
-    :param email: the party uuid
+    :param email: the party email
     :return: respondent or none
     """
     logger.info('Querying respondents by email')
     return session.query(Respondent).filter(func.lower(Respondent.email_address) == email.lower()).first()
+
+
+def query_single_respondent_by_email(email, session):
+    """
+    Query to return respondent based on email.  Must only return 1 result, otherwise it will throw either
+    a NoResultFound or MultipleResultsFound exceptions.
+    :param email: the party email
+    :return: single respondent or exception thrown
+    """
+    logger.info('Querying respondents by email, expecting exactly one result')
+    return session.query(Respondent).filter(func.lower(Respondent.email_address) == email.lower()).one()
 
 
 def query_respondent_by_pending_email(email, session):

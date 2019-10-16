@@ -58,3 +58,13 @@ def flatten_keys(d, prefix=None):
 def build_url(template, config, *args):
     url = template.format(config['scheme'], config['host'], config['port'], *args)
     return url
+
+
+def obfuscate_email(email):
+    """Takes an email address and returns an obfuscated version of it.
+    For example: test@example.com would turn into t**t@e*********m
+    """
+    m = email.split('@')
+    prefix = f'{m[0][0]}{"*"*(len(m[0])-2)}{m[0][-1]}'
+    domain = f'{m[1][0]}{"*"*(len(m[1])-2)}{m[1][-1]}'
+    return f'{prefix}@{domain}'

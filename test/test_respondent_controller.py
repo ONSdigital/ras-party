@@ -1601,19 +1601,13 @@ class TestRespondents(PartyTestClient):
             self.post_to_respondents(self.mock_respondent, 200)
             logger.info.assert_any_call('Registering respondent auth service responded with', content={}, status=500)
 
-    def test_delete_respondent_by_id_invalid_uuid(self):
-        """A BadRequest exception should be raised if an invalid uuid is provided"""
-        with self.assertRaises(BadRequest):
-            respondent_controller.delete_respondent_by_id('not-a-uuid')
-
-    def test_delete_respondent_by_id_user_does_not_exist(self):
+    def test_delete_respondent_by_email_user_does_not_exist(self):
         """A NotFound exception should be raised if the user can't be found"""
         with self.assertRaises(NotFound):
-            # Random uuid, not going to come back with anything
-            respondent_controller.delete_respondent_by_id('024ad853-7b74-4297-8f1c-a87bca73c736')
+            respondent_controller.delete_respondent_by_email('does-not-exist@blah.com')
 
-    def test_delete_respondent_by_id_sqlalchemyerror_on_commit(self):
-        with patch("ras_party.controllers.queries.query_respondent_by_party_uuid") as query,\
+    def test_delete_respondent_by_email_sqlalchemyerror_on_commit(self):
+        with patch("ras_party.controllers.queries.query_single_respondent_by_email") as query,\
              patch('ras_party.support.session_decorator.current_app.db') as db:
             query.return_value = {
                 'party_uuid': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
@@ -1629,11 +1623,11 @@ class TestRespondents(PartyTestClient):
             # will raise a SQLAlchemyError.  The setup looks weird but none of the other varients seemed to work.
             db.configure_mock(**{'session.return_value': MagicMock(**{'commit.side_effect': SQLAlchemyError})})
             with self.assertRaises(SQLAlchemyError):
-                respondent_controller.delete_respondent_by_id('438df969-7c9c-4cd4-a89b-ac88cf0bfdf3')
+                respondent_controller.delete_respondent_by_email('user@domain.com')
                 db.rollback.assert_called_once()
 
-    def test_delete_respondent_by_id_exception_on_commit(self):
-        with patch("ras_party.controllers.queries.query_respondent_by_party_uuid") as query,\
+    def test_delete_respondent_by_email_exception_on_commit(self):
+        with patch("ras_party.controllers.queries.query_single_respondent_by_email") as query,\
              patch('ras_party.support.session_decorator.current_app.db') as db:
             query.return_value = {
                 'party_uuid': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
@@ -1649,5 +1643,5 @@ class TestRespondents(PartyTestClient):
             # will raise an Exception.  The setup looks weird but none of the other varients seemed to work.
             db.configure_mock(**{'session.return_value': MagicMock(**{'commit.side_effect': Exception})})
             with self.assertRaises(Exception):
-                respondent_controller.delete_respondent_by_id('438df969-7c9c-4cd4-a89b-ac88cf0bfdf3')
+                respondent_controller.delete_respondent_by_email('user@domain.com')
                 db.rollback.assert_called_once()

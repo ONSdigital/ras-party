@@ -2,14 +2,16 @@ import logging
 import uuid
 
 import structlog
-from werkzeug.exceptions import BadRequest, NotFound
+from werkzeug.exceptions import BadRequest, NotFound, UnprocessableEntity
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from ras_party.controllers.account_controller import change_respondent
 from ras_party.models.models import Enrolment, BusinessRespondent, PendingEnrolment, Respondent
 from ras_party.controllers.queries import query_respondent_by_party_uuid, \
     query_respondent_by_email, update_respondent_details, query_respondent_by_names_and_emails, \
-    query_respondent_by_party_uuids
+    query_respondent_by_party_uuids, query_single_respondent_by_email
 from ras_party.support.session_decorator import with_db_session
+from ras_party.support.util import obfuscate_email
 
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -70,35 +72,40 @@ def get_respondent_by_id(respondent_id, session):
 
 
 @with_db_session
-def delete_respondent_by_id(party_uuid, session):
+def delete_respondent_by_email(email, session):
     """
-    Delete a Respondent by its Party ID
+    Delete a Respondent by its email
     On success it returns None, on failure will raise one of many different exceptions
-    :param party_uuid: Id of Respondent to delete
-    :type party_uuid: str
+    :param email: Id of Respondent to delete
+    :type email: str
     """
-    logger.info("Starting to delete respondent", party_uuid=party_uuid)
-    try:
-        uuid.UUID(party_uuid)
-    except ValueError:
-        logger.info("party_uuid value is not a valid UUID", party_uuid=party_uuid)
-        raise BadRequest(f"'{party_uuid}' is not a valid UUID format for property 'party_uuid'")
+    logger.info("Starting to delete respondent", email=obfuscate_email(email))
 
     # We need to get the respondent to make sure they exist, but also because the id (not the party_uuid...for
     # some reason) of the respondent is needed for the later deletion steps.
-    respondent = query_respondent_by_party_uuid(party_uuid, session)
-    if not respondent:
-        logger.info("Respondent with party_uuid does not exist", party_uuid=party_uuid)
-        raise NotFound("Respondent with party_uuid does not exist")
+    try:
+        respondent = query_single_respondent_by_email(email, session)
+    except NoResultFound:
+        logger.error("Respondent with email does not exist", email=obfuscate_email(email))
+        raise NotFound("Respondent with email does not exist")
+    except MultipleResultsFound:
+        logger.error("Multiple respondents found for email", email=obfuscate_email(email))
+        raise UnprocessableEntity("Multiple users found, unable to proceed")
 
-    logger.info("Found respondent", party_uuid=str(respondent.party_uuid), id=respondent.id)
+    logger.info("Found respondent",
+                email=obfuscate_email(respondent.email_address),
+                party_uuid=respondent.party_uuid,
+                id=respondent.id)
 
     session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
     session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
     session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
-    session.query(Respondent).filter(Respondent.party_uuid == party_uuid).delete()
+    session.query(Respondent).filter(Respondent.email_address == email).delete()
 
-    logger.info("Deleted user, about to commit", party_uuid=str(respondent.party_uuid), id=respondent.id)
+    logger.info("Deleted user, about to commit",
+                email=obfuscate_email(email),
+                party_uuid=str(respondent.party_uuid),
+                id=respondent.id)
 
 
 @with_db_session
