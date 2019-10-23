@@ -349,16 +349,19 @@ def request_password_change(payload, session):
     return {'response': "Ok"}
 
 
-@with_db_session
-def resend_password_email_expired_token(token, session):
+def resend_password_email_expired_token(token):
     """
     Check and resend an email verification email using the expired token
     :param token: the expired token
-    :param session: database session
+
     :return: response
     """
+    session = current_app.db.session()
     email_address = decode_email_token(token)
-    respondent = query_respondent_by_email(email_address, session)
+    try:
+        respondent = query_respondent_by_email(email_address, session)
+    except SQLAlchemyError as e:
+        logger.exception("Error occured whilst searching for respondent by email", code=e.code)
 
     if not respondent:
         logger.info("Respondent does not exist")
