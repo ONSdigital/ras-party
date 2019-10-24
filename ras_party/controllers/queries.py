@@ -159,9 +159,9 @@ def update_respondent_details(respondent_data, respondent_id, session):
             respondent_data['lastName'] or respondent_details.telephone != respondent_data['telephone']:
 
         session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update({
-                                         Respondent.first_name: respondent_data['firstName'],
-                                         Respondent.last_name: respondent_data['lastName'],
-                                         Respondent.telephone: respondent_data['telephone']})
+            Respondent.first_name: respondent_data['firstName'],
+            Respondent.last_name: respondent_data['lastName'],
+            Respondent.telephone: respondent_data['telephone']})
 
         return True
     return False
@@ -181,14 +181,14 @@ def search_businesses(search_query, session):
     key_words = search_query.split()
 
     for word in key_words:
-        name_filters.append(BusinessAttributes.attributes['name'].astext.ilike(f'%{word}%'))
-        trading_as_filters.append(BusinessAttributes.attributes['trading_as'].astext.ilike(f'%{word}%'))
+        name_filters.append(BusinessAttributes.name.astext.ilike(f'%{word}%'))
+        trading_as_filters.append(BusinessAttributes.trading_as.astext.ilike(f'%{word}%'))
 
     filters.append(Business.business_ref.ilike(f'%{search_query}%'))
     filters.append(and_(*name_filters))
     filters.append(and_(*trading_as_filters))
 
-    return session.query(BusinessAttributes.attributes['name'], BusinessAttributes.attributes['trading_as'],
+    return session.query(BusinessAttributes.name, BusinessAttributes.trading_as,
                          Business.business_ref)\
         .join(Business)\
         .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None)))\

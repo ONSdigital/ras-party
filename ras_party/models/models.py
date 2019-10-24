@@ -165,11 +165,15 @@ class BusinessAttributes(Base):
     __tablename__ = 'business_attributes'
 
     id = Column("id", Integer(), primary_key=True)
+    name = Column(Text)
+    trading_as = Column(Text)
     business_id = Column(GUID, ForeignKey('business.party_uuid'))
     sample_summary_id = Column(Text)
     collection_exercise = Column(Text)
     attributes = Column(JSONB)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
+    Index('attributes_namex', name)
+    Index('attributes_trading_asx', trading_as)
     Index('attributes_business_idx', business_id)
     Index('attributes_sample_summary_idx', sample_summary_id)
     Index('attributes_business_sample_idx', business_id, sample_summary_id)
