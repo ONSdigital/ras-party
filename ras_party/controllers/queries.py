@@ -174,22 +174,13 @@ def search_businesses(search_query, session):
     :return: list of businesses
     """
     logger.info('Searching businesses by name with search query', search_query=search_query)
-    filters = list()
-    name_filters = list()
-    trading_as_filters = list()
+    filters = []
 
-    key_words = search_query.split()
+    filters.append(Business.business_ref.like(f'%{search_query}%'))
+    filters.append(BusinessAttributes.name.ilike(f'%{search_query}%'))
+    filters.append(BusinessAttributes.trading_as.ilike(f'%{search_query}%'))
 
-    for word in key_words:
-        name_filters.append(BusinessAttributes.name.astext.ilike(f'%{word}%'))
-        trading_as_filters.append(BusinessAttributes.trading_as.astext.ilike(f'%{word}%'))
-
-    filters.append(Business.business_ref.ilike(f'%{search_query}%'))
-    filters.append(and_(*name_filters))
-    filters.append(and_(*trading_as_filters))
-
-    return session.query(BusinessAttributes.name, BusinessAttributes.trading_as,
-                         Business.business_ref)\
+    return session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
         .join(Business)\
         .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None)))\
         .distinct().all()
