@@ -104,6 +104,9 @@ class Business(Base):
         trading_as = '{tradstyle1} {tradstyle2} {tradstyle3}'.format(**ba.attributes)
         ba.attributes['trading_as'] = ' '.join(trading_as.split())
         self.attributes.append(ba)
+        ba.name = name
+        ba.trading_as = trading_as
+
 
     def to_business_dict(self, collection_exercise_id=None):
         d = self.to_business_summary_dict()
