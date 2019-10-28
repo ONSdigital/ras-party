@@ -10,7 +10,7 @@ from ras_party.models.models import Enrolment, BusinessRespondent, PendingEnrolm
 from ras_party.controllers.queries import query_respondent_by_party_uuid, \
     query_respondent_by_email, update_respondent_details, query_respondent_by_names_and_emails, \
     query_respondent_by_party_uuids, query_single_respondent_by_email
-from ras_party.support.session_decorator import with_db_session
+from ras_party.support.session_decorator import with_db_session, with_query_only_db_session
 from ras_party.support.util import obfuscate_email
 
 
@@ -108,7 +108,7 @@ def delete_respondent_by_email(email, session):
                 id=respondent.id)
 
 
-@with_db_session
+@with_query_only_db_session
 def get_respondent_by_email(email, session):
     """
     Get a verified respondent by its email address.
