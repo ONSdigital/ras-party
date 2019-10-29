@@ -19,17 +19,17 @@ try:
     connection = psycopg2.connect(Config.DATABASE_URI)
     cursor = connection.cursor()
     start = datetime.now()
-    for x in range(10):
+    for x in range(20000):
         name = random_char(10)
         trading_as = random_char(10)
         business_id = uuid.uuid4()
         business_insert_query = f"""INSERT INTO partysvc.business(party_uuid, business_ref, created_on)VALUES('{business_id}', '{random.randint(10000000000, 99999999999)}', '{datetime.now()}');"""
-        firstba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"thing": "abc"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
-        secondba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"thing": "abc"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
-        thirdba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"thing": "abc"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
-        fourthba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"thing": "abc"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
-        fifthba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"thing": "abc"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
-
+        firstba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"name": "{name}", "trading_as": "{trading_as}"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
+        secondba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"name": "{name}", "trading_as": "{trading_as}"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
+        thirdba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"name": "{name}", "trading_as": "{trading_as}"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
+        fourthba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"name": "{name}", "trading_as": "{trading_as}"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
+        fifthba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"name": "{name}", "trading_as": "{trading_as}"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
+        print(firstba_insert_query)
         print(f"Inserting {business_id}, which is {x}")
         cursor.execute(business_insert_query)
         cursor.execute(firstba_insert_query)
