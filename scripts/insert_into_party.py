@@ -29,7 +29,6 @@ try:
         thirdba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"thing": "abc"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
         fourthba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"thing": "abc"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
         fifthba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"thing": "abc"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
-        sixthba_insert_query = f"""INSERT INTO partysvc.business_attributes(business_id, sample_summary_id, collection_exercise, "attributes", created_on, "name", trading_as) VALUES('{business_id}', '{uuid.uuid4()}', '{uuid.uuid4()}', '{{"thing": "abc"}}', '{datetime.now()}', '{name}', '{trading_as}');"""
 
         print(f"Inserting {business_id}, which is {x}")
         cursor.execute(business_insert_query)
@@ -38,7 +37,6 @@ try:
         cursor.execute(thirdba_insert_query)
         cursor.execute(fourthba_insert_query)
         cursor.execute(fifthba_insert_query)
-        cursor.execute(sixthba_insert_query)
 
     end = datetime.now()
     print(f"started at: {start}")
