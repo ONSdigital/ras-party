@@ -174,6 +174,14 @@ def search_businesses(search_query, session):
     :return: list of businesses
     """
     logger.info('Searching businesses by name with search query', search_query=search_query)
+    if len(search_query) == 11 and search_query.isdigit():
+        logger.info("Query looks like an ru_ref, searching only on ru_ref", search_query=search_query)
+        result = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
+        .join(Business).filter(Business.business_ref == search_query).distinct().all()
+        if result:
+            return result
+        logger.info("Didn't find an ru_ref, seraching everything", search_query=search_query)
+
     filters = []
 
     filters.append(Business.business_ref.like(f'%{search_query}%'))
