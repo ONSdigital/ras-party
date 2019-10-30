@@ -183,19 +183,10 @@ def search_businesses(search_query, session):
         logger.info("Didn't find an ru_ref, seraching everything", search_query=search_query)
 
     filters = []
-    name_filters = []
-    trading_as_filters = []
 
     filters.append(Business.business_ref.like(f'%{search_query}%'))
-
-    key_words = search_query.split()
-
-    for word in key_words:
-        name_filters.append(BusinessAttributes.name.ilike(f'%{word}%'))
-        trading_as_filters.append(BusinessAttributes.trading_as.ilike(f'%{word}%'))
-
-    filters.append(and_(*name_filters))
-    filters.append(and_(*trading_as_filters))
+    filters.append(BusinessAttributes.name.like(f'{search_query.replace(" ", "%")}'))
+    filters.append(BusinessAttributes.trading_as.like(f'%{search_query.replace(" ", "%")}%'))
 
     return session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
         .join(Business)\
