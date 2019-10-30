@@ -113,7 +113,7 @@ class TestBusinessesSearch(PartyTestClient):
 
         # when user searches by multiple key words in name
         response = self.get_businesses_search(query_string={"query": f"{business['attributes']['runame1']}"
-                                                                     f" {business['attributes']['runame2']}"})
+                                                                     f" {business['attributes']['runame3']}"})
 
         # then the correct business is returned
         self.assertEqual(len(response), 1)

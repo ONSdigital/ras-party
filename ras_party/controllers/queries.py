@@ -177,16 +177,25 @@ def search_businesses(search_query, session):
     if len(search_query) == 11 and search_query.isdigit():
         logger.info("Query looks like an ru_ref, searching only on ru_ref", search_query=search_query)
         result = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
-        .join(Business).filter(Business.business_ref == search_query).distinct().all()
+            .join(Business).filter(Business.business_ref == search_query).distinct().all()
         if result:
             return result
         logger.info("Didn't find an ru_ref, seraching everything", search_query=search_query)
 
     filters = []
+    name_filters = []
+    trading_as_filters = []
 
     filters.append(Business.business_ref.like(f'%{search_query}%'))
-    filters.append(BusinessAttributes.name.ilike(f'%{search_query}%'))
-    filters.append(BusinessAttributes.trading_as.ilike(f'%{search_query}%'))
+
+    key_words = search_query.split()
+
+    for word in key_words:
+        name_filters.append(BusinessAttributes.name.ilike(f'%{word}%'))
+        trading_as_filters.append(BusinessAttributes.trading_as.ilike(f'%{word}%'))
+
+    filters.append(and_(*name_filters))
+    filters.append(and_(*trading_as_filters))
 
     return session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
         .join(Business)\
