@@ -24,7 +24,6 @@
                 "frotover": {"type": "integer"},
                 "inclexcl": {"type": "string"},
                 "legalstatus": {"type": "string"},
-                "name": {"type": "string"},
                 "region": {"type": "string"},
                 "runame1": {"type": "string"},
                 "runame2": {"type": "string"},
@@ -32,7 +31,6 @@
                 "rusic2007": {"type": "string"},
                 "rusic92": {"type": "string"},
                 "seltype": {"type": "string"},
-                "trading_as": {"type": "string"},
                 "tradstyle1": {"type": "string"},
                 "cell_no": {"type": "integer"}
             },
