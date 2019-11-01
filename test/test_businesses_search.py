@@ -1,8 +1,9 @@
+import copy
 from ras_party.support.requests_wrapper import Requests
 
 from test.mocks import MockRequests
 from test.party_client import PartyTestClient
-from test.test_data.mock_business import MockBusiness
+from test.test_data.mock_business import MockBusiness, DEFAULT_ATTRIBUTES
 
 
 class TestBusinessesSearch(PartyTestClient):
@@ -145,6 +146,50 @@ class TestBusinessesSearch(PartyTestClient):
         self.assertIn(name_2, names)
         self.assertIn(name_3, names)
 
+    def test_business_search_gives_correct_number_per_page(self):
+        self._set_up_businesses(count=20)
+        for limit in [2, 10, 15, 20]:
+            with self.subTest(limit=limit):
+                response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=1, limit=limit)
+                self.assertEqual(len(response), limit)
+
+    def test_business_search_gets_correct_page_and_ordered_by_name(self):
+        self._set_up_businesses(count=10)
+
+        response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=2, limit=5)
+        self.assertIn("5-", response[0]['name'])
+        self.assertIn("6-", response[1]['name'])
+        self.assertIn("7-", response[2]['name'])
+        self.assertIn("8-", response[3]['name'])
+        self.assertIn("9-", response[4]['name'])
+
+    def test_business_search_gets_partial_page_if_result_count_less_than_limit(self):
+        self._set_up_businesses(count=5)
+
+        response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=1, limit=10)
+        self.assertEqual(len(response), 5)
+
+    def test_business_search_returns_partial_page_if_last_page_not_full(self):
+        self._set_up_businesses(count=25)
+
+        response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=3, limit=10)
+        self.assertEqual(len(response), 5)
+
+    def test_business_search_returns_empty_list_if_no_reults(self):
+        response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=3, limit=10)
+        self.assertEqual(len(response), 0)
+
+    def test_business_search_returns_empty_list_if_page_too_high(self):
+        self._set_up_businesses(count=10)
+
+        response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=3, limit=10)
+        self.assertEqual(len(response), 0)
+
+    def test_business_search_with_no_pagination_parameters_uses_default_params(self):
+        self._set_up_businesses(count=102)
+        response = self.get_businesses_search(200, query_string={"query": "Runame-1"})
+        self.assertEqual(len(response), 100)
+
     def test_get_business_by_search_inactive_business_attributes(self):
         mock_business = MockBusiness() \
             .attributes(source='test_get_business_by_search_partial_ru') \
@@ -158,3 +203,23 @@ class TestBusinessesSearch(PartyTestClient):
 
         # then no businesses returned
         self.assertEqual(len(response), 0)
+
+    def _set_up_businesses(self, count):
+        """set up multiple businesses with unique ru refs and names and trading as starting in <n>-"""
+        for i in range(count):
+            attribs = copy.deepcopy(DEFAULT_ATTRIBUTES)
+            attribs["runame1"] = f"{i}-Runame-1"
+            attribs["runame2"] = f"{i}-Runame-2"
+            attribs["runame3"] = f"{i}-Runame-3"
+            attribs["name"] = f'{attribs["runame1"]} {attribs["runame2"]} {attribs["runame3"]}'
+
+            attribs["tradstyle1"] = f"{i}-Tradstyle-1"
+            attribs["tradstyle2"] = f"{i}-Tradstyle-2"
+            attribs["tradstyle3"] = f"{i}-Tradstyle-3"
+            attribs["name"] = f'{attribs["tradstyle1"]} {attribs["tradstyle2"]} {attribs["tradstyle3"]}'
+
+            mock_business = MockBusiness(attribs) \
+                .as_business()
+
+            self.post_to_businesses(mock_business, 200)
+            self._make_business_attributes_active(mock_business)

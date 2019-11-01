@@ -167,10 +167,12 @@ def update_respondent_details(respondent_data, respondent_id, session):
     return False
 
 
-def search_businesses(search_query, session):
+def search_businesses(search_query, page, limit, session):
     """
     Query to return list of businesses based on search query
     :param search_query: the search query
+    :param page: page to return starting at 1
+    :param limit: the maximum number of results to return in a page
     :return: list of businesses
     """
     logger.info('Searching businesses by name with search query', search_query=search_query)
@@ -197,10 +199,11 @@ def search_businesses(search_query, session):
     filters.append(and_(*name_filters))
     filters.append(and_(*trading_as_filters))
 
-    return session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
+    query = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
         .join(Business)\
         .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None)))\
-        .distinct().all()
+        .distinct().order_by(BusinessAttributes.name).limit(limit).offset((page-1)*limit)    # Build the query
+    return query.all()  # Execute the query
 
 
 def query_enrolment_by_survey_business_respondent(respondent_id, business_id, survey_id, session):
