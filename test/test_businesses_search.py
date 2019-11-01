@@ -216,7 +216,7 @@ class TestBusinessesSearch(PartyTestClient):
             attribs["tradstyle1"] = f"{i}-Tradstyle-1"
             attribs["tradstyle2"] = f"{i}-Tradstyle-2"
             attribs["tradstyle3"] = f"{i}-Tradstyle-3"
-            attribs["name"] = f'{attribs["tradstyle1"]} {attribs["tradstyle2"]} {attribs["tradstyle3"]}'
+            attribs["trading_as"] = f'{attribs["tradstyle1"]} {attribs["tradstyle2"]} {attribs["tradstyle3"]}'
 
             mock_business = MockBusiness(attribs) \
                 .as_business()
