@@ -7,7 +7,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 from ras_party.controllers.queries import query_business_by_party_uuid, query_business_by_ref
 from ras_party.controllers.queries import query_respondent_by_party_uuid
 from ras_party.models.models import Business, Respondent
-from ras_party.support.session_decorator import with_db_session
+from ras_party.support.session_decorator import with_db_session, with_query_only_db_session
 
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -41,7 +41,7 @@ def parties_post(party_data, session):
     return business.to_post_response_dict()
 
 
-@with_db_session
+@with_query_only_db_session
 def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
     """
     Get a Party by its unique reference (ruref / uprn)
@@ -62,18 +62,26 @@ def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
     return business.to_party_dict()
 
 
-@with_db_session
-def get_party_by_id(sample_unit_type, id, session):
+@with_query_only_db_session
+def get_party_by_id(sample_unit_type, party_id, session):
+    """
+    Get a party by its party_id.  Need to provide the type of party, otherwise it will
+    return a BadRequest
+    :param sample_unit_type: Type of the party
+    :param party_id: uuid identifier of the party
+    :raises BadRequest: Raised if the sample_unit_type isnt' recognised
+    :raises NotFound: Raised if the party_id doesn't match one in the database
+    """
     if sample_unit_type == Business.UNIT_TYPE:
-        business = query_business_by_party_uuid(id, session)
+        business = query_business_by_party_uuid(party_id, session)
         if not business:
-            logger.info("Business with id does not exist", business_id=id, status=404)
+            logger.info("Business with id does not exist", business_id=party_id, status=404)
             raise NotFound("Business with id does not exist")
         return business.to_party_dict()
     elif sample_unit_type == Respondent.UNIT_TYPE:
-        respondent = query_respondent_by_party_uuid(id, session)
+        respondent = query_respondent_by_party_uuid(party_id, session)
         if not respondent:
-            logger.info("Respondent with id does not exist", respondent_id=id, status=404)
+            logger.info("Respondent with id does not exist", respondent_id=party_id, status=404)
             raise NotFound("Respondent with id does not exist")
         return respondent.to_party_dict()
     else:
