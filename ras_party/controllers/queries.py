@@ -173,14 +173,15 @@ def search_businesses(search_query, session):
     :param search_query: the search query
     :return: list of businesses
     """
-    logger.info('Searching businesses by name with search query', search_query=search_query)
+    bound_logger = logger.bind(search_query=search_query)
+    bound_logger.info('Searching businesses by name with search query')
     if len(search_query) == 11 and search_query.isdigit():
-        logger.info("Query looks like an ru_ref, searching only on ru_ref", search_query=search_query)
+        bound_logger.info("Query looks like an ru_ref, searching only on ru_ref")
         result = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
             .join(Business).filter(Business.business_ref == search_query).distinct().all()
         if result:
             return result
-        logger.info("Didn't find an ru_ref, seraching everything", search_query=search_query)
+        bound_logger.info("Didn't find an ru_ref, seraching everything")
 
     filters = []
     name_filters = []
@@ -197,6 +198,7 @@ def search_businesses(search_query, session):
     filters.append(and_(*name_filters))
     filters.append(and_(*trading_as_filters))
 
+    bound_logger.unbind('search_query')
     return session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
         .join(Business)\
         .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None)))\
