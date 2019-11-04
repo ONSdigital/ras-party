@@ -68,13 +68,28 @@ class Business(Base):
         b = Business(party_uuid=party.get('id', uuid.uuid4()), business_ref=party['sampleUnitRef'])
         ba = BusinessAttributes(business_id=b.party_uuid, sample_summary_id=party['sampleSummaryId'])
         ba.attributes = party.get('attributes')
+        Business._populate_name_and_trading_as(ba)
+
+        b.attributes.append(ba)
+        b.valid = True
+        return b
+
+    def add_versioned_attributes(self, party):
+        ba = BusinessAttributes(business_id=self.party_uuid,
+                                sample_summary_id=party['sampleSummaryId'])
+        ba.attributes = party.get('attributes')
+        self._populate_name_and_trading_as(ba)
+
+        self.attributes.append(ba)
+
+    @staticmethod
+    def _populate_name_and_trading_as(ba):
         name = '{runame1} {runame2} {runame3}'.format(**ba.attributes)
         trading_as = '{tradstyle1} {tradstyle2} {tradstyle3}'.format(**ba.attributes)
         ba.attributes['name'] = ' '.join(name.split())
         ba.attributes['trading_as'] = ' '.join(trading_as.split())
-        b.attributes.append(ba)
-        b.valid = True
-        return b
+        ba.name = name
+        ba.trading_as = trading_as
 
     @staticmethod
     def _get_respondents_associations(respondents):
@@ -94,16 +109,6 @@ class Business(Base):
                 respondent_dict['enrolments'].append(enrolments_dict)
             associations.append(respondent_dict)
         return associations
-
-    def add_versioned_attributes(self, party):
-        ba = BusinessAttributes(business_id=self.party_uuid,
-                                sample_summary_id=party['sampleSummaryId'])
-        ba.attributes = party.get('attributes')
-        name = '{runame1} {runame2} {runame3}'.format(**ba.attributes)
-        ba.attributes['name'] = ' '.join(name.split())
-        trading_as = '{tradstyle1} {tradstyle2} {tradstyle3}'.format(**ba.attributes)
-        ba.attributes['trading_as'] = ' '.join(trading_as.split())
-        self.attributes.append(ba)
 
     def to_business_dict(self, collection_exercise_id=None):
         d = self.to_business_summary_dict()
@@ -143,8 +148,8 @@ class Business(Base):
             'sampleUnitType': self.UNIT_TYPE,
             'sampleSummaryId': self.attributes[-1].sample_summary_id,
             'attributes': self.attributes[-1].attributes,
-            'name': self.attributes[-1].attributes.get('name'),
-            'trading_as': self.attributes[-1].attributes.get('trading_as'),
+            'name': self.attributes[-1].name,
+            'trading_as': self.attributes[-1].trading_as,
             'associations': self._get_respondents_associations(self.respondents)
         }
 
@@ -170,6 +175,10 @@ class BusinessAttributes(Base):
     collection_exercise = Column(Text)
     attributes = Column(JSONB)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
+    name = Column(Text)   # New columns placed at end of list in case code uses positional rather than named references
+    trading_as = Column(Text)
+    Index('attributes_name_idx', name)
+    Index('attributes_trading_as_idx', trading_as)
     Index('attributes_business_idx', business_id)
     Index('attributes_sample_summary_idx', sample_summary_id)
     Index('attributes_business_sample_idx', business_id, sample_summary_id)
