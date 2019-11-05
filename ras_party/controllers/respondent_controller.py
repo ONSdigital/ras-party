@@ -17,7 +17,7 @@ from ras_party.support.util import obfuscate_email
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
-@with_db_session
+@with_query_only_db_session
 def get_respondent_by_ids(ids, session):
     """
     Get respondents by Party IDs, if an id doesn't exist then nothing is return for that id.
@@ -31,7 +31,7 @@ def get_respondent_by_ids(ids, session):
     return [respondent.to_respondent_dict() for respondent in respondents]
 
 
-@with_db_session
+@with_query_only_db_session
 def get_respondents_by_name_and_email(first_name, last_name, email, page, limit, session):
     """
     Get respondents that match the provided parameters
@@ -47,7 +47,7 @@ def get_respondents_by_name_and_email(first_name, last_name, email, page, limit,
     return {'data': [respondent.to_respondent_dict() for respondent in respondents], 'total': record_count}
 
 
-@with_db_session
+@with_query_only_db_session
 def get_respondent_by_id(respondent_id, session):
     """
     Get a Respondent by its Party ID
