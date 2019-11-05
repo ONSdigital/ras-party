@@ -115,7 +115,7 @@ class TestBusinessesSearch(PartyTestClient):
         response = self.get_businesses_search(query_string={"query": f"{business['attributes']['runame1']}"
                                                                      f" {business['attributes']['runame3']}"})
 
-        # then th correct business is returned
+        # then the correct business is returned
         self.assertEqual(len(response), 1)
         self.assertEqual(response[0]['ruref'], business['sampleUnitRef'])
         self.assertEqual(response[0]['name'], business['name'])
