@@ -235,7 +235,7 @@ def verify_token(token, session):
         logger.info("Expired email verification token")
         raise Conflict("Expired email verification token")
     except (BadSignature, BadData):
-        logger.exception("Bad token")
+        logger.exception("Bad token in verify_token")
         raise NotFound("Unknown email verification token")
 
     respondent = query_respondent_by_email(email_address, session)
@@ -258,7 +258,7 @@ def change_respondent_password(token, payload, tran, session):
         logger.info("Expired email verification token")
         raise Conflict("Expired email verification token")
     except (BadSignature, BadData):
-        logger.exception("Bad token")
+        logger.exception("Bad token in change_respondent_password")
         raise NotFound("Unknown email verification token")
 
     respondent = query_respondent_by_email(email_address, session)
@@ -442,7 +442,7 @@ def put_email_verification(token, tran, session):
         logger.info("Expired email verification token")
         raise Conflict("Expired email verification token")
     except (BadSignature, BadData):
-        logger.exception("Bad token")
+        logger.exception("Bad token in put_email_verification")
         raise NotFound("Unknown email verification token")
 
     respondent = query_respondent_by_email(email_address, session)
