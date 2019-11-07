@@ -16,7 +16,7 @@ def _is_true(value):
 
 
 class Config(object):
-    VERSION = '1.9.1'
+    VERSION = '1.10.0'
     SCHEME = os.getenv('http')
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = os.getenv('PORT', 8081)
@@ -36,7 +36,7 @@ class Config(object):
         DATABASE_URI = cf.db.credentials['uri']
     else:
         DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'partysvc')
-        DATABASE_URI = os.getenv('DATABASE_URI', "postgresql://postgres:postgres@localhost:6432/postgres")
+        DATABASE_URI = os.getenv('DATABASE_URI', "postgresql://postgres:postgres@localhost:7432/postgres")
 
     # Zipkin
     ZIPKIN_DISABLE = bool(strtobool(os.getenv("ZIPKIN_DISABLE", "False")))

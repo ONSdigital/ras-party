@@ -9,13 +9,13 @@ from ras_party.controllers.queries import query_business_by_ref, query_business_
     query_businesses_by_party_uuids, search_businesses
 from ras_party.controllers.validate import Validator, Exists
 from ras_party.models.models import Business, BusinessAttributes
-from ras_party.support.session_decorator import with_db_session
+from ras_party.support.session_decorator import with_db_session, with_query_only_db_session
 
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
-@with_db_session
+@with_query_only_db_session
 def get_business_by_ref(ref, session, verbose=False):
     """
     Get a Business by its unique business reference
@@ -37,8 +37,14 @@ def get_business_by_ref(ref, session, verbose=False):
         return business.to_business_summary_dict()
 
 
-@with_db_session
+@with_query_only_db_session
 def get_businesses_by_ids(party_uuids, session):
+    """
+    Get a list of businesses by party id.
+    :param party_uuids: A list of party_ids' to search on
+    :returns: A list of businesses
+    :raises BadRequest: Raised if any of the uuids provided aren't valid uuids
+    """
     for party_uuid in party_uuids:
         try:
             uuid.UUID(party_uuid)
@@ -50,7 +56,7 @@ def get_businesses_by_ids(party_uuids, session):
     return [business.to_business_summary_dict() for business in businesses]
 
 
-@with_db_session
+@with_query_only_db_session
 def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_id=None):
     """
     Get a Business by its Party ID
@@ -64,6 +70,8 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
     :type collection_exercise_id: str
 
     :rtype: Business
+    :raises BadRequest: Raised if the party_uuid is an invalid uuid
+    :raises NotFound: Raised if there isn't a business that has that party_uuid
     """
     try:
         uuid.UUID(party_uuid)
@@ -132,8 +140,8 @@ def businesses_sample_ce_link(sample, ce_data, session):
         .update({'collection_exercise': collection_exercise_id})
 
 
-@with_db_session
-def get_businesses_by_search_query(search_query, page, limit, session):
-    businesses = search_businesses(search_query, page, limit, session)
+@with_query_only_db_session
+def get_businesses_by_search_query(search_query, session):
+    businesses = search_businesses(search_query, session)
     businesses = [{"ruref": business[2], "trading_as": business[1], "name": business[0]} for business in businesses]
     return businesses

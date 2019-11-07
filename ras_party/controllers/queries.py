@@ -170,19 +170,20 @@ def update_respondent_details(respondent_data, respondent_id, session):
 def search_businesses(search_query, page, limit, session):
     """
     Query to return list of businesses based on search query
-    :param search_query: the search query
+    :param search_query: a string containing space separated list of keywords to search for in name or trading as
     :param page: page to return starting at 1
     :param limit: the maximum number of results to return in a page
     :return: list of businesses
     """
-    logger.info('Searching businesses by name with search query', search_query=search_query)
+    bound_logger = logger.bind(search_query=search_query)
+    bound_logger.info('Searching businesses by name with search query')
     if len(search_query) == 11 and search_query.isdigit():
-        logger.info("Query looks like an ru_ref, searching only on ru_ref", search_query=search_query)
+        bound_logger.info("Query looks like an ru_ref, searching only on ru_ref")
         result = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
             .join(Business).filter(Business.business_ref == search_query).distinct().all()
         if result:
             return result
-        logger.info("Didn't find an ru_ref, seraching everything", search_query=search_query)
+        bound_logger.info("Didn't find an ru_ref, searching everything")
 
     filters = []
     name_filters = []
@@ -199,6 +200,7 @@ def search_businesses(search_query, page, limit, session):
     filters.append(and_(*name_filters))
     filters.append(and_(*trading_as_filters))
 
+    bound_logger.unbind('search_query')
     query = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
         .join(Business)\
         .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None)))\
