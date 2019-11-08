@@ -21,19 +21,21 @@ def handle_session(f, args, kwargs):
         session.commit()
         return result
     except SQLAlchemyError as exc:
-        logger.exception(f"Rolling back database session due to {exc.__class__.__name__}",
-                         pool_size=current_app.db.engine.pool.size(),
-                         connections_in_pool=current_app.db.engine.pool.checkedin(),
-                         connections_checked_out=current_app.db.engine.pool.checkedout(),
-                         current_overflow=current_app.db.engine.pool.overflow())
+        logger.error(f"Rolling back database session due to {exc.__class__.__name__}",
+                     pool_size=current_app.db.engine.pool.size(),
+                     connections_in_pool=current_app.db.engine.pool.checkedin(),
+                     connections_checked_out=current_app.db.engine.pool.checkedout(),
+                     current_overflow=current_app.db.engine.pool.overflow(),
+                     exc_info=True)
         session.rollback()
         raise SQLAlchemyError(f"{exc.__class__.__name__} occurred when committing to database", code=exc.code)
     except Exception:
-        logger.exception("Rolling back database session due to uncaught exception",
-                         pool_size=current_app.db.engine.pool.size(),
-                         connections_in_pool=current_app.db.engine.pool.checkedin(),
-                         connections_checked_out=current_app.db.engine.pool.checkedout(),
-                         current_overflow=current_app.db.engine.pool.overflow())
+        logger.error("Rolling back database session due to uncaught exception",
+                     pool_size=current_app.db.engine.pool.size(),
+                     connections_in_pool=current_app.db.engine.pool.checkedin(),
+                     connections_checked_out=current_app.db.engine.pool.checkedout(),
+                     current_overflow=current_app.db.engine.pool.overflow(),
+                     exc_info=True)
         session.rollback()
         raise
     finally:
@@ -47,11 +49,12 @@ def handle_query_only_session(f, args, kwargs):
         result = f(*args, session=session, **kwargs)
         return result
     except SQLAlchemyError:
-        logger.exception("Something went wrong accessing database",
-                         pool_size=current_app.db.engine.pool.size(),
-                         connections_in_pool=current_app.db.engine.pool.checkedin(),
-                         connections_checked_out=current_app.db.engine.pool.checkedout(),
-                         current_overflow=current_app.db.engine.pool.overflow())
+        logger.error("Something went wrong accessing database",
+                     pool_size=current_app.db.engine.pool.size(),
+                     connections_in_pool=current_app.db.engine.pool.checkedin(),
+                     connections_checked_out=current_app.db.engine.pool.checkedout(),
+                     current_overflow=current_app.db.engine.pool.overflow(),
+                     exc_info=True)
         raise
     finally:
         current_app.db.session.remove()
