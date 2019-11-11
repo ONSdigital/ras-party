@@ -46,7 +46,7 @@ def handle_query_only_session(f, args, kwargs):
     try:
         result = f(*args, session=session, **kwargs)
         return result
-    except SQLAlchemyError:
+    except SQLAlchemyError as e:
         logger.exception("Something went wrong accessing database",
                          pool_size=current_app.db.engine.pool.size(),
                          connections_in_pool=current_app.db.engine.pool.checkedin(),

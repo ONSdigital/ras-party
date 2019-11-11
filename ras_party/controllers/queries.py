@@ -1,7 +1,7 @@
 import logging
 
 import structlog
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_, or_, distinct
 
 from ras_party.models.models import Business, BusinessAttributes, BusinessRespondent, \
     Enrolment, EnrolmentStatus, Respondent
@@ -182,7 +182,7 @@ def search_businesses(search_query, page, limit, session):
         result = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
             .join(Business).filter(Business.business_ref == search_query).distinct().all()
         if result:
-            return result
+            return result, len(result)      # ru ref searches do not need to support pagination
         bound_logger.info("Didn't find an ru_ref, searching everything")
 
     filters = []
@@ -204,8 +204,16 @@ def search_businesses(search_query, page, limit, session):
     query = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
         .join(Business)\
         .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None)))\
-        .distinct().order_by(BusinessAttributes.name).limit(limit).offset((page-1)*limit)    # Build the query
-    return query.all()  # Execute the query
+        .distinct().order_by(BusinessAttributes.name)          # Build the query
+
+    results = query.limit(limit).offset((page-1)*limit).all()  # Execute the query
+    if page == 1 and len(results) < limit:
+        total_business_count = len(results)
+    else:
+        count_q = query.statement.with_only_columns([func.count(distinct(Business.business_ref))]).order_by(None)
+        total_business_count = query.session.execute(count_q).scalar()
+
+    return results, total_business_count
 
 
 def query_enrolment_by_survey_business_respondent(respondent_id, business_id, survey_id, session):
@@ -237,3 +245,4 @@ def count_enrolment_by_survey_business(business_id, survey_id, session):
                                                     Enrolment.survey_id == survey_id,
                                                     Enrolment.status == EnrolmentStatus.ENABLED)).count()
     return response
+

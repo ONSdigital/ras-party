@@ -89,5 +89,5 @@ def get_party_by_search():
     page = int(request.args.get('page', default=1))
     limit = int(request.args.get('limit', default=100))
 
-    response = business_controller.get_businesses_by_search_query(query, page, limit)
-    return jsonify(response)
+    businesses, total_business_count = business_controller.get_businesses_by_search_query(query, page, limit)
+    return {'businesses': businesses, 'total_business_count': total_business_count}

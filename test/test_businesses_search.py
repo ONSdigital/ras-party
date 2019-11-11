@@ -30,8 +30,8 @@ class TestBusinessesSearch(PartyTestClient):
         response = self.get_businesses_search(query_string={"query": business['sampleUnitRef']})
 
         # then the correct business is returned
-        self.assertEqual(len(response), 1)
-        self.assertEqual(response[0]['ruref'], business['sampleUnitRef'])
+        self.assertEqual(len(response['businesses']), 1)
+        self.assertEqual(response['businesses'][0]['ruref'], business['sampleUnitRef'])
 
     def test_get_business_by_search_name(self):
         mock_business = MockBusiness() \
@@ -46,10 +46,10 @@ class TestBusinessesSearch(PartyTestClient):
         response = self.get_businesses_search(query_string={"query": business['name']})
 
         # then the correct business is returned
-        self.assertEqual(len(response), 1)
-        self.assertEqual(response[0]['ruref'], business['sampleUnitRef'])
-        self.assertEqual(response[0]['name'], business['name'])
-        self.assertEqual(response[0]['trading_as'], business['trading_as'])
+        self.assertEqual(len(response['businesses']), 1)
+        self.assertEqual(response['businesses'][0]['ruref'], business['sampleUnitRef'])
+        self.assertEqual(response['businesses'][0]['name'], business['name'])
+        self.assertEqual(response['businesses'][0]['trading_as'], business['trading_as'])
 
     def test_get_business_by_search_trading_as(self):
         mock_business = MockBusiness() \
@@ -64,10 +64,10 @@ class TestBusinessesSearch(PartyTestClient):
         response = self.get_businesses_search(query_string={"query": business['trading_as']})
 
         # then the correct business is returned
-        self.assertEqual(len(response), 1)
-        self.assertEqual(response[0]['ruref'], business['sampleUnitRef'])
-        self.assertEqual(response[0]['name'], business['name'])
-        self.assertEqual(response[0]['trading_as'], business['trading_as'])
+        self.assertEqual(len(response['businesses']), 1)
+        self.assertEqual(response['businesses'][0]['ruref'], business['sampleUnitRef'])
+        self.assertEqual(response['businesses'][0]['name'], business['name'])
+        self.assertEqual(response['businesses'][0]['trading_as'], business['trading_as'])
 
     def test_get_business_by_search_partial_ru(self):
         mock_business = MockBusiness() \
@@ -82,8 +82,8 @@ class TestBusinessesSearch(PartyTestClient):
         response = self.get_businesses_search(query_string={"query": business['sampleUnitRef'][4:]})
 
         # then the correct business is returned
-        self.assertEqual(len(response), 1)
-        self.assertEqual(response[0]['ruref'], business['sampleUnitRef'])
+        self.assertEqual(len(response['businesses']), 1)
+        self.assertEqual(response['businesses'][0]['ruref'], business['sampleUnitRef'])
 
     def test_get_business_by_search_partial_name(self):
         mock_business = MockBusiness() \
@@ -98,10 +98,10 @@ class TestBusinessesSearch(PartyTestClient):
         response = self.get_businesses_search(query_string={"query": business['name'][5:]})
 
         # then th correct business is returned
-        self.assertEqual(len(response), 1)
-        self.assertEqual(response[0]['ruref'], business['sampleUnitRef'])
-        self.assertEqual(response[0]['name'], business['name'])
-        self.assertEqual(response[0]['trading_as'], business['trading_as'])
+        self.assertEqual(len(response['businesses']), 1)
+        self.assertEqual(response['businesses'][0]['ruref'], business['sampleUnitRef'])
+        self.assertEqual(response['businesses'][0]['name'], business['name'])
+        self.assertEqual(response['businesses'][0]['trading_as'], business['trading_as'])
 
     def test_get_business_by_search_key_words_in_name(self):
         mock_business = MockBusiness() \
@@ -117,10 +117,10 @@ class TestBusinessesSearch(PartyTestClient):
                                                                      f" {business['attributes']['runame3']}"})
 
         # then the correct business is returned
-        self.assertEqual(len(response), 1)
-        self.assertEqual(response[0]['ruref'], business['sampleUnitRef'])
-        self.assertEqual(response[0]['name'], business['name'])
-        self.assertEqual(response[0]['trading_as'], business['trading_as'])
+        self.assertEqual(len(response['businesses']), 1)
+        self.assertEqual(response['businesses'][0]['ruref'], business['sampleUnitRef'])
+        self.assertEqual(response['businesses'][0]['name'], business['name'])
+        self.assertEqual(response['businesses'][0]['trading_as'], business['trading_as'])
 
     def test_get_business_by_search_distinct_multi_names(self):
         mock_business = MockBusiness() \
@@ -140,55 +140,61 @@ class TestBusinessesSearch(PartyTestClient):
         response = self.get_businesses_search(query_string={"query": mock_business['runame1']})
 
         # then distinct variations of the correct business is returned
-        names = [business['name'] for business in response]
-        self.assertEqual(len(response), 3)
+        names = [business['name'] for business in response['businesses']]
+        self.assertEqual(len(response['businesses']), 3)
         self.assertIn(name_1, names)
         self.assertIn(name_2, names)
         self.assertIn(name_3, names)
 
     def test_business_search_gives_correct_number_per_page(self):
-        self._set_up_businesses(count=20)
+        setup_count = 20
+        self._set_up_businesses(count=setup_count)
         for limit in [2, 10, 15, 20]:
             with self.subTest(limit=limit):
                 response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=1, limit=limit)
-                self.assertEqual(len(response), limit)
+                self.assertEqual(len(response['businesses']), limit)
+                self.assertEqual(response['total_business_count'], setup_count)
 
     def test_business_search_gets_correct_page_and_ordered_by_name(self):
         self._set_up_businesses(count=10)
 
         response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=2, limit=5)
-        self.assertIn("5-", response[0]['name'])
-        self.assertIn("6-", response[1]['name'])
-        self.assertIn("7-", response[2]['name'])
-        self.assertIn("8-", response[3]['name'])
-        self.assertIn("9-", response[4]['name'])
+        self.assertIn("5-", response['businesses'][0]['name'])
+        self.assertIn("6-", response['businesses'][1]['name'])
+        self.assertIn("7-", response['businesses'][2]['name'])
+        self.assertIn("8-", response['businesses'][3]['name'])
+        self.assertIn("9-", response['businesses'][4]['name'])
 
     def test_business_search_gets_partial_page_if_result_count_less_than_limit(self):
         self._set_up_businesses(count=5)
 
         response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=1, limit=10)
-        self.assertEqual(len(response), 5)
+        self.assertEqual(len(response['businesses']), 5)
 
     def test_business_search_returns_partial_page_if_last_page_not_full(self):
-        self._set_up_businesses(count=25)
+        setup_count = 25
+        self._set_up_businesses(count=setup_count)
 
         response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=3, limit=10)
-        self.assertEqual(len(response), 5)
+        self.assertEqual(len(response['businesses']), 5)
+        self.assertEqual(response['total_business_count'], setup_count)
 
     def test_business_search_returns_empty_list_if_no_reults(self):
         response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=3, limit=10)
-        self.assertEqual(len(response), 0)
+        self.assertEqual(len(response['businesses']), 0)
 
     def test_business_search_returns_empty_list_if_page_too_high(self):
         self._set_up_businesses(count=10)
 
         response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=3, limit=10)
-        self.assertEqual(len(response), 0)
+        self.assertEqual(len(response['businesses']), 0)
 
     def test_business_search_with_no_pagination_parameters_uses_default_params(self):
-        self._set_up_businesses(count=102)
+        expected_count = 111
+        self._set_up_businesses(count=expected_count)
         response = self.get_businesses_search(200, query_string={"query": "Runame-1"})
-        self.assertEqual(len(response), 100)
+        self.assertEqual(len(response['businesses']), 100)
+        self.assertEqual(expected_count, response['total_business_count'])
 
     def test_get_business_by_search_inactive_business_attributes(self):
         mock_business = MockBusiness() \
@@ -202,7 +208,7 @@ class TestBusinessesSearch(PartyTestClient):
         response = self.get_businesses_search(query_string={"query": name})
 
         # then no businesses returned
-        self.assertEqual(len(response), 0)
+        self.assertEqual(len(response['businesses']), 0)
 
     def _set_up_businesses(self, count):
         """set up multiple businesses with unique ru refs and names and trading as starting in <n>-"""
