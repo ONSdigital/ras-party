@@ -245,4 +245,3 @@ def count_enrolment_by_survey_business(business_id, survey_id, session):
                                                     Enrolment.survey_id == survey_id,
                                                     Enrolment.status == EnrolmentStatus.ENABLED)).count()
     return response
-
