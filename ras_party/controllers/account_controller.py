@@ -693,7 +693,7 @@ def register_user(party):
 
 
 def request_case(enrolment_code):
-    case_svc = current_app.config['RAS_CASE_SERVICE']
+    case_svc = current_app.config['CASE_SERVICE']
     case_url = f'{case_svc}/cases/iac/{enrolment_code}'
     logger.info('GET URL', url=case_url)
     response = Requests.get(case_url)
@@ -703,7 +703,7 @@ def request_case(enrolment_code):
 
 
 def request_collection_exercise(collection_exercise_id):
-    ce_svc = current_app.config['RAS_COLLEX_SERVICE']
+    ce_svc = current_app.config['COLLECTION_EXERCISE_SERVICE']
     ce_url = f'{ce_svc}/collectionexercises/{collection_exercise_id}'
     logger.info('GET', url=ce_url)
     response = Requests.get(ce_url)
@@ -713,7 +713,7 @@ def request_collection_exercise(collection_exercise_id):
 
 
 def request_survey(survey_id):
-    survey_svc = current_app.config['RAS_SURVEY_SERVICE']
+    survey_svc = current_app.config['SURVEY_SERVICE']
     survey_url = f'{survey_svc}/surveys/{survey_id}'
     logger.info('GET', url=survey_url)
     response = Requests.get(survey_url)
@@ -724,7 +724,7 @@ def request_survey(survey_id):
 
 def request_casegroups_for_business(business_id):
     logger.info('Retrieving casegroups for business', business_id=business_id)
-    url = f'{current_app.config["RAS_CASE_SERVICE"]}/casegroups/partyid/{business_id}'
+    url = f'{current_app.config["CASE_SERVICE"]}/casegroups/partyid/{business_id}'
     response = Requests.get(url)
     response.raise_for_status()
     logger.info('Successfully retrieved casegroups for business', business_id=business_id)
@@ -733,7 +733,7 @@ def request_casegroups_for_business(business_id):
 
 def request_collection_exercises_for_survey(survey_id):
     logger.info('Retrieving collection exercises for survey', survey_id=survey_id)
-    url = f'{current_app.config["RAS_COLLEX_SERVICE"]}/collectionexercises/survey/{survey_id}'
+    url = f'{current_app.config["COLLECTION_EXERCISE_SERVICE"]}/collectionexercises/survey/{survey_id}'
     response = Requests.get(url)
     response.raise_for_status()
     logger.info('Successfully retrieved collection exercises for survey', survey_id=survey_id)
