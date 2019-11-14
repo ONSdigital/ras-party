@@ -197,7 +197,7 @@ def change_respondent(payload, session):
     """
     v = Validator(Exists('email_address', 'new_email_address'))
     if not v.validate(payload):
-        logger.debug(v.errors)
+        logger.info("Payload for change respondent was invalid", errors=v.errors)
         raise BadRequest(v.errors, 400)
 
     email_address = payload['email_address']
@@ -663,6 +663,7 @@ def enrol_respondent_for_survey(respondent, session):
     :param respondent: A Respondent db object
     :param session: A db session
     """
+
     pending_enrolment_id = respondent.pending_enrolment[0].id
     pending_enrolment = session.query(PendingEnrolment).filter(
         PendingEnrolment.id == pending_enrolment_id).one()
@@ -674,13 +675,13 @@ def enrol_respondent_for_survey(respondent, session):
     session.add(enrolment)
     logger.info('Enabling pending enrolment for respondent', party_uuid=respondent.party_uuid,
                 survey_id=pending_enrolment.survey_id, business_id=pending_enrolment.business_id)
+
     # Send an enrolment event to the case service
     case_id = pending_enrolment.case_id
     logger.info('Pending enrolment for case_id', case_id=case_id)
-    if count_enrolment_by_survey_business(survey_id=enrolment.survey_id, business_id=enrolment.business_id,
-                                          session=session) == 0:
+    if count_enrolment_by_survey_business(enrolment.business_id, enrolment.survey_id, session) == 0:
         logger.info("Informing case of respondent enrolled", survey_id=enrolment.survey_id,
-                    business_id=enrolment.business_id, respondent_id=respondent.party_uuid)
+                    business_id=enrolment.business_id, party_uuid=respondent.party_uuid)
         post_case_event(case_id=case_id, category="RESPONDENT_ENROLED", desc="Respondent enrolled")
     session.delete(pending_enrolment)
 
@@ -715,12 +716,17 @@ def request_case(enrolment_code):
 
 
 def request_collection_exercise(collection_exercise_id):
+    """
+    Contact the collection exercise service for a collection exercise by id
+
+    :param collection_exercise_id: The id of the collection exercise
+    """
     ce_svc = current_app.config['RAS_COLLEX_SERVICE']
     ce_url = f'{ce_svc}/collectionexercises/{collection_exercise_id}'
-    logger.info('GET', url=ce_url)
+    logger.info('Retrieving collection exercise by id', collection_exercise_id=collection_exercise_id)
     response = Requests.get(ce_url)
-    logger.info('Collection exercise service responded with', status=response.status_code)
     response.raise_for_status()
+    logger.info("Successfully retrived collection exercise by id")
     return response.json()
 
 
@@ -776,7 +782,6 @@ def get_case_id_for_business_survey(survey_id, business_id):
     logger.info('Retrieving case for survey and business', survey_id=survey_id, business_id=business_id)
 
     case_group_ids = get_business_survey_casegroups(survey_id, business_id)
-
     cases = get_cases_for_casegroup(case_group_ids[0])
 
     return cases[0]['id']
