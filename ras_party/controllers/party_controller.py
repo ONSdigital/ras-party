@@ -24,7 +24,6 @@ def parties_post(party_data, session):
     logger.info("party data in controller", party_data=party_data)
     errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
     if errors:
-        logger.info("errors", errors=errors)
         logger.info("party schema validation failed", errors=[e.split('\n')[0] for e in errors])
         raise BadRequest([e.split('\n')[0] for e in errors])
 
