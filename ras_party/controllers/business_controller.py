@@ -33,8 +33,8 @@ def get_business_by_ref(ref, session, verbose=False):
 
     if verbose:
         return business.to_business_dict()
-    else:
-        return business.to_business_summary_dict()
+
+    return business.to_business_summary_dict()
 
 
 @with_query_only_db_session
@@ -86,8 +86,8 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
 
     if verbose:
         return business.to_business_dict(collection_exercise_id=collection_exercise_id)
-    else:
-        return business.to_business_summary_dict(collection_exercise_id=collection_exercise_id)
+
+    return business.to_business_summary_dict(collection_exercise_id=collection_exercise_id)
 
 
 @with_db_session

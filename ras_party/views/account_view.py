@@ -7,7 +7,6 @@ from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import account_controller
 from ras_party.controllers.validate import Exists, Validator
-from ras_party.support.log_decorator import log_route
 
 
 account_view = Blueprint('account_view', __name__)
@@ -19,7 +18,6 @@ auth = HTTPBasicAuth()
 
 @account_view.before_request
 @auth.login_required
-@log_route
 def before_account_view():
     pass
 
