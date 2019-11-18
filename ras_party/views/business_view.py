@@ -84,6 +84,8 @@ def put_business_attributes_ce(sample):
 @business_view.route('/businesses/search', methods=['GET'])
 def get_party_by_search():
     query = request.args.get('query', '')
+    page = int(request.args.get('page', default=1))
+    limit = int(request.args.get('limit', default=100))
 
-    response = business_controller.get_businesses_by_search_query(query)
-    return jsonify(response)
+    businesses, total_business_count = business_controller.get_businesses_by_search_query(query, page, limit)
+    return jsonify({'businesses': businesses, 'total_business_count': total_business_count})

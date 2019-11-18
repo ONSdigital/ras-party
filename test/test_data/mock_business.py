@@ -1,21 +1,11 @@
+import copy
 import random
 
 from ras_party.support.util import partition_dict
 
 
-class MockBusiness:
-
-    REQUIRED_ATTRIBUTES = ['id', 'sampleUnitType', 'sampleUnitRef', "sampleSummaryId"]
-
-    def __init__(self):
-
-        ruref = str(random.randrange(100000000, 999999999))
-
-        self._attributes = {
+DEFAULT_ATTRIBUTES = {
             "sampleUnitType": "B",
-            "sampleUnitRef": ruref,
-            "sampleSummaryId": ruref,
-            "ruref": ruref,
             "birthdate": "1/1/2001",
             "checkletter": "A",
             "currency": "S",
@@ -46,6 +36,20 @@ class MockBusiness:
             "name": "Runame-1 Runame-2 Runame-3",
             "trading_as": "Tradstyle-1 Tradstyle-2 Tradstyle-3"
         }
+
+
+class MockBusiness:
+
+    REQUIRED_ATTRIBUTES = ['id', 'sampleUnitType', 'sampleUnitRef', "sampleSummaryId"]
+
+    def __init__(self, attributes=DEFAULT_ATTRIBUTES):
+
+        ruref = str(random.randrange(100000000, 999999999))
+
+        self._attributes = copy.deepcopy(attributes)
+        self._attributes["sampleUnitRef"] = ruref
+        self._attributes["sampleSummaryId"] = ruref
+        self._attributes["ruref"] = ruref
 
     def attributes(self, **kwargs):
         self._attributes.update(kwargs)
