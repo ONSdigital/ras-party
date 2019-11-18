@@ -141,7 +141,7 @@ def businesses_sample_ce_link(sample, ce_data, session):
 
 
 @with_query_only_db_session
-def get_businesses_by_search_query(search_query, session):
-    businesses = search_businesses(search_query, session)
+def get_businesses_by_search_query(search_query, page, limit, session):
+    businesses, total_business_count = search_businesses(search_query, page, limit, session)
     businesses = [{"ruref": business[2], "trading_as": business[1], "name": business[0]} for business in businesses]
-    return businesses
+    return businesses, total_business_count
