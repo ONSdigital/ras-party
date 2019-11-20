@@ -17,6 +17,7 @@ from ras_party.controllers.queries import query_business_respondent_by_responden
 from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.queries import query_respondent_by_email, query_respondent_by_pending_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
+from ras_party.controllers.queries import query_all_non_disabled_enrolments_respondent
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import RasNotifyError
 from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
@@ -26,7 +27,7 @@ from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session, with_query_only_db_session
 from ras_party.support.transactional import transactional
 from ras_party.support.verification import decode_email_token
-
+from ras_party.support.util import obfuscate_email
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -153,31 +154,43 @@ def _add_enrolment_and_auth(business, business_id, case_id, party, session, surv
 @with_db_session
 def change_respondent_enrolment_status(payload, session):
     """
-    Change respondent enrolment status for business and survey
-    :param payload:
-    :param session:
-    :return:
+    Change respondent enrolment status for business and survey, takes params from a payload dict
+
+    :param payload: A dictionary holding the values for the respondent party id being modified
     """
-    change_flag = payload['change_flag']
-    business_id = payload['business_id']
-    survey_id = payload['survey_id']
     respondent_id = payload['respondent_id']
-    logger.info("Attempting to change respondent enrolment",
-                respondent_id=respondent_id,
-                survey_id=survey_id,
-                business_id=business_id,
-                status=change_flag)
+
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
         logger.info("Respondent does not exist", respondent_id=respondent_id)
+        raise NotFound("Respondent does not exist")
+
+    return _change_respondent_enrolment_status(respondent=respondent,
+                                               survey_id=payload['survey_id'],
+                                               business_id=payload['business_id'],
+                                               status=payload['change_flag'],
+                                               session=session)
+
+
+def _change_respondent_enrolment_status(respondent, survey_id, business_id, status, session):
+
+    logger.info("Attempting to change respondent enrolment",
+                respondent_id=respondent.party_uuid,
+                survey_id=survey_id,
+                business_id=business_id,
+                status=status)
+
+    respondent = query_respondent_by_party_uuid(respondent.party_uuid, session)
+    if not respondent:
+        logger.info("Respondent does not exist", respondent_id=respondent.party_uuid)
         raise NotFound("Respondent does not exist")
 
     enrolment = query_enrolment_by_survey_business_respondent(respondent_id=respondent.id,
                                                               business_id=business_id,
                                                               survey_id=survey_id,
                                                               session=session)
-    enrolment.status = change_flag
-    session.commit()
+    enrolment.status = status
+    session.commit()       # Needs to be committed before call to case as that may look up party
 
     # If no enrolments are remaining for business/survey
     # then send NO_ACTIVE_ENROLMENTS case event
@@ -188,6 +201,37 @@ def change_respondent_enrolment_status(payload, session):
         post_case_event(case_id=get_case_id_for_business_survey(survey_id, business_id),
                         category='NO_ACTIVE_ENROLMENTS',
                         desc='No active enrolments remaining for case')
+
+
+@with_db_session
+def disable_all_respondent_enrolments(respondent_email, session):
+    """Disables all enrolments for a respondent ,  returns the count of the removed enrolments"""
+
+    obfuscated_email = obfuscate_email(respondent_email)
+
+    logger.info('Disabling all enrolments for respondent', email=obfuscated_email)
+
+    removed_enrolments_count = 0
+
+    # raises errors if none or multiple, unusual import to avoid circular references
+    respondent = __import__('ras_party').controllers.respondent_controller.get_single_respondent_by_email(
+        respondent_email, session)
+
+    enrolments = query_all_non_disabled_enrolments_respondent(respondent.id, session)
+
+    for enrolment in enrolments:
+        _change_respondent_enrolment_status(respondent=respondent,
+                                            survey_id=enrolment.survey_id,
+                                            business_id=enrolment.business_id,
+                                            status='DISABLED',
+                                            session=session)
+        removed_enrolments_count += 1
+
+    # If no enrolments then logged count is zero
+    logger.info('Completed disabling respondent enrolments',
+                email=obfuscated_email, removed_enrolment_count=removed_enrolments_count)
+
+    return removed_enrolments_count
 
 
 @with_db_session

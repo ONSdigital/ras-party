@@ -50,9 +50,9 @@ class PartyTestClient(TestCase):
         connection.execute(f"drop schema {current_app.config['DATABASE_SCHEMA']} cascade;")
         connection.close()
 
-    def populate_with_business(self):
+    def populate_with_business(self, business_id=DEFAULT_BUSINESS_UUID):
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business['id'] = business_id
         self.post_to_businesses(mock_business, 200)
 
     @property
@@ -253,6 +253,14 @@ class PartyTestClient(TestCase):
         response = self.client.put('/party-api/v1/respondents/change_enrolment_status',
                                    headers=self.auth_headers,
                                    data=json.dumps(payload),
+                                   content_type='application/vnd.ons.business+json')
+        self.assertStatus(response, expected_status)
+        return json.loads(response.get_data(as_text=True))
+
+    def put_disable_all_respondent_enrolments(self, email_address, expected_status=200):
+        response = self.client.put(f'/party-api/v1/respondents/disable-user-enrolments',
+                                   data=json.dumps({'email': email_address}),
+                                   headers=self.auth_headers,
                                    content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status)
         return json.loads(response.get_data(as_text=True))

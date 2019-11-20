@@ -74,7 +74,7 @@ def get_respondent_by_id(respondent_id, session):
 @with_db_session
 def delete_respondent_by_email(email, session):
     """
-    Delete a Respondent by its email
+    Delete a Respondent by its email fter disabling all their enrolments
     On success it returns None, on failure will raise one of many different exceptions
     :param email: Id of Respondent to delete
     :type email: str
@@ -83,19 +83,7 @@ def delete_respondent_by_email(email, session):
 
     # We need to get the respondent to make sure they exist, but also because the id (not the party_uuid...for
     # some reason) of the respondent is needed for the later deletion steps.
-    try:
-        respondent = query_single_respondent_by_email(email, session)
-    except NoResultFound:
-        logger.error("Respondent with email does not exist", email=obfuscate_email(email))
-        raise NotFound("Respondent with email does not exist")
-    except MultipleResultsFound:
-        logger.error("Multiple respondents found for email", email=obfuscate_email(email))
-        raise UnprocessableEntity("Multiple users found, unable to proceed")
-
-    logger.info("Found respondent",
-                email=obfuscate_email(respondent.email_address),
-                party_uuid=respondent.party_uuid,
-                id=respondent.id)
+    respondent = get_single_respondent_by_email(email, session)
 
     session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
     session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
@@ -106,6 +94,23 @@ def delete_respondent_by_email(email, session):
                 email=obfuscate_email(email),
                 party_uuid=str(respondent.party_uuid),
                 id=respondent.id)
+
+
+def get_single_respondent_by_email(email, session):
+    """gets a single respondent based on an email address"""
+    try:
+        respondent = query_single_respondent_by_email(email, session)
+    except NoResultFound:
+        logger.error("Respondent with email does not exist", email=obfuscate_email(email))
+        raise NotFound("Respondent with email does not exist")
+    except MultipleResultsFound:
+        logger.error("Multiple respondents found for email", email=obfuscate_email(email))
+        raise UnprocessableEntity("Multiple users found, unable to proceed")
+    logger.info("Found respondent",
+                email=obfuscate_email(respondent.email_address),
+                party_uuid=respondent.party_uuid,
+                id=respondent.id)
+    return respondent
 
 
 @with_query_only_db_session

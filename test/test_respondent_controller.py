@@ -26,6 +26,7 @@ from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDis
 from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, \
     MockRespondentWithIdActive, MockRespondentWithIdSuspended, MockRespondentWithPendingEmail
 from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID, DEFAULT_RESPONDENT_UUID
+from test.test_data.default_test_values import ALTERNATE_SURVEY_UUID1
 
 
 class TestRespondents(PartyTestClient):
@@ -758,7 +759,7 @@ class TestRespondents(PartyTestClient):
             reference=respondent.party_uuid
         )
 
-    def test_request_password_change_with_valid_email(self):
+    def test_request_word_change_with_valid_email(self):
         respondent = self.populate_with_respondent()
         payload = {'email_address': respondent.email_address}
         self.request_password_change(payload)
@@ -1416,10 +1417,49 @@ class TestRespondents(PartyTestClient):
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': DEFAULT_BUSINESS_UUID,
-            'survey_id': DEFAULT_SURVEY_UUID,
+            'survey_id': ALTERNATE_SURVEY_UUID1,
             'change_flag': 'woafouewbhouGFHEPIW0'
         }
         self.put_enrolment_status(request_json, 500)
+
+    @mock.patch("ras_party.controllers.account_controller.get_case_id_for_business_survey")
+    @mock.patch("ras_party.controllers.case_controller.post_case_event")
+    def test_disable_all_respondent_enrolments_disables_all_enrolments(self, mock_post_case, mock_get_case):
+        respondent_email = self._create_enrolments(second_enrolment_status='PENDING')
+        response = self.put_disable_all_respondent_enrolments(respondent_email, expected_status=200)
+        assert response == '2 enrolments removed'
+
+    @mock.patch("ras_party.controllers.account_controller.get_case_id_for_business_survey")
+    @mock.patch("ras_party.controllers.case_controller.post_case_event")
+    def test_disable_all_respondent_enrolments_ignores_already_disabled_enrolments(self, mock_post_case, mock_get_case):
+        respondent_email = self._create_enrolments(second_enrolment_status='DISABLED')
+        response = self.put_disable_all_respondent_enrolments(respondent_email, expected_status=200)
+        assert response == '1 enrolments removed'
+
+    def _create_enrolments(self, second_enrolment_status):
+        def mock_put_iac(*args, **kwargs):
+            return MockResponse('{"active": false}')
+
+        respondent_id = self.mock_respondent_with_id['id']
+        self.mock_requests.put = mock_put_iac
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
+                                               respondent_id=respondent_id)
+        self.populate_with_enrolment()
+        # Add an enrolment for an alternate survey on same business
+        enrolment = {
+            'business_id': DEFAULT_BUSINESS_UUID,
+            'respondent_id': 1,
+            'survey_id': ALTERNATE_SURVEY_UUID1,
+            'status': second_enrolment_status,
+            'created_on': "2017-12-01 13:40:55.495895"
+        }
+        self.populate_with_enrolment(enrolment=enrolment)
+        db_respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        self.put_email_verification(token, 200)
+        return db_respondent.email_address
 
     def test_put_change_respondent_account_status_suspend(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
