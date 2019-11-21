@@ -6,7 +6,8 @@ from flask import current_app
 from itsdangerous import SignatureExpired, BadSignature, BadData
 from requests import HTTPError
 from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.exceptions import BadRequest, Conflict, InternalServerError, NotFound
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from werkzeug.exceptions import BadRequest, Conflict, InternalServerError, NotFound, UnprocessableEntity
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.case_controller import get_cases_for_casegroup, post_case_event
@@ -18,6 +19,7 @@ from ras_party.controllers.queries import query_enrolment_by_survey_business_res
 from ras_party.controllers.queries import query_respondent_by_email, query_respondent_by_pending_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
 from ras_party.controllers.queries import query_all_non_disabled_enrolments_respondent
+from ras_party.controllers.queries import query_single_respondent_by_email
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import RasNotifyError
 from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
@@ -214,8 +216,7 @@ def disable_all_respondent_enrolments(respondent_email, session):
     removed_enrolments_count = 0
 
     # raises errors if none or multiple, unusual import to avoid circular references
-    respondent = __import__('ras_party').controllers.respondent_controller.get_single_respondent_by_email(
-        respondent_email, session)
+    respondent = get_single_respondent_by_email(respondent_email, session)
 
     enrolments = query_all_non_disabled_enrolments_respondent(respondent.id, session)
 
@@ -232,6 +233,23 @@ def disable_all_respondent_enrolments(respondent_email, session):
                 email=obfuscated_email, removed_enrolment_count=removed_enrolments_count)
 
     return removed_enrolments_count
+
+
+def get_single_respondent_by_email(email, session):
+    """gets a single respondent based on an email address"""
+    try:
+        respondent = query_single_respondent_by_email(email, session)
+    except NoResultFound:
+        logger.error("Respondent with email does not exist", email=obfuscate_email(email))
+        raise NotFound("Respondent with email does not exist")
+    except MultipleResultsFound:
+        logger.error("Multiple respondents found for email", email=obfuscate_email(email))
+        raise UnprocessableEntity("Multiple users found, unable to proceed")
+    logger.info("Found respondent",
+                email=obfuscate_email(respondent.email_address),
+                party_uuid=respondent.party_uuid,
+                id=respondent.id)
+    return respondent
 
 
 @with_db_session
