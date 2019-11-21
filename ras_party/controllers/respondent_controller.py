@@ -2,14 +2,13 @@ import logging
 import uuid
 
 import structlog
-from werkzeug.exceptions import BadRequest, NotFound, UnprocessableEntity
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from werkzeug.exceptions import BadRequest, NotFound
 
-from ras_party.controllers.account_controller import change_respondent
+from ras_party.controllers.account_controller import change_respondent, get_single_respondent_by_email
 from ras_party.models.models import Enrolment, BusinessRespondent, PendingEnrolment, Respondent
 from ras_party.controllers.queries import query_respondent_by_party_uuid, \
     query_respondent_by_email, update_respondent_details, query_respondent_by_names_and_emails, \
-    query_respondent_by_party_uuids, query_single_respondent_by_email
+    query_respondent_by_party_uuids
 from ras_party.support.session_decorator import with_db_session, with_query_only_db_session
 from ras_party.support.util import obfuscate_email
 
@@ -83,19 +82,7 @@ def delete_respondent_by_email(email, session):
 
     # We need to get the respondent to make sure they exist, but also because the id (not the party_uuid...for
     # some reason) of the respondent is needed for the later deletion steps.
-    try:
-        respondent = query_single_respondent_by_email(email, session)
-    except NoResultFound:
-        logger.error("Respondent with email does not exist", email=obfuscate_email(email))
-        raise NotFound("Respondent with email does not exist")
-    except MultipleResultsFound:
-        logger.error("Multiple respondents found for email", email=obfuscate_email(email))
-        raise UnprocessableEntity("Multiple users found, unable to proceed")
-
-    logger.info("Found respondent",
-                email=obfuscate_email(respondent.email_address),
-                party_uuid=respondent.party_uuid,
-                id=respondent.id)
+    respondent = get_single_respondent_by_email(email, session)
 
     session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
     session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()

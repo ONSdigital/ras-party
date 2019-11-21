@@ -997,10 +997,18 @@ total would be 27
 }
 ```
 
-### Delete Respondent by ID
+### Delete Respondent by Email
 
-* `DELETE /party-api/v1/respondents/id/<id>`
-  * Deletes a respondent by their party_uuid.
+* `DELETE /party-api/v1/respondents/email`
+  * Deletes a respondent by their email address.
+  * Returns a 204 on success, a 400 if the id isn't a valid uuid and 404 if the user cannot be found.
+
+---
+
+### Disable all user enrolments by email
+
+* `PATCH /party-api/v1/respondents/disable-user-enrolments`
+  * Disables all active enrolments for a respondent based on their email address.
   * Returns a 204 on success, a 400 if the id isn't a valid uuid and 404 if the user cannot be found.
 
 ---

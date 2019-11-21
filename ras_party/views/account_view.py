@@ -113,6 +113,21 @@ def change_respondent_enrolment_status():
     return make_response(jsonify('OK'), 200)
 
 
+@account_view.route('/respondents/disable-user-enrolments', methods=['PATCH'])
+def disable_user_enrolments():
+    """Disable all enrolments for a specific respondent email address"""
+    try:
+        email = request.get_json()['email']
+    except TypeError:
+        raise BadRequest('JSON payload not provided')
+    except KeyError:
+        raise BadRequest("Email key must be provided in the JSON payload")
+
+    removed_enrolment_count = account_controller.disable_all_respondent_enrolments(email)
+
+    return make_response(jsonify({"message": f'{removed_enrolment_count} enrolments removed'}), 200)
+
+
 @account_view.route('/respondents/edit-account-status/<party_id>', methods=['PUT'])
 def put_edit_account_status(party_id):
     # This is the party endpoint to lock and notify respondent when account is locked

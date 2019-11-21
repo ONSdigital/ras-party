@@ -233,6 +233,20 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
     return response
 
 
+def query_all_non_disabled_enrolments_respondent(respondent_id, session):
+    """
+    Query to return all non disabled enrolments based on respondent id
+    :param respondent_id,  the id column from the respondent (integer not uuid)
+    :return: enrolments for the respondent
+    """
+
+    logger.info('Querying all enrolments for respondent', respondent_id=respondent_id)
+
+    response = session.query(Enrolment).filter(and_(Enrolment.respondent_id == respondent_id,
+                                                    Enrolment.status != 'DISABLED')).all()
+    return response
+
+
 def count_enrolment_by_survey_business(business_id, survey_id, session):
     """
     Query to return count of enrolments for given business id and survey
