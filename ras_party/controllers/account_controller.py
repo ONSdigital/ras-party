@@ -156,7 +156,7 @@ def _add_enrolment_and_auth(business, business_id, case_id, party, session, surv
 @with_db_session
 def change_respondent_enrolment_status(payload, session):
     """
-    Change respondent enrolment status for business and survey, takes params from a payload dict
+    Change respondent enrolment status for respondent and survey. Takes params from a payload dict
 
     :param payload: A dictionary holding the values for the respondent party id being modified
     """
@@ -228,7 +228,6 @@ def disable_all_respondent_enrolments(respondent_email, session):
                                             session=session)
         removed_enrolments_count += 1
 
-    # If no enrolments then logged count is zero
     logger.info('Completed disabling respondent enrolments',
                 email=obfuscated_email, removed_enrolment_count=removed_enrolments_count)
 

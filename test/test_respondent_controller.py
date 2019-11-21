@@ -26,7 +26,7 @@ from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDis
 from test.test_data.mock_respondent import MockRespondent, MockRespondentWithId, \
     MockRespondentWithIdActive, MockRespondentWithIdSuspended, MockRespondentWithPendingEmail
 from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID, DEFAULT_RESPONDENT_UUID
-from test.test_data.default_test_values import ALTERNATE_SURVEY_UUID1
+from test.test_data.default_test_values import ALTERNATE_SURVEY_UUID
 
 
 class TestRespondents(PartyTestClient):
@@ -1417,7 +1417,7 @@ class TestRespondents(PartyTestClient):
         request_json = {
             'respondent_id': self.mock_respondent_with_id['id'],
             'business_id': DEFAULT_BUSINESS_UUID,
-            'survey_id': ALTERNATE_SURVEY_UUID1,
+            'survey_id': ALTERNATE_SURVEY_UUID,
             'change_flag': 'woafouewbhouGFHEPIW0'
         }
         self.put_enrolment_status(request_json, 500)
@@ -1426,15 +1426,15 @@ class TestRespondents(PartyTestClient):
     @mock.patch("ras_party.controllers.case_controller.post_case_event")
     def test_disable_all_respondent_enrolments_disables_all_enrolments(self, mock_post_case, mock_get_case):
         respondent_email = self._create_enrolments(second_enrolment_status='PENDING')
-        response = self.put_disable_all_respondent_enrolments(respondent_email, expected_status=200)
-        assert response == '2 enrolments removed'
+        response = self.patch_disable_all_respondent_enrolments(respondent_email, expected_status=200)
+        assert response == {'message': '2 enrolments removed'}
 
     @mock.patch("ras_party.controllers.account_controller.get_case_id_for_business_survey")
     @mock.patch("ras_party.controllers.case_controller.post_case_event")
     def test_disable_all_respondent_enrolments_ignores_already_disabled_enrolments(self, mock_post_case, mock_get_case):
         respondent_email = self._create_enrolments(second_enrolment_status='DISABLED')
-        response = self.put_disable_all_respondent_enrolments(respondent_email, expected_status=200)
-        assert response == '1 enrolments removed'
+        response = self.patch_disable_all_respondent_enrolments(respondent_email, expected_status=200)
+        assert response == {'message': '1 enrolments removed'}
 
     def _create_enrolments(self, second_enrolment_status):
         def mock_put_iac(*args, **kwargs):
@@ -1451,7 +1451,7 @@ class TestRespondents(PartyTestClient):
         enrolment = {
             'business_id': DEFAULT_BUSINESS_UUID,
             'respondent_id': 1,
-            'survey_id': ALTERNATE_SURVEY_UUID1,
+            'survey_id': ALTERNATE_SURVEY_UUID,
             'status': second_enrolment_status,
             'created_on': "2017-12-01 13:40:55.495895"
         }

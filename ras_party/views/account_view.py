@@ -113,7 +113,7 @@ def change_respondent_enrolment_status():
     return make_response(jsonify('OK'), 200)
 
 
-@account_view.route('/respondents/disable-user-enrolments', methods=['PUT'])
+@account_view.route('/respondents/disable-user-enrolments', methods=['PATCH'])
 def disable_user_enrolments():
     """Disable all enrolments for a specific respondent email address"""
     try:
@@ -125,7 +125,7 @@ def disable_user_enrolments():
 
     removed_enrolment_count = account_controller.disable_all_respondent_enrolments(email)
 
-    return make_response(jsonify(f'{removed_enrolment_count} enrolments removed'), 200)
+    return make_response(jsonify({"message": f'{removed_enrolment_count} enrolments removed'}), 200)
 
 
 @account_view.route('/respondents/edit-account-status/<party_id>', methods=['PUT'])

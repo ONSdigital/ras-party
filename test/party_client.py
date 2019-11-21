@@ -257,11 +257,11 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status)
         return json.loads(response.get_data(as_text=True))
 
-    def put_disable_all_respondent_enrolments(self, email_address, expected_status=200):
-        response = self.client.put(f'/party-api/v1/respondents/disable-user-enrolments',
-                                   data=json.dumps({'email': email_address}),
-                                   headers=self.auth_headers,
-                                   content_type='application/vnd.ons.business+json')
+    def patch_disable_all_respondent_enrolments(self, email_address, expected_status=200):
+        response = self.client.patch(f'/party-api/v1/respondents/disable-user-enrolments',
+                                     data=json.dumps({'email': email_address}),
+                                     headers=self.auth_headers,
+                                     content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status)
         return json.loads(response.get_data(as_text=True))
 

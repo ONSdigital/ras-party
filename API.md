@@ -1007,7 +1007,7 @@ total would be 27
 
 ### Disable all user enrolments by email
 
-* `PUT /party-api/v1/respondents/disable-user-enrolments`
+* `PATCH /party-api/v1/respondents/disable-user-enrolments`
   * Disables all active enrolments for a respondent based on their email address.
   * Returns a 204 on success, a 400 if the id isn't a valid uuid and 404 if the user cannot be found.
 

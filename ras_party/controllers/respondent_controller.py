@@ -73,7 +73,7 @@ def get_respondent_by_id(respondent_id, session):
 @with_db_session
 def delete_respondent_by_email(email, session):
     """
-    Delete a Respondent by its email fter disabling all their enrolments
+    Delete a Respondent by its email
     On success it returns None, on failure will raise one of many different exceptions
     :param email: Id of Respondent to delete
     :type email: str
