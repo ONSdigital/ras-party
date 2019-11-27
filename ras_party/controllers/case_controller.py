@@ -9,6 +9,10 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def post_case_event(case_id, category='Default category message', desc='Default description message'):
+    """Posts a case event
+
+    :raises HTTPError: Raised if the post returns a failure status code
+    """
     logger.info('Posting case event', case_id=case_id)
     case_svc = current_app.config['CASE_SERVICE']
     case_url = f'{case_svc}/cases/{case_id}/events'

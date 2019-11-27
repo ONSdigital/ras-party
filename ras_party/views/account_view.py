@@ -7,7 +7,6 @@ from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import account_controller
 from ras_party.controllers.validate import Exists, Validator
-from ras_party.support.log_decorator import log_route
 
 
 account_view = Blueprint('account_view', __name__)
@@ -19,7 +18,6 @@ auth = HTTPBasicAuth()
 
 @account_view.before_request
 @auth.login_required
-@log_route
 def before_account_view():
     pass
 
@@ -113,6 +111,21 @@ def change_respondent_enrolment_status():
     account_controller.change_respondent_enrolment_status(payload)
 
     return make_response(jsonify('OK'), 200)
+
+
+@account_view.route('/respondents/disable-user-enrolments', methods=['PATCH'])
+def disable_user_enrolments():
+    """Disable all enrolments for a specific respondent email address"""
+    try:
+        email = request.get_json()['email']
+    except TypeError:
+        raise BadRequest('JSON payload not provided')
+    except KeyError:
+        raise BadRequest("Email key must be provided in the JSON payload")
+
+    removed_enrolment_count = account_controller.disable_all_respondent_enrolments(email)
+
+    return make_response(jsonify({"message": f'{removed_enrolment_count} enrolments removed'}), 200)
 
 
 @account_view.route('/respondents/edit-account-status/<party_id>', methods=['PUT'])
