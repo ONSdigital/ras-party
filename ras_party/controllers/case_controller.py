@@ -14,7 +14,7 @@ def post_case_event(case_id, category='Default category message', desc='Default 
     :raises HTTPError: Raised if the post returns a failure status code
     """
     logger.info('Posting case event', case_id=case_id)
-    case_svc = current_app.config['RAS_CASE_SERVICE']
+    case_svc = current_app.config['CASE_SERVICE']
     case_url = f'{case_svc}/cases/{case_id}/events'
     payload = {
         'description': desc,
@@ -30,7 +30,7 @@ def post_case_event(case_id, category='Default category message', desc='Default 
 
 def get_cases_for_casegroup(case_group_id):
     logger.info('Requesting cases for case group', casegroup_id=case_group_id)
-    case_svc = current_app.config['RAS_CASE_SERVICE']
+    case_svc = current_app.config['CASE_SERVICE']
     get_case_url = f'{case_svc}/cases/casegroupid/{case_group_id}'
 
     response = Requests.get(get_case_url)

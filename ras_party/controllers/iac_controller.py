@@ -11,7 +11,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def request_iac(enrolment_code):
-    iac_svc = current_app.config['RAS_IAC_SERVICE']
+    iac_svc = current_app.config['IAC_SERVICE']
     iac_url = f'{iac_svc}/iacs/{enrolment_code}'
     response = Requests.get(iac_url)
     response.raise_for_status()
@@ -19,7 +19,7 @@ def request_iac(enrolment_code):
 
 
 def disable_iac(enrolment_code, case_id):
-    iac_svc = current_app.config['RAS_IAC_SERVICE']
+    iac_svc = current_app.config['IAC_SERVICE']
     iac_url = f'{iac_svc}/iacs/{enrolment_code}'
     payload = {
         "updatedBy": "Party Service"
