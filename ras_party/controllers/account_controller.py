@@ -37,7 +37,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID'
 EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 
-
+# flake8: noqa: C901
 @with_quiet_db_session
 def post_respondent(party, session):
     """
@@ -98,11 +98,19 @@ def post_respondent(party, session):
         'status': RespondentStatus.CREATED
     }
 
-    respondent = _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id,
-                                         translated_party)
+    # This might look odd but it's done in the interest of keeping the code working in the same way.
+    # If raise_for_status in the function raises an error, it would've been caught by @with_db_session,
+    # rolled back the db and raised it.  Whether that's something we want is another question.
+    try:
+        respondent = _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id,
+                                             translated_party)
+    except HTTPError:
+        logger.error("add_enrolment_and_auth raised an HTTPError", exc_info=True)
+        session.rollback()
+        raise
 
     # If the disabling of the enrolment code fails we log an error and continue anyway.  In the interest of keeping
-    # the code working in the same way (which may itself be  wrong...) we'll handle the ValueError that can be raised
+    # the code working in the same way (which may itself be wrong...) we'll handle the ValueError that can be raised
     # in the same way as before (rollback the session and raise) but it's not clear whether this is the desired
     # behaviour.
     try:
@@ -152,7 +160,7 @@ def _add_enrolment_and_auth(business, business_id, case_id, party, session, surv
         oauth_response = OauthClient().create_account(party['emailAddress'], party['password'])
         if not oauth_response.status_code == 201:
             logger.info('Registering respondent auth service responded with', status=oauth_response.status_code,
-                        content=oauth_response.content, party_uuid=translated_party['party_uuid'])
+                        content=oauth_response.content)
 
             session.rollback()  # Rollback to SAVEPOINT
             oauth_response.raise_for_status()
