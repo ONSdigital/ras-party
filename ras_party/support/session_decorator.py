@@ -60,6 +60,25 @@ def handle_query_only_session(f, args, kwargs):
         current_app.db.session.remove()
 
 
+def handle_quiet_session(f, args, kwargs):
+    session = current_app.db.session()
+    try:
+        result = f(*args, session=session, **kwargs)
+        session.commit()
+        return result
+    except SQLAlchemyError:
+        logger.error("Something went wrong accessing database",
+                     pool_size=current_app.db.engine.pool.size(),
+                     connections_in_pool=current_app.db.engine.pool.checkedin(),
+                     connections_checked_out=current_app.db.engine.pool.checkedout(),
+                     current_overflow=current_app.db.engine.pool.overflow(),
+                     exc_info=True)
+        session.rollback()
+        raise
+    finally:
+        current_app.db.session.remove()
+
+
 def with_db_session(f):
     """
     Wraps the supplied function, and introduces a correctly-scoped database session which is passed into the decorated
@@ -71,6 +90,25 @@ def with_db_session(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         return handle_session(f, args, kwargs)
+
+    return wrapper
+
+
+def with_quiet_db_session(f):
+    """
+    Wraps the supplied function, and introduces a correctly-scoped database session which is passed into the decorated
+    function as the named parameter 'session'.  This is different from the @query_only_db_session in that it handles
+    rollbacksfor you on SQLAlchemyErrors as functions with this wrapper are ones that modify the database.
+    Note:  This is meant to replace @with_db_session as a wrapper that doesn't log an error on every exception as
+    every exception isn't worthy of a rollback and a logger.error line.  Once all  the @with_db_session's have been
+    replaced with this, it'd be wise to change the name of this function to something more accurate.
+
+    :param f: The function to be wrapped.
+    """
+
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return handle_quiet_session(f, args, kwargs)
 
     return wrapper
 
