@@ -27,6 +27,7 @@ from ras_party.models.models import PendingEnrolment, Respondent, RespondentStat
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session, with_query_only_db_session
+from ras_party.support.session_decorator import with_quiet_db_session
 from ras_party.support.transactional import transactional
 from ras_party.support.verification import decode_email_token
 from ras_party.support.util import obfuscate_email
@@ -36,8 +37,8 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID'
 EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 
-
-@with_db_session
+# flake8: noqa: C901
+@with_quiet_db_session
 def post_respondent(party, session):
     """
     Register respondent and set up pending enrolment before account verification
@@ -97,10 +98,27 @@ def post_respondent(party, session):
         'status': RespondentStatus.CREATED
     }
 
-    respondent = _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id,
-                                         translated_party)
+    # This might look odd but it's done in the interest of keeping the code working in the same way.
+    # If raise_for_status in the function raises an error, it would've been caught by @with_db_session,
+    # rolled back the db and raised it.  Whether that's something we want is another question.
+    try:
+        respondent = _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id,
+                                             translated_party)
+    except HTTPError:
+        logger.error("add_enrolment_and_auth raised an HTTPError", exc_info=True)
+        session.rollback()
+        raise
 
-    disable_iac(party['enrolmentCode'], case_id)  # calls raise for status
+    # If the disabling of the enrolment code fails we log an error and continue anyway.  In the interest of keeping
+    # the code working in the same way (which may itself be wrong...) we'll handle the ValueError that can be raised
+    # in the same way as before (rollback the session and raise) but it's not clear whether this is the desired
+    # behaviour.
+    try:
+        disable_iac(party['enrolmentCode'], case_id)
+    except ValueError:
+        logger.error("disable_iac didn't return json in its response", exc_info=True)
+        session.rollback()
+        raise
 
     _send_email_verification(respondent.party_uuid, party['emailAddress'])
 
@@ -149,7 +167,7 @@ def _add_enrolment_and_auth(business, business_id, case_id, party, session, surv
 
         session.commit()  # Full session commit
 
-    logger.info("New user has been registered via the auth-service")
+    logger.info("New user has been registered via the auth-service", party_uuid=translated_party['party_uuid'])
     return respondent
 
 
