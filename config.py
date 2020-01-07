@@ -86,7 +86,7 @@ class Config(object):
 
     RAS_OAUTH_SERVICE_PROTOCOL = os.getenv('RAS_OAUTH_SERVICE_PROTOCOL', 'http')
     RAS_OAUTH_SERVICE_HOST = os.getenv('RAS_OAUTH_SERVICE_HOST', 'localhost')
-    RAS_OAUTH_SERVICE_PORT = os.getenv('RAS_OAUTH_SERVICE_PORT', 8040)
+    RAS_OAUTH_SERVICE_PORT = os.getenv('RAS_OAUTH_SERVICE_PORT', 8041)
     RAS_OAUTH_SERVICE = f'{RAS_OAUTH_SERVICE_PROTOCOL}://{RAS_OAUTH_SERVICE_HOST}:{RAS_OAUTH_SERVICE_PORT}'
     RAS_OAUTH_CLIENT_ID = os.getenv('RAS_OAUTH_CLIENT_ID', 'ons@ons.gov')
     RAS_OAUTH_CLIENT_SECRET = os.getenv('RAS_OAUTH_CLIENT_SECRET', 'password')
@@ -119,7 +119,6 @@ class TestingConfig(DevelopmentConfig):
     DEBUG = True
     LOGGING_LEVEL = 'ERROR'
     SECRET_KEY = 'aardvark'
-#    EMAIL_TOKEN_SALT = 'bulbous'
     PARTY_SCHEMA = 'ras_party/schemas/party_schema.json'
     SECURITY_USER_NAME = 'username'
     SECURITY_USER_PASSWORD = 'password'

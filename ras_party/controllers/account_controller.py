@@ -257,21 +257,6 @@ def change_respondent_password(payload, tran, session):
         logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
-    # try:
-    #     # duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
-    #     # email_address = decode_email_token(token, duration)
-    # except SignatureExpired:
-    #     logger.info("Expired email verification token")
-    #     raise Conflict("Expired email verification token")
-    # except (BadSignature, BadData):
-    #     logger.exception("Bad token in change_respondent_password")
-    #     raise NotFound("Unknown email verification token")
-    #
-    # respondent = query_respondent_by_email(email_address, session)
-    # if not respondent:
-    #     logger.info("Respondent with email from token does not exist")
-    #     raise NotFound("Respondent does not exist")
-
     new_password = payload['new_password']
 
     # Check and see if the account is active, if not we can now set to active

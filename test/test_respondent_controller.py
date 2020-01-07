@@ -832,15 +832,6 @@ class TestRespondents(PartyTestClient):
             account_controller.request_password_change(payload)
             query.assert_called_once_with('test@example.test', db.session())
 
-    def test_change_password_with_invalid_token(self):
-        # When the password is changed with an incorrect token
-        # token = 'fake_token'
-        payload = {
-            'new_password': 'password',
-            'email_address': 'fake_mock'
-        }
-        self.change_password(payload, expected_status=404)
-
     def test_change_password_with_no_password(self):
         # When the password is changed with a valid email and no password
         payload = {
@@ -848,40 +839,16 @@ class TestRespondents(PartyTestClient):
         }
         self.change_password(payload, expected_status=400)
 
-    # def test_change_password_with_empty_password(self):
-    #     # When the password is changed with a token that does not match respondent
-    #     self.populate_with_respondent()
-    #     # token = self.generate_valid_token_from_email('not-mock@email.com')
-    #     payload = {
-    #         'new_password': '',
-    #         'email_address': 'a@z.com'
-    #     }
-    #     self.change_password(payload, expected_status=404)
-
-    # def test_change_password_with_other_token(self):
-    #     # When the password is changed with a token that does not match respondent
-    #     self.populate_with_respondent()
-    #     # token = self.generate_valid_token_from_email('not-mock@email.com')
-    #     payload = {
-    #         'new_password': 'password',
-    #         'email_address': 'a@z.com'
-    #         # 'token': token
-    #     }
-    #     self.change_password(payload, expected_status=404)
-
     def test_change_password_with_no_respondent(self):
         # When the password is changed with no respondents in db
-        # token = self.generate_valid_token_from_email(self.mock_respondent['emailAddress'])
         payload = {
             'new_password': 'password',
-            # 'token': token
         }
-        self.change_password(payload, expected_status=404)
+        self.change_password(payload, expected_status=500)
 
     def test_change_password_with_valid_token(self):
         # Given a valid token from the respondent
         respondent = self.populate_with_respondent()
-        # token = self.generate_valid_token_from_email(respondent.email_address)
         payload = {
             'new_password': 'password',
             'email_address': respondent.email_address
@@ -1488,9 +1455,9 @@ class TestRespondents(PartyTestClient):
              patch('ras_party.controllers.account_controller.OauthClient') as auth, \
              patch('ras_party.controllers.account_controller.Requests'):
             payload = {
-                'new_password': 'password'
+                'new_password': 'password',
+                'email_address': 'mock@email.com'
             }
-
             auth().update_account().status_code.return_value = 500
             with self.assertRaises(InternalServerError):
                 account_controller.change_respondent_password(payload)
