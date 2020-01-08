@@ -6,7 +6,8 @@ from flask import current_app
 from itsdangerous import SignatureExpired, BadSignature, BadData
 from requests import HTTPError
 from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.exceptions import BadRequest, Conflict, InternalServerError,  NotFound
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from werkzeug.exceptions import BadRequest, Conflict, InternalServerError, NotFound, UnprocessableEntity
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.case_controller import get_cases_for_casegroup, post_case_event
@@ -17,24 +18,27 @@ from ras_party.controllers.queries import query_business_respondent_by_responden
 from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
 from ras_party.controllers.queries import query_respondent_by_email, query_respondent_by_pending_email
 from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_by_party_uuid
+from ras_party.controllers.queries import query_all_non_disabled_enrolments_respondent
+from ras_party.controllers.queries import query_single_respondent_by_email
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import RasNotifyError
 from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
 from ras_party.models.models import PendingEnrolment, Respondent, RespondentStatus
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
-from ras_party.support.session_decorator import with_db_session
+from ras_party.support.session_decorator import with_db_session, with_query_only_db_session
+from ras_party.support.session_decorator import with_quiet_db_session
 from ras_party.support.transactional import transactional
 from ras_party.support.verification import decode_email_token
-
+from ras_party.support.util import obfuscate_email
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
-NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID '
+NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID'
 EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 
-
-@with_db_session
+# flake8: noqa: C901
+@with_quiet_db_session
 def post_respondent(party, session):
     """
     Register respondent and set up pending enrolment before account verification
@@ -94,10 +98,27 @@ def post_respondent(party, session):
         'status': RespondentStatus.CREATED
     }
 
-    respondent = _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id,
-                                         translated_party)
+    # This might look odd but it's done in the interest of keeping the code working in the same way.
+    # If raise_for_status in the function raises an error, it would've been caught by @with_db_session,
+    # rolled back the db and raised it.  Whether that's something we want is another question.
+    try:
+        respondent = _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id,
+                                             translated_party)
+    except HTTPError:
+        logger.error("add_enrolment_and_auth raised an HTTPError", exc_info=True)
+        session.rollback()
+        raise
 
-    disable_iac(party['enrolmentCode'], case_id)  # calls raise for status
+    # If the disabling of the enrolment code fails we log an error and continue anyway.  In the interest of keeping
+    # the code working in the same way (which may itself be wrong...) we'll handle the ValueError that can be raised
+    # in the same way as before (rollback the session and raise) but it's not clear whether this is the desired
+    # behaviour.
+    try:
+        disable_iac(party['enrolmentCode'], case_id)
+    except ValueError:
+        logger.error("disable_iac didn't return json in its response", exc_info=True)
+        session.rollback()
+        raise
 
     _send_email_verification(respondent.party_uuid, party['emailAddress'])
 
@@ -119,12 +140,12 @@ def _add_enrolment_and_auth(business, business_id, case_id, party, session, surv
             # Create the enrolment respondent-business-survey associations
 
             respondent = Respondent(**translated_party)
-            br = BusinessRespondent(business=business, respondent=respondent)
+            business_respondent = BusinessRespondent(business=business, respondent=respondent)
             pending_enrolment = PendingEnrolment(case_id=case_id,
                                                  respondent=respondent,
                                                  business_id=business_id,
                                                  survey_id=survey_id)
-            Enrolment(business_respondent=br,
+            Enrolment(business_respondent=business_respondent,
                       survey_id=survey_id,
                       status=EnrolmentStatus.PENDING)
 
@@ -146,38 +167,50 @@ def _add_enrolment_and_auth(business, business_id, case_id, party, session, surv
 
         session.commit()  # Full session commit
 
-    logger.info("New user has been registered via the auth-service")
+    logger.info("New user has been registered via the auth-service", party_uuid=translated_party['party_uuid'])
     return respondent
 
 
 @with_db_session
 def change_respondent_enrolment_status(payload, session):
     """
-    Change respondent enrolment status for business and survey
-    :param payload:
-    :param session:
-    :return:
+    Change respondent enrolment status for respondent and survey. Takes params from a payload dict
+
+    :param payload: A dictionary holding the values for the respondent party id being modified
     """
-    change_flag = payload['change_flag']
-    business_id = payload['business_id']
-    survey_id = payload['survey_id']
     respondent_id = payload['respondent_id']
-    logger.info("Attempting to change respondent enrolment",
-                respondent_id=respondent_id,
-                survey_id=survey_id,
-                business_id=business_id,
-                status=change_flag)
+
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     if not respondent:
         logger.info("Respondent does not exist", respondent_id=respondent_id)
+        raise NotFound("Respondent does not exist")
+
+    return _change_respondent_enrolment_status(respondent=respondent,
+                                               survey_id=payload['survey_id'],
+                                               business_id=payload['business_id'],
+                                               status=payload['change_flag'],
+                                               session=session)
+
+
+def _change_respondent_enrolment_status(respondent, survey_id, business_id, status, session):
+
+    logger.info("Attempting to change respondent enrolment",
+                respondent_id=respondent.party_uuid,
+                survey_id=survey_id,
+                business_id=business_id,
+                status=status)
+
+    respondent = query_respondent_by_party_uuid(respondent.party_uuid, session)
+    if not respondent:
+        logger.info("Respondent does not exist", respondent_id=respondent.party_uuid)
         raise NotFound("Respondent does not exist")
 
     enrolment = query_enrolment_by_survey_business_respondent(respondent_id=respondent.id,
                                                               business_id=business_id,
                                                               survey_id=survey_id,
                                                               session=session)
-    enrolment.status = change_flag
-    session.commit()
+    enrolment.status = status
+    session.commit()       # Needs to be committed before call to case as that may look up party
 
     # If no enrolments are remaining for business/survey
     # then send NO_ACTIVE_ENROLMENTS case event
@@ -191,13 +224,59 @@ def change_respondent_enrolment_status(payload, session):
 
 
 @with_db_session
+def disable_all_respondent_enrolments(respondent_email, session):
+    """Disables all enrolments for a respondent ,  returns the count of the removed enrolments"""
+
+    obfuscated_email = obfuscate_email(respondent_email)
+
+    logger.info('Disabling all enrolments for respondent', email=obfuscated_email)
+
+    removed_enrolments_count = 0
+
+    # raises errors if none or multiple, unusual import to avoid circular references
+    respondent = get_single_respondent_by_email(respondent_email, session)
+
+    enrolments = query_all_non_disabled_enrolments_respondent(respondent.id, session)
+
+    for enrolment in enrolments:
+        _change_respondent_enrolment_status(respondent=respondent,
+                                            survey_id=enrolment.survey_id,
+                                            business_id=enrolment.business_id,
+                                            status='DISABLED',
+                                            session=session)
+        removed_enrolments_count += 1
+
+    logger.info('Completed disabling respondent enrolments',
+                email=obfuscated_email, removed_enrolment_count=removed_enrolments_count)
+
+    return removed_enrolments_count
+
+
+def get_single_respondent_by_email(email, session):
+    """gets a single respondent based on an email address"""
+    try:
+        respondent = query_single_respondent_by_email(email, session)
+    except NoResultFound:
+        logger.error("Respondent with email does not exist", email=obfuscate_email(email))
+        raise NotFound("Respondent with email does not exist")
+    except MultipleResultsFound:
+        logger.error("Multiple respondents found for email", email=obfuscate_email(email))
+        raise UnprocessableEntity("Multiple users found, unable to proceed")
+    logger.info("Found respondent",
+                email=obfuscate_email(respondent.email_address),
+                party_uuid=respondent.party_uuid,
+                id=respondent.id)
+    return respondent
+
+
+@with_db_session
 def change_respondent(payload, session):
     """
     Modify an existing respondent's email address, identified by their current email address.
     """
     v = Validator(Exists('email_address', 'new_email_address'))
     if not v.validate(payload):
-        logger.debug(v.errors)
+        logger.info("Payload for change respondent was invalid", errors=v.errors)
         raise BadRequest(v.errors, 400)
 
     email_address = payload['email_address']
@@ -226,7 +305,7 @@ def change_respondent(payload, session):
     return respondent.to_respondent_dict()
 
 
-@with_db_session
+@with_query_only_db_session
 def verify_token(token, session):
     try:
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
@@ -302,10 +381,11 @@ def change_respondent_password(payload, tran, session):
     return {'response': "Ok"}
 
 
-@with_db_session
+@with_query_only_db_session
 def request_password_change(payload, session):
     _is_valid(payload, attribute='email_address')
 
+    logger.info("Verifying user exists before sending password reset email")
     respondent = query_respondent_by_email(payload['email_address'], session)
     if not respondent:
         logger.info("Respondent does not exist")
@@ -340,7 +420,7 @@ def request_password_change(payload, session):
     return {'response': "Ok"}
 
 
-@with_db_session
+@with_query_only_db_session
 def resend_password_email_expired_token(token, session):
     """
     Check and resend an email verification email using the expired token
@@ -503,7 +583,7 @@ def update_verified_email_address(respondent, tran):
     tran.on_success(lambda: logger.info('Updated verified email address'))
 
 
-@with_db_session
+@with_query_only_db_session
 def resend_verification_email_by_uuid(party_uuid, session):
     """
     Check and resend an email verification email using the party id
@@ -524,7 +604,7 @@ def resend_verification_email_by_uuid(party_uuid, session):
     return response
 
 
-@with_db_session
+@with_query_only_db_session
 def resend_verification_email_expired_token(token, session):
     """
     Check and resend an email verification email using the expired token
@@ -574,29 +654,26 @@ def add_new_survey_for_respondent(payload, tran, session):
         raise BadRequest("Enrolment code is not active")
 
     respondent = query_respondent_by_party_uuid(respondent_party_id, session)
-
     case_context = request_case(enrolment_code)
     case_id = case_context['id']
     business_id = case_context['partyId']
     collection_exercise_id = case_context['caseGroup']['collectionExerciseId']
     collection_exercise = request_collection_exercise(collection_exercise_id)
-
     survey_id = collection_exercise['surveyId']
 
-    br = query_business_respondent_by_respondent_id_and_business_id(business_id, respondent.id, session)
+    business_respondent = query_business_respondent_by_respondent_id_and_business_id(
+        business_id, respondent.id, session)
 
-    if not br:
-        """
-        Associate respondent with new business
-        """
+    if not business_respondent:
+        # Associate respondent with new business
         business = query_business_by_party_uuid(business_id, session)
         if not business:
             logger.error("Could not find business", business_id=business_id, case_id=case_id,
                          collection_exercise_id=collection_exercise_id)
             raise InternalServerError("Could not locate business when creating business association")
-        br = BusinessRespondent(business=business, respondent=respondent)
+        business_respondent = BusinessRespondent(business=business, respondent=respondent)
 
-    enrolment = Enrolment(business_respondent=br,
+    enrolment = Enrolment(business_respondent=business_respondent,
                           survey_id=survey_id,
                           status=EnrolmentStatus.ENABLED)
     session.add(enrolment)
@@ -619,11 +696,8 @@ def _send_email_verification(party_id, email):
     Send an email verification to the respondent
     """
     verification_url = PublicWebsite().activate_account_url(email)
+    personalisation = {'ACCOUNT_VERIFICATION_URL': verification_url}
     logger.info('Verification URL for party_id', party_id=str(party_id), url=verification_url)
-
-    personalisation = {
-        'ACCOUNT_VERIFICATION_URL': verification_url
-    }
 
     try:
         NotifyGateway(current_app.config).request_to_notify(email=email,
@@ -650,6 +724,16 @@ def set_user_verified(email_address):
 
 
 def enrol_respondent_for_survey(respondent, session):
+    """
+    Enrol a respondent for a survey
+
+    Searches for a respondent with a matching id in the pending enrolment table.  Once the respondent
+    has been enroled, the pending enrolment is deleted
+
+    :param respondent: A Respondent db object
+    :param session: A db session
+    """
+
     pending_enrolment_id = respondent.pending_enrolment[0].id
     pending_enrolment = session.query(PendingEnrolment).filter(
         PendingEnrolment.id == pending_enrolment_id).one()
@@ -661,18 +745,21 @@ def enrol_respondent_for_survey(respondent, session):
     session.add(enrolment)
     logger.info('Enabling pending enrolment for respondent', party_uuid=respondent.party_uuid,
                 survey_id=pending_enrolment.survey_id, business_id=pending_enrolment.business_id)
+
     # Send an enrolment event to the case service
     case_id = pending_enrolment.case_id
     logger.info('Pending enrolment for case_id', case_id=case_id)
-    if count_enrolment_by_survey_business(survey_id=enrolment.survey_id, business_id=enrolment.business_id,
-                                          session=session) == 0:
+    if count_enrolment_by_survey_business(enrolment.business_id, enrolment.survey_id, session) == 0:
         logger.info("Informing case of respondent enrolled", survey_id=enrolment.survey_id,
-                    business_id=enrolment.business_id, respondent_id=respondent.party_uuid)
+                    business_id=enrolment.business_id, party_uuid=respondent.party_uuid)
         post_case_event(case_id=case_id, category="RESPONDENT_ENROLED", desc="Respondent enrolled")
     session.delete(pending_enrolment)
 
 
 def register_user(party):
+    """
+    Create an account for the user in the auth service
+    """
     oauth_response = OauthClient().create_account(
         party['emailAddress'], party['password'])
     if not oauth_response.status_code == 201:
@@ -684,38 +771,53 @@ def register_user(party):
 
 
 def request_case(enrolment_code):
-    case_svc = current_app.config['RAS_CASE_SERVICE']
+    """
+    Contact the case service to retrieve a case for a given enrolment code
+
+    :param enrolment_code: A respondent provided enrolment code
+    """
+    case_svc = current_app.config['CASE_SERVICE']
     case_url = f'{case_svc}/cases/iac/{enrolment_code}'
-    logger.info('GET URL', url=case_url)
+    logger.info('Retrieving case from an enrolment code', enrolment_code=enrolment_code)
     response = Requests.get(case_url)
-    logger.info('Case service responded with', status=response.status_code)
     response.raise_for_status()
+    logger.info("Successfully retrieved case from an enrolment code", enrolment_code=enrolment_code)
     return response.json()
 
 
 def request_collection_exercise(collection_exercise_id):
-    ce_svc = current_app.config['RAS_COLLEX_SERVICE']
+    """
+    Contact the collection exercise service for a collection exercise by id
+
+    :param collection_exercise_id: The id of the collection exercise
+    """
+    ce_svc = current_app.config['COLLECTION_EXERCISE_SERVICE']
     ce_url = f'{ce_svc}/collectionexercises/{collection_exercise_id}'
-    logger.info('GET', url=ce_url)
+    logger.info('Retrieving collection exercise by id', collection_exercise_id=collection_exercise_id)
     response = Requests.get(ce_url)
-    logger.info('Collection exercise service responded with', status=response.status_code)
     response.raise_for_status()
+    logger.info("Successfully retrived collection exercise by id")
     return response.json()
 
 
 def request_survey(survey_id):
-    survey_svc = current_app.config['RAS_SURVEY_SERVICE']
+    """
+    Contact the survey service to get the details of a survey from its uuid.
+
+    :param survey_id: A uuid of a survey
+    """
+    survey_svc = current_app.config['_SURVEY_SERVICE']
     survey_url = f'{survey_svc}/surveys/{survey_id}'
-    logger.info('GET', url=survey_url)
+    logger.info("Retriving survey information from the survey service", survey_id=survey_id)
     response = Requests.get(survey_url)
-    logger.info('Survey service responded with', status=response.status_code)
     response.raise_for_status()
+    logger.info('Successfully retrieved survey information from the survey service', survey_id=survey_id)
     return response.json()
 
 
 def request_casegroups_for_business(business_id):
     logger.info('Retrieving casegroups for business', business_id=business_id)
-    url = f'{current_app.config["RAS_CASE_SERVICE"]}/casegroups/partyid/{business_id}'
+    url = f'{current_app.config["CASE_SERVICE"]}/casegroups/partyid/{business_id}'
     response = Requests.get(url)
     response.raise_for_status()
     logger.info('Successfully retrieved casegroups for business', business_id=business_id)
@@ -724,7 +826,7 @@ def request_casegroups_for_business(business_id):
 
 def request_collection_exercises_for_survey(survey_id):
     logger.info('Retrieving collection exercises for survey', survey_id=survey_id)
-    url = f'{current_app.config["RAS_COLLEX_SERVICE"]}/collectionexercises/survey/{survey_id}'
+    url = f'{current_app.config["COLLECTION_EXERCISE_SERVICE"]}/collectionexercises/survey/{survey_id}'
     response = Requests.get(url)
     response.raise_for_status()
     logger.info('Successfully retrieved collection exercises for survey', survey_id=survey_id)
@@ -750,7 +852,6 @@ def get_case_id_for_business_survey(survey_id, business_id):
     logger.info('Retrieving case for survey and business', survey_id=survey_id, business_id=business_id)
 
     case_group_ids = get_business_survey_casegroups(survey_id, business_id)
-
     cases = get_cases_for_casegroup(case_group_ids[0])
 
     return cases[0]['id']

@@ -1,7 +1,7 @@
 import logging
 
 import structlog
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_, or_, distinct
 
 from ras_party.models.models import Business, BusinessAttributes, BusinessRespondent, \
     Enrolment, EnrolmentStatus, Respondent
@@ -167,10 +167,12 @@ def update_respondent_details(respondent_data, respondent_id, session):
     return False
 
 
-def search_businesses(search_query, session):
+def search_businesses(search_query, page, limit, session):
     """
     Query to return list of businesses based on search query
     :param search_query: a string containing space separated list of keywords to search for in name or trading as
+    :param page: page to return starting at 1
+    :param limit: the maximum number of results to return in a page
     :return: list of businesses
     """
     bound_logger = logger.bind(search_query=search_query)
@@ -180,7 +182,7 @@ def search_businesses(search_query, session):
         result = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
             .join(Business).filter(Business.business_ref == search_query).distinct().all()
         if result:
-            return result
+            return result, len(result)      # ru ref searches do not need to support pagination
         bound_logger.info("Didn't find an ru_ref, searching everything")
 
     filters = []
@@ -199,10 +201,19 @@ def search_businesses(search_query, session):
     filters.append(and_(*trading_as_filters))
 
     bound_logger.unbind('search_query')
-    return session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
+    query = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
         .join(Business)\
         .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None)))\
-        .distinct().all()
+        .distinct().order_by(BusinessAttributes.name)          # Build the query
+
+    results = query.limit(limit).offset((page-1)*limit).all()  # Execute the query
+    if page == 1 and len(results) < limit:
+        total_business_count = len(results)
+    else:
+        count_q = query.statement.with_only_columns([func.count(distinct(Business.business_ref))]).order_by(None)
+        total_business_count = query.session.execute(count_q).scalar()
+
+    return results, total_business_count
 
 
 def query_enrolment_by_survey_business_respondent(respondent_id, business_id, survey_id, session):
@@ -219,6 +230,20 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
     response = session.query(Enrolment).filter(and_(Enrolment.respondent_id == respondent_id,
                                                     Enrolment.business_id == business_id,
                                                     Enrolment.survey_id == survey_id)).first()
+    return response
+
+
+def query_all_non_disabled_enrolments_respondent(respondent_id, session):
+    """
+    Query to return all non disabled enrolments based on respondent id
+    :param respondent_id,  the id column from the respondent (integer not uuid)
+    :return: enrolments for the respondent
+    """
+
+    logger.info('Querying all enrolments for respondent', respondent_id=respondent_id)
+
+    response = session.query(Enrolment).filter(and_(Enrolment.respondent_id == respondent_id,
+                                                    Enrolment.status != 'DISABLED')).all()
     return response
 
 

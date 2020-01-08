@@ -7,7 +7,6 @@ from flask_httpauth import HTTPBasicAuth
 from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import respondent_controller
-from ras_party.support.log_decorator import log_route
 
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -17,7 +16,6 @@ auth = HTTPBasicAuth()
 
 @respondent_view.before_request
 @auth.login_required
-@log_route
 def before_respondent_view():
     pass
 

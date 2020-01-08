@@ -15,11 +15,11 @@ class NotifyGateway:
 
     def __init__(self, config):
         self.config = config
-        self.notify_url = config['RAS_NOTIFY_SERVICE_URL']
-        self.email_verification_template = config['RAS_NOTIFY_EMAIL_VERIFICATION_TEMPLATE']
-        self.request_password_change_template = config['RAS_NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE']
-        self.confirm_password_change_template = config['RAS_NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE']
-        self.notify_account_locked = config['RAS_NOTIFY_ACCOUNT_LOCKED_TEMPLATE']
+        self.notify_url = config['NOTIFY_SERVICE_URL']
+        self.email_verification_template = config['NOTIFY_EMAIL_VERIFICATION_TEMPLATE']
+        self.request_password_change_template = config['NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE']
+        self.confirm_password_change_template = config['NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE']
+        self.notify_account_locked = config['NOTIFY_ACCOUNT_LOCKED_TEMPLATE']
 
     def _send_message(self, email, template_id, personalisation=None, reference=None):
         """
