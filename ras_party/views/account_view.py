@@ -44,10 +44,10 @@ def get_verify_token(token):
     return make_response(jsonify(response), 200)
 
 
-@account_view.route('/respondents/change_password/<token>', methods=['PUT'])
-def change_respondent_password(token):
+@account_view.route('/respondents/change_password', methods=['PUT'])
+def change_respondent_password():
     payload = request.get_json() or {}
-    response = account_controller.change_respondent_password(token, payload)
+    response = account_controller.change_respondent_password(payload)
     return make_response(jsonify(response), 200)
 
 

@@ -86,7 +86,7 @@ class Config(object):
 
     OAUTH_SERVICE_PROTOCOL = os.getenv('OAUTH_SERVICE_PROTOCOL', 'http')
     OAUTH_SERVICE_HOST = os.getenv('OAUTH_SERVICE_HOST', 'localhost')
-    OAUTH_SERVICE_PORT = os.getenv('OAUTH_SERVICE_PORT', 8040)
+    OAUTH_SERVICE_PORT = os.getenv('OAUTH_SERVICE_PORT', 8041)
     OAUTH_SERVICE = f'{OAUTH_SERVICE_PROTOCOL}://{OAUTH_SERVICE_HOST}:{OAUTH_SERVICE_PORT}'
     OAUTH_CLIENT_ID = os.getenv('OAUTH_CLIENT_ID', 'ons@ons.gov')
     OAUTH_CLIENT_SECRET = os.getenv('OAUTH_CLIENT_SECRET', 'password')
@@ -119,7 +119,6 @@ class TestingConfig(DevelopmentConfig):
     DEBUG = True
     LOGGING_LEVEL = 'ERROR'
     SECRET_KEY = 'aardvark'
-    EMAIL_TOKEN_SALT = 'bulbous'
     PARTY_SCHEMA = 'ras_party/schemas/party_schema.json'
     SECURITY_USER_NAME = 'username'
     SECURITY_USER_PASSWORD = 'password'
