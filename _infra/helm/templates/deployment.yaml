@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ras-party
+  labels:
+    run: ras-party
+    helm.release: RELEASE-NAME
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge:
+      maxUnavailable:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: ras-party
+      env: dev
+      version: "v1.2"
+  template:
+    metadata:
+      labels:
+        app: ras-party
+        env: dev
+        version: "v1.2"
+    spec:
+      containers:
+        - name: ras-party
+          image: "eu.gcr.io/rm-ras-sandbox/ras-party:migration-sandbox"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http-server
+              containerPort: 8090
+          readinessProbe:
+            httpGet:
+              path: /info
+              port: 8090
+            initialDelaySeconds: 1
+            periodSeconds: 20
+            failureThreshold: 5
+            successThreshold: 1
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /info
+              port: 8090
+            initialDelaySeconds: 1
+            periodSeconds: 20
+            failureThreshold: 5
+            successThreshold: 1
+            timeoutSeconds: 5
+          env:
+          - name: DB_HOST
+            value: $(POSTGRES_SERVICE_HOST)
+          - name: DB_PORT
+            valueFrom:
+              secretKeyRef:
+                name: db-config
+                key: db-port
+          - name: DB_NAME
+            valueFrom:
+              secretKeyRef:
+                name: db-config
+                key: db-name
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: db-credentials
+                key: username
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db-credentials
+                key: password
+          - name: SECURITY_USER_NAME
+            valueFrom:
+              secretKeyRef:
+                name: security-credentials
+                key: security-user
+          - name: SECURITY_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: security-credentials
+                key: security-password
+          - name: DATABASE_URI
+            value: "postgresql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+          - name: RAS_OAUTH_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: oauth-secret
+                key: oauth-client-id
+          - name: RAS_OAUTH_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: oauth-secret
+                key: oauth-client-secret
+          - name: RAS_CASE_SERVICE_HOST
+            value: "$(CASESVC_SERVICE_HOST)"
+          - name: RAS_CASE_SERVICE_PORT
+            value: "$(CASESVC_SERVICE_PORT)"
+          - name: RAS_COLLEX_SERVICE_HOST
+            value: "$(COLLECTIONEXERCISESVC_SERVICE_HOST)"
+          - name: RAS_COLLEX_SERVICE_PORT
+            value: "$(COLLECTIONEXERCISESVC_SERVICE_PORT)"
+          - name: RAS_SURVEY_SERVICE_HOST
+            value: "$(SURVEYSVC_SERVICE_HOST)"
+          - name: RAS_IAC_SERVICE_HOST
+            value: "$(IACSVC_SERVICE_HOST)"
+          - name: RAS_IAC_SERVICE_PORT
+            value: "$(IACSVC_SERVICE_PORT)"
+          - name: RAS_OAUTH_SERVICE_HOST
+            value: "$(RAS_RM_AUTH_SERVICE_SERVICE_HOST)"
+          - name: RAS_OAUTH_SERVICE_PORT
+            value: "$(RAS_RM_AUTH_SERVICE_SERVICE_PORT)"
+          - name: PORT
+            value: "8090"
+          - name: ZIPKIN_DSN
+            value: "http://$(ZIPKIN_SERVICE_HOST):$(ZIPKIN_SERVICE_PORT)/api/v1/spans"
+          - name: ZIPKIN_SAMPLE_RATE
+            value: "100"
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2056Mi
+            requests:
+              cpu: 500m
+              memory: 1028Mi
