@@ -5,6 +5,7 @@ from sqlalchemy import func, and_, or_, distinct
 
 from ras_party.models.models import Business, BusinessAttributes, BusinessRespondent, \
     Enrolment, EnrolmentStatus, Respondent
+from ras_party.support.util import obfuscate_email
 
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -64,8 +65,7 @@ def query_respondent_by_names_and_emails(first_name, last_name, email, page, lim
     :param session:
     """
 
-    logger.info('Querying respondents by names , email', first_name=first_name, last_name=last_name,
-                email=email, page=page, limit=limit)
+    logger.info('Querying respondents by names and/or email', email=obfuscate_email(email), page=page, limit=limit)
 
     conditions = []
 
