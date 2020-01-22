@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ras-party
+  name: {{ .Chart.Name }}
   labels:
-    run: ras-party
+    run: (( .Chart.Name }}
     helm.release: RELEASE-NAME
 spec:
   type: ClusterIP
@@ -11,5 +11,5 @@ spec:
   - port: 8090
     protocol: TCP
   selector:
-    app: ras-party
+    app: {{ .Chart.Name }}
 
