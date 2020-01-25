@@ -1,0 +1,17 @@
+replicaCount: 1
+
+env: "dev"
+
+service:
+  port: 8090
+
+secret:
+  jwt: dGVzdHNlY3JldA==
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1028Mi"
+  limits:
+    cpu: "1000m"
+    memory: "2056Mi"
