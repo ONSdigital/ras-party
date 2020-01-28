@@ -1,4 +1,8 @@
 import functools
+import structlog
+import logging
+
+logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def filter_dict(d, cb):
@@ -64,7 +68,20 @@ def obfuscate_email(email):
     """Takes an email address and returns an obfuscated version of it.
     For example: test@example.com would turn into t**t@e*********m
     """
-    m = email.split('@')
-    prefix = f'{m[0][0]}{"*"*(len(m[0])-2)}{m[0][-1]}'
-    domain = f'{m[1][0]}{"*"*(len(m[1])-2)}{m[1][-1]}'
-    return f'{prefix}@{domain}'
+    try:
+        m = email.split('@')
+        # If the prefix is 1 character, then we can't obfuscate it
+        if len(m[0]) > 1:
+            prefix = f'{m[0][0]}{"*"*(len(m[0])-2)}{m[0][-1]}'
+        else:
+            prefix = m[0]
+        # If the domain is missing or 1 character, then we can't obfuscate it
+        if len(m) > 1 and len(m[1]) > 1:
+            domain = f'{m[1][0]}{"*"*(len(m[1])-2)}{m[1][-1]}'
+            return f'{prefix}@{domain}'
+        else:
+            return f'{prefix}'
+    except AssertionError:
+        if email is None:
+            logger.exception('Address missing')
+            return email
