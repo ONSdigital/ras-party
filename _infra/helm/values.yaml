@@ -6,7 +6,7 @@ service:
   port: 8090
 
 secret:
-  jwt: dGVzdHNlY3JldA==
+  jwt: testsecret
 
 resources:
   requests:
