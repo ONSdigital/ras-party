@@ -7,6 +7,7 @@ service:
 
 secret:
   jwt: testsecret
+  versioned: false
 
 resources:
   requests:
