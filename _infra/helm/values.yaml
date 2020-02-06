@@ -1,17 +1,18 @@
 replicaCount: 1
 
-env: "dev"
+env: "minikube"
 
 service:
   port: 8090
 
 secret:
-  jwt: dGVzdHNlY3JldA==
+  jwt: testsecret
+  versioned: false
 
 resources:
   requests:
     cpu: "500m"
-    memory: "1028Mi"
+    memory: "256Mi"
   limits:
     cpu: "1000m"
-    memory: "2056Mi"
+    memory: "512Mi"

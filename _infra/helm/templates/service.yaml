@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: {{ .Chart.Name }}
   labels:
-    run: (( .Chart.Name }}
+    run: {{ .Chart.Name }}
 spec:
   type: ClusterIP
   ports:
