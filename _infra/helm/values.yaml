@@ -1,14 +1,26 @@
 replicaCount: 1
 
-env: "minikube"
+namespace: minikube
+env: minikube
+
+rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 1
 
 service:
   port: 8090
+  type: ClusterIP
 
-secret:
-  jwt: testsecret
-  versioned: false
+image:
+  name: eu.gcr.io/ons-rasrmbs-management
+  pullPolicy: IfNotPresent
 
 resources:
   requests:
-    memory: "256Mi"
+    memory: 256Mi
+
+email:
+  secret:
+    key: aardvark
+  token:
+    salt: aardvark
