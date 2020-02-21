@@ -4,8 +4,8 @@ namespace: minikube
 env: minikube
 
 rollingUpdate:
-    maxSurge: 1
-    maxUnavailable: 1
+  maxSurge: 1
+  maxUnavailable: 1
 
 container:
   port: 80
