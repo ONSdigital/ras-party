@@ -23,15 +23,15 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
-          image: {{ .Values.image.name}}/{{ .Chart.Name }}:{{ .Chart.AppVersion }}"
+          image: "{{ .Values.image.name}}/{{ .Chart.Name }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http-server
-              containerPort: {{ .Values.service.port }}
+              containerPort: {{ .Values.container.port }}
           readinessProbe:
             httpGet:
               path: /info
-              port:  {{ .Values.service.port }}
+              port:  {{ .Values.container.port }}
             initialDelaySeconds: 1
             periodSeconds: 20
             failureThreshold: 5
@@ -40,7 +40,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /info
-              port:  {{ .Values.service.port }}
+              port:  {{ .Values.container.port }}
             initialDelaySeconds: 1
             periodSeconds: 20
             failureThreshold: 5
@@ -110,7 +110,7 @@ spec:
           - name: RAS_OAUTH_SERVICE_PORT
             value: "$(AUTH_SERVICE_PORT)"
           - name: PORT
-            value: "8090"
+            value: "{{ .Values.container.port }}"
           - name: ZIPKIN_DSN
             value: "http://$(ZIPKIN_SERVICE_HOST):$(ZIPKIN_SERVICE_PORT)/api/v1/spans"
           - name: ZIPKIN_SAMPLE_RATE
