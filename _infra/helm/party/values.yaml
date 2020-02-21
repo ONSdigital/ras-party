@@ -1,0 +1,29 @@
+replicaCount: 1
+
+namespace: minikube
+env: minikube
+
+rollingUpdate:
+  maxSurge: 1
+  maxUnavailable: 1
+
+container:
+  port: 80
+
+service:
+  port: 80
+  type: ClusterIP
+
+image:
+  name: eu.gcr.io/ons-rasrmbs-management
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    memory: 256Mi
+
+email:
+  secret:
+    key: aardvark
+  token:
+    salt: aardvark
