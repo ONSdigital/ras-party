@@ -28,6 +28,12 @@ resources:
     memory: "256Mi"
 
 email:
+  enabled: false
+  templates:
+    notifyAccountLockedTemplate: account_locked_id
+    notifyConfirmPasswordChangeTemplate: confirm_password_change_id
+    notifyEmailVerificationTemplate: email_verification_id
+    notifyRequestPasswordChangeTemplate: request_password_change_id
   secret:
     key: aardvark
   token:
