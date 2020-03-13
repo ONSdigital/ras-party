@@ -138,6 +138,8 @@ spec:
               secretKeyRef:
                 name: oauth-secret
                 key: oauth-client-secret
+          - name: NOTIFY_SERVICE_URL
+            value: "http://$(NOTIFY_GATEWAY_SERVICE_HOST):$(NOTIFY_GATEWAY_SERVICE_PORT)/emails/"
           - name: NOTIFY_EMAIL_VERIFICATION_TEMPLATE
             value: "{{ .Values.email.templates.notifyEmailVerificationTemplate }}"
           - name: NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE
