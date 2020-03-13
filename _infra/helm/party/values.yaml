@@ -34,6 +34,10 @@ email:
     notifyConfirmPasswordChangeTemplate: confirm_password_change_id
     notifyEmailVerificationTemplate: email_verification_id
     notifyRequestPasswordChangeTemplate: request_password_change_id
+  callback:
+    protocol: http
+    host: localhost
+    port: 8080
   secret:
     key: aardvark
   token:

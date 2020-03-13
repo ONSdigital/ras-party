@@ -112,6 +112,20 @@ spec:
               secretKeyRef:
                 name: db-credentials
                 key: {{ .Values.database.secrets.passwordKey }}
+          - name: FRONTSTAGE_HOST
+            {{- if .Values.email.enabled }}
+            value: {{ .Values.email.callback.host }}
+            {{- else }}
+            value: "$(FRONTSTAGE_SERVICE_HOST)"
+            {{- end }}
+          - name: FRONTSTAGE_PORT
+            {{- if .Values.email.enabled }}
+            value: "{{ .Values.email.callback.port }}"
+            {{- else }}
+            value: "$(FRONTSTAGE_SERVICE_PORT)"
+            {{- end }}
+          - name: FRONTSTAGE_PROTOCOL
+            value: {{ .Values.email.callback.protocol }}
           - name: SECURITY_USER_NAME
             valueFrom:
               secretKeyRef:
