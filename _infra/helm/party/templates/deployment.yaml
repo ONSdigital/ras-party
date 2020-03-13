@@ -155,7 +155,7 @@ spec:
           - name: PORT
             value: "{{ .Values.container.port }}"
           - name: SEND_EMAIL_TO_GOV_NOTIFY
-            value: {{ .Values.email.enabled }}
+            value: "{{ .Values.email.enabled }}"
           - name: ZIPKIN_DSN
             value: "http://$(ZIPKIN_SERVICE_HOST):$(ZIPKIN_SERVICE_PORT)/api/v1/spans"
           - name: ZIPKIN_SAMPLE_RATE
