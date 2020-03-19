@@ -152,8 +152,20 @@ spec:
               secretKeyRef:
                 name: oauth-secret
                 key: oauth-client-secret
+          - name: NOTIFY_SERVICE_HOST
+            {{- if .Values.dns.enabled }}
+            value: "notify-gateway.{{ .Values.namespace }}.svc.cluster.local"
+            {{- else }}
+            value: "$(NOTIFY_GATEWAY_SERVICE_HOST)"
+            {{- end }}
+          - name: NOTIFY_SERVICE_PORT
+            {{- if .Values.dns.enabled }}
+            value: "{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: $(NOTIFY_GATEWAY_SERVICE_PORT)
+            {{- end }}
           - name: NOTIFY_SERVICE_URL
-            value: "http://$(NOTIFY_GATEWAY_SERVICE_HOST):$(NOTIFY_GATEWAY_SERVICE_PORT)/emails/"
+            value: "http://$(NOTIFY_SERVICE_HOST):$(NOTIFY_SERVICE_PORT)/emails/"
           - name: NOTIFY_EMAIL_VERIFICATION_TEMPLATE
             value: "{{ .Values.email.templates.notifyEmailVerificationTemplate }}"
           - name: NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE
@@ -163,9 +175,17 @@ spec:
           - name: NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE
             value: "{{ .Values.email.templates.notifyRequestPasswordChangeTemplate }}"
           - name: OAUTH_SERVICE_HOST
+            {{- if .Values.dns.enabled }}
+            value: "auth.{{ .Values.namespace }}.svc.cluster.local"
+            {{- else }}
             value: "$(AUTH_SERVICE_HOST)"
+            {{- end }}
           - name: OAUTH_SERVICE_PORT
-            value: "$(AUTH_SERVICE_PORT)"
+            {{- if .Values.dns.enabled }}
+            value: "{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: $(AUTH_SERVICE_PORT)
+            {{- end }}
           - name: PORT
             value: "{{ .Values.container.port }}"
           - name: SEND_EMAIL_TO_GOV_NOTIFY
