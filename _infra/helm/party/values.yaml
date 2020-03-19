@@ -42,3 +42,7 @@ email:
     key: aardvark
   token:
     salt: aardvark
+
+dns:
+  enabled: false
+  wellKnownPort: 8080
