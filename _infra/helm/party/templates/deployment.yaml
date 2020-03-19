@@ -115,16 +115,12 @@ spec:
           - name: FRONTSTAGE_HOST
             {{- if .Values.email.enabled }}
             value: {{ .Values.email.callback.host }}
-            {{- else if .Values.dns.enabled }}
-            value: "frontstage.{{ .Values.namespace }}.svc.cluster.local"
             {{- else }}
             value: "$(FRONTSTAGE_SERVICE_HOST)"
             {{- end }}
           - name: FRONTSTAGE_PORT
             {{- if .Values.email.enabled }}
             value: "{{ .Values.email.callback.port }}"
-            {{- else if .Values.dns.enabled }}
-            value: "{{ .Values.dns.wellKnownPort }}"
             {{- else }}
             value: "$(FRONTSTAGE_SERVICE_PORT)"
             {{- end }}
