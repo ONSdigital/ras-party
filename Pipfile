@@ -13,7 +13,7 @@ flask = "*"
 flask-cors = "*"
 flask-httpauth = "*"
 gunicorn = "*"
-gevent = {version = "*", platform_python_implementation="=='CPython'"}
+gevent = {version = "*",platform_python_implementation = "=='CPython'"}
 itsdangerous = "*"
 jsonschema = "*"
 python-dateutil = "*"
@@ -25,6 +25,7 @@ structlog = "*"
 requestsdefaulter = "*"
 flask-zipkin = "*"
 "psycopg2-binary" = "*"
+urllib3 = "*"
 
 [dev-packages]
 coverage = "*"
