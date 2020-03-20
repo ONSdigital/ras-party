@@ -166,6 +166,16 @@ spec:
             value: "$(AUTH_SERVICE_HOST)"
           - name: OAUTH_SERVICE_PORT
             value: "$(AUTH_SERVICE_PORT)"
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Chart.Name }}
+                key: email-secret-key
+          - name: EMAIL_TOKEN_SALT
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Chart.Name }}
+                key: email-token-salt
           - name: PORT
             value: "{{ .Values.container.port }}"
           - name: SEND_EMAIL_TO_GOV_NOTIFY
@@ -175,4 +185,4 @@ spec:
           - name: ZIPKIN_SAMPLE_RATE
             value: "100"
           resources:
-            {{ toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.resources | nindent 12 }}
