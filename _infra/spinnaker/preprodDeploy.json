@@ -1,16 +1,16 @@
 {
   "schema": "v2",
   "application": "party",
-  "name": "party",
+  "name": "deploy preprod",
   "template": {
     "artifactAccount": "front50ArtifactCredentials",
-    "reference": "spinnaker://rasrmApplicationTemplate",
+    "reference": "spinnaker://individualDeploymentTemplate",
     "type": "front50/pipelineTemplate"
   },
   "variables": {
-    "name": "party",
-    "defaultHelmChart": "party-0.1.0.tgz",
-    "helmChartMatcher": "party-.*\\.tgz"
+    "namespace": "preprod",
+    "environment": "preprod",
+    "service": "party"
   },
   "exclude": [],
   "triggers": [],
