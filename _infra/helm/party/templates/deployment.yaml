@@ -168,6 +168,24 @@ spec:
             value: "http://$(NOTIFY_SERVICE_HOST):$(NOTIFY_SERVICE_PORT)/emails/"
           - name: NOTIFY_EMAIL_VERIFICATION_TEMPLATE
             value: "{{ .Values.email.templates.notifyEmailVerificationTemplate }}"
+          {{- if .Values.dns.enabled }}
+          - name: CASE_SERVICE_HOST
+            value: "case.{{ .Values.namespace }}.svc.cluster.local"
+          - name: CASE_SERVICE_PORT
+            value: "{{ .Values.dns.wellKnownPort }}"
+          - name: COLLECTION_EXERCISE_SERVICE_HOST
+            value: "collection-exercise.{{ .Values.namespace }}.svc.cluster.local"
+          - name: COLLECTION_EXERCISE_SERVICE_PORT
+            value: "{{ .Values.dns.wellKnownPort }}"
+          - name: SURVEY_SERVICE_HOST
+            value: "survey.{{ .Values.namespace }}.svc.cluster.local"
+          - name: SURVEY_SERVICE_PORT
+            value: "{{ .Values.dns.wellKnownPort }}"
+          - name: IAC_SERVICE_HOST
+            value: "iac.{{ .Values.namespace }}.svc.cluster.local"
+          - name: IAC_SERVICE_PORT
+            value: "{{ .Values.dns.wellKnownPort }}"
+          {{- end }}
           - name: NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE
             value: "{{ .Values.email.templates.notifyConfirmPasswordChangeTemplate }}"
           - name: NOTIFY_EMAIL_VERIFICATION_TEMPLATE
