@@ -9,8 +9,10 @@
   },
   "variables": {
     "namespace": "dev",
+    "configNamespace": "dev",
     "environment": "dev",
-    "service": "party"
+    "service": "party",
+    "bucket": "ras-rm-configuration"
   },
   "exclude": [],
   "triggers": [],
