@@ -174,8 +174,6 @@ spec:
             {{- else }}
             value: "http://$(NOTIFY_GATEWAY_SERVICE_HOST):$(NOTIFY_GATEWAY_SERVICE_PORT)/emails/"
             {{- end }}
-          - name: NOTIFY_EMAIL_VERIFICATION_TEMPLATE
-            value: "{{ .Values.email.templates.notifyEmailVerificationTemplate }}"
           {{- if .Values.dns.enabled }}
           - name: CASE_SERVICE_HOST
             value: "case.{{ .Values.namespace }}.svc.cluster.local"
@@ -200,6 +198,8 @@ spec:
             value: "{{ .Values.email.templates.notifyEmailVerificationTemplate }}"
           - name: NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE
             value: "{{ .Values.email.templates.notifyRequestPasswordChangeTemplate }}"
+          - name: NOTIFY_ACCOUNT_LOCKED_TEMPLATE
+            value: {{ .Values.email.templates.notifyAccountLockedTemplate }}
           - name: OAUTH_SERVICE_HOST
             {{- if .Values.dns.enabled }}
             value: "auth.{{ .Values.namespace }}.svc.cluster.local"
