@@ -51,7 +51,8 @@ class NotifyGateway:
             logger.info('Notification id sent via Notify-Gateway to GOV.UK Notify.', id=response.json()["id"])
         else:
             ref = reference if reference else 'reference_unknown'
-            raise RasNotifyError(f"There was a problem sending a notification to Notify-Gateway to GOV.UK Notify. URL = {url}, STATUS CODE = {status_code}",
+            raise RasNotifyError("There was a problem sending a notification to Notify-Gateway to GOV.UK Notify."
+                                 f" URL = {url}, STATUS CODE = {status_code}, MESSAGE = {response.text}",
                                  reference=ref)
 
     def request_to_notify(self, email, template_name, personalisation=None, reference=None):
