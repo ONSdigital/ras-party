@@ -35,25 +35,24 @@ class NotifyGateway:
             logger.info("Notification not sent. Notify is disabled.")
             return
 
-        try:
-            notification = {
-                "emailAddress": email,
-            }
-            if personalisation:
-                notification.update({"personalisation": personalisation})
-            if reference:
-                notification.update({"reference": reference})
+        notification = {
+            "emailAddress": email,
+        }
+        if personalisation:
+            notification.update({"personalisation": personalisation})
+        if reference:
+            notification.update({"reference": reference})
 
-            url = urlparse.urljoin(self.notify_url, str(template_id))
+        url = urlparse.urljoin(self.notify_url, str(template_id))
+        response = Requests.post(url, json=notification)
+        status_code = response.status_code
 
-            response = Requests.post(url, json=notification)
-
+        if status_code == 201:
             logger.info('Notification id sent via Notify-Gateway to GOV.UK Notify.', id=response.json()["id"])
-
-        except Exception as e:
+        else:
             ref = reference if reference else 'reference_unknown'
-            raise RasNotifyError("There was a problem sending a notification to Notify-Gateway to GOV.UK Notify",
-                                 error=e, reference=ref)
+            raise RasNotifyError(f"There was a problem sending a notification to Notify-Gateway to GOV.UK Notify. URL = {url}, STATUS CODE = {status_code}",
+                                 reference=ref)
 
     def request_to_notify(self, email, template_name, personalisation=None, reference=None):
         template_id = self._get_template_id(template_name)

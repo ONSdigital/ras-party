@@ -71,7 +71,7 @@ class Config(object):
     SURVEY_SERVICE_PORT = os.getenv('SURVEY_SERVICE_PORT', 8080)
     SURVEY_SERVICE = f'{SURVEY_SERVICE_PROTOCOL}://{SURVEY_SERVICE_HOST}:{SURVEY_SERVICE_PORT}'
 
-    NOTIFY_SERVICE_URL = os.getenv('NOTIFY_SERVICE_URL', 'http://notify-gateway-service/emails/')
+    NOTIFY_SERVICE_URL = os.getenv('NOTIFY_SERVICE_URL', 'http://localhost:8181/emails/')
     NOTIFY_EMAIL_VERIFICATION_TEMPLATE = os.getenv('NOTIFY_EMAIL_VERIFICATION_TEMPLATE', 'email_verification_id')
     NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = os.getenv('NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE',
                                                             'request_password_change_id')
