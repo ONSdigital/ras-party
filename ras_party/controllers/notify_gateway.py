@@ -5,7 +5,7 @@ import structlog
 
 from ras_party.exceptions import RasNotifyError
 from ras_party.support.requests_wrapper import Requests
-
+from requests.exceptions import HTTPError
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -45,15 +45,15 @@ class NotifyGateway:
 
         url = urlparse.urljoin(self.notify_url, str(template_id))
         response = Requests.post(url, json=notification)
-        status_code = response.status_code
 
-        if 201 <= status_code <= 399:
+        try:
             logger.info('Notification id sent via Notify-Gateway to GOV.UK Notify.', id=response.json()["id"])
-        else:
+            response.raise_for_status()
+        except HTTPError as e:
             ref = reference if reference else 'reference_unknown'
-            raise RasNotifyError("There was a problem sending a notification to Notify-Gateway to GOV.UK Notify."
-                                 f" URL = {url}, STATUS CODE = {status_code}, MESSAGE = {response.text}",
-                                 reference=ref)
+            raise RasNotifyError("There was a problem sending a notification via Notify-Gateway to GOV.UK Notify.",
+                                 url=url, status_code=response.status_code,
+                                 message=response.text, reference=ref, error=e)
 
     def request_to_notify(self, email, template_name, personalisation=None, reference=None):
         template_id = self._get_template_id(template_name)
