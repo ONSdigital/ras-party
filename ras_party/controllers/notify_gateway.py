@@ -5,7 +5,6 @@ import structlog
 
 from ras_party.exceptions import RasNotifyError
 from ras_party.support.requests_wrapper import Requests
-from requests.exceptions import HTTPError
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -34,26 +33,29 @@ class NotifyGateway:
         if not self.config['SEND_EMAIL_TO_GOV_NOTIFY']:
             logger.info("Notification not sent. Notify is disabled.")
             return
-
-        notification = {
-            "emailAddress": email,
-        }
-        if personalisation:
-            notification.update({"personalisation": personalisation})
-        if reference:
-            notification.update({"reference": reference})
-
-        url = urlparse.urljoin(self.notify_url, str(template_id))
-        response = Requests.post(url, json=notification)
-
         try:
+            notification = {
+                "emailAddress": email,
+            }
+            if personalisation:
+                notification.update({"personalisation": personalisation})
+            if reference:
+                notification.update({"reference": reference})
+
+            url = urlparse.urljoin(self.notify_url, str(template_id))
+            response = Requests.post(url, json=notification)
+
             logger.info('Notification id sent via Notify-Gateway to GOV.UK Notify.', id=response.json()["id"])
             response.raise_for_status()
-        except HTTPError as e:
+        except Exception as e:
             ref = reference if reference else 'reference_unknown'
+            resp = response if response else {
+                'status_code': 'Unknown',
+                'text': 'Excpetion thrown before request was made'
+            }
             raise RasNotifyError("There was a problem sending a notification via Notify-Gateway to GOV.UK Notify.",
-                                 url=url, status_code=response.status_code,
-                                 message=response.text, reference=ref, error=e)
+                                 url=url, status_code=resp.status_code,
+                                 message=resp.text, reference=ref, error=e)
 
     def request_to_notify(self, email, template_name, personalisation=None, reference=None):
         template_id = self._get_template_id(template_name)
