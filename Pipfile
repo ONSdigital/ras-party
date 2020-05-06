@@ -23,7 +23,6 @@ sqlalchemy = "*"
 sqlalchemy-utils = "*"
 structlog = "*"
 requestsdefaulter = "*"
-flask-zipkin = "*"
 "psycopg2-binary" = "*"
 
 [dev-packages]

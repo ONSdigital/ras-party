@@ -83,14 +83,6 @@
             "index": "pypi",
             "version": "==3.3.0"
         },
-        "flask-zipkin": {
-            "hashes": [
-                "sha256:402bed9a98d3507d82db98a8f7437fb52ef3684af33c58a241b37779f9013d74",
-                "sha256:fbd3e3c41ceeda922701eebbfce88c8fccb7bc849289d772f5186a14a49827bd"
-            ],
-            "index": "pypi",
-            "version": "==0.0.4"
-        },
         "furl": {
             "hashes": [
                 "sha256:c0e0231a1feee2acd256574b7033df3144775451c610cb587060d6a0d7e0b621",
@@ -293,13 +285,6 @@
             ],
             "index": "pypi",
             "version": "==2.8.4"
-        },
-        "py-zipkin": {
-            "hashes": [
-                "sha256:1ea437ecfa5198605ef5b34816f9da8e0ff45ab25244a77d72220905f00bd822",
-                "sha256:c442befc0764b045a5b0f94c21fa1705eb0cf03bb68bb6a7b90efce9dcb9c9d8"
-            ],
-            "version": "==0.18.6"
         },
         "pyrsistent": {
             "hashes": [
