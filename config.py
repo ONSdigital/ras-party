@@ -2,11 +2,6 @@
 import os
 from distutils.util import strtobool
 
-from ras_party.cloud.cloudfoundry import ONSCloudFoundry
-
-
-cf = ONSCloudFoundry()
-
 
 def _is_true(value):
     try:
@@ -31,19 +26,14 @@ class Config(object):
     DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', '10'))
     DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', '-1'))
 
-    if cf.detected:
-        DATABASE_SCHEMA = 'partysvc'
-        DATABASE_URI = cf.db.credentials['uri']
-    else:
-        DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'partysvc')
-        DATABASE_URI = os.getenv('DATABASE_URI', "postgresql://postgres:postgres@localhost:6432/postgres")
+    DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'partysvc')
+    DATABASE_URI = os.getenv('DATABASE_URI', "postgresql://postgres:postgres@localhost:6432/postgres")
 
 
     REQUESTS_GET_TIMEOUT = os.getenv('REQUESTS_GET_TIMEOUT', 20)
     REQUESTS_POST_TIMEOUT = os.getenv('REQUESTS_POST_TIMEOUT', 20)
     SECURITY_USER_NAME = os.getenv('SECURITY_USER_NAME', 'admin')
     SECURITY_USER_PASSWORD = os.getenv('SECURITY_USER_PASSWORD', 'secret')
-    SECURITY_REALM = os.getenv('SECURITY_REALM', 'sdc')
 
     # dependencies
 
@@ -87,20 +77,6 @@ class Config(object):
     OAUTH_CLIENT_ID = os.getenv('OAUTH_CLIENT_ID', 'ons@ons.gov')
     OAUTH_CLIENT_SECRET = os.getenv('OAUTH_CLIENT_SECRET', 'password')
 
-    DEPENDENCIES = [
-        'ras-party-db',
-        'public-website',
-        'case-service',
-        'collectionexercise-service',
-        'survey-service',
-        'notify-service',
-        'iac-service',
-        'oauth2-service',
-    ]
-
-    # features
-
-    REPORT_DEPENDENCIES = _is_true(os.getenv('REPORT_DEPENDENCIES', False))
     SEND_EMAIL_TO_GOV_NOTIFY = _is_true(os.getenv('SEND_EMAIL_TO_GOV_NOTIFY', False))
 
 

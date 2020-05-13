@@ -17,8 +17,4 @@ def get_info():
         "version": current_app.config['VERSION'],
     }
     info = dict(_health_check, **info)
-
-    if current_app.config['REPORT_DEPENDENCIES']:
-        info["dependencies"] = [{'name': name} for name in current_app.config['DEPENDENCIES']]
-
     return info
