@@ -22,13 +22,8 @@ class Config(object):
     EMAIL_TOKEN_EXPIRY = int(os.getenv('EMAIL_TOKEN_EXPIRY', '306000'))
     PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
 
-    DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', '5'))
-    DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', '10'))
-    DB_POOL_RECYCLE = int(os.getenv('DB_POOL_RECYCLE', '-1'))
-
     DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'partysvc')
     DATABASE_URI = os.getenv('DATABASE_URI', "postgresql://postgres:postgres@localhost:6432/postgres")
-
 
     REQUESTS_GET_TIMEOUT = os.getenv('REQUESTS_GET_TIMEOUT', 20)
     REQUESTS_POST_TIMEOUT = os.getenv('REQUESTS_POST_TIMEOUT', 20)
@@ -36,26 +31,12 @@ class Config(object):
     SECURITY_USER_PASSWORD = os.getenv('SECURITY_USER_PASSWORD', 'secret')
 
     # dependencies
-
-    FRONTSTAGE_PROTOCOL = os.getenv('FRONTSTAGE_PROTOCOL', 'http')
-    FRONTSTAGE_HOST = os.getenv('FRONTSTAGE_HOST', 'localhost')
-    FRONTSTAGE_PORT = os.getenv('FRONTSTAGE_PORT', 8082)
-    FRONTSTAGE_URL = f'{FRONTSTAGE_PROTOCOL}://{FRONTSTAGE_HOST}:{FRONTSTAGE_PORT}'
-
-    CASE_SERVICE_PROTOCOL = os.getenv('CASE_SERVICE_PROTOCOL', 'http')
-    CASE_SERVICE_HOST = os.getenv('CASE_SERVICE_HOST', 'localhost')
-    CASE_SERVICE_PORT = os.getenv('CASE_SERVICE_PORT', 8171)
-    CASE_SERVICE = f'{CASE_SERVICE_PROTOCOL}://{CASE_SERVICE_HOST}:{CASE_SERVICE_PORT}'
-
-    COLLECTION_EXERCISE_SERVICE_PROTOCOL = os.getenv('COLLECTION_EXERCISE_SERVICE_PROTOCOL', 'http')
-    COLLECTION_EXERCISE_SERVICE_HOST = os.getenv('COLLECTION_EXERCISE_SERVICE_HOST', 'localhost')
-    COLLECTION_EXERCISE_SERVICE_PORT = os.getenv('COLLECTION_EXERCISE_SERVICE_PORT', 8145)
-    COLLECTION_EXERCISE_SERVICE = f'{COLLECTION_EXERCISE_SERVICE_PROTOCOL}://{COLLECTION_EXERCISE_SERVICE_HOST}:{COLLECTION_EXERCISE_SERVICE_PORT}'
-
-    SURVEY_SERVICE_PROTOCOL = os.getenv('SURVEY_SERVICE_PROTOCOL', 'http')
-    SURVEY_SERVICE_HOST = os.getenv('SURVEY_SERVICE_HOST', 'localhost')
-    SURVEY_SERVICE_PORT = os.getenv('SURVEY_SERVICE_PORT', 8080)
-    SURVEY_SERVICE = f'{SURVEY_SERVICE_PROTOCOL}://{SURVEY_SERVICE_HOST}:{SURVEY_SERVICE_PORT}'
+    AUTH_SERVICE_URL = os.getenv('AUTH_SERVICE_URL')
+    CASE_SERVICE_URL = os.getenv('CASE_SERVICE_URL')
+    COLLECTION_EXERCISE_SERVICE_URL = os.getenv('COLLECTION_EXERCISE_SERVICE_URL')
+    FRONTSTAGE_URL = os.getenv('FRONTSTAGE_URL')
+    IAC_SERVICE_URL = os.getenv('IAC_SERVICE_URL')
+    SURVEY_SERVICE_URL = os.getenv('SURVEY_SERVICE_URL')
 
     NOTIFY_SERVICE_URL = os.getenv('NOTIFY_SERVICE_URL', 'http://notify-gateway-service/emails/')
     NOTIFY_EMAIL_VERIFICATION_TEMPLATE = os.getenv('NOTIFY_EMAIL_VERIFICATION_TEMPLATE', 'email_verification_id')
@@ -64,19 +45,6 @@ class Config(object):
     NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = os.getenv('NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE',
                                                             'confirm_password_change_id')
     NOTIFY_ACCOUNT_LOCKED_TEMPLATE = os.getenv('NOTIFY_ACCOUNT_LOCKED_TEMPLATE', 'account_locked_id')
-
-    IAC_SERVICE_PROTOCOL = os.getenv('IAC_SERVICE_PROTOCOL', 'http')
-    IAC_SERVICE_HOST = os.getenv('IAC_SERVICE_HOST', 'localhost')
-    IAC_SERVICE_PORT = os.getenv('IAC_SERVICE_PORT', 8121)
-    IAC_SERVICE = f'{IAC_SERVICE_PROTOCOL}://{IAC_SERVICE_HOST}:{IAC_SERVICE_PORT}'
-
-    OAUTH_SERVICE_PROTOCOL = os.getenv('OAUTH_SERVICE_PROTOCOL', 'http')
-    OAUTH_SERVICE_HOST = os.getenv('OAUTH_SERVICE_HOST', 'localhost')
-    OAUTH_SERVICE_PORT = os.getenv('OAUTH_SERVICE_PORT', 8041)
-    OAUTH_SERVICE = f'{OAUTH_SERVICE_PROTOCOL}://{OAUTH_SERVICE_HOST}:{OAUTH_SERVICE_PORT}'
-    OAUTH_CLIENT_ID = os.getenv('OAUTH_CLIENT_ID', 'ons@ons.gov')
-    OAUTH_CLIENT_SECRET = os.getenv('OAUTH_CLIENT_SECRET', 'password')
-
     SEND_EMAIL_TO_GOV_NOTIFY = _is_true(os.getenv('SEND_EMAIL_TO_GOV_NOTIFY', False))
 
 
@@ -99,17 +67,15 @@ class TestingConfig(DevelopmentConfig):
     DATABASE_SCHEMA = 'partysvc'
 
     FRONTSTAGE_URL = 'http://dummy.ons.gov.uk'
-    CASE_SERVICE = 'http://mockhost:1111'
-    COLLECTION_EXERCISE_SERVICE = 'http://mockhost:2222'
-    SURVEY_SERVICE = 'http://mockhost:3333'
-    OAUTH_SERVICE = 'http://mockhost:4444'
-    OAUTH_CLIENT_ID = 'ons@ons.gov'
-    OAUTH_CLIENT_SECRET = 'password'
+    CASE_SERVICE_URL = 'http://mockhost:1111'
+    COLLECTION_EXERCISE_SERVICE_URL = 'http://mockhost:2222'
+    SURVEY_SERVICE_URL = 'http://mockhost:3333'
+    AUTH_SERVICE_URL = 'http://mockhost:4444'
     NOTIFY_SERVICE_URL = 'http://mockhost:5555/emails/'
     NOTIFY_EMAIL_VERIFICATION_TEMPLATE = 'email_verification_id'
     NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = 'request_password_change_id'
     NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = 'confirm_password_change_id'
     NOTIFY_ACCOUNT_LOCKED_TEMPLATE = 'account_locked_id'
-    IAC_SERVICE = 'http://mockhost:6666'
+    IAC_SERVICE_URL = 'http://mockhost:6666'
 
     SEND_EMAIL_TO_GOV_NOTIFY = True
