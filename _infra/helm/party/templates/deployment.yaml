@@ -87,6 +87,24 @@ spec:
             successThreshold: 1
             timeoutSeconds: 5
           env:
+          - name: AUTH_SERVICE_URL
+            {{- if .Values.dns.enabled }}
+            value: "http://auth.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: "http://$(AUTH_SERVICE_HOST):$(AUTH_SERVICE_PORT)"
+            {{- end }}
+          - name: CASE_SERVICE_URL
+            {{- if .Values.dns.enabled }}
+            value: "http://case.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: "http://$(CASE_SERVICE_HOST):$(CASE_SERVICE_PORT)"
+            {{- end }}
+          - name: COLLECTION_EXERCISE_SERVICE_URL
+            {{- if .Values.dns.enabled }}
+            value: "http://collection-exercise.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: "http://$(COLLECTION_EXERCISE_SERVICE_HOST):$(COLLECTION_EXERCISE_SERVICE_PORT)"
+            {{- end }}
           - name: DB_HOST
             {{- if .Values.database.managedPostgres }}
             valueFrom:
@@ -116,46 +134,24 @@ spec:
               secretKeyRef:
                 name: db-credentials
                 key: {{ .Values.database.secrets.passwordKey }}
-          - name: FRONTSTAGE_HOST
-            {{- if .Values.email.enabled }}
-            value: {{ .Values.email.callback.host }}
-            {{- else }}
-            value: "$(FRONTSTAGE_SERVICE_HOST)"
-            {{- end }}
-          - name: FRONTSTAGE_PORT
-            {{- if .Values.email.enabled }}
-            value: "{{ .Values.email.callback.port }}"
-            {{- else }}
-            value: "$(FRONTSTAGE_SERVICE_PORT)"
-            {{- end }}
-          - name: FRONTSTAGE_PROTOCOL
-            value: {{ .Values.email.callback.protocol }}
-          - name: SECURITY_USER_NAME
-            valueFrom:
-              secretKeyRef:
-                name: security-credentials
-                key: security-user
-          - name: SECURITY_USER_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: security-credentials
-                key: security-password
           - name: DATABASE_URI
             {{- if .Values.database.sqlProxyEnabled }}
             value: "postgresql://$(DB_USERNAME):$(DB_PASSWORD)@127.0.0.1:$(DB_PORT)/$(DB_NAME)"
             {{- else }}
             value: "postgresql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
             {{- end }}
-          - name: OAUTH_CLIENT_ID
-            valueFrom:
-              secretKeyRef:
-                name: oauth-secret
-                key: oauth-client-id
-          - name: OAUTH_CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: oauth-secret
-                key: oauth-client-secret
+          - name: FRONTSTAGE_URL
+            {{- if .Values.email.enabled }}
+            value: "{{ .Values.email.callback.protocol }}://{{ .Values.email.callback.host }}:{{ .Values.email.callback.port }}"
+            {{- else }}
+            value: "http://$(FRONTSTAGE_SERVICE_HOST):$(FRONTSTAGE_SERVICE_PORT)"
+            {{- end }}
+          - name: IAC_SERVICE_URL
+            {{- if .Values.dns.enabled }}
+            value: "http://iac.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: "http://$(IAC_SERVICE_HOST):$(IAC_SERVICE_PORT)"
+            {{- end }}
           - name: NOTIFY_SERVICE_HOST
             {{- if .Values.dns.enabled }}
             value: "notify-gateway.{{ .Values.namespace }}.svc.cluster.local"
@@ -174,24 +170,12 @@ spec:
             {{- else }}
             value: "http://$(NOTIFY_GATEWAY_SERVICE_HOST):$(NOTIFY_GATEWAY_SERVICE_PORT)/emails/"
             {{- end }}
-          {{- if .Values.dns.enabled }}
-          - name: CASE_SERVICE_HOST
-            value: "case.{{ .Values.namespace }}.svc.cluster.local"
-          - name: CASE_SERVICE_PORT
-            value: "{{ .Values.dns.wellKnownPort }}"
-          - name: COLLECTION_EXERCISE_SERVICE_HOST
-            value: "collection-exercise.{{ .Values.namespace }}.svc.cluster.local"
-          - name: COLLECTION_EXERCISE_SERVICE_PORT
-            value: "{{ .Values.dns.wellKnownPort }}"
-          - name: SURVEY_SERVICE_HOST
-            value: "survey.{{ .Values.namespace }}.svc.cluster.local"
-          - name: SURVEY_SERVICE_PORT
-            value: "{{ .Values.dns.wellKnownPort }}"
-          - name: IAC_SERVICE_HOST
-            value: "iac.{{ .Values.namespace }}.svc.cluster.local"
-          - name: IAC_SERVICE_PORT
-            value: "{{ .Values.dns.wellKnownPort }}"
-          {{- end }}
+          - name: SURVEY_SERVICE_URL
+            {{- if .Values.dns.enabled }}
+            value: "http://survey.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: "http://$(SURVEY_SERVICE_HOST):$(SURVEY_SERVICE_PORT)"
+            {{- end }}
           - name: NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE
             value: "{{ .Values.email.templates.notifyConfirmPasswordChangeTemplate }}"
           - name: NOTIFY_EMAIL_VERIFICATION_TEMPLATE
@@ -200,18 +184,16 @@ spec:
             value: "{{ .Values.email.templates.notifyRequestPasswordChangeTemplate }}"
           - name: NOTIFY_ACCOUNT_LOCKED_TEMPLATE
             value: {{ .Values.email.templates.notifyAccountLockedTemplate }}
-          - name: OAUTH_SERVICE_HOST
-            {{- if .Values.dns.enabled }}
-            value: "auth.{{ .Values.namespace }}.svc.cluster.local"
-            {{- else }}
-            value: "$(AUTH_SERVICE_HOST)"
-            {{- end }}
-          - name: OAUTH_SERVICE_PORT
-            {{- if .Values.dns.enabled }}
-            value: "{{ .Values.dns.wellKnownPort }}"
-            {{- else }}
-            value: $(AUTH_SERVICE_PORT)
-            {{- end }}
+          - name: SECURITY_USER_NAME
+            valueFrom:
+              secretKeyRef:
+                name: security-credentials
+                key: security-user
+          - name: SECURITY_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: security-credentials
+                key: security-password
           - name: SECRET_KEY
             valueFrom:
               secretKeyRef:
