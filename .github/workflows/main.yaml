@@ -22,6 +22,8 @@ jobs:
     # Running the tests
     - name: Run Tests
       run: |
+        pip install pipenv
+        pipenv install --dev
         make test
 
     - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
