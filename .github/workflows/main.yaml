@@ -22,7 +22,6 @@ jobs:
     # Running the tests
     - name: Run Tests
       run: |
-        pipenv install --dev
         make test
 
     - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
@@ -55,7 +54,7 @@ jobs:
     - uses: 8398a7/action-slack@v3
       with:
         status: ${{ job.status }}
-        fields: repo,message,commit,author,action,eventName,ref,workflow # selectable (default: repo,message)
+        fields: repo,message,commit,author,action,eventName,ref,workflow
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       if: failure()
