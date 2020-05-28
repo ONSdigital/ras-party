@@ -18,56 +18,58 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-      - name: Build Python
-        run: |
-          python -m pip install --upgrade pip
-          pip install pipenv
-          pipenv install --dev
-      - name: test
-        run: |
-          make test
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Build Python
+      run: |
+       docker-compose --verbose build
+       docker-compose up -d
+       python -m pip install --upgrade pip
+       pip install pipenv
+       pipenv install --dev
+    - name: test
+      run: |
+        make test
 
-      - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
-        with:
-          version: '270.0.0'
-          service_account_key: ${{ secrets.GCR_KEY }}
-      # Configure docker to use the gcloud command-line tool as a credential helper
-      - run: |
-          gcloud auth configure-docker
-      # Build the Docker image
-      - name: Build Docker Image
-        run: |
-          docker build -t "$REGISTRY_HOSTNAME"/"$HOST"/"$IMAGE":latest .
+    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        version: '270.0.0'
+        service_account_key: ${{ secrets.GCR_KEY }}
+    # Configure docker to use the gcloud command-line tool as a credential helper
+    - run: |
+        gcloud auth configure-docker
+    # Build the Docker image
+    - name: Build Docker Image
+      run: |
+        docker build -t "$REGISTRY_HOSTNAME"/"$HOST"/"$IMAGE":latest .
 
-      - name: Publish Docker Image
-        run: |
-          docker push "$REGISTRY_HOSTNAME"/"$HOST"/"$IMAGE":latest
+    - name: Publish Docker Image
+      run: |
+        docker push "$REGISTRY_HOSTNAME"/"$HOST"/"$IMAGE":latest
 
-      - name: Helm Image pull
-        if: github.ref == 'refs/heads/master'
-        run: |
-          docker pull gcr.io/${{ secrets.GOOGLE_PROJECT_ID }}/helm:latest
+    - name: Helm Image pull
+      if: github.ref == 'refs/heads/master'
+      run: |
+        docker pull gcr.io/${{ secrets.GOOGLE_PROJECT_ID }}/helm:latest
 
-      - name: Package Helm
-        if: github.ref == 'refs/heads/master'
-        run: |
-          helm dep up _infra/helm/party
-          helm package _infra/helm/party
-      # Constructing the slack message
-      - uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: failure()
+    - name: Package Helm
+      if: github.ref == 'refs/heads/master'
+      run: |
+        helm dep up _infra/helm/party
+        helm package _infra/helm/party
+    # Constructing the slack message
+    - uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      if: failure()
 
-      - name: Publish Charts
-        if: github.ref == 'refs/heads/master'
-        run: |
-          gsutil cp party-*.tgz gs://ras-rm-artifacts/act/
+    - name: Publish Charts
+      if: github.ref == 'refs/heads/master'
+      run: |
+        gsutil cp party-*.tgz gs://ras-rm-artifacts/act/
