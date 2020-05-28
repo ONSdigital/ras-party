@@ -31,11 +31,12 @@ jobs:
           python-version: '3.6'
       - name: Get Dependencies
         run: |
+          docker-compose --verbose build
+          docker-compose up -d
           pip install pipenv
-          pipenv install --dev --deploy
-          pip install tox==2.7.0
-      - name: Run Tox
-        run: pipenv run tox
+          pipenv install --dev
+      - name: Run tests
+        run: make test
       - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
         with:
           version: '270.0.0'
