@@ -7,14 +7,6 @@ class Requests:
     _lib = requests
 
     @staticmethod
-    def get_timeout():
-        return int(current_app.config['REQUESTS_GET_TIMEOUT'])
-
-    @staticmethod
-    def post_timeout():
-        return int(current_app.config['REQUESTS_POST_TIMEOUT'])
-
-    @staticmethod
     def auth():
         return current_app.config['SECURITY_USER_NAME'], current_app.config['SECURITY_USER_PASSWORD']
 
@@ -24,7 +16,7 @@ class Requests:
             auth = kwargs.pop('auth')
         except KeyError:
             auth = cls.auth()
-        return cls._lib.get(*args, auth=auth, timeout=cls.get_timeout(), **kwargs)
+        return cls._lib.get(*args, auth=auth, timeout=20, **kwargs)
 
     @classmethod
     def put(cls, *args, **kwargs):
@@ -32,7 +24,7 @@ class Requests:
             auth = kwargs.pop('auth')
         except KeyError:
             auth = cls.auth()
-        return cls._lib.put(*args, auth=auth, timeout=cls.post_timeout(), **kwargs)
+        return cls._lib.put(*args, auth=auth, timeout=20, **kwargs)
 
     @classmethod
     def post(cls, *args, **kwargs):
@@ -40,4 +32,4 @@ class Requests:
             auth = kwargs.pop('auth')
         except KeyError:
             auth = cls.auth()
-        return cls._lib.post(*args, auth=auth, timeout=cls.post_timeout(), **kwargs)
+        return cls._lib.post(*args, auth=auth, timeout=20, **kwargs)

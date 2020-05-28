@@ -23,10 +23,8 @@ class Config(object):
     PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
 
     DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'partysvc')
-    DATABASE_URI = os.getenv('DATABASE_URI', "postgresql://postgres:postgres@localhost:6432/postgres")
+    DATABASE_URI = os.getenv('DATABASE_URI', "postgresql://postgres:postgres@localhost:5432/postgres")
 
-    REQUESTS_GET_TIMEOUT = os.getenv('REQUESTS_GET_TIMEOUT', 20)
-    REQUESTS_POST_TIMEOUT = os.getenv('REQUESTS_POST_TIMEOUT', 20)
     SECURITY_USER_NAME = os.getenv('SECURITY_USER_NAME', 'admin')
     SECURITY_USER_PASSWORD = os.getenv('SECURITY_USER_PASSWORD', 'secret')
 
@@ -62,8 +60,6 @@ class TestingConfig(DevelopmentConfig):
     PARTY_SCHEMA = 'ras_party/schemas/party_schema.json'
     SECURITY_USER_NAME = 'username'
     SECURITY_USER_PASSWORD = 'password'
-    REQUESTS_GET_TIMEOUT = 99
-    REQUESTS_POST_TIMEOUT = 99
     DATABASE_SCHEMA = 'partysvc'
 
     FRONTSTAGE_URL = 'http://dummy.ons.gov.uk'
