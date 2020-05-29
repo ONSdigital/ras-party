@@ -87,19 +87,19 @@ spec:
             successThreshold: 1
             timeoutSeconds: 5
           env:
-          - name: AUTH_SERVICE_URL
+          - name: AUTH_URL
             {{- if .Values.dns.enabled }}
             value: "http://auth.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
             {{- else }}
             value: "http://$(AUTH_SERVICE_HOST):$(AUTH_SERVICE_PORT)"
             {{- end }}
-          - name: CASE_SERVICE_URL
+          - name: CASE_URL
             {{- if .Values.dns.enabled }}
             value: "http://case.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
             {{- else }}
             value: "http://$(CASE_SERVICE_HOST):$(CASE_SERVICE_PORT)"
             {{- end }}
-          - name: COLLECTION_EXERCISE_SERVICE_URL
+          - name: COLLECTION_EXERCISE_URL
             {{- if .Values.dns.enabled }}
             value: "http://collection-exercise.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
             {{- else }}
@@ -146,31 +146,19 @@ spec:
             {{- else }}
             value: "http://$(FRONTSTAGE_SERVICE_HOST):$(FRONTSTAGE_SERVICE_PORT)"
             {{- end }}
-          - name: IAC_SERVICE_URL
+          - name: IAC_URL
             {{- if .Values.dns.enabled }}
             value: "http://iac.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
             {{- else }}
             value: "http://$(IAC_SERVICE_HOST):$(IAC_SERVICE_PORT)"
             {{- end }}
-          - name: NOTIFY_SERVICE_HOST
-            {{- if .Values.dns.enabled }}
-            value: "notify-gateway.{{ .Values.namespace }}.svc.cluster.local"
-            {{- else }}
-            value: "$(NOTIFY_GATEWAY_SERVICE_HOST)"
-            {{- end }}
-          - name: NOTIFY_SERVICE_PORT
-            {{- if .Values.dns.enabled }}
-            value: "{{ .Values.dns.wellKnownPort }}"
-            {{- else }}
-            value: $(NOTIFY_GATEWAY_SERVICE_PORT)
-            {{- end }}
-          - name: NOTIFY_SERVICE_URL
+          - name: NOTIFY_URL
             {{- if .Values.dns.enabled }}
             value: "http://notify-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}/emails/"
             {{- else }}
             value: "http://$(NOTIFY_GATEWAY_SERVICE_HOST):$(NOTIFY_GATEWAY_SERVICE_PORT)/emails/"
             {{- end }}
-          - name: SURVEY_SERVICE_URL
+          - name: SURVEY_URL
             {{- if .Values.dns.enabled }}
             value: "http://survey.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
             {{- else }}

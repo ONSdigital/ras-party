@@ -5,7 +5,7 @@ from ras_party.support.requests_wrapper import Requests
 
 class OauthClient:
     def __init__(self):
-        self.service = current_app.config['AUTH_SERVICE_URL']
+        self.service = current_app.config['AUTH_URL']
 
     @property
     def admin_url(self):
