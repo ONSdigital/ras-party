@@ -11,7 +11,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def request_iac(enrolment_code):
-    iac_url = f'{current_app.config["IAC_SERVICE_URL"]}/iacs/{enrolment_code}'
+    iac_url = f'{current_app.config["IAC_URL"]}/iacs/{enrolment_code}'
     response = Requests.get(iac_url)
     response.raise_for_status()
     return response.json()
@@ -25,7 +25,7 @@ def disable_iac(enrolment_code, case_id):
     :returns:  A dictionary containing the json response from the call
     :raises ValueError:  Raised when the response doesn't return json (on a 500 response?)
     """
-    iac_url = f'{current_app.config["IAC_SERVICE_URL"]}/iacs/{enrolment_code}'
+    iac_url = f'{current_app.config["IAC_URL"]}/iacs/{enrolment_code}'
     payload = {
         "updatedBy": "Party Service"
     }
