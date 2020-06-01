@@ -764,7 +764,7 @@
 
 ### Get Respondent Info
 
-* `GET /party-api/v1/respondents?id=<id>&firstname=<firstname>&lastname=<lastname>&email=<email>`
+* `GET /party-api/v1/respondents?id=<id>&firstname=<firstname>&lastname=<lastname>&emailAddress=<emailAddress>`
   * Returns respondents info based on passed in params.
   * id is the party ids of a list of respondents.
     * Uses party_uuid from respondent table.
