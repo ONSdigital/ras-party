@@ -1,3 +1,4 @@
+import json
 import logging
 from urllib import parse as urlparse
 
@@ -5,6 +6,7 @@ import structlog
 
 from ras_party.exceptions import RasNotifyError
 from ras_party.support.requests_wrapper import Requests
+from google.cloud import pubsub_v1
 
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -55,9 +57,59 @@ class NotifyGateway:
             raise RasNotifyError("There was a problem sending a notification to Notify-Gateway to GOV.UK Notify",
                                  error=e, reference=ref)
 
+    def _send_message_via_pubsub(self, email, template_id, personalisation):
+        """Sends an email via pubsub topic
+
+        :param email: Email address to send the email too
+        :type email: str
+        :param template_id: A uuid of the template_id to be used in gov notify
+        :type template_id: str
+        :param personalisation: A dictionary containing
+        :type personalisation: dict
+        :return:
+        """
+        if not self.config['SEND_EMAIL_TO_GOV_NOTIFY']:
+            logger.info("Notification not sent. Notify is disabled.")
+            return
+
+        try:
+            # Need to double check notify, but I think reference can be dropped.  I think it was used for logging?
+            # if reference:
+            #     notification.update({"reference": reference})
+
+            payload = {
+                'notify': {
+                    'email_address': email,
+                    'template_id': template_id,
+                    'personalisation': {}
+                }
+            }
+            if personalisation:
+                payload['notify']['personalisation'] = personalisation
+
+            payload_str = json.dumps(payload)
+            payload_bytes = payload_str.encode()
+
+            publisher = pubsub_v1.PublisherClient()
+            project_id = self.config['GCP_PROJECT_ID']
+            topic_id = self.config['NOTIFY_PUBSUB_TOPIC']
+            # The `topic_path` method creates a fully qualified identifier
+            # in the form `projects/{project_id}/topics/{topic_id}`
+            topic_path = publisher.topic_path(project_id, topic_id)
+
+            future = publisher.publish(topic_path, data=payload_bytes)
+            logger.info("Publish result", result=future.result())
+
+        except Exception as e:
+            raise RasNotifyError("There was a problem sending a notification to Notify-Gateway to GOV.UK Notify",
+                                 error=e)
+
     def request_to_notify(self, email, template_name, personalisation=None, reference=None):
         template_id = self._get_template_id(template_name)
-        self._send_message(email, template_id, personalisation, reference)
+        if self.config['USE_PUBSUB_FOR_EMAIL']:
+            self._send_message_via_pubsub(email, template_id, personalisation)
+        else:
+            self._send_message(email, template_id, personalisation, reference)
 
     def _get_template_id(self, template_name):
         templates = {'notify_account_locked': self.notify_account_locked,
