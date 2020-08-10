@@ -7,7 +7,7 @@ rollingUpdate:
   maxUnavailable: 1
 
 gcp:
-  project: rm-ras-sandbox
+  project: ras-rm-sandbox
 
 image:
   devRepo: eu.gcr.io/ons-rasrmbs-management
