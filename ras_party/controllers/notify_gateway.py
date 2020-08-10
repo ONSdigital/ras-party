@@ -91,6 +91,7 @@ class NotifyGateway:
             publisher = pubsub_v1.PublisherClient()
             project_id = self.config['GOOGLE_CLOUD_PROJECT']
             topic_id = self.config['NOTIFY_PUBSUB_TOPIC']
+            logger.info("things", project_id=project_id, topic_id=topic_id)
             topic_path = publisher.topic_path(project_id, topic_id)
 
             # Fix logging after functionality works
@@ -100,6 +101,7 @@ class NotifyGateway:
             logger.info("Publish result", result=future.result())
 
         except Exception as e:
+            logger.error("error", error=e)
             raise RasNotifyError("There was a problem sending a notification to Notify-Gateway to GOV.UK Notify",
                                  error=e)
 
