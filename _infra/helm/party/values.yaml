@@ -1,11 +1,13 @@
 env: minikube
 namespace: minikube
-project_id: rm-ras-sandbox
 
 replicas: 1
 rollingUpdate:
   maxSurge: 1
   maxUnavailable: 1
+
+gcp:
+  project: rm-ras-sandbox
 
 image:
   devRepo: eu.gcr.io/ons-rasrmbs-management

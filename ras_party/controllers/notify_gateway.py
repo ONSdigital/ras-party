@@ -69,6 +69,7 @@ class NotifyGateway:
         :type personalisation: dict
         :return:
         """
+        logger.info("Sending email via pubsub")
         if not self.config['SEND_EMAIL_TO_GOV_NOTIFY']:
             logger.info("Notification not sent. Notify is disabled.")
             return
@@ -88,10 +89,13 @@ class NotifyGateway:
             payload_bytes = payload_str.encode()
 
             publisher = pubsub_v1.PublisherClient()
-            project_id = self.config['GCP_PROJECT_ID']
+            project_id = self.config['GOOGLE_CLOUD_PROJECT']
             topic_id = self.config['NOTIFY_PUBSUB_TOPIC']
             topic_path = publisher.topic_path(project_id, topic_id)
 
+            # Fix logging after functionality works
+            logger.info("topic path", topic_path=topic_path)
+            logger.info("payload", payload=payload)
             future = publisher.publish(topic_path, data=payload_bytes)
             logger.info("Publish result", result=future.result())
 

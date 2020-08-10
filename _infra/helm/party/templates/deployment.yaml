@@ -21,15 +21,18 @@ spec:
         app: {{ .Chart.Name }}
         env: {{ .Values.env }}
     spec:
-      {{- if .Values.database.sqlProxyEnabled }}
       volumes:
-        - name: cloudsql-instance-credentials
-          secret:
-            secretName: cloudsql-proxy-credentials
-            defaultMode: 0444
-            items:
-            - key: "credentials.json"
-              path: "credentials.json"
+      - name: google-cloud-key
+        secret:
+          secretName: google-application-credentials
+      {{- if .Values.database.sqlProxyEnabled }}
+      - name: cloudsql-instance-credentials
+        secret:
+          secretName: cloudsql-proxy-credentials
+          defaultMode: 0444
+          items:
+          - key: "credentials.json"
+            path: "credentials.json"
       {{- end }}
       containers:
         {{- if .Values.database.sqlProxyEnabled }}
@@ -46,6 +49,8 @@ spec:
             - name: cloudsql-instance-credentials
               mountPath: /secrets/cloudsql
               readOnly: true
+            - name: google-cloud-key
+              mountPath: /var/secrets/google
           env:
           - name: SQL_INSTANCE_NAME
             valueFrom:
@@ -146,8 +151,10 @@ spec:
             {{- else }}
             value: "http://$(FRONTSTAGE_SERVICE_HOST):$(FRONTSTAGE_SERVICE_PORT)"
             {{- end }}
-          - name: GCP_PROJECT_ID
-            value: "{{ .Values.project_id }}"
+          - name: GOOGLE_CLOUD_PROJECT
+            value: "{{ .Values.gcp.project }}"
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: /var/secrets/google/credentials.json
           - name: IAC_URL
             {{- if .Values.dns.enabled }}
             value: "http://iac.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
