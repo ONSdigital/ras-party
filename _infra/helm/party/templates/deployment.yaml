@@ -69,8 +69,8 @@ spec:
           {{- end}}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
-          - mountPath: google-cloud-key
-            name: /var/secrets/google
+          - name: google-cloud-key
+            mountPath: /var/secrets/google
           ports:
             - name: http-server
               containerPort: {{ .Values.container.port }}
