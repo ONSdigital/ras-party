@@ -1,5 +1,6 @@
 env: minikube
 namespace: minikube
+project_id: rm-ras-sandbox
 
 replicas: 1
 rollingUpdate:
@@ -44,6 +45,9 @@ email:
     key: aardvark
   token:
     salt: aardvark
+  pubsub:
+    enabled: false
+    topic: ras-rm-notify-test
 
 dns:
   enabled: false

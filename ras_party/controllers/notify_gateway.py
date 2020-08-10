@@ -13,7 +13,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 class NotifyGateway:
-    """ Client for Notify gateway"""
+    """Client for Notify gateway"""
 
     def __init__(self, config):
         self.config = config
@@ -26,6 +26,7 @@ class NotifyGateway:
     def _send_message(self, email, template_id, personalisation=None, reference=None):
         """
         Send message to gov.uk notify wrapper
+
         :param email: email address of recipient
         :param template_id: the template id on gov.uk notify to use
         :param personalisation: placeholder values in the template
@@ -73,10 +74,6 @@ class NotifyGateway:
             return
 
         try:
-            # Need to double check notify, but I think reference can be dropped.  I think it was used for logging?
-            # if reference:
-            #     notification.update({"reference": reference})
-
             payload = {
                 'notify': {
                     'email_address': email,
@@ -93,8 +90,6 @@ class NotifyGateway:
             publisher = pubsub_v1.PublisherClient()
             project_id = self.config['GCP_PROJECT_ID']
             topic_id = self.config['NOTIFY_PUBSUB_TOPIC']
-            # The `topic_path` method creates a fully qualified identifier
-            # in the form `projects/{project_id}/topics/{topic_id}`
             topic_path = publisher.topic_path(project_id, topic_id)
 
             future = publisher.publish(topic_path, data=payload_bytes)

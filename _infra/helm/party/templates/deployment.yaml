@@ -146,6 +146,8 @@ spec:
             {{- else }}
             value: "http://$(FRONTSTAGE_SERVICE_HOST):$(FRONTSTAGE_SERVICE_PORT)"
             {{- end }}
+          - name: GCP_PROJECT_ID
+            value: "{{ .Values.project_id }}"
           - name: IAC_URL
             {{- if .Values.dns.enabled }}
             value: "http://iac.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
@@ -164,6 +166,8 @@ spec:
             {{- else }}
             value: "http://$(SURVEY_SERVICE_HOST):$(SURVEY_SERVICE_PORT)"
             {{- end }}
+          - name: NOTIFY_PUBSUB_TOPIC
+            value: {{ .Values.email.pubsub.topic }}
           - name: NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE
             value: "{{ .Values.email.templates.notifyConfirmPasswordChangeTemplate }}"
           - name: NOTIFY_EMAIL_VERIFICATION_TEMPLATE
@@ -194,6 +198,8 @@ spec:
                 key: email-token-salt
           - name: PORT
             value: "{{ .Values.container.port }}"
+          - name: USE_PUBSUB_FOR_EMAIL
+            value: {{ .Values.email.pubsub.enabled }}
           - name: SEND_EMAIL_TO_GOV_NOTIFY
             value: "{{ .Values.email.enabled }}"
           resources:
