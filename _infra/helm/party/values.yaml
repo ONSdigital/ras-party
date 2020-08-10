@@ -35,10 +35,10 @@ resources:
 email:
   enabled: false
   templates:
-    notifyAccountLockedTemplate: account_locked_id
-    notifyConfirmPasswordChangeTemplate: confirm_password_change_id
-    notifyEmailVerificationTemplate: email_verification_id
-    notifyRequestPasswordChangeTemplate: request_password_change_id
+    notifyAccountLockedTemplate: c69147fc-0f9c-40d4-b111-5b11acc8551f
+    notifyConfirmPasswordChangeTemplate: ba41c152-ad96-4255-9456-9e42de83f510
+    notifyEmailVerificationTemplate: df7d5512-ad35-4275-bdd0-dfe89ad646f6
+    notifyRequestPasswordChangeTemplate: c45c59ff-7771-4de4-a66b-ce50b108390a
   callback:
     protocol: http
     host: localhost
