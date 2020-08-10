@@ -1,0 +1,200 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    run: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  strategy:
+    rollingUpdate:
+      maxSurge: {{ .Values.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.rollingUpdate.maxUnavailable }}
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+      env: {{ .Values.env }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+        env: {{ .Values.env }}
+    spec:
+      {{- if .Values.database.sqlProxyEnabled }}
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-proxy-credentials
+            defaultMode: 0444
+            items:
+            - key: "credentials.json"
+              path: "credentials.json"
+      {{- end }}
+      containers:
+        {{- if .Values.database.sqlProxyEnabled }}
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.16
+          command: ["/cloud_sql_proxy",
+                    "-instances=$(SQL_INSTANCE_NAME)=tcp:$(DB_PORT)",
+                    "-ip_address_types=PRIVATE",
+                    "-credential_file=/secrets/cloudsql/credentials.json"]
+          securityContext:
+            runAsUser: 2  # non-root user
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+          env:
+          - name: SQL_INSTANCE_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: cloudsql-proxy-config
+                key: instance-connection-name
+          - name: DB_PORT
+            valueFrom:
+              secretKeyRef:
+                name: db-config
+                key: db-port
+        {{- end }}
+        - name: {{ .Chart.Name }}
+          {{- if eq .Values.image.tag "latest"}}
+          image: "{{ .Values.image.name}}/{{ .Chart.Name }}:{{ .Chart.AppVersion }}"
+          {{- else}}
+          image: "{{ .Values.image.devRepo }}/{{ .Chart.Name }}:{{ .Values.image.tag }}"
+          {{- end}}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http-server
+              containerPort: {{ .Values.container.port }}
+          readinessProbe:
+            httpGet:
+              path: /info
+              port:  {{ .Values.container.port }}
+            initialDelaySeconds: 1
+            periodSeconds: 20
+            failureThreshold: 5
+            successThreshold: 1
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /info
+              port:  {{ .Values.container.port }}
+            initialDelaySeconds: 1
+            periodSeconds: 20
+            failureThreshold: 5
+            successThreshold: 1
+            timeoutSeconds: 5
+          env:
+          - name: AUTH_URL
+            {{- if .Values.dns.enabled }}
+            value: "http://auth.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: "http://$(AUTH_SERVICE_HOST):$(AUTH_SERVICE_PORT)"
+            {{- end }}
+          - name: CASE_URL
+            {{- if .Values.dns.enabled }}
+            value: "http://case.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: "http://$(CASE_SERVICE_HOST):$(CASE_SERVICE_PORT)"
+            {{- end }}
+          - name: COLLECTION_EXERCISE_URL
+            {{- if .Values.dns.enabled }}
+            value: "http://collection-exercise.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: "http://$(COLLECTION_EXERCISE_SERVICE_HOST):$(COLLECTION_EXERCISE_SERVICE_PORT)"
+            {{- end }}
+          - name: DB_HOST
+            {{- if .Values.database.managedPostgres }}
+            valueFrom:
+              secretKeyRef:
+                name: db-config
+                key: db-host
+            {{- else }}
+            value: $(POSTGRES_SERVICE_HOST)
+            {{- end }}
+          - name: DB_PORT
+            valueFrom:
+              secretKeyRef:
+                name: db-config
+                key: db-port
+          - name: DB_NAME
+            valueFrom:
+              secretKeyRef:
+                name: db-config
+                key: {{ .Values.database.secrets.nameKey }}
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: db-credentials
+                key: {{ .Values.database.secrets.usernameKey }}
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db-credentials
+                key: {{ .Values.database.secrets.passwordKey }}
+          - name: DATABASE_URI
+            {{- if .Values.database.sqlProxyEnabled }}
+            value: "postgresql://$(DB_USERNAME):$(DB_PASSWORD)@127.0.0.1:$(DB_PORT)/$(DB_NAME)"
+            {{- else }}
+            value: "postgresql://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+            {{- end }}
+          - name: FRONTSTAGE_URL
+            {{- if .Values.email.enabled }}
+            value: "{{ .Values.email.callback.protocol }}://{{ .Values.email.callback.host }}:{{ .Values.email.callback.port }}"
+            {{- else }}
+            value: "http://$(FRONTSTAGE_SERVICE_HOST):$(FRONTSTAGE_SERVICE_PORT)"
+            {{- end }}
+          - name: IAC_URL
+            {{- if .Values.dns.enabled }}
+            value: "http://iac.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: "http://$(IAC_SERVICE_HOST):$(IAC_SERVICE_PORT)"
+            {{- end }}
+          - name: NOTIFY_URL
+            {{- if .Values.dns.enabled }}
+            value: "http://notify-gateway.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}/emails/"
+            {{- else }}
+            value: "http://$(NOTIFY_GATEWAY_SERVICE_HOST):$(NOTIFY_GATEWAY_SERVICE_PORT)/emails/"
+            {{- end }}
+          - name: SURVEY_URL
+            {{- if .Values.dns.enabled }}
+            value: "http://survey.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
+            {{- else }}
+            value: "http://$(SURVEY_SERVICE_HOST):$(SURVEY_SERVICE_PORT)"
+            {{- end }}
+          - name: NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE
+            value: "{{ .Values.email.templates.notifyConfirmPasswordChangeTemplate }}"
+          - name: NOTIFY_EMAIL_VERIFICATION_TEMPLATE
+            value: "{{ .Values.email.templates.notifyEmailVerificationTemplate }}"
+          - name: NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE
+            value: "{{ .Values.email.templates.notifyRequestPasswordChangeTemplate }}"
+          - name: NOTIFY_ACCOUNT_LOCKED_TEMPLATE
+            value: {{ .Values.email.templates.notifyAccountLockedTemplate }}
+          - name: SECURITY_USER_NAME
+            valueFrom:
+              secretKeyRef:
+                name: security-credentials
+                key: security-user
+          - name: SECURITY_USER_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: security-credentials
+                key: security-password
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Chart.Name }}
+                key: email-secret-key
+          - name: EMAIL_TOKEN_SALT
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Chart.Name }}
+                key: email-token-salt
+          - name: PORT
+            value: "{{ .Values.container.port }}"
+          - name: SEND_EMAIL_TO_GOV_NOTIFY
+            value: "{{ .Values.email.enabled }}"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

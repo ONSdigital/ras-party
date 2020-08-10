@@ -1,0 +1,50 @@
+env: minikube
+namespace: minikube
+
+replicas: 1
+rollingUpdate:
+  maxSurge: 1
+  maxUnavailable: 1
+
+image:
+  devRepo: eu.gcr.io/ons-rasrmbs-management
+  name: eu.gcr.io/ons-rasrmbs-management
+  tag: latest
+  pullPolicy: Always
+
+database:
+  managedPostgres: false
+  sqlProxyEnabled: false
+  secrets:
+    usernameKey: username
+    passwordKey: password
+    nameKey: db-name
+
+container:
+  port: 8080
+service:
+  port: 8080
+
+resources:
+  requests:
+    memory: "256Mi"
+
+email:
+  enabled: false
+  templates:
+    notifyAccountLockedTemplate: account_locked_id
+    notifyConfirmPasswordChangeTemplate: confirm_password_change_id
+    notifyEmailVerificationTemplate: email_verification_id
+    notifyRequestPasswordChangeTemplate: request_password_change_id
+  callback:
+    protocol: http
+    host: localhost
+    port: 8080
+  secret:
+    key: aardvark
+  token:
+    salt: aardvark
+
+dns:
+  enabled: false
+  wellKnownPort: 8080

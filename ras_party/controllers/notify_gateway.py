@@ -15,7 +15,7 @@ class NotifyGateway:
 
     def __init__(self, config):
         self.config = config
-        self.notify_url = config['NOTIFY_SERVICE_URL']
+        self.notify_url = config['NOTIFY_URL']
         self.email_verification_template = config['NOTIFY_EMAIL_VERIFICATION_TEMPLATE']
         self.request_password_change_template = config['NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE']
         self.confirm_password_change_template = config['NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE']

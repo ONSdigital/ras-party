@@ -41,8 +41,7 @@ class PartyTestClient(TestCase):
         app = create_app('TestingConfig')
         logger_initial_config(log_level=app.config['LOGGING_LEVEL'])
         app.config['PARTY_SCHEMA'] = party_schema.schema
-        app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'], app.config['DB_POOL_SIZE'],
-                                 app.config['DB_MAX_OVERFLOW'], app.config['DB_POOL_RECYCLE'])
+        app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'])
         return app
 
     def tearDown(self):
@@ -222,7 +221,7 @@ class PartyTestClient(TestCase):
         return json.loads(response.get_data(as_text=True))
 
     def change_password(self, payload, expected_status=200):
-        response = self.client.put(f'/party-api/v1/respondents/change_password',
+        response = self.client.put('/party-api/v1/respondents/change_password',
                                    headers=self.auth_headers, data=json.dumps(payload),
                                    content_type='application/vnd.ons.business+json')
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
@@ -258,7 +257,7 @@ class PartyTestClient(TestCase):
         return json.loads(response.get_data(as_text=True))
 
     def patch_disable_all_respondent_enrolments(self, email_address, expected_status=200):
-        response = self.client.patch(f'/party-api/v1/respondents/disable-user-enrolments',
+        response = self.client.patch('/party-api/v1/respondents/disable-user-enrolments',
                                      data=json.dumps({'email': email_address}),
                                      headers=self.auth_headers,
                                      content_type='application/vnd.ons.business+json')

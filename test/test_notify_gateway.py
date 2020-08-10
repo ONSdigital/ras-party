@@ -26,7 +26,7 @@ class TestNotifyGateway(PartyTestClient):
 
         expected_request = {"auth": (current_app.config['SECURITY_USER_NAME'],
                                      current_app.config['SECURITY_USER_PASSWORD']),
-                            "timeout": 99, "json": expected_data}
+                            "timeout": 20, "json": expected_data}
 
         self.mock_requests.post.assert_called_with(
             "http://mockhost:5555/emails/email_verification_id",
@@ -44,7 +44,7 @@ class TestNotifyGateway(PartyTestClient):
         expected_data = {"emailAddress": "email", "personalisation": "personalised message", "reference": "reference"}
         expected_request = {"auth": (current_app.config['SECURITY_USER_NAME'],
                                      current_app.config['SECURITY_USER_PASSWORD']),
-                            "timeout": 99, "json": expected_data}
+                            "timeout": 20, "json": expected_data}
 
         self.mock_requests.post.assert_called_with(
             "http://mockhost:5555/emails/request_password_change_id",

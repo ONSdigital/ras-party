@@ -16,7 +16,7 @@ class TestCreateDatabase(TestCase):
         db_schema = 'partysvc'
 
         with patch('run.create_engine'), patch('run.scoped_session') as upgrade:
-            create_database(db_connection, db_schema, 5, 10, -1)
+            create_database(db_connection, db_schema)
 
         upgrade.assert_called_once()
 
@@ -26,4 +26,4 @@ class TestCreateDatabase(TestCase):
 
         with patch('run.create_engine'), patch('run.scoped_session') as session:
             session()().query().scalar.return_value = None
-            create_database(db_connection, db_schema, 5, 10, -1)
+            create_database(db_connection, db_schema)

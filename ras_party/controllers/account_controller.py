@@ -547,7 +547,6 @@ def put_email_verification(token, tran, session):
 
 
 def update_verified_email_address(respondent, tran):
-
     logger.info('Attempting to update verified email address')
 
     new_email_address = respondent.pending_email_address
@@ -716,8 +715,7 @@ def set_user_verified(email_address):
     If it fails a raise_for_status is executed
     """
     logger.info("Setting user active on OAuth2 server")
-    oauth_response = OauthClient().update_account(
-        username=email_address, account_verified='true')
+    oauth_response = OauthClient().update_account(username=email_address, account_verified='true')
     if oauth_response.status_code != 201:
         logger.error("Unable to set the user active on the OAuth2 server")
         oauth_response.raise_for_status()
@@ -760,8 +758,7 @@ def register_user(party):
     """
     Create an account for the user in the auth service
     """
-    oauth_response = OauthClient().create_account(
-        party['emailAddress'], party['password'])
+    oauth_response = OauthClient().create_account(party['emailAddress'], party['password'])
     if not oauth_response.status_code == 201:
         logger.info('Registering respondent OAuth2 server responded with', status=oauth_response.status_code,
                     content=oauth_response.content)
@@ -776,8 +773,7 @@ def request_case(enrolment_code):
 
     :param enrolment_code: A respondent provided enrolment code
     """
-    case_svc = current_app.config['CASE_SERVICE']
-    case_url = f'{case_svc}/cases/iac/{enrolment_code}'
+    case_url = f'{current_app.config["CASE_URL"]}/cases/iac/{enrolment_code}'
     logger.info('Retrieving case from an enrolment code', enrolment_code=enrolment_code)
     response = Requests.get(case_url)
     response.raise_for_status()
@@ -791,8 +787,7 @@ def request_collection_exercise(collection_exercise_id):
 
     :param collection_exercise_id: The id of the collection exercise
     """
-    ce_svc = current_app.config['COLLECTION_EXERCISE_SERVICE']
-    ce_url = f'{ce_svc}/collectionexercises/{collection_exercise_id}'
+    ce_url = f'{current_app.config["COLLECTION_EXERCISE_URL"]}/collectionexercises/{collection_exercise_id}'
     logger.info('Retrieving collection exercise by id', collection_exercise_id=collection_exercise_id)
     response = Requests.get(ce_url)
     response.raise_for_status()
@@ -806,9 +801,8 @@ def request_survey(survey_id):
 
     :param survey_id: A uuid of a survey
     """
-    survey_svc = current_app.config['_SURVEY_SERVICE']
-    survey_url = f'{survey_svc}/surveys/{survey_id}'
-    logger.info("Retriving survey information from the survey service", survey_id=survey_id)
+    survey_url = f'{current_app.config["SURVEY_URL"]}/surveys/{survey_id}'
+    logger.info("Retrieving survey information from the survey service", survey_id=survey_id)
     response = Requests.get(survey_url)
     response.raise_for_status()
     logger.info('Successfully retrieved survey information from the survey service', survey_id=survey_id)
@@ -817,7 +811,7 @@ def request_survey(survey_id):
 
 def request_casegroups_for_business(business_id):
     logger.info('Retrieving casegroups for business', business_id=business_id)
-    url = f'{current_app.config["CASE_SERVICE"]}/casegroups/partyid/{business_id}'
+    url = f'{current_app.config["CASE_URL"]}/casegroups/partyid/{business_id}'
     response = Requests.get(url)
     response.raise_for_status()
     logger.info('Successfully retrieved casegroups for business', business_id=business_id)
@@ -826,7 +820,7 @@ def request_casegroups_for_business(business_id):
 
 def request_collection_exercises_for_survey(survey_id):
     logger.info('Retrieving collection exercises for survey', survey_id=survey_id)
-    url = f'{current_app.config["COLLECTION_EXERCISE_SERVICE"]}/collectionexercises/survey/{survey_id}'
+    url = f'{current_app.config["COLLECTION_EXERCISE_URL"]}/collectionexercises/survey/{survey_id}'
     response = Requests.get(url)
     response.raise_for_status()
     logger.info('Successfully retrieved collection exercises for survey', survey_id=survey_id)
@@ -834,8 +828,7 @@ def request_collection_exercises_for_survey(survey_id):
 
 
 def get_business_survey_casegroups(survey_id, business_id):
-    logger.info('Retrieving casegroups for business and survey',
-                survey_id=survey_id, business_id=business_id)
+    logger.info('Retrieving casegroups for business and survey', survey_id=survey_id, business_id=business_id)
     collection_exercise_ids = [ce['id']
                                for ce in request_collection_exercises_for_survey(survey_id)]
     casegroups = request_casegroups_for_business(business_id)

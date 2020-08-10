@@ -4,11 +4,10 @@ name = "pypi"
 url = "https://pypi.python.org/simple"
 
 [requires]
-python_version = "3.6"
+python_version = "3.8"
 
 [packages]
 alembic = "*"
-cfenv = "*"
 flask = "*"
 flask-cors = "*"
 flask-httpauth = "*"
@@ -23,12 +22,11 @@ sqlalchemy = "*"
 sqlalchemy-utils = "*"
 structlog = "*"
 requestsdefaulter = "*"
-flask-zipkin = "*"
-"psycopg2-binary" = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 coverage = "*"
-"flake8" = "*"
+flake8 = "*"
 flask-testing = "*"
 pytest-cov = "*"
 pylint = "*"
