@@ -3,12 +3,11 @@ import logging
 from urllib import parse as urlparse
 
 import structlog
+from concurrent.futures import TimeoutError
+from google.cloud import pubsub_v1
 
 from ras_party.exceptions import RasNotifyError
 from ras_party.support.requests_wrapper import Requests
-from google.cloud import pubsub_v1
-from concurrent.futures import TimeoutError
-
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -122,6 +121,7 @@ class NotifyGateway:
         :type personalisation: dict
         :param reference:
         :raises KeyError: Raised if the template name doesn't have a mapping in this class.
+        :raises RasNotifyError: Raised on publish errors and any other non-template mapping error.
 
         """
         template_id = self._get_template_id(template_name)
