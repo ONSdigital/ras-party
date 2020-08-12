@@ -31,13 +31,17 @@ def parties_post(party_data, session):
         logger.info("Wrong sampleUnitType", type=party_data['sampleUnitType'])
         raise BadRequest(f'sampleUnitType must be of type {Business.UNIT_TYPE}')
 
-    business = query_business_by_ref(party_data['sampleUnitRef'], session)
+    sample_unit_ref = party_data['sampleUnitRef']
+    logger.info("about to create business", sample_unit_ref=sample_unit_ref)
+    business = query_business_by_ref(sample_unit_ref, session)
     if business:
         party_data['id'] = str(business.party_uuid)
         business.add_versioned_attributes(party_data)
+        logger.info("merging business", business=business)
         session.merge(business)
     else:
         business = Business.from_party_dict(party_data)
+        logger.info("adding business", business=business)
         session.add(business)
     return business.to_post_response_dict()
 
