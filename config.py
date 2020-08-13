@@ -73,6 +73,10 @@ class TestingConfig(DevelopmentConfig):
     IAC_URL = 'http://mockhost:6666'
     SURVEY_URL = 'http://mockhost:3333'
     NOTIFY_URL = 'http://mockhost:5555/emails/'
+
+    GOOGLE_CLOUD_PROJECT = 'test-project-id'
+    NOTIFY_PUBSUB_TOPIC = 'ras-rm-notify-test'
+
     NOTIFY_EMAIL_VERIFICATION_TEMPLATE = 'email_verification_id'
     NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = 'request_password_change_id'
     NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = 'confirm_password_change_id'
