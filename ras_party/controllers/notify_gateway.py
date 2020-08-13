@@ -76,7 +76,7 @@ class NotifyGateway:
         bound_logger = logger.bind(template_id=template_id, project_id=self.project_id, topic_id=self.topic_id)
         bound_logger.info("Sending email via pubsub")
         if not self.config['SEND_EMAIL_TO_GOV_NOTIFY']:
-            logger.info("Notification not sent. Notify is disabled.")
+            bound_logger.info("Notification not sent. Notify is disabled.")
             return
 
         payload = {
