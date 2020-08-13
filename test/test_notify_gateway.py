@@ -1,3 +1,6 @@
+from concurrent.futures import TimeoutError
+from unittest.mock import MagicMock, patch
+
 from flask import current_app
 
 from ras_party.controllers.notify_gateway import NotifyGateway
@@ -74,3 +77,41 @@ class TestNotifyGateway(PartyTestClient):
         # Then a key error is raised
         with self.assertRaises(KeyError):
             notify._get_template_id(template_name)
+
+    @patch('google.cloud.pubsub_v1.PublisherClient.publish')
+    def test_request_to_notify_with_pubsub_no_personalisation(self, mock_publish):
+        """Tests what is sent to pubsub when no personalisation is added"""
+        # Given a mocked notify gateway
+        current_app.config['USE_PUBSUB_FOR_EMAIL'] = True
+        notify = NotifyGateway(current_app.config)
+        result = notify.request_to_notify('test@email.com', 'notify_account_locked')
+        data = b'{"notify": {"email_address": "test@email.com", ' \
+               b'"template_id": "account_locked_id", "personalisation": {}}}'
+
+        mock_publish.assert_called_with('projects/test-project-id/topics/ras-rm-notify-test', data=data)
+        self.assertIsNone(result)
+
+    @patch('google.cloud.pubsub_v1.PublisherClient.publish')
+    def test_request_to_notify_with_pubsub_with_personalisation(self, mock_publish):
+        """Tests what is sent to pubsub when personalisation is added"""
+        # Given a mocked notify gateway
+        current_app.config['USE_PUBSUB_FOR_EMAIL'] = True
+        notify = NotifyGateway(current_app.config)
+        personalisation = {"first_name": "testy", "last_name": "surname"}
+        result = notify.request_to_notify('test@email.com', 'notify_account_locked', personalisation)
+        data = b'{"notify": {"email_address": "test@email.com", "template_id": "account_locked_id",' \
+               b' "personalisation": {"first_name": "testy", "last_name": "surname"}}}'
+        mock_publish.assert_called_with('projects/test-project-id/topics/ras-rm-notify-test', data=data)
+        self.assertIsNone(result)
+
+    @patch('google.cloud.pubsub_v1.PublisherClient.publish')
+    def test_request_to_notify_with_pubsub_timeout_error(self, mock_publish):
+        """Tests if the future.result() raises a TimeoutError then the function raises a RasNotifyError"""
+        future = MagicMock()
+        future.result.side_effect = TimeoutError("bad")
+        mock_publish.return_value = future
+        # Given a mocked notify gateway
+        current_app.config['USE_PUBSUB_FOR_EMAIL'] = True
+        notify = NotifyGateway(current_app.config)
+        with self.assertRaises(RasNotifyError):
+            notify.request_to_notify('test@email.com', 'notify_account_locked')
