@@ -1,14 +1,19 @@
 from unittest.mock import patch
+from flask_testing import TestCase
 
 from flask import request
 from requests import Request, RequestException, Response
 from werkzeug.exceptions import NotFound
 
 from ras_party.error_handlers import http_error, http_exception_handler, exception_error
-from test.party_client import PartyTestClient
+from run import create_app
 
 
-class TestErrorHandlers(PartyTestClient):
+class TestErrorHandlers(TestCase):
+
+    @staticmethod
+    def create_app():
+        return create_app('TestingConfig')
 
     def test_uncaught_request_exception_handler(self):
         # Given
