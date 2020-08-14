@@ -1,5 +1,5 @@
 from concurrent.futures import TimeoutError
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from flask import current_app
 
