@@ -2,10 +2,12 @@ from concurrent.futures import TimeoutError
 from unittest.mock import MagicMock
 
 from flask import current_app
+from flask_testing import TestCase
 
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.exceptions import RasNotifyError
 from ras_party.support.requests_wrapper import Requests
+from run import create_app
 from test.mocks import MockRequests
 from test.party_client import PartyTestClient
 
@@ -69,8 +71,22 @@ class TestNotifyGateway(PartyTestClient):
         with self.assertRaises(RasNotifyError):
             notify.request_to_notify('email', 'request_password_change')
 
+
+class TestNotifyGatewayUnit(TestCase):
+    """
+    Unit tests for NotifyGateway controller
+
+    Note: Even though these are unit tests, we have a create_app function to let us easily access the config
+    as a dictionary as it's difficult to do otherwise.
+    """
+
+    @staticmethod
+    def create_app():
+        return create_app('TestingConfig')
+
     def test_get_template_with_fake_template_name(self):
         # Given a mocked notify gateway
+
         notify = NotifyGateway(current_app.config)
         # When given a fake template name
         template_name = 'fake_name'
