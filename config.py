@@ -36,6 +36,10 @@ class Config(object):
     IAC_URL = os.getenv('IAC_URL')
     SURVEY_URL = os.getenv('SURVEY_URL')
 
+    USE_PUBSUB_FOR_EMAIL = os.getenv('USE_PUBSUB_FOR_EMAIL', False)
+    GOOGLE_CLOUD_PROJECT = os.getenv('GOOGLE_CLOUD_PROJECT', 'test-project-id')
+    NOTIFY_PUBSUB_TOPIC = os.getenv('NOTIFY_PUBSUB_TOPIC', 'ras-rm-notify-test')
+
     NOTIFY_URL = os.getenv('NOTIFY_URL', 'http://notify-gateway-service/emails/')
     NOTIFY_EMAIL_VERIFICATION_TEMPLATE = os.getenv('NOTIFY_EMAIL_VERIFICATION_TEMPLATE', 'email_verification_id')
     NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = os.getenv('NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE',
@@ -69,6 +73,10 @@ class TestingConfig(DevelopmentConfig):
     IAC_URL = 'http://mockhost:6666'
     SURVEY_URL = 'http://mockhost:3333'
     NOTIFY_URL = 'http://mockhost:5555/emails/'
+
+    GOOGLE_CLOUD_PROJECT = 'test-project-id'
+    NOTIFY_PUBSUB_TOPIC = 'ras-rm-notify-test'
+
     NOTIFY_EMAIL_VERIFICATION_TEMPLATE = 'email_verification_id'
     NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = 'request_password_change_id'
     NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = 'confirm_password_change_id'

@@ -21,15 +21,18 @@ spec:
         app: {{ .Chart.Name }}
         env: {{ .Values.env }}
     spec:
-      {{- if .Values.database.sqlProxyEnabled }}
       volumes:
-        - name: cloudsql-instance-credentials
-          secret:
-            secretName: cloudsql-proxy-credentials
-            defaultMode: 0444
-            items:
-            - key: "credentials.json"
-              path: "credentials.json"
+      - name: google-cloud-key
+        secret:
+          secretName: google-application-credentials
+      {{- if .Values.database.sqlProxyEnabled }}
+      - name: cloudsql-instance-credentials
+        secret:
+          secretName: cloudsql-proxy-credentials
+          defaultMode: 0444
+          items:
+          - key: "credentials.json"
+            path: "credentials.json"
       {{- end }}
       containers:
         {{- if .Values.database.sqlProxyEnabled }}
@@ -65,6 +68,9 @@ spec:
           image: "{{ .Values.image.devRepo }}/{{ .Chart.Name }}:{{ .Values.image.tag }}"
           {{- end}}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+          - name: google-cloud-key
+            mountPath: /var/secrets/google
           ports:
             - name: http-server
               containerPort: {{ .Values.container.port }}
@@ -146,6 +152,10 @@ spec:
             {{- else }}
             value: "http://$(FRONTSTAGE_SERVICE_HOST):$(FRONTSTAGE_SERVICE_PORT)"
             {{- end }}
+          - name: GOOGLE_CLOUD_PROJECT
+            value: "{{ .Values.gcp.project }}"
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: /var/secrets/google/credentials.json
           - name: IAC_URL
             {{- if .Values.dns.enabled }}
             value: "http://iac.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
@@ -164,6 +174,8 @@ spec:
             {{- else }}
             value: "http://$(SURVEY_SERVICE_HOST):$(SURVEY_SERVICE_PORT)"
             {{- end }}
+          - name: NOTIFY_PUBSUB_TOPIC
+            value: "{{ .Values.email.pubsub.topic }}"
           - name: NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE
             value: "{{ .Values.email.templates.notifyConfirmPasswordChangeTemplate }}"
           - name: NOTIFY_EMAIL_VERIFICATION_TEMPLATE
@@ -194,6 +206,8 @@ spec:
                 key: email-token-salt
           - name: PORT
             value: "{{ .Values.container.port }}"
+          - name: USE_PUBSUB_FOR_EMAIL
+            value: "{{ .Values.email.pubsub.enabled }}"
           - name: SEND_EMAIL_TO_GOV_NOTIFY
             value: "{{ .Values.email.enabled }}"
           resources:
