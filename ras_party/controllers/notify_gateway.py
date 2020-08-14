@@ -1,9 +1,9 @@
 import json
 import logging
+from concurrent.futures import TimeoutError
 from urllib import parse as urlparse
 
 import structlog
-from concurrent.futures import TimeoutError
 from google.cloud import pubsub_v1
 
 from ras_party.exceptions import RasNotifyError
