@@ -1,13 +1,11 @@
 import json
 import logging
 from concurrent.futures import TimeoutError
-from urllib import parse as urlparse
 
 import structlog
 from google.cloud import pubsub_v1
 
 from ras_party.exceptions import RasNotifyError
-from ras_party.support.requests_wrapper import Requests
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -26,42 +24,7 @@ class NotifyGateway:
         self.topic_id = self.config['NOTIFY_PUBSUB_TOPIC']
         self.publisher = None
 
-    def _send_message(self, email, template_id, personalisation=None, reference=None):
-        """
-        Send message to gov.uk notify wrapper
-
-        :param email: email address of recipient
-        :param template_id: the template id on gov.uk notify to use
-        :param personalisation: placeholder values in the template
-        :param reference: reference to be generated if not using Notify's id
-        :rtype: 201 if success
-        """
-        logger.info("Sending email via notify-gateway", template_id=template_id)
-        if not self.config['SEND_EMAIL_TO_GOV_NOTIFY']:
-            logger.info("Notification not sent. Notify is disabled.")
-            return
-
-        try:
-            notification = {
-                "emailAddress": email,
-            }
-            if personalisation:
-                notification.update({"personalisation": personalisation})
-            if reference:
-                notification.update({"reference": reference})
-
-            url = urlparse.urljoin(self.notify_url, str(template_id))
-
-            response = Requests.post(url, json=notification)
-
-            logger.info('Notification id sent via Notify-Gateway to GOV.UK Notify.', id=response.json()["id"])
-
-        except Exception as e:
-            ref = reference if reference else 'reference_unknown'
-            raise RasNotifyError("There was a problem sending a notification to Notify-Gateway to GOV.UK Notify",
-                                 error=e, reference=ref)
-
-    def _send_message_via_pubsub(self, email, template_id, personalisation):
+    def _send_message(self, email, template_id, personalisation):
         """Sends an email via pubsub topic
 
         :param email: Email address to send the email too
@@ -112,8 +75,7 @@ class NotifyGateway:
 
     def request_to_notify(self, email, template_name, personalisation=None, reference=None):
         """
-        Sends a message to either notify-gateway or a pubsub topic which will ultimately result in an email being
-        sent via gov notify
+        Sends a message to a pubsub topic which will ultimately result in an email being sent via gov notify
 
         :param email: Email address to send the email too
         :type email: str
@@ -127,10 +89,7 @@ class NotifyGateway:
 
         """
         template_id = self._get_template_id(template_name)
-        if self.config['USE_PUBSUB_FOR_EMAIL']:
-            self._send_message_via_pubsub(email, template_id, personalisation)
-        else:
-            self._send_message(email, template_id, personalisation, reference)
+        self._send_message(email, template_id, personalisation)
 
     def _get_template_id(self, template_name):
         templates = {'notify_account_locked': self.notify_account_locked,

@@ -48,7 +48,6 @@ email:
   token:
     salt: aardvark
   pubsub:
-    enabled: false
     topic: ras-rm-notify-test
 
 dns:

@@ -36,7 +36,6 @@ class Config(object):
     IAC_URL = os.getenv('IAC_URL')
     SURVEY_URL = os.getenv('SURVEY_URL')
 
-    USE_PUBSUB_FOR_EMAIL = os.getenv('USE_PUBSUB_FOR_EMAIL', False)
     GOOGLE_CLOUD_PROJECT = os.getenv('GOOGLE_CLOUD_PROJECT', 'test-project-id')
     NOTIFY_PUBSUB_TOPIC = os.getenv('NOTIFY_PUBSUB_TOPIC', 'ras-rm-notify-test')
 
@@ -51,13 +50,11 @@ class Config(object):
 
 
 class DevelopmentConfig(Config):
-
     DEBUG = True
     LOGGING_LEVEL = 'DEBUG'
 
 
 class TestingConfig(DevelopmentConfig):
-
     DEBUG = True
     LOGGING_LEVEL = 'ERROR'
     SECRET_KEY = 'aardvark'

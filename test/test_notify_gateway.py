@@ -99,7 +99,6 @@ class TestNotifyGatewayUnit(TestCase):
         publisher = MagicMock()
         publisher.topic_path.return_value = 'projects/test-project-id/topics/ras-rm-notify-test'
         # Given a mocked notify gateway
-        current_app.config['USE_PUBSUB_FOR_EMAIL'] = True
         notify = NotifyGateway(current_app.config)
         notify.publisher = publisher
         result = notify.request_to_notify('test@email.com', 'notify_account_locked')
@@ -115,7 +114,6 @@ class TestNotifyGatewayUnit(TestCase):
         publisher = MagicMock()
         publisher.topic_path.return_value = 'projects/test-project-id/topics/ras-rm-notify-test'
         # Given a mocked notify gateway
-        current_app.config['USE_PUBSUB_FOR_EMAIL'] = True
         notify = NotifyGateway(current_app.config)
         notify.publisher = publisher
         personalisation = {"first_name": "testy", "last_name": "surname"}
@@ -134,7 +132,6 @@ class TestNotifyGatewayUnit(TestCase):
         publisher.publish.return_value = future
 
         # Given a mocked notify gateway
-        current_app.config['USE_PUBSUB_FOR_EMAIL'] = True
         notify = NotifyGateway(current_app.config)
         notify.publisher = publisher
         with self.assertRaises(RasNotifyError):
