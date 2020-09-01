@@ -23,7 +23,7 @@ class NotifyGateway:
         self.confirm_password_change_template = config['NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE']
         self.notify_account_locked = config['NOTIFY_ACCOUNT_LOCKED_TEMPLATE']
         self.project_id = self.config['GOOGLE_CLOUD_PROJECT']
-        self.topic_id = self.config['NOTIFY_PUBSUB_TOPIC']
+        self.topic_id = self.config['PUBSUB_TOPIC']
         self.publisher = None
 
     def _send_message(self, email, template_id, personalisation=None, reference=None):

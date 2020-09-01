@@ -8,6 +8,7 @@ rollingUpdate:
 
 gcp:
   project: ras-rm-sandbox
+  topic: sample-jobs
 
 image:
   devRepo: eu.gcr.io/ons-rasrmbs-management
