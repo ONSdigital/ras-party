@@ -2,7 +2,6 @@ import logging
 from json import loads
 
 import structlog
-import requestsdefaulter
 
 from retrying import RetryError
 

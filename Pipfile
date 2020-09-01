@@ -27,7 +27,5 @@ psycopg2-binary = "*"
 
 [dev-packages]
 coverage = "*"
-flake8 = "*"
 flask-testing = "*"
 pytest-cov = "*"
-pylint = "*"
