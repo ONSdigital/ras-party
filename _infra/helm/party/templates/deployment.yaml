@@ -206,8 +206,6 @@ spec:
                 key: email-token-salt
           - name: PORT
             value: "{{ .Values.container.port }}"
-          - name: USE_PUBSUB_FOR_EMAIL
-            value: "{{ .Values.email.pubsub.enabled }}"
           - name: SEND_EMAIL_TO_GOV_NOTIFY
             value: "{{ .Values.email.enabled }}"
           resources:

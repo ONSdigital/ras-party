@@ -48,8 +48,6 @@ email:
     key: aardvark
   token:
     salt: aardvark
-  pubsub:
-    enabled: false
 
 dns:
   enabled: false
