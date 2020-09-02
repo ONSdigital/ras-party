@@ -8,6 +8,7 @@ rollingUpdate:
 
 gcp:
   project: ras-rm-sandbox
+  topic: ras-rm-notify-test
 
 image:
   devRepo: eu.gcr.io/ons-rasrmbs-management
@@ -47,8 +48,6 @@ email:
     key: aardvark
   token:
     salt: aardvark
-  pubsub:
-    topic: ras-rm-notify-test
 
 dns:
   enabled: false

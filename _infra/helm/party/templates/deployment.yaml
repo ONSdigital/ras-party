@@ -174,8 +174,8 @@ spec:
             {{- else }}
             value: "http://$(SURVEY_SERVICE_HOST):$(SURVEY_SERVICE_PORT)"
             {{- end }}
-          - name: NOTIFY_PUBSUB_TOPIC
-            value: "{{ .Values.email.pubsub.topic }}"
+          - name: PUBSUB_TOPIC
+            value: "{{ .Values.gcp.topic }}"
           - name: NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE
             value: "{{ .Values.email.templates.notifyConfirmPasswordChangeTemplate }}"
           - name: NOTIFY_EMAIL_VERIFICATION_TEMPLATE
