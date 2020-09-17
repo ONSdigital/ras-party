@@ -1750,30 +1750,30 @@ class TestRespondents(PartyTestClient):
         respondent_email_3 = {'email': 'res3@example.com'}
         request = [
             {
-                "method": "PATCH",
+                "method": "DELETE",
                 "path": "/party-api/v1/respondents/email",
                 "body": respondent_email_0,
                 "headers": self.auth_headers
             },
             {
-                "method": "PATCH",
+                "method": "DELETE",
                 "path": "/party-api/v1/respondents/email",
                 "body": respondent_email_1,
                 "headers": self.auth_headers
             },
             {
-                "method": "PATCH",
+                "method": "DELETE",
                 "path": "/party-api/v1/respondents/email",
                 "body": respondent_email_2,
                 "headers": self.auth_headers
             },
             {
-                "method": "PATCH",
+                "method": "DELETE",
                 "path": "/party-api/v1/respondents/email",
                 "body": respondent_email_3,
                 "headers": self.auth_headers
             }
         ]
         response = self.batch(request)
-        expected_output = '[{"status": 200}, {"status": 200}, {"status": 200}, {"status": 404}]'
+        expected_output = '[{"status": 204}, {"status": 204}, {"status": 204}, {"status": 404}]'
         self.assertEqual(response, expected_output)

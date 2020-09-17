@@ -30,7 +30,7 @@ def create_app(config=None):
     from ras_party.views.respondent_view import respondent_view
     from ras_party.views.account_view import account_view
     from ras_party.views.info_view import info_view
-    from ras_party.batch_process.batch_request import batch_request
+    from ras_party.views.batch_request import batch_request
     from ras_party import error_handlers
     app.register_blueprint(party_view, url_prefix='/party-api/v1')
     app.register_blueprint(account_view, url_prefix='/party-api/v1')
