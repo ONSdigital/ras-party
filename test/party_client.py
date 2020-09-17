@@ -299,3 +299,16 @@ class PartyTestClient(TestCase):
         if expected_result:
             self.assertEqual(response_data, expected_result)
         return response_data
+
+    def delete_user_data_marked_for_deletion(self, expected_status=204):
+        response = self.client.delete(f'/party-api/v1/batch/respondents',
+                                      headers=self.auth_headers)
+        self.assertStatus(response, expected_status)
+        return response
+
+    def batch(self, payload, expected_status=207):
+        response = self.client.post(f'/party-api/v1/batch/requests',
+                                    headers=self.auth_headers,
+                                    data=json.dumps(payload))
+        self.assertStatus(response, expected_status)
+        return response.get_data(as_text=True)

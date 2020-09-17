@@ -8,7 +8,6 @@ from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import respondent_controller
 
-
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 respondent_view = Blueprint('respondent_view', __name__)
 auth = HTTPBasicAuth()
@@ -89,6 +88,22 @@ def get_respondent_by_email():
     email = payload['email']
     response = respondent_controller.get_respondent_by_email(email)
     return jsonify(response)
+
+
+@respondent_view.route('/respondents/email', methods=['PATCH'])
+def update_respondent_mark_for_deletion_by_email():
+    try:
+        email = request.get_json()['email']
+    except TypeError:
+        raise BadRequest('JSON payload not provided')
+    except KeyError:
+        raise BadRequest("Email key must be provided in the JSON payload")
+
+    if not email:
+        raise BadRequest("Email cannot be empty")
+
+    respondent_controller.update_respondent_mark_for_deletion(email)
+    return '', 200
 
 
 @respondent_view.route('/respondents/email', methods=['DELETE'])

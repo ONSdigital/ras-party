@@ -10,6 +10,7 @@ class MockRespondent:
             'lastName': 'Z',
             'emailAddress': 'a@z.com',
             'telephone': '123',
+            'mark_for_deletion': False,
             'enrolmentCode': 'fb747cq725lj',
             'password': 'banana'
         }
@@ -36,6 +37,7 @@ class MockRespondentWithId:
             'lastName': 'Z',
             'emailAddress': 'a@b.com',
             'telephone': '123',
+            'mark_for_deletion': False,
             'enrolment_code': 'fb747cq725lj',
             'password': 'banana'
         }
@@ -62,6 +64,7 @@ class MockRespondentWithIdSuspended:
             'lastName': 'Z',
             'emailAddress': 'a@b.com',
             'telephone': '123',
+            'mark_for_deletion': False,
             'enrolment_code': 'fb747cq725lj',
             'password': 'banana',
             'status': 'SUSPENDED'
@@ -89,6 +92,7 @@ class MockRespondentWithIdActive:
             'lastName': 'Z',
             'emailAddress': 'a@b.com',
             'telephone': '123',
+            'mark_for_deletion': False,
             'enrolment_code': 'fb747cq725lj',
             'password': 'banana',
             'status': 'ACTIVE'
@@ -117,6 +121,7 @@ class MockRespondentWithPendingEmail:
             'emailAddress': 'a@b.com',
             'pendingEmailAddress': 'new@email.com',
             'telephone': '123',
+            'mark_for_deletion': False,
             'enrolment_code': 'fb747cq725lj',
             'password': 'banana',
             'status': 'ACTIVE'

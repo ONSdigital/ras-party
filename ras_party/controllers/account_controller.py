@@ -37,6 +37,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 NO_RESPONDENT_FOR_PARTY_ID = 'There is no respondent with that party ID'
 EMAIL_VERIFICATION_SENT = 'A new verification email has been sent'
 
+
 # flake8: noqa: C901
 @with_quiet_db_session
 def post_respondent(party, session):
@@ -193,7 +194,6 @@ def change_respondent_enrolment_status(payload, session):
 
 
 def _change_respondent_enrolment_status(respondent, survey_id, business_id, status, session):
-
     logger.info("Attempting to change respondent enrolment",
                 respondent_id=respondent.party_uuid,
                 survey_id=survey_id,
@@ -210,7 +210,7 @@ def _change_respondent_enrolment_status(respondent, survey_id, business_id, stat
                                                               survey_id=survey_id,
                                                               session=session)
     enrolment.status = status
-    session.commit()       # Needs to be committed before call to case as that may look up party
+    session.commit()  # Needs to be committed before call to case as that may look up party
 
     # If no enrolments are remaining for business/survey
     # then send NO_ACTIVE_ENROLMENTS case event

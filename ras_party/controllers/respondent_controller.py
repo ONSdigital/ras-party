@@ -12,7 +12,6 @@ from ras_party.controllers.queries import query_respondent_by_party_uuid, \
 from ras_party.support.session_decorator import with_db_session, with_query_only_db_session
 from ras_party.support.util import obfuscate_email
 
-
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
@@ -68,6 +67,38 @@ def get_respondent_by_id(respondent_id, session):
         raise NotFound("Respondent with party id does not exist")
 
     return respondent.to_respondent_dict()
+
+
+@with_db_session
+def update_respondent_mark_for_deletion(email, session):
+    """
+    Update respondent flag mark_for_deletion
+    On Success it returns None, on failure will raise exceptions
+    :param email: email of Respondent to be marked for deletion
+    :type email: str
+    :param session:
+    """
+    respondent = query_respondent_by_email(email, session)
+    if not respondent:
+        logger.error("Respondent does not exist", email=email)
+        raise NotFound("Respondent does not exist")
+    logger.info("Marking respondent for deletion", email=email)
+    session.query(Respondent).filter(Respondent.party_uuid == respondent.party_uuid) \
+        .update({Respondent.mark_for_deletion: True})
+
+
+@with_db_session
+def delete_respondents_marked_for_deletion(session):
+    """
+    Deletes all the existing respondents and there associated data which are marked for deletion
+    :param session
+    """
+    respondents = session.query(Respondent).filter(Respondent.mark_for_deletion == True)
+    for respondent in respondents:
+        session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
+        session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
+        session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
+        session.query(Respondent).filter(Respondent.id == respondent.id).delete()
 
 
 @with_db_session
