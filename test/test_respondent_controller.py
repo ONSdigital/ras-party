@@ -1,6 +1,7 @@
 # pylint: disable=no-value-for-parameter
 
 import json
+import sys
 import uuid
 from unittest import mock
 from unittest.mock import MagicMock, patch
@@ -9,6 +10,7 @@ from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 from requests import Response
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.testing.plugin.plugin_base import logging
 from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 
 from ras_party.controllers import account_controller, respondent_controller
@@ -59,6 +61,7 @@ class TestRespondents(PartyTestClient):
             'first_name': respondent['firstName'],
             'last_name': respondent['lastName'],
             'telephone': respondent['telephone'],
+            'mark_for_deletion': respondent['mark_for_deletion'],
             'status': respondent.get('status') or RespondentStatus.CREATED
         }
         self.respondent = Respondent(**translated_party)
@@ -560,7 +563,7 @@ class TestRespondents(PartyTestClient):
         response = self.get_respondents_by_name_email(first_name="fifthAndrew", last_name=None, email=None,
                                                       page=3, limit=2, expected_status=200)
         self.assertEqual(len(response['data']), 2)
-        self.assertEqual(response['total'], 6)     # 0, 5, 10, 15, 20 and 25 should be 'fifthAndrew'
+        self.assertEqual(response['total'], 6)  # 0, 5, 10, 15, 20 and 25 should be 'fifthAndrew'
 
     def test_get_respondents_page_returns_zero_respondents_if_none_on_requested_page(self):
         respondents_last_name = [f"{chr(i)}_Torrance" for i in range(ord('a'), ord('z') + 1)]
@@ -825,9 +828,9 @@ class TestRespondents(PartyTestClient):
 
     @staticmethod
     def test_request_password_change_uses_case_insensitive_email_query():
-        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
-                patch('ras_party.support.session_decorator.current_app.db') as db,\
-                patch('ras_party.controllers.account_controller.NotifyGateway'),\
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query, \
+                patch('ras_party.support.session_decorator.current_app.db') as db, \
+                patch('ras_party.controllers.account_controller.NotifyGateway'), \
                 patch('ras_party.controllers.account_controller.PublicWebsite'):
             payload = {'email_address': 'test@example.test'}
             account_controller.request_password_change(payload)
@@ -868,9 +871,9 @@ class TestRespondents(PartyTestClient):
 
     @staticmethod
     def test_change_respondent_password_uses_case_insensitive_email_query():
-        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
-                patch('ras_party.support.session_decorator.current_app.db') as db,\
-                patch('ras_party.controllers.account_controller.OauthClient') as client,\
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query, \
+                patch('ras_party.support.session_decorator.current_app.db') as db, \
+                patch('ras_party.controllers.account_controller.OauthClient') as client, \
                 patch('ras_party.controllers.account_controller.NotifyGateway'):
             client().update_account().status_code = 201
             account_controller.change_respondent_password({'new_password': 'abc', 'email_address': 'test@example.test'})
@@ -896,9 +899,9 @@ class TestRespondents(PartyTestClient):
 
     @staticmethod
     def test_change_respondent_password_ras_notify_error():
-        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
-                patch('ras_party.support.session_decorator.current_app.db') as db,\
-                patch('ras_party.controllers.account_controller.OauthClient') as client,\
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query, \
+                patch('ras_party.support.session_decorator.current_app.db') as db, \
+                patch('ras_party.controllers.account_controller.OauthClient') as client, \
                 patch('ras_party.controllers.account_controller.NotifyGateway') as notify:
             notify.side_effect = RasNotifyError(mock.Mock())
             client().update_account().status_code = 201
@@ -924,8 +927,8 @@ class TestRespondents(PartyTestClient):
         self.put_respondent_account_status(payload, party_id, expected_status=400)
 
     def test_notify_account_ras_notify_error(self):
-        with patch('ras_party.controllers.account_controller.NotifyGateway') as notify,\
-             patch('ras_party.controllers.account_controller.PublicWebsite'):
+        with patch('ras_party.controllers.account_controller.NotifyGateway') as notify, \
+                patch('ras_party.controllers.account_controller.PublicWebsite'):
             with self.assertLogs() as ctx:
                 notify.side_effect = RasNotifyError(mock.Mock())
                 self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
@@ -968,7 +971,7 @@ class TestRespondents(PartyTestClient):
 
     @staticmethod
     def test_verify_token_uses_case_insensitive_email_query():
-        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query, \
                 patch('ras_party.support.session_decorator.current_app.db') as db:
             token = generate_email_token('test@example.test')
             account_controller.verify_token(token)
@@ -1079,7 +1082,7 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(db_respondent.status, RespondentStatus.CREATED)
 
     def test_put_email_verification_uses_case_insensitive_email_query(self):
-        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query,\
+        with patch('ras_party.controllers.account_controller.query_respondent_by_email') as query, \
                 patch('ras_party.support.session_decorator.current_app.db') as db:
             token = self.generate_valid_token_from_email('test@example.test')
             account_controller.put_email_verification(token)
@@ -1119,6 +1122,7 @@ class TestRespondents(PartyTestClient):
         # Given the IAC code is inactive
         def mock_get_iac(*args, **kwargs):
             return MockResponse('{"active": false}')
+
         self.mock_requests.get = mock_get_iac
         # When a new respondent is posted
         # Then status code 400 is returned
@@ -1208,12 +1212,12 @@ class TestRespondents(PartyTestClient):
         )
 
     def test_post_respondent_uses_case_insensitive_email_query(self):
-        with patch('ras_party.controllers.queries.query_respondent_by_email') as query,\
-             patch('ras_party.support.session_decorator.current_app.db') as db,\
-             patch('ras_party.controllers.account_controller.NotifyGateway'),\
-             patch('ras_party.controllers.account_controller.Requests'),\
-             patch('ras_party.controllers.account_controller.request_iac') as requested_iac,\
-             patch('ras_party.controllers.account_controller.disable_iac') as updated_iac:
+        with patch('ras_party.controllers.queries.query_respondent_by_email') as query, \
+                patch('ras_party.support.session_decorator.current_app.db') as db, \
+                patch('ras_party.controllers.account_controller.NotifyGateway'), \
+                patch('ras_party.controllers.account_controller.Requests'), \
+                patch('ras_party.controllers.account_controller.request_iac') as requested_iac, \
+                patch('ras_party.controllers.account_controller.disable_iac') as updated_iac:
             payload = {
                 'emailAddress': 'test@example.test',
                 'firstName': 'Joe',
@@ -1288,6 +1292,7 @@ class TestRespondents(PartyTestClient):
         # Set IAC code to be inactive
         def mock_get_iac(*args, **kwargs):
             return MockResponse('{"active": false}')
+
         self.mock_requests.get = mock_get_iac
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
@@ -1315,6 +1320,7 @@ class TestRespondents(PartyTestClient):
     def test_put_change_respondent_enrolment_status_disabled_success(self):
         def mock_put_iac(*args, **kwargs):
             return MockResponse('{"active": false}')
+
         self.mock_requests.put = mock_put_iac
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
@@ -1335,6 +1341,7 @@ class TestRespondents(PartyTestClient):
     def test_put_change_respondent_enrolment_status_enabled_success(self):
         def mock_put_iac(*args, **kwargs):
             return MockResponse('{"active": false}')
+
         self.mock_requests.put = mock_put_iac
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
@@ -1371,6 +1378,7 @@ class TestRespondents(PartyTestClient):
     def test_put_change_respondent_enrolment_status_random_string_fail(self):
         def mock_put_iac(*args, **kwargs):
             return MockResponse('{"active": false}')
+
         self.mock_requests.put = mock_put_iac
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
         self.populate_with_business()
@@ -1493,7 +1501,7 @@ class TestRespondents(PartyTestClient):
              patch('ras_party.controllers.account_controller.enrol_respondent_for_survey'), \
              patch('ras_party.controllers.account_controller.NotifyGateway'), \
              patch('ras_party.controllers.account_controller.OauthClient') as auth, \
-             patch('ras_party.controllers.account_controller.Requests'):
+                patch('ras_party.controllers.account_controller.Requests'):
             payload = {
                 'new_password': 'password',
                 'email_address': 'mock@email.com'
@@ -1598,7 +1606,7 @@ class TestRespondents(PartyTestClient):
         # And there is a business (related to the IAC code case context)
         self.populate_with_business()
 
-        with patch('ras_party.controllers.account_controller.OauthClient') as auth,\
+        with patch('ras_party.controllers.account_controller.OauthClient') as auth, \
                 patch('ras_party.controllers.account_controller.logger') as logger:
             auth().create_account().status_code = 500
             auth().create_account().content = {}
@@ -1613,8 +1621,8 @@ class TestRespondents(PartyTestClient):
             respondent_controller.delete_respondent_by_email('does-not-exist@blah.com')
 
     def test_delete_respondent_by_email_sqlalchemyerror_on_commit(self):
-        with patch("ras_party.controllers.queries.query_single_respondent_by_email") as query,\
-             patch('ras_party.support.session_decorator.current_app.db') as db:
+        with patch("ras_party.controllers.queries.query_single_respondent_by_email") as query, \
+                patch('ras_party.support.session_decorator.current_app.db') as db:
             query.return_value = {
                 'party_uuid': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
                 'email_address': 'user@domain.com',
@@ -1633,8 +1641,8 @@ class TestRespondents(PartyTestClient):
                 db.rollback.assert_called_once()
 
     def test_delete_respondent_by_email_exception_on_commit(self):
-        with patch("ras_party.controllers.queries.query_single_respondent_by_email") as query,\
-             patch('ras_party.support.session_decorator.current_app.db') as db:
+        with patch("ras_party.controllers.queries.query_single_respondent_by_email") as query, \
+                patch('ras_party.support.session_decorator.current_app.db') as db:
             query.return_value = {
                 'party_uuid': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
                 'email_address': 'user@domain.com',
@@ -1651,3 +1659,121 @@ class TestRespondents(PartyTestClient):
             with self.assertRaises(Exception):
                 respondent_controller.delete_respondent_by_email('user@domain.com')
                 db.rollback.assert_called_once()
+
+    def test_update_respondent_mark_for_deletion_for_user_does_not_exists(self):
+        """Given : The user email does not exists
+           When : update_respondent_mark_for_deletion is called
+           Then: A NotFound exception should be raised if the user can't be found
+        """
+        with self.assertRaises(NotFound):
+            respondent_controller.delete_respondent_by_email('does-not-exist@blah.com')
+
+    def test_update_respondent_mark_for_deletion_for_user_exception_on_commit(self):
+        with patch("ras_party.controllers.queries.query_single_respondent_by_email") as query, \
+                patch('ras_party.support.session_decorator.current_app.db') as db:
+            query.return_value = {
+                'party_uuid': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
+                'email_address': 'user@domain.com',
+                'pending_email_address': '',
+                'first_name': 'Some',
+                'last_name': 'One',
+                'telephone': '01271345820',
+                'status': RespondentStatus.CREATED
+            }
+
+            # This says db.session() returns an object that if commit is called on it (e.g., db.session().commit())
+            # will raise an Exception.  The setup looks weird but none of the other varients seemed to work.
+            db.configure_mock(**{'session.return_value': MagicMock(**{'commit.side_effect': Exception})})
+            with self.assertRaises(Exception):
+                respondent_controller.update_respondent_mark_for_deletion('user@domain.com')
+                db.rollback.assert_called_once()
+
+    def test_update_respondent_mark_for_deletion_for_user(self):
+        respondent = self.populate_with_respondent()
+        self.assertEqual(respondent.mark_for_deletion, False)
+        respondent_controller.update_respondent_mark_for_deletion(respondent.email_address)
+        response = self.get_respondent_by_id(respondent.party_uuid)
+        self.assertEqual(response['markForDeletion'], True)
+
+    def test_delete_respondent_mark_for_deletion(self):
+        respondent = self.populate_with_respondent()
+        self.assertEqual(respondent.mark_for_deletion, False)
+        respondent_controller.update_respondent_mark_for_deletion(respondent.email_address)
+        response_respondent = self.get_respondent_by_id(respondent.party_uuid)
+        self.assertEqual(response_respondent['markForDeletion'], True)
+        respondent_controller.delete_respondents_marked_for_deletion()
+        with self.assertRaises(Exception):
+            self.get_respondent_by_id(respondent.party_uuid)
+
+    def test_batch_delete_user_data_marked_for_deletion(self):
+        def mock_put_iac(*args, **kwargs):
+            return MockResponse('{"active": false}')
+
+        self.mock_requests.put = mock_put_iac
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID,
+                                               respondent_id=self.mock_respondent_with_id['id'])
+        self.populate_with_enrolment()
+        respondent = respondents()[0]
+        self.assertEqual(respondent.mark_for_deletion, False)
+        respondent_controller.update_respondent_mark_for_deletion(respondent.email_address)
+        response_respondent = self.get_respondent_by_id(respondent.party_uuid)
+        self.assertEqual(response_respondent['markForDeletion'], True)
+        respondent_1 = MockRespondent()
+        respondent_1.attributes(emailAddress='res1@example.com', mark_for_deletion=True)
+        respondent_1 = self.populate_with_respondent(respondent=respondent_1.as_respondent())
+        response = self.delete_user_data_marked_for_deletion()
+        self.assertStatus(response, 204)
+        with self.assertRaises(Exception):
+            self.get_respondent_by_id(respondent.party_uuid)
+        with self.assertRaises(Exception):
+            self.get_respondent_by_email(respondent_1.email_address)
+
+    def test_batch(self):
+        respondent_0 = self.populate_with_respondent()
+        respondent_1 = MockRespondent()
+        respondent_1.attributes(emailAddress='res1@example.com')
+
+        respondent_2 = MockRespondent()
+        respondent_2.attributes(emailAddress='res2@example.com')
+
+        respondent_1 = self.populate_with_respondent(respondent=respondent_1.as_respondent())
+        respondent_2 = self.populate_with_respondent(respondent=respondent_2.as_respondent())
+
+        self.assertEqual(respondent_0.mark_for_deletion, False)
+        self.assertEqual(respondent_1.mark_for_deletion, False)
+        self.assertEqual(respondent_2.mark_for_deletion, False)
+        respondent_email_0 = {'email': 'a@z.com'}
+        respondent_email_1 = {'email': 'res1@example.com'}
+        respondent_email_2 = {'email': 'res2@example.com'}
+        respondent_email_3 = {'email': 'res3@example.com'}
+        request = [
+            {
+                "method": "DELETE",
+                "path": "/party-api/v1/respondents/email",
+                "body": respondent_email_0,
+                "headers": self.auth_headers
+            },
+            {
+                "method": "DELETE",
+                "path": "/party-api/v1/respondents/email",
+                "body": respondent_email_1,
+                "headers": self.auth_headers
+            },
+            {
+                "method": "DELETE",
+                "path": "/party-api/v1/respondents/email",
+                "body": respondent_email_2,
+                "headers": self.auth_headers
+            },
+            {
+                "method": "DELETE",
+                "path": "/party-api/v1/respondents/email",
+                "body": respondent_email_3,
+                "headers": self.auth_headers
+            }
+        ]
+        response = self.batch(request)
+        expected_output = '[{"status": 204}, {"status": 204}, {"status": 204}, {"status": 404}]'
+        self.assertEqual(response, expected_output)

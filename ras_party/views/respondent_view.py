@@ -8,7 +8,6 @@ from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import respondent_controller
 
-
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 respondent_view = Blueprint('respondent_view', __name__)
 auth = HTTPBasicAuth()
@@ -103,7 +102,7 @@ def delete_respondent_by_email():
     if not email:
         raise BadRequest("Email cannot be empty")
 
-    respondent_controller.delete_respondent_by_email(email)
+    respondent_controller.update_respondent_mark_for_deletion(email)
     return '', 204
 
 

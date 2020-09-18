@@ -5,7 +5,7 @@ import uuid
 
 import structlog
 from jsonschema import Draft4Validator
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint, Index
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint, Index, Boolean
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -248,6 +248,7 @@ class Respondent(Base):
     first_name = Column(Text)
     last_name = Column(Text)
     telephone = Column(Text)
+    mark_for_deletion = Column(Boolean, default=False)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
     pending_enrolment = relationship('PendingEnrolment', back_populates='respondent')
     Index('respondent_first_name_idx', first_name)
@@ -284,6 +285,7 @@ class Respondent(Base):
             'lastName': self.last_name,
             'telephone': self.telephone,
             'status': RespondentStatus(self.status).name,
+            'markForDeletion': self.mark_for_deletion,
             'associations': self._get_business_associations(self.businesses)
         }
 
