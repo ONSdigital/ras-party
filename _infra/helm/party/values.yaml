@@ -52,3 +52,9 @@ email:
 dns:
   enabled: false
   wellKnownPort: 8080
+
+crons:
+  markForDeletionScheduler:
+    name: party-scheduler-delete-respondents
+    cron: "0 3 * * *"
+    target: "party-api/v1/batch/respondents"
