@@ -1,11 +1,6 @@
 env: minikube
 namespace: minikube
 
-replicas: 1
-rollingUpdate:
-  maxSurge: 1
-  maxUnavailable: 1
-
 gcp:
   project: ras-rm-sandbox
   topic: ras-rm-notify-test
@@ -31,7 +26,21 @@ service:
 
 resources:
   requests:
-    memory: "256Mi"
+    memory: "500Mi"
+    cpu: "25m"
+  limits:
+    cpu: "100m"
+    memory: "1500Mi"
+
+autoscaling: false
+scaleAt:
+  # These are expressed as a percentage of resources.requests, not resources.limits
+  memoryPercentage: 150
+  cpuPercentage: 200
+replicas: 1
+rollingUpdate:
+  maxSurge: 1
+  maxUnavailable: 1
 
 email:
   enabled: false
