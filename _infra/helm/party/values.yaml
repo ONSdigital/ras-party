@@ -25,12 +25,20 @@ service:
   port: 8080
 
 resources:
-  requests:
-    memory: "500Mi"
-    cpu: "25m"
-  limits:
-    cpu: "100m"
-    memory: "1500Mi"
+  application:
+    requests:
+      memory: "500Mi"
+      cpu: "25m"
+    limits:
+      memory: "1500Mi"
+      cpu: "200m"
+  proxy:
+    requests:
+      memory: "25Mi"
+      cpu: "5m"
+    limits:
+      memory: "64Mi"
+      cpu: "100m"
 
 autoscaling: false
 scaleAt:
