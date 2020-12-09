@@ -20,6 +20,7 @@ def request_iac(enrolment_code):
 def disable_iac(enrolment_code, case_id):
     """
     Disables the iac code by calling the iac service
+
     :param enrolment_code: A string containing the code to disable
     :param case_id: A string containing a uuid for the case
     :returns:  A dictionary containing the json response from the call

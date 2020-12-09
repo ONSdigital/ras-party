@@ -45,12 +45,12 @@ def parties_post(party_data, session):
 @with_query_only_db_session
 def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
     """
-    Get a Party by its unique reference (ruref / uprn)
-    Returns a single Party
+    Get a business by its ru ref.
+
     :param sample_unit_ref: Reference of the Party to return
     :type sample_unit_ref: str
-
-    :rtype: Party
+    :returns: Returns a Business object with data for the reporting unit
+    :rtype: Business
     """
     if sample_unit_type != Business.UNIT_TYPE:
         logger.info("Wrong sampleUnitType", type=sample_unit_type)
@@ -68,9 +68,10 @@ def get_party_by_id(sample_unit_type, party_id, session):
     """
     Get a party by its party_id.  Need to provide the type of party, otherwise it will
     return a BadRequest
+
     :param sample_unit_type: Type of the party
     :param party_id: uuid identifier of the party
-    :raises BadRequest: Raised if the sample_unit_type isnt' recognised
+    :raises BadRequest: Raised if the sample_unit_type is not recognised
     :raises NotFound: Raised if the party_id doesn't match one in the database
     """
     if sample_unit_type == Business.UNIT_TYPE:
