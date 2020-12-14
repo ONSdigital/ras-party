@@ -6,7 +6,8 @@ from flask import current_app
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid, \
-    query_businesses_by_party_uuids, search_businesses, query_business_attributes
+    query_businesses_by_party_uuids, search_businesses, query_business_attributes, \
+    query_business_attributes_by_collection_exercise
 from ras_party.controllers.validate import Validator, Exists
 from ras_party.models.models import Business, BusinessAttributes
 from ras_party.support.session_decorator import with_db_session, with_query_only_db_session
@@ -82,15 +83,11 @@ def get_business_attributes(business_id, session, collection_exercise_ids=None):
             except ValueError:
                 logger.info("Invalid collection exercise uuid value", collection_exercise_id=collection_exercise_id)
                 raise BadRequest(f"'{collection_exercise_id}' is not a valid UUID format for property 'id'")
-        attributes = query_business_attributes(business_id, collection_exercise_ids)
-        attributes_dict = {attribute.collection_exercise: attribute for attribute in attributes}
-        logger.info(attributes_dict)
-        return attributes_dict
+        attributes = query_business_attributes_by_collection_exercise(business_id, collection_exercise_ids, session)
     else:
-        attributes = query_business_attributes(business_id)
-        attributes_dict = {attribute.collection_exercise: attribute for attribute in attributes}
-        logger.info(attributes_dict)
-        return attributes_dict
+        attributes = query_business_attributes(business_id, session)
+
+    return {attribute.collection_exercise: attribute.to_dict() for attribute in attributes}
 
 
 @with_query_only_db_session

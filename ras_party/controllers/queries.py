@@ -14,6 +14,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 def query_businesses_by_party_uuids(party_uuids, session):
     """
     Query to return businesses based on party uuids
+
     :param party_uuids: a list of party uuids
     :return: the businesses
     """
@@ -24,8 +25,10 @@ def query_businesses_by_party_uuids(party_uuids, session):
 def query_business_by_party_uuid(party_uuid, session):
     """
     Query to return business based on party uuid
+
     :param party_uuid: the party uuid
     :return: business or none
+    :rtype: Business
     """
     logger.info('Querying businesses by party_uuid', party_uuid=party_uuid)
 
@@ -37,6 +40,7 @@ def query_business_by_ref(business_ref, session):
     Query to return business based on business ref
     :param business_ref: the business ref
     :return: business or none
+    :rtype: Business
     """
     logger.info('Querying businesses by business_ref', business_ref=business_ref)
 
@@ -46,9 +50,10 @@ def query_business_by_ref(business_ref, session):
 def query_business_attributes(business_id, session):
     """
     Query to return all business attributes records based
+
     :param business_id: the id of the business
     :param session: A database session
-    :return: business or none
+    :return: A list of businessAttributes that match the id
     :rtype: list of BusinessAttributes
     """
     logger.info('Querying business attributes by id', business_id=business_id)
@@ -56,17 +61,18 @@ def query_business_attributes(business_id, session):
     return session.query(BusinessAttributes).filter(BusinessAttributes.business_id == business_id).all()
 
 
-def query_business_attributes(business_id, collection_exercise_uuids, session):
+def query_business_attributes_by_collection_exercise(business_id, collection_exercise_uuids, session):
     """
-    Query to return all business attributes records based
+    Query to return all business attributes records based.  Will not error if no matches are found.
 
     :param business_id: the id of the business
     :param collection_exercise_uuids:
     :param session: A database session
-    :return: business or none
+    :return: A list of businessAttributes that match the query parameters
     :rtype: list of BusinessAttributes
     """
-    logger.info('Querying business attributes by id', business_id=business_id)
+    logger.info('Querying business attributes by id and collection exercise', business_id=business_id,
+                collection_exercise_uuids=collection_exercise_uuids)
     conditions = [BusinessAttributes.business_id == business_id,
                   BusinessAttributes.collection_exercise.in_(collection_exercise_uuids)]
     return session.query(BusinessAttributes).filter(and_(*conditions)).all()
@@ -75,6 +81,7 @@ def query_business_attributes(business_id, collection_exercise_uuids, session):
 def query_respondent_by_party_uuids(party_uuids, session):
     """
     Query to return respondents based on party uuids
+
     :param party_uuids: the party uuids
     :return: respondents or empty list
     """
@@ -86,6 +93,7 @@ def query_respondent_by_names_and_emails(first_name, last_name, email, page, lim
     """
     returns respondents which match first_name, last_name and email, ignoring case in all cases
     if any parameter is empty then it is ignored
+
     :param first_name: only return respondents whose first name starts with this first_name
     :param last_name: only return respondents whose last name starts with this last_name
     :param email: only return respondents whose email address contains starts with this email
@@ -117,6 +125,7 @@ def query_respondent_by_names_and_emails(first_name, last_name, email, page, lim
 def query_respondent_by_party_uuid(party_uuid, session):
     """
     Query to return respondent based on party uuid
+
     :param party_uuid: the party uuid
     :return: respondent or none
     """
@@ -127,6 +136,7 @@ def query_respondent_by_party_uuid(party_uuid, session):
 def query_respondent_by_email(email, session):
     """
     Query to return respondent based on email
+
     :param email: the party email
     :return: respondent or none
     """
@@ -138,6 +148,7 @@ def query_single_respondent_by_email(email, session):
     """
     Query to return respondent based on email.  Must only return 1 result, otherwise it will throw either
     a NoResultFound or MultipleResultsFound exceptions.
+
     :param email: the party email
     :return: single respondent or exception thrown
     """
@@ -148,6 +159,7 @@ def query_single_respondent_by_email(email, session):
 def query_respondent_by_pending_email(email, session):
     """
     Query to return respondent based on pending_email_address
+
     :param email: the party uuid
     :return: respondent or none
     """
@@ -158,12 +170,13 @@ def query_respondent_by_pending_email(email, session):
 def query_business_respondent_by_respondent_id_and_business_id(business_id, respondent_id, session):
     """
     Query to return respondent business associations based on respondent id
-    :param business_id
-    :param respondent_id
-    :param session
+
+    :param business_id:
+    :param respondent_id:
+    :param session:
     :return: business associations for respondent
     """
-    logger.info('Querying business respondent', respondent_id=respondent_id)
+    logger.info('Querying business respondent', respondent_id=respondent_id, business_id=business_id)
 
     response = session.query(BusinessRespondent).filter(and_(BusinessRespondent.business_id == business_id,
                                                              BusinessRespondent.respondent_id == respondent_id)).first()
@@ -172,13 +185,13 @@ def query_business_respondent_by_respondent_id_and_business_id(business_id, resp
 
 def update_respondent_details(respondent_data, respondent_id, session):
     """
-    Query to return respondent, respondent_data consists of the following parameters
+    Query to return respondent, respondent_data consists of the following parameters: first_name, last_name,
+    telephone.
+
     :param respondent_data:
-        respondent_id: id of the respondent
-        first_name:
-        last_name:
-        telephone:
-    :param session
+    :param respondent_id: id of the respondent
+    :param session:
+    :return: True on success, False on failure or if any details are missing
     """
 
     logger.info('Updating respondent details', respondent_id=respondent_id)
@@ -199,6 +212,7 @@ def update_respondent_details(respondent_data, respondent_id, session):
 def search_businesses(search_query, page, limit, session):
     """
     Query to return list of businesses based on search query
+
     :param search_query: a string containing space separated list of keywords to search for in name or trading as
     :param page: page to return starting at 1
     :param limit: the maximum number of results to return in a page
@@ -248,9 +262,10 @@ def search_businesses(search_query, page, limit, session):
 def query_enrolment_by_survey_business_respondent(respondent_id, business_id, survey_id, session):
     """
     Query to return enrolment based on respondent id, business id and survey
-    :param respondent_id,
-    :param business_id,
-    :param survey_id
+
+    :param respondent_id:
+    :param business_id:
+    :param survey_id:
     :return: enrolment for survey and business for respondent
     """
 
@@ -265,7 +280,8 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
 def query_all_non_disabled_enrolments_respondent(respondent_id, session):
     """
     Query to return all non disabled enrolments based on respondent id
-    :param respondent_id,  the id column from the respondent (integer not uuid)
+
+    :param respondent_id:  the id column from the respondent (integer not uuid)
     :return: enrolments for the respondent
     """
 
@@ -279,8 +295,9 @@ def query_all_non_disabled_enrolments_respondent(respondent_id, session):
 def count_enrolment_by_survey_business(business_id, survey_id, session):
     """
     Query to return count of enrolments for given business id and survey
-    :param business_id,
-    :param survey_id
+
+    :param business_id:
+    :param survey_id:
     :return: Integer count of number of enrolments
     """
     logger.info('Querying enrolment', business_id=business_id, survey_id=survey_id)
