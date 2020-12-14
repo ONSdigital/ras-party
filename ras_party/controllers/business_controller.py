@@ -19,12 +19,11 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 def get_business_by_ref(ref, session, verbose=False):
     """
     Get a Business by its unique business reference
-    Returns a single Business
+
     :param ref: Reference of the Business to return
     :type ref: str
-
     :param verbose: Verbosity of business details
-
+    :returns: A business object containing the data for the business
     :rtype: Business
     """
     business = query_business_by_ref(ref, session)
@@ -41,6 +40,7 @@ def get_business_by_ref(ref, session, verbose=False):
 def get_businesses_by_ids(party_uuids, session):
     """
     Get a list of businesses by party id.
+
     :param party_uuids: A list of party_ids' to search on
     :returns: A list of businesses
     :raises BadRequest: Raised if any of the uuids provided aren't valid uuids
@@ -60,15 +60,13 @@ def get_businesses_by_ids(party_uuids, session):
 def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_id=None):
     """
     Get a Business by its Party ID
-    Returns a single Party
+
     :param party_uuid: ID of Party to return
     :type party_uuid: str
-
     :param verbose: Verbosity of business details
-
     :param collection_exercise_id: ID of Collection Exercise version of party
     :type collection_exercise_id: str
-
+    :returns: A business object containing the data for the business
     :rtype: Business
     :raises BadRequest: Raised if the party_uuid is an invalid uuid
     :raises NotFound: Raised if there isn't a business that has that party_uuid

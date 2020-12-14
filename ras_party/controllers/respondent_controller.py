@@ -20,9 +20,9 @@ def get_respondent_by_ids(ids, session):
     """
     Get respondents by Party IDs, if an id doesn't exist then nothing is return for that id.
     Returns multiple parties
+
     :param ids: the ids of Respondent to return
     :type ids: str
-
     :rtype: Respondent
     """
     respondents = query_respondent_by_party_uuids(ids, session)
@@ -33,6 +33,7 @@ def get_respondent_by_ids(ids, session):
 def get_respondents_by_name_and_email(first_name, last_name, email, page, limit, session):
     """
     Get respondents that match the provided parameters
+
     :param first_name: only return respondents whose first name starts with this first_name
     :param last_name: only return respondents whose last name starts with this last_name
     :param email: only return respondents whose email address contains starts with this email
@@ -48,11 +49,11 @@ def get_respondents_by_name_and_email(first_name, last_name, email, page, limit,
 @with_query_only_db_session
 def get_respondent_by_id(respondent_id, session):
     """
-    Get a Respondent by its Party ID
-    Returns a single Party
+    Get a Respondent by its Party ID. Returns a single Party
+
     :param respondent_id: ID of Respondent to return
     :type respondent_id: str
-
+    :return: An object representing a respondent, if it exists.
     :rtype: Respondent
     """
     try:
@@ -73,10 +74,11 @@ def get_respondent_by_id(respondent_id, session):
 def update_respondent_mark_for_deletion(email, session):
     """
     Update respondent flag mark_for_deletion
-    On Success it returns None, on failure will raise exceptions
+
     :param email: email of Respondent to be marked for deletion
     :type email: str
     :param session:
+    :return: On Success it returns None, on failure will raise exceptions
     """
     respondent = query_respondent_by_email(email, session)
     if not respondent:
@@ -91,7 +93,8 @@ def update_respondent_mark_for_deletion(email, session):
 def delete_respondents_marked_for_deletion(session):
     """
     Deletes all the existing respondents and there associated data which are marked for deletion
-    :param session
+
+    :param session A db session
     """
     respondents = session.query(Respondent).filter(Respondent.mark_for_deletion == True)
     for respondent in respondents:
@@ -105,9 +108,10 @@ def delete_respondents_marked_for_deletion(session):
 def delete_respondent_by_email(email, session):
     """
     Delete a Respondent by its email
-    On success it returns None, on failure will raise one of many different exceptions
+
     :param email: Id of Respondent to delete
     :type email: str
+    :return: On success it returns None, on failure will raise one of many different exceptions
     """
     logger.info("Starting to delete respondent", email=obfuscate_email(email))
 
@@ -147,10 +151,12 @@ def get_respondent_by_email(email, session):
 @with_db_session
 def change_respondent_details(respondent_data, respondent_id, session):
     """
-    :param respondent_data:
-    :param respondent_id
-    :param session:
-    :return:
+    Completely replaces current respondent details with the data provided
+
+    :param respondent_data: A dict containing all the respondent details
+    :param respondent_id:
+    :param session: A db session
+    :return: None on success
     """
 
     respondent = query_respondent_by_party_uuid(respondent_id, session)

@@ -111,6 +111,14 @@ class Business(Base):
         return associations
 
     def to_business_dict(self, collection_exercise_id=None):
+        """
+        Gets a dict that contains both summary data and collection exercise data.  The collection exercise data will be
+        for either the specified one if supplied, or the most recent one if not supplied
+
+        :param collection_exercise_id: A collection exercise uuid
+        :return: A dict containing both the summary data and business attributes for the business
+        :rtype: dict
+        """
         d = self.to_business_summary_dict()
         attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
         return dict(d, **attributes.attributes)
