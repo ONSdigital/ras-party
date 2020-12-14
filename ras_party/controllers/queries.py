@@ -53,7 +53,7 @@ def query_business_attributes(business_id, session):
     """
     logger.info('Querying business attributes by id', business_id=business_id)
 
-    return session.query(BusinessAttributes).filter(BusinessAttributes.id == business_id).all()
+    return session.query(BusinessAttributes).filter(BusinessAttributes.business_id == business_id).all()
 
 
 def query_business_attributes(business_id, collection_exercise_uuids, session):
@@ -67,7 +67,7 @@ def query_business_attributes(business_id, collection_exercise_uuids, session):
     :rtype: list of BusinessAttributes
     """
     logger.info('Querying business attributes by id', business_id=business_id)
-    conditions = [BusinessAttributes.id == business_id,
+    conditions = [BusinessAttributes.business_id == business_id,
                   BusinessAttributes.collection_exercise.in_(collection_exercise_uuids)]
     return session.query(BusinessAttributes).filter(and_(*conditions)).all()
 
