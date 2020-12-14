@@ -93,7 +93,6 @@ def get_business_attributes(business_id, session, collection_exercise_ids=None):
         return attributes_dict
 
 
-
 @with_query_only_db_session
 def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_id=None):
     """
