@@ -43,6 +43,35 @@ def query_business_by_ref(business_ref, session):
     return session.query(Business).filter(Business.business_ref == business_ref).first()
 
 
+def query_business_attributes(business_id, session):
+    """
+    Query to return all business attributes records based
+    :param business_id: the id of the business
+    :param session: A database session
+    :return: business or none
+    :rtype: list of BusinessAttributes
+    """
+    logger.info('Querying business attributes by id', business_id=business_id)
+
+    return session.query(BusinessAttributes).filter(BusinessAttributes.id == business_id).all()
+
+
+def query_business_attributes(business_id, collection_exercise_uuids, session):
+    """
+    Query to return all business attributes records based
+
+    :param business_id: the id of the business
+    :param collection_exercise_uuids:
+    :param session: A database session
+    :return: business or none
+    :rtype: list of BusinessAttributes
+    """
+    logger.info('Querying business attributes by id', business_id=business_id)
+    conditions = [BusinessAttributes.id == business_id,
+                  BusinessAttributes.collection_exercise.in_(collection_exercise_uuids)]
+    return session.query(BusinessAttributes).filter(and_(*conditions)).all()
+
+
 def query_respondent_by_party_uuids(party_uuids, session):
     """
     Query to return respondents based on party uuids

@@ -58,6 +58,13 @@ def get_business_by_id(business_id):
     return jsonify(response)
 
 
+@business_view.route('/businesses/id/<business_id>/attributes', methods=['GET'])
+def get_business_attributes_by_id(business_id):
+    collection_exercise_ids = request.args.getlist("collection_exercise_id")
+    response = business_controller.get_business_attributes(business_id, collection_exercise_ids=collection_exercise_ids)
+    return jsonify(response)
+
+
 @business_view.route('/businesses/ref/<ref>', methods=['GET'])
 def get_business_by_ref(ref):
     verbose = request.args.get('verbose', '')
