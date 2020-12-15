@@ -15,14 +15,15 @@ class TestBusinessController(TestCase):
 
     valid_business_id = '0afa0529-8b4c-45db-92be-af937aa675a7'
     valid_collection_exercise_id = '4f3f66e0-e54d-4b14-a84e-067b3c8fcefb'
-    valid_collection_exercises = ['4f3f66e0-e54d-4b14-a84e-067b3c8fcefb', 'c47c0837-8304-40ae-9557-bfff3b371f9d']
+    another_valid_collection_exercise_id = 'c47c0837-8304-40ae-9557-bfff3b371f9d'
+    valid_collection_exercises = [valid_collection_exercise_id, another_valid_collection_exercise_id]
 
-    def get_business_attribute_object(self):
+    def get_business_attribute_object(self, collection_exercise_id=valid_collection_exercise_id):
         base = BusinessAttributes()
         base.id = "id"
         base.business_id = self.valid_business_id
         base.sample_summary_id = "sample_summary_id"
-        base.collection_exercise = self.valid_collection_exercise_id
+        base.collection_exercise = collection_exercise_id
         base.attributes = {}
         base.created_on = "created_on"
         base.name = "name"
@@ -67,6 +68,40 @@ class TestBusinessController(TestCase):
         session = MagicMock()
         session.query().filter().all.return_value = [self.get_business_attribute_object()]
         value = business_controller.get_business_attributes.__wrapped__(self.valid_business_id, session)
+        self.assertEqual(expected_output, value)
+
+    def test_query_business_attributes_with_collection_exercise_list(self):
+        expected_output = {
+            self.valid_collection_exercise_id: {
+                'attributes': {},
+                'business_id': self.valid_business_id,
+                'collection_exercise': self.valid_collection_exercise_id,
+                'created_on': "created_on",
+                'id': "id",
+                'name': "name",
+                'sample_summary_id': "sample_summary_id",
+                'trading_as': "trading_as"
+            },
+            self.another_valid_collection_exercise_id: {
+                'attributes': {},
+                'business_id': self.valid_business_id,
+                'collection_exercise': self.another_valid_collection_exercise_id,
+                'created_on': "created_on",
+                'id': "id",
+                'name': "name",
+                'sample_summary_id': "sample_summary_id",
+                'trading_as': "trading_as"
+            }
+        }
+        session = MagicMock()
+        return_value = [self.get_business_attribute_object(),
+                        self.get_business_attribute_object(
+                            collection_exercise_id=self.another_valid_collection_exercise_id)
+                        ]
+        session.query().filter().all.return_value = return_value
+        value = business_controller.\
+            get_business_attributes.__wrapped__(self.valid_business_id, session,
+                                                collection_exercise_ids=self.valid_collection_exercises)
         self.assertEqual(expected_output, value)
 
 
