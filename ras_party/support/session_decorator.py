@@ -9,11 +9,9 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def handle_session(f, args, kwargs):
-    logger.debug("Acquiring database session.")
     session = current_app.db.session()
     try:
         result = f(*args, session=session, **kwargs)
-        logger.debug("Committing database session.")
         session.commit()
         return result
     except SQLAlchemyError as exc:
@@ -25,7 +23,6 @@ def handle_session(f, args, kwargs):
         session.rollback()
         raise
     finally:
-        logger.debug("Removing database session.")
         current_app.db.session.remove()
 
 
