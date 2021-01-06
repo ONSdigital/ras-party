@@ -193,6 +193,25 @@ class BusinessAttributes(Base):
     Index('attributes_collection_exercise_idx', collection_exercise)
     Index('attributes_created_on_idx', created_on)
 
+    def to_dict(self):
+        """
+        Returns a dictionary representation of all the columns in this model.  This was implemented because
+        the vars() built-in function returns ALL attributes of this object, including a `_sa_instance_state`
+        field that we don't want.
+
+        :return: A dict with all the columns and their values
+        """
+        return {
+            'id': self.id,
+            'business_id': self.business_id,
+            'sample_summary_id': self.sample_summary_id,
+            'collection_exercise': self.collection_exercise,
+            'attributes': self.attributes,
+            'created_on': self.created_on,
+            'name': self.name,
+            'trading_as': self.trading_as
+        }
+
 
 class BusinessRespondentStatus(enum.IntEnum):
     ACTIVE = 0

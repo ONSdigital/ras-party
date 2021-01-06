@@ -264,6 +264,67 @@
 
 ---
 
+### Get Business attributes by ID (URL)
+
+* `GET /party-api/v1/businesses/id/<id>/attributes`
+  * Provides business attribute details for a reporting unit by id.
+  * If the business_id isn't found, it WILL NOT return an error.
+  * **Optional attribute:** `?collection_exercise_id=<uuid>`.  This can be repeated many times to get a list of attributes
+  for only specific collection exercises
+  * It will return a dictionary of data with the collection exercise as the key.
+  * Any collection exercises not found will not be included in the result but WILL NOT return an error
+
+Returns:
+  * 200 - On success
+  * 400 - If the business id or any of the collection_exercise_id's aren't a valid uuid's
+
+#### Example JSON Response
+
+```json
+{
+  "14fb3e68-4dca-46db-bf49-04b84e07e77c": {
+    "id": "1",
+    "business_id": "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c",
+    "sample_summary_id": "3eff4678-a8d1-41fd-b986-4e497de9bbda",
+    "collection_exercise": "14fb3e68-4dca-46db-bf49-04b84e07e77c",
+    "attributes": {
+      "ruref": "50012345678",
+      "checkletter": "A",
+      "frosic92": "11111",
+      "rusic92": "11111",
+      "frosic2007": "11111",
+      "rusic2007": "11111",
+      "froempment": 50,
+      "frotover": 50,
+      "entref": "1234567890",
+      "legalstatus": "B",
+      "entrepmkr": "C",
+      "region": "DE",
+      "birthdate": "01/09/1993",
+      "entname1": "ENTNAME1",
+      "entname2": "ENTNAME2",
+      "entname3": "ENTNAME3",
+      "runame1": "Bolts",
+      "runame2": "and",
+      "runame3": "Ratchets Ltd",
+      "tradstyle1": "TRADSTYLE1",
+      "tradstyle2": "TRADSTYLE2",
+      "tradstyle3": "TRADSTYLE3",
+      "seltype": "F",
+      "inclexcl": "G",
+      "cell_no": 1,
+      "formtype": "0001",
+      "currency": "H"
+    },
+    "created_on": "2020-06-16T10:19:13.152Z",
+    "name": "Bolts and Ratchets Ltd",
+    "trading_as": "Bolts and Ratchets Ltd"
+  }
+}
+ ```
+
+---
+
 ### Store Association Between Business, Collection & Sample
 
 * `PUT /party-api/v1/businesses/sample/link/<sampleSummaryId>`

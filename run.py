@@ -53,7 +53,6 @@ def create_database(db_connection, db_schema):
     engine = create_engine(db_connection)
     session = scoped_session(sessionmaker(), scopefunc=current_request)
     session.configure(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
-    # TODO: change this
     engine.session = session
 
     logger.info("Creating database")

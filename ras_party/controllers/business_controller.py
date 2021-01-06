@@ -6,7 +6,8 @@ from flask import current_app
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid, \
-    query_businesses_by_party_uuids, search_businesses
+    query_businesses_by_party_uuids, search_businesses, query_business_attributes, \
+    query_business_attributes_by_collection_exercise
 from ras_party.controllers.validate import Validator, Exists
 from ras_party.models.models import Business, BusinessAttributes
 from ras_party.support.session_decorator import with_db_session, with_query_only_db_session
@@ -42,6 +43,7 @@ def get_businesses_by_ids(party_uuids, session):
     Get a list of businesses by party id.
 
     :param party_uuids: A list of party_ids' to search on
+    :param session: A database session
     :returns: A list of businesses
     :raises BadRequest: Raised if any of the uuids provided aren't valid uuids
     """
@@ -54,6 +56,38 @@ def get_businesses_by_ids(party_uuids, session):
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
     return [business.to_business_summary_dict() for business in businesses]
+
+
+@with_query_only_db_session
+def get_business_attributes(business_id, session, collection_exercise_ids=None):
+    """
+    Get a list of businesses by business id and (optionally) collection exercise ids
+
+    :param business_id: A business's uuid
+    :param collection_exercise_ids: A list of collection exercise ids
+    :param session: A database session
+    :returns: A dict of BusinessAttributes, keyed by the collection_exercise id
+    :rtype: dict of (str, BusinessAttributes)
+    :raises BadRequest: Raised if any of the uuids provided aren't valid uuids
+    """
+    try:
+        uuid.UUID(business_id)
+    except ValueError:
+        logger.warn("Invalid party uuid value", business_id=business_id)
+        raise BadRequest(f"'{business_id}' is not a valid UUID format for property 'id'")
+
+    if collection_exercise_ids:
+        for collection_exercise_id in collection_exercise_ids:
+            try:
+                uuid.UUID(collection_exercise_id)
+            except ValueError:
+                logger.warn("Invalid collection exercise uuid value", collection_exercise_id=collection_exercise_id)
+                raise BadRequest(f"'{collection_exercise_id}' is not a valid UUID format for property 'id'")
+        attributes = query_business_attributes_by_collection_exercise(business_id, collection_exercise_ids, session)
+    else:
+        attributes = query_business_attributes(business_id, session)
+
+    return {attribute.collection_exercise: attribute.to_dict() for attribute in attributes}
 
 
 @with_query_only_db_session
