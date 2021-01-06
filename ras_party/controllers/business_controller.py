@@ -73,7 +73,7 @@ def get_business_attributes(business_id, session, collection_exercise_ids=None):
     try:
         uuid.UUID(business_id)
     except ValueError:
-        logger.info("Invalid party uuid value", business_id=business_id)
+        logger.warn("Invalid party uuid value", business_id=business_id)
         raise BadRequest(f"'{business_id}' is not a valid UUID format for property 'id'")
 
     if collection_exercise_ids:
@@ -81,7 +81,7 @@ def get_business_attributes(business_id, session, collection_exercise_ids=None):
             try:
                 uuid.UUID(collection_exercise_id)
             except ValueError:
-                logger.info("Invalid collection exercise uuid value", collection_exercise_id=collection_exercise_id)
+                logger.warn("Invalid collection exercise uuid value", collection_exercise_id=collection_exercise_id)
                 raise BadRequest(f"'{collection_exercise_id}' is not a valid UUID format for property 'id'")
         attributes = query_business_attributes_by_collection_exercise(business_id, collection_exercise_ids, session)
     else:
