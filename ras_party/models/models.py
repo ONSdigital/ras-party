@@ -201,13 +201,16 @@ class BusinessAttributes(Base):
 
         :return: A dict with all the columns and their values
         """
+        created_on = None
+        if self.created_on:
+            created_on = self.created_on.strftime("%Y-%m-%d, %H:%M:%S")
         return {
             'id': self.id,
-            'business_id': self.business_id,
+            'business_id': str(self.business_id),
             'sample_summary_id': self.sample_summary_id,
             'collection_exercise': self.collection_exercise,
             'attributes': self.attributes,
-            'created_on': self.created_on,
+            'created_on': created_on,
             'name': self.name,
             'trading_as': self.trading_as
         }

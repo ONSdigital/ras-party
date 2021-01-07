@@ -63,6 +63,9 @@ def get_business_attributes(business_id, session, collection_exercise_ids=None):
     """
     Get a list of businesses by business id and (optionally) collection exercise ids
 
+    The result is keyed on collection_exercise, so if the collection_exercise is missing, it won't be included
+    in the records.
+
     :param business_id: A business's uuid
     :param collection_exercise_ids: A list of collection exercise ids
     :param session: A database session
@@ -89,7 +92,8 @@ def get_business_attributes(business_id, session, collection_exercise_ids=None):
 
     logger.debug("Database result", attributes=attributes)
 
-    return {attribute.collection_exercise: attribute.to_dict() for attribute in attributes}
+    return {attribute.collection_exercise: attribute.to_dict()
+            for attribute in attributes if attribute.collection_exercise}
 
 
 @with_query_only_db_session
