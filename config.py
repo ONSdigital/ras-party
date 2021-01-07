@@ -16,7 +16,7 @@ class Config(object):
     HOST = os.getenv('HOST', '0.0.0.0')
     PORT = os.getenv('PORT', 8081)
     DEBUG = _is_true(os.getenv('DEBUG', False))
-    LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'INFO')
+    LOGGING_LEVEL = os.getenv('LOGGING_LEVEL', 'DEBUG')
     SECRET_KEY = os.getenv('SECRET_KEY', 'aardvark')
     EMAIL_TOKEN_SALT = os.getenv('EMAIL_TOKEN_SALT', 'aardvark')
     EMAIL_TOKEN_EXPIRY = int(os.getenv('EMAIL_TOKEN_EXPIRY', '306000'))
