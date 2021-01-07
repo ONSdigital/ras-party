@@ -203,7 +203,7 @@ class BusinessAttributes(Base):
         """
         created_on = None
         if self.created_on:
-            created_on = self.created_on.strftime("%Y-%m-%d, %H:%M:%S")
+            created_on = self.created_on.strftime("%Y-%m-%d %H:%M:%S")
         return {
             'id': self.id,
             'business_id': str(self.business_id),
