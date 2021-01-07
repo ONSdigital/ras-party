@@ -62,6 +62,7 @@ def get_business_by_id(business_id):
 def get_business_attributes_by_id(business_id):
     collection_exercise_ids = request.args.getlist("collection_exercise_id")
     response = business_controller.get_business_attributes(business_id, collection_exercise_ids=collection_exercise_ids)
+    logger.debug("Parsed result", response=response)
     return jsonify(response)
 
 

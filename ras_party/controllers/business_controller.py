@@ -87,6 +87,8 @@ def get_business_attributes(business_id, session, collection_exercise_ids=None):
     else:
         attributes = query_business_attributes(business_id, session)
 
+    logger.debug("Database result", attributes=attributes)
+
     return {attribute.collection_exercise: attribute.to_dict() for attribute in attributes}
 
 
