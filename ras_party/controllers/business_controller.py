@@ -63,6 +63,9 @@ def get_business_attributes(business_id, session, collection_exercise_ids=None):
     """
     Get a list of businesses by business id and (optionally) collection exercise ids
 
+    The result is keyed on collection_exercise, so if the collection_exercise is missing, it won't be included
+    in the records.
+
     :param business_id: A business's uuid
     :param collection_exercise_ids: A list of collection exercise ids
     :param session: A database session
@@ -73,7 +76,7 @@ def get_business_attributes(business_id, session, collection_exercise_ids=None):
     try:
         uuid.UUID(business_id)
     except ValueError:
-        logger.warn("Invalid party uuid value", business_id=business_id)
+        logger.warning("Invalid party uuid value", business_id=business_id)
         raise BadRequest(f"'{business_id}' is not a valid UUID format for property 'id'")
 
     if collection_exercise_ids:
@@ -81,15 +84,14 @@ def get_business_attributes(business_id, session, collection_exercise_ids=None):
             try:
                 uuid.UUID(collection_exercise_id)
             except ValueError:
-                logger.warn("Invalid collection exercise uuid value", collection_exercise_id=collection_exercise_id)
+                logger.warning("Invalid collection exercise uuid value", collection_exercise_id=collection_exercise_id)
                 raise BadRequest(f"'{collection_exercise_id}' is not a valid UUID format for property 'id'")
         attributes = query_business_attributes_by_collection_exercise(business_id, collection_exercise_ids, session)
     else:
         attributes = query_business_attributes(business_id, session)
 
-    logger.debug("Database result", attributes=attributes)
-
-    return {attribute.collection_exercise: attribute.to_dict() for attribute in attributes}
+    return {attribute.collection_exercise: attribute.to_dict()
+            for attribute in attributes if attribute.collection_exercise}
 
 
 @with_query_only_db_session

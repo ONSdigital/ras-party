@@ -1,3 +1,5 @@
+import datetime
+import uuid
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -21,11 +23,11 @@ class TestBusinessController(TestCase):
     def get_business_attribute_object(self, collection_exercise_id=valid_collection_exercise_id):
         base = BusinessAttributes()
         base.id = "id"
-        base.business_id = self.valid_business_id
+        base.business_id = uuid.UUID(self.valid_business_id)
         base.sample_summary_id = "sample_summary_id"
         base.collection_exercise = collection_exercise_id
         base.attributes = {}
-        base.created_on = "created_on"
+        base.created_on = datetime.datetime.strptime("2021-01-30 00:00:00", "%Y-%m-%d %H:%M:%S")
         base.name = "name"
         base.trading_as = "trading_as"
         return base
@@ -58,7 +60,7 @@ class TestBusinessController(TestCase):
                 'attributes': {},
                 'business_id': self.valid_business_id,
                 'collection_exercise': self.valid_collection_exercise_id,
-                'created_on': "created_on",
+                'created_on': "2021-01-30 00:00:00",
                 'id': "id",
                 'name': "name",
                 'sample_summary_id': "sample_summary_id",
@@ -76,7 +78,7 @@ class TestBusinessController(TestCase):
                 'attributes': {},
                 'business_id': self.valid_business_id,
                 'collection_exercise': self.valid_collection_exercise_id,
-                'created_on': "created_on",
+                'created_on': "2021-01-30 00:00:00",
                 'id': "id",
                 'name': "name",
                 'sample_summary_id': "sample_summary_id",
@@ -86,7 +88,7 @@ class TestBusinessController(TestCase):
                 'attributes': {},
                 'business_id': self.valid_business_id,
                 'collection_exercise': self.another_valid_collection_exercise_id,
-                'created_on': "created_on",
+                'created_on': "2021-01-30 00:00:00",
                 'id': "id",
                 'name': "name",
                 'sample_summary_id': "sample_summary_id",
@@ -102,6 +104,26 @@ class TestBusinessController(TestCase):
         value = business_controller.\
             get_business_attributes.__wrapped__(self.valid_business_id, session,
                                                 collection_exercise_ids=self.valid_collection_exercises)
+        self.assertEqual(expected_output, value)
+
+    def test_query_business_attributes_one_missing_collection_exercise_id(self):
+        """Any attributes with a mission collection exercise id won't be inlcuded in the result"""
+        expected_output = {
+            self.valid_collection_exercise_id: {
+                'attributes': {},
+                'business_id': self.valid_business_id,
+                'collection_exercise': self.valid_collection_exercise_id,
+                'created_on': "2021-01-30 00:00:00",
+                'id': "id",
+                'name': "name",
+                'sample_summary_id': "sample_summary_id",
+                'trading_as': "trading_as"
+            }
+        }
+        session = MagicMock()
+        session.query().filter().all.return_value = [self.get_business_attribute_object(),
+                                                     self.get_business_attribute_object(collection_exercise_id=None)]
+        value = business_controller.get_business_attributes.__wrapped__(self.valid_business_id, session)
         self.assertEqual(expected_output, value)
 
 
