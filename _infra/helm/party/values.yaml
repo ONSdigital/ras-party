@@ -27,18 +27,7 @@ service:
 resources:
   application:
     requests:
-      memory: "500Mi"
-      cpu: "35m"
-    limits:
-      memory: "1500Mi"
-      cpu: "400m"
-  proxy:
-    requests:
-      memory: "25Mi"
-      cpu: "5m"
-    limits:
-      memory: "64Mi"
-      cpu: "100m"
+      memory: "256Mi"
 
 replicas: 1
 rollingUpdate:
