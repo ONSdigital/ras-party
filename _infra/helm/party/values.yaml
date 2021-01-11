@@ -27,26 +27,9 @@ service:
 resources:
   application:
     requests:
-      memory: "500Mi"
-      cpu: "35m"
-    limits:
-      memory: "1500Mi"
-      cpu: "400m"
-  proxy:
-    requests:
-      memory: "25Mi"
-      cpu: "5m"
-    limits:
-      memory: "64Mi"
-      cpu: "100m"
+      memory: "256Mi"
 
-autoscaling: false
-scaleAt:
-  # These are expressed as a percentage of resources.requests, not resources.limits
-  memoryPercentage: 150
-  cpuPercentage: 200
 replicas: 1
-maxReplicas: 1
 rollingUpdate:
   maxSurge: 1
   maxUnavailable: 1
