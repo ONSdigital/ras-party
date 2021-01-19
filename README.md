@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is the RAS Party micro-service. See [Confluence] for further information
+This is the RAS Party micro-service. See [Confluence] for further information.
 
 The API is specified [here](./API.md)
 
