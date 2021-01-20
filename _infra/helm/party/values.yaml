@@ -37,7 +37,6 @@ resources:
       memory: "25Mi"
       cpu: "5m"
     limits:
-      memory: "64Mi"
       cpu: "100m"
       memory: "256Mi"
 
