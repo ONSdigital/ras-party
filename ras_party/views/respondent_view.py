@@ -90,17 +90,8 @@ def get_respondent_by_email():
     return jsonify(response)
 
 
-@respondent_view.route('/respondents/email', methods=['POST'])
-def delete_respondent_by_email():
-    try:
-        email = request.get_json()['email']
-    except TypeError:
-        raise BadRequest('JSON payload not provided')
-    except KeyError:
-        raise BadRequest("Email key must be provided in the JSON payload")
-
-    if not email:
-        raise BadRequest("Email cannot be empty")
+@respondent_view.route('/respondents/<email>', methods=['DELETE'])
+def delete_respondent_by_email(email):
     try:
         respondent_controller.update_respondent_mark_for_deletion(email)
     except NotFound:

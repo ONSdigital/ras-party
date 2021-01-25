@@ -1742,33 +1742,25 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(respondent_0.mark_for_deletion, False)
         self.assertEqual(respondent_1.mark_for_deletion, False)
         self.assertEqual(respondent_2.mark_for_deletion, False)
-        respondent_email_0 = {'email': 'a@z.com'}
-        respondent_email_1 = {'email': 'res1@example.com'}
-        respondent_email_2 = {'email': 'res2@example.com'}
-        respondent_email_3 = {'email': 'res3@example.com'}
         request = [
             {
-                "method": "POST",
-                "path": "/party-api/v1/respondents/email",
-                "body": respondent_email_0,
+                "method": "DELETE",
+                "path": f"/party-api/v1/respondents/a@z.com",
                 "headers": self.auth_headers
             },
             {
-                "method": "POST",
-                "path": "/party-api/v1/respondents/email",
-                "body": respondent_email_1,
+                "method": "DELETE",
+                "path": f"/party-api/v1/respondents/res1@example.com",
                 "headers": self.auth_headers
             },
             {
-                "method": "POST",
-                "path": "/party-api/v1/respondents/email",
-                "body": respondent_email_2,
+                "method": "DELETE",
+                "path": f"/party-api/v1/respondents/res2@example.com",
                 "headers": self.auth_headers
             },
             {
-                "method": "POST",
-                "path": "/party-api/v1/respondents/email",
-                "body": respondent_email_3,
+                "method": "DELETE",
+                "path": f"/party-api/v1/respondents/email/res3@example.com",
                 "headers": self.auth_headers
             }
         ]
