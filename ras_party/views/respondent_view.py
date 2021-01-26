@@ -4,7 +4,7 @@ import uuid
 import structlog
 from flask import Blueprint, current_app, make_response, jsonify, request
 from flask_httpauth import HTTPBasicAuth
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers import respondent_controller
 
@@ -90,20 +90,13 @@ def get_respondent_by_email():
     return jsonify(response)
 
 
-@respondent_view.route('/respondents/email', methods=['DELETE'])
-def delete_respondent_by_email():
+@respondent_view.route('/respondents/<email>', methods=['DELETE'])
+def delete_respondent_by_email(email):
     try:
-        email = request.get_json()['email']
-    except TypeError:
-        raise BadRequest('JSON payload not provided')
-    except KeyError:
-        raise BadRequest("Email key must be provided in the JSON payload")
-
-    if not email:
-        raise BadRequest("Email cannot be empty")
-
-    respondent_controller.update_respondent_mark_for_deletion(email)
-    return '', 204
+        respondent_controller.update_respondent_mark_for_deletion(email)
+    except NotFound:
+        return 'Respondent does not exist in party', NotFound.code
+    return 'Respondent Deleted Successfully.', 202
 
 
 @respondent_view.route('/respondents/id/<respondent_id>', methods=['PUT'])

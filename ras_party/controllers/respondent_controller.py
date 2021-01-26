@@ -167,8 +167,9 @@ def change_respondent_details(respondent_data, respondent_id, session):
     # This function updates the name and number of a respondent
     update_respondent_details(respondent_data, respondent_id, session)
 
-    # This function only changes the respondents email address
-    change_respondent(respondent_data)
+    if 'new_email_address' in respondent_data:
+        # This function only changes the respondents email address
+        change_respondent(respondent_data)
 
 
 def does_user_have_claim(user_id, business_id, survey_id):

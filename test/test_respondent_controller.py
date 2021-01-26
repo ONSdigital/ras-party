@@ -1,7 +1,6 @@
 # pylint: disable=no-value-for-parameter
 
 import json
-import sys
 import uuid
 from unittest import mock
 from unittest.mock import MagicMock, patch
@@ -10,7 +9,6 @@ from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 from requests import Response
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.testing.plugin.plugin_base import logging
 from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 
 from ras_party.controllers import account_controller, respondent_controller
@@ -1744,36 +1742,28 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(respondent_0.mark_for_deletion, False)
         self.assertEqual(respondent_1.mark_for_deletion, False)
         self.assertEqual(respondent_2.mark_for_deletion, False)
-        respondent_email_0 = {'email': 'a@z.com'}
-        respondent_email_1 = {'email': 'res1@example.com'}
-        respondent_email_2 = {'email': 'res2@example.com'}
-        respondent_email_3 = {'email': 'res3@example.com'}
         request = [
             {
                 "method": "DELETE",
-                "path": "/party-api/v1/respondents/email",
-                "body": respondent_email_0,
+                "path": f"/party-api/v1/respondents/a@z.com",
                 "headers": self.auth_headers
             },
             {
                 "method": "DELETE",
-                "path": "/party-api/v1/respondents/email",
-                "body": respondent_email_1,
+                "path": f"/party-api/v1/respondents/res1@example.com",
                 "headers": self.auth_headers
             },
             {
                 "method": "DELETE",
-                "path": "/party-api/v1/respondents/email",
-                "body": respondent_email_2,
+                "path": f"/party-api/v1/respondents/res2@example.com",
                 "headers": self.auth_headers
             },
             {
                 "method": "DELETE",
-                "path": "/party-api/v1/respondents/email",
-                "body": respondent_email_3,
+                "path": f"/party-api/v1/respondents/email/res3@example.com",
                 "headers": self.auth_headers
             }
         ]
         response = self.batch(request)
-        expected_output = '[{"status": 204}, {"status": 204}, {"status": 204}, {"status": 404}]'
+        expected_output = '[{"status": 202}, {"status": 202}, {"status": 202}, {"status": 404}]'
         self.assertEqual(response, expected_output)
