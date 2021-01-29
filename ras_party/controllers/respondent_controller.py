@@ -82,9 +82,9 @@ def update_respondent_mark_for_deletion(email, session):
     """
     respondent = query_respondent_by_email(email, session)
     if not respondent:
-        logger.error("Respondent does not exist", email=email)
+        logger.error("Respondent does not exist", email=obfuscate_email(email))
         raise NotFound("Respondent does not exist")
-    logger.info("Marking respondent for deletion", email=email)
+    logger.info("Marking respondent for deletion", email=obfuscate_email(email))
     session.query(Respondent).filter(Respondent.party_uuid == respondent.party_uuid) \
         .update({Respondent.mark_for_deletion: True})
 
