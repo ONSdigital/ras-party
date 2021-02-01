@@ -306,6 +306,11 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status)
         return response
 
+    def delete_user(self, url):
+        response = self.client.delete(url,
+                                      headers=self.auth_headers)
+        return response
+
     def batch(self, payload, expected_status=207):
         response = self.client.post(f'/party-api/v1/batch/requests',
                                     headers=self.auth_headers,

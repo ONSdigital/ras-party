@@ -2,6 +2,8 @@ import logging
 import uuid
 
 import structlog
+from flask import jsonify
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers.account_controller import change_respondent, get_single_respondent_by_email
@@ -81,12 +83,15 @@ def update_respondent_mark_for_deletion(email, session):
     :return: On Success it returns None, on failure will raise exceptions
     """
     respondent = query_respondent_by_email(email, session)
-    if not respondent:
-        logger.error("Respondent does not exist", email=obfuscate_email(email))
-        raise NotFound("Respondent does not exist")
-    logger.info("Marking respondent for deletion", email=obfuscate_email(email))
-    session.query(Respondent).filter(Respondent.party_uuid == respondent.party_uuid) \
-        .update({Respondent.mark_for_deletion: True})
+    if respondent:
+        try:
+            session.query(Respondent).filter(Respondent.party_uuid == respondent.party_uuid) \
+                .update({Respondent.mark_for_deletion: True})
+            return 'respondent successfully marked for deletion', 202
+        except SQLAlchemyError:
+            return 'something went wrong', 500
+    else:
+        return 'respondent does not exist', 404
 
 
 @with_db_session

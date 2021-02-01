@@ -92,11 +92,8 @@ def get_respondent_by_email():
 
 @respondent_view.route('/respondents/<email>', methods=['DELETE'])
 def delete_respondent_by_email(email):
-    try:
-        respondent_controller.update_respondent_mark_for_deletion(email)
-    except NotFound:
-        return 'Respondent does not exist in party', NotFound.code
-    return 'Respondent Deleted Successfully.', 202
+    response = respondent_controller.update_respondent_mark_for_deletion(email)
+    return response
 
 
 @respondent_view.route('/respondents/id/<respondent_id>', methods=['PUT'])
