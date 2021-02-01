@@ -909,7 +909,7 @@ class TestRespondents(PartyTestClient):
 
     def test_notify_account_lock(self):
         with patch('ras_party.controllers.account_controller.NotifyGateway'), \
-             patch('ras_party.controllers.account_controller.PublicWebsite'):
+                patch('ras_party.controllers.account_controller.PublicWebsite'):
             self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
             party_id = self.mock_respondent_with_id['id']
             db_respondent = respondents()[0]
@@ -1494,11 +1494,11 @@ class TestRespondents(PartyTestClient):
 
     def test_change_respondent_password_bad_auth_response(self):
         with patch('ras_party.controllers.account_controller.decode_email_token'), \
-             patch('ras_party.controllers.account_controller.current_app'), \
-             patch('ras_party.support.session_decorator.current_app.db'), \
-             patch('ras_party.controllers.account_controller.enrol_respondent_for_survey'), \
-             patch('ras_party.controllers.account_controller.NotifyGateway'), \
-             patch('ras_party.controllers.account_controller.OauthClient') as auth, \
+                patch('ras_party.controllers.account_controller.current_app'), \
+                patch('ras_party.support.session_decorator.current_app.db'), \
+                patch('ras_party.controllers.account_controller.enrol_respondent_for_survey'), \
+                patch('ras_party.controllers.account_controller.NotifyGateway'), \
+                patch('ras_party.controllers.account_controller.OauthClient') as auth, \
                 patch('ras_party.controllers.account_controller.Requests'):
             payload = {
                 'new_password': 'password',
@@ -1766,4 +1766,64 @@ class TestRespondents(PartyTestClient):
         ]
         response = self.batch(request)
         expected_output = '[{"status": 202}, {"status": 202}, {"status": 202}, {"status": 404}]'
-        self.assertEqual(response, expected_output)
+        self.assertEqual(expected_output, response)
+
+    def test_multiple_delete(self):
+        respondent_0 = self.populate_with_respondent()
+        respondent_1 = MockRespondent()
+        respondent_1.attributes(emailAddress='res1@example.com')
+
+        respondent_2 = MockRespondent()
+        respondent_2.attributes(emailAddress='res2@example.com')
+
+        respondent_1 = self.populate_with_respondent(respondent=respondent_1.as_respondent())
+        respondent_2 = self.populate_with_respondent(respondent=respondent_2.as_respondent())
+
+        self.assertEqual(respondent_0.mark_for_deletion, False)
+        self.assertEqual(respondent_1.mark_for_deletion, False)
+        self.assertEqual(respondent_2.mark_for_deletion, False)
+        users = ['a@z.com', 'res1@example.com', 'res2@example.com', 'a@b.com']
+        for user in users:
+            response = self.delete_user(f"/party-api/v1/respondents/{user}")
+            if user != 'a@b.com':
+                self.assertEqual(202, response.status_code)
+            else:
+                self.assertEqual(404, response.status_code)
+
+    def test_delete_returns_status_code_500_on_any_unhandled_error(self):
+        with patch("ras_party.controllers.queries.query_single_respondent_by_email") as query, \
+                patch('ras_party.support.session_decorator.current_app.db') as db:
+            query.return_value = {
+                'party_uuid': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
+                'email_address': 'user@domain.com',
+                'pending_email_address': '',
+                'first_name': 'Some',
+                'last_name': 'One',
+                'telephone': '01271345820',
+                'status': RespondentStatus.CREATED
+            }
+
+            # This says db.session() returns an object that if commit is called on it (e.g., db.session().commit())
+            # will raise an Exception.  The setup looks weird but none of the other varients seemed to work.
+            db.configure_mock(**{'session.return_value': MagicMock(**{'commit.side_effect': Exception})})
+            response = self.delete_user(f"/party-api/v1/respondents/user@domain.com")
+            self.assertEqual(500, response.status_code)
+
+    def test_delete_returns_status_code_500_on_sql_alchemy_error(self):
+        with patch("ras_party.controllers.queries.query_single_respondent_by_email") as query, \
+                patch('ras_party.support.session_decorator.current_app.db') as db:
+            query.return_value = {
+                'party_uuid': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
+                'email_address': 'user@domain.com',
+                'pending_email_address': '',
+                'first_name': 'Some',
+                'last_name': 'One',
+                'telephone': '01271345820',
+                'status': RespondentStatus.CREATED
+            }
+
+            # This says db.session() returns an object that if commit is called on it (e.g., db.session().commit())
+            # will raise an Exception.  The setup looks weird but none of the other varients seemed to work.
+            db.configure_mock(**{'session.return_value': MagicMock(**{'commit.side_effect': SQLAlchemyError})})
+            response = self.delete_user(f"/party-api/v1/respondents/user@domain.com")
+            self.assertEqual(500, response.status_code)
