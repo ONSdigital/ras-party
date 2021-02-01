@@ -88,7 +88,7 @@ def update_respondent_mark_for_deletion(email, session):
             session.query(Respondent).filter(Respondent.party_uuid == respondent.party_uuid) \
                 .update({Respondent.mark_for_deletion: True})
             return 'respondent successfully marked for deletion', 202
-        except SQLAlchemyError:
+        except (SQLAlchemyError, Exception):
             return 'something went wrong', 500
     else:
         return 'respondent does not exist', 404

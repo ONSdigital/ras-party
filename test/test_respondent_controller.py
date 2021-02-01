@@ -1789,3 +1789,41 @@ class TestRespondents(PartyTestClient):
                 self.assertEqual(202, response.status_code)
             else:
                 self.assertEqual(404, response.status_code)
+
+    def test_delete_returns_status_code_500_on_any_unhandled_error(self):
+        with patch("ras_party.controllers.queries.query_single_respondent_by_email") as query, \
+                patch('ras_party.support.session_decorator.current_app.db') as db:
+            query.return_value = {
+                'party_uuid': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
+                'email_address': 'user@domain.com',
+                'pending_email_address': '',
+                'first_name': 'Some',
+                'last_name': 'One',
+                'telephone': '01271345820',
+                'status': RespondentStatus.CREATED
+            }
+
+            # This says db.session() returns an object that if commit is called on it (e.g., db.session().commit())
+            # will raise an Exception.  The setup looks weird but none of the other varients seemed to work.
+            db.configure_mock(**{'session.return_value': MagicMock(**{'commit.side_effect': Exception})})
+            response = self.delete_user(f"/party-api/v1/respondents/user@domain.com")
+            self.assertEqual(500, response.status_code)
+
+    def test_delete_returns_status_code_500_on_sql_alchemy_error(self):
+        with patch("ras_party.controllers.queries.query_single_respondent_by_email") as query, \
+                patch('ras_party.support.session_decorator.current_app.db') as db:
+            query.return_value = {
+                'party_uuid': '438df969-7c9c-4cd4-a89b-ac88cf0bfdf3',
+                'email_address': 'user@domain.com',
+                'pending_email_address': '',
+                'first_name': 'Some',
+                'last_name': 'One',
+                'telephone': '01271345820',
+                'status': RespondentStatus.CREATED
+            }
+
+            # This says db.session() returns an object that if commit is called on it (e.g., db.session().commit())
+            # will raise an Exception.  The setup looks weird but none of the other varients seemed to work.
+            db.configure_mock(**{'session.return_value': MagicMock(**{'commit.side_effect': SQLAlchemyError})})
+            response = self.delete_user(f"/party-api/v1/respondents/user@domain.com")
+            self.assertEqual(500, response.status_code)
