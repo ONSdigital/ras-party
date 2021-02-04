@@ -23,13 +23,13 @@ class Config(object):
     PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
 
     DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'partysvc')
-    DATABASE_URI = os.getenv('DATABASE_URI', "postgresql://postgres:postgres@localhost:5432/ras")
+    DATABASE_URI = os.getenv('DATABASE_URI', "postgresql://postgres:postgres@localhost:5432/postgres")
 
     SECURITY_USER_NAME = os.getenv('SECURITY_USER_NAME', 'admin')
     SECURITY_USER_PASSWORD = os.getenv('SECURITY_USER_PASSWORD', 'secret')
 
     # dependencies
-    AUTH_URL = os.getenv('AUTH_URL', "http://localhost:8041")
+    AUTH_URL = os.getenv('AUTH_URL')
     CASE_URL = os.getenv('CASE_URL')
     COLLECTION_EXERCISE_URL = os.getenv('COLLECTION_EXERCISE_URL')
     FRONTSTAGE_URL = os.getenv('FRONTSTAGE_URL')
@@ -82,7 +82,5 @@ class TestingConfig(DevelopmentConfig):
     NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = 'request_password_change_id'
     NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = 'confirm_password_change_id'
     NOTIFY_ACCOUNT_LOCKED_TEMPLATE = 'account_locked_id'
-    NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE = 'verify_account_email_change'
-    NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE = 'confirm_account_email_change'
 
     SEND_EMAIL_TO_GOV_NOTIFY = True
