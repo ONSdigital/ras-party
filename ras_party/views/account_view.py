@@ -8,7 +8,6 @@ from werkzeug.exceptions import BadRequest
 from ras_party.controllers import account_controller
 from ras_party.controllers.validate import Exists, Validator
 
-
 account_view = Blueprint('account_view', __name__)
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -74,6 +73,12 @@ def put_email_verification(token):
 @account_view.route('/resend-verification-email/<party_uuid>', methods=['POST'])
 def resend_verification_email(party_uuid):
     response = account_controller.resend_verification_email_by_uuid(party_uuid)
+    return make_response(jsonify(response), 200)
+
+
+@account_view.route('/resend-account-email-change-expired-token/<token>', methods=['POST'])
+def resend_account_email_change_expired_token(token):
+    response = account_controller.resend_account_email_change_verification_email_expired_token(token)
     return make_response(jsonify(response), 200)
 
 

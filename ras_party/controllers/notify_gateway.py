@@ -20,6 +20,8 @@ class NotifyGateway:
         self.request_password_change_template = config['NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE']
         self.confirm_password_change_template = config['NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE']
         self.notify_account_locked = config['NOTIFY_ACCOUNT_LOCKED_TEMPLATE']
+        self.verify_account_email_change = config['NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE']
+        self.confirm_account_email_change = config['NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE']
         self.project_id = self.config['GOOGLE_CLOUD_PROJECT']
         self.topic_id = self.config['PUBSUB_TOPIC']
         self.publisher = None
@@ -95,7 +97,9 @@ class NotifyGateway:
         templates = {'notify_account_locked': self.notify_account_locked,
                      'confirm_password_change': self.confirm_password_change_template,
                      'request_password_change': self.request_password_change_template,
-                     'email_verification': self.email_verification_template}
+                     'email_verification': self.email_verification_template,
+                     'verify_account_email_change': self.verify_account_email_change,
+                     'confirm_change_to_account_email': self.confirm_account_email_change}
         if template_name in templates:
             return templates[template_name]
         else:
