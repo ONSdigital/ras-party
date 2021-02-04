@@ -58,6 +58,8 @@ email:
     notifyConfirmPasswordChangeTemplate: ba41c152-ad96-4255-9456-9e42de83f510
     notifyEmailVerificationTemplate: df7d5512-ad35-4275-bdd0-dfe89ad646f6
     notifyRequestPasswordChangeTemplate: c45c59ff-7771-4de4-a66b-ce50b108390a
+    notifyVerifyAccountEmailChange: 4f128de3-4183-420e-84fd-d6c31594edd5
+    notifyConfirmAccountEmailChange: 1e085049-cfa3-45a0-9c8f-6863ab4d569d
   callback:
     protocol: http
     host: localhost

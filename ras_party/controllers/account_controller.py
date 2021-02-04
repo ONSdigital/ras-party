@@ -301,7 +301,7 @@ def change_respondent(payload, session):
     # check if respondent has initiated this request
     if 'respondent_initiated' in payload:
         verification_url = PublicWebsite().confirm_account_email_change_url(new_email_address)
-        personalisation = {'CONFIRM_EMAIL_URL': verification_url}
+        personalisation = {'CONFIRM_EMAIL_URL': verification_url, 'FIRST_NAME': respondent.first_name}
         logger.info('Account change email URL for party_id', party_id=str(respondent.party_uuid), url=verification_url)
         _send_account_email_change_email(personalisation,
                                          template='verify_account_email_change',
@@ -642,7 +642,7 @@ def resend_account_email_change_verification_email_expired_token(token, session)
         raise NotFound("Respondent does not exist")
 
     verification_url = PublicWebsite().confirm_account_email_change_url(email_address)
-    personalisation = {'CONFIRM_EMAIL_URL': verification_url}
+    personalisation = {'CONFIRM_EMAIL_URL': verification_url, 'FIRST_NAME': respondent.first_name}
     logger.info('Account change email URL for party_id', party_id=str(respondent.party_uuid), url=verification_url)
     _send_account_email_change_email(personalisation,
                                      template='verify_account_email_change',

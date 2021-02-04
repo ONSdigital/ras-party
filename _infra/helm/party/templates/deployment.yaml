@@ -184,6 +184,10 @@ spec:
             value: "{{ .Values.email.templates.notifyEmailVerificationTemplate }}"
           - name: NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE
             value: "{{ .Values.email.templates.notifyRequestPasswordChangeTemplate }}"
+          - name: NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE
+            value: "{{ .Values.email.templates.notifyVerifyAccountEmailChange }}"
+          - name: NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE
+            value: "{{ .Values.email.templates.notifyConfirmAccountEmailChange }}"
           - name: NOTIFY_ACCOUNT_LOCKED_TEMPLATE
             value: {{ .Values.email.templates.notifyAccountLockedTemplate }}
           - name: SECURITY_USER_NAME
