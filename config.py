@@ -47,10 +47,10 @@ class Config(object):
                                                         'confirm_password_change_id')
     NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE = os.getenv('NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE',
                                                    'verify_account_email_change')
-    NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE = os.getenv('NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE',
+    NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE = os.getenv('NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE',
                                                     'confirm_account_email_change')
     NOTIFY_ACCOUNT_LOCKED_TEMPLATE = os.getenv('NOTIFY_ACCOUNT_LOCKED_TEMPLATE', 'account_locked_id')
-    SEND_EMAIL_TO_GOV_NOTIFY = _is_true(os.getenv('SEND_EMAIL_TO_GOV_NOTIFY', False))
+    SEND_EMAIL_TO_GOV_NOTIFY = _is_true(os.getenv('SEND_EMAIL_TO_GOV_NOTIFY', True))
 
 
 class DevelopmentConfig(Config):
