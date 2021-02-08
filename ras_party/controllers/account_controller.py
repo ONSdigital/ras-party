@@ -299,7 +299,7 @@ def change_respondent(payload, session):
     respondent.pending_email_address = new_email_address
 
     # check if respondent has initiated this request
-    if 'respondent_initiated' in payload:
+    if 'change_requested_by_respondent' in payload:
         verification_url = PublicWebsite().confirm_account_email_change_url(new_email_address)
         personalisation = {'CONFIRM_EMAIL_URL': verification_url, 'FIRST_NAME': respondent.first_name}
         logger.info('Account change email URL for party_id', party_id=str(respondent.party_uuid), url=verification_url)
