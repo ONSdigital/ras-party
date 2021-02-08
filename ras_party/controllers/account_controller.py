@@ -540,7 +540,7 @@ def put_email_verification(token, tran, session):
             # send confirmation email to old email address
             personalisation = {
                 'FIRST_NAME': respondent.first_name,
-                'NEW_EMAIL': respondent.pending_email_address
+                'NEW_EMAIL': respondent.email_address
             }
             logger.info("Sending change of email on account to previously held email address")
             _send_account_email_change_email(personalisation=personalisation,
