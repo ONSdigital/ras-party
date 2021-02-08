@@ -52,7 +52,7 @@ rollingUpdate:
   maxUnavailable: 1
 
 email:
-  enabled: false
+  enabled: true
   templates:
     notifyAccountLockedTemplate: c69147fc-0f9c-40d4-b111-5b11acc8551f
     notifyConfirmPasswordChangeTemplate: ba41c152-ad96-4255-9456-9e42de83f510
