@@ -42,11 +42,15 @@ class Config(object):
     NOTIFY_URL = os.getenv('NOTIFY_URL', 'http://notify-gateway-service/emails/')
     NOTIFY_EMAIL_VERIFICATION_TEMPLATE = os.getenv('NOTIFY_EMAIL_VERIFICATION_TEMPLATE', 'email_verification_id')
     NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = os.getenv('NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE',
-                                                            'request_password_change_id')
+                                                        'request_password_change_id')
     NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = os.getenv('NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE',
-                                                            'confirm_password_change_id')
+                                                        'confirm_password_change_id')
+    NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE_TEMPLATE = os.getenv('NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE_TEMPLATE',
+                                                   'verify_account_email_change')
+    NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE_TEMPLATE = os.getenv('NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE_TEMPLATE',
+                                                    'confirm_account_email_change')
     NOTIFY_ACCOUNT_LOCKED_TEMPLATE = os.getenv('NOTIFY_ACCOUNT_LOCKED_TEMPLATE', 'account_locked_id')
-    SEND_EMAIL_TO_GOV_NOTIFY = _is_true(os.getenv('SEND_EMAIL_TO_GOV_NOTIFY', False))
+    SEND_EMAIL_TO_GOV_NOTIFY = _is_true(os.getenv('SEND_EMAIL_TO_GOV_NOTIFY', True))
 
 
 class DevelopmentConfig(Config):

@@ -114,6 +114,11 @@ class TestRespondents(PartyTestClient):
         frontstage_url = PublicWebsite().activate_account_url(email)
         return frontstage_url.split('/')[-1]
 
+    @staticmethod
+    def generate_valid_token_for_email_change(email):
+        frontstage_url = PublicWebsite().confirm_account_email_change_url(email)
+        return frontstage_url.split('/')[-1]
+
     def test_get_respondent_with_invalid_id(self):
         self.get_respondent_by_id('123', 400)
 
@@ -732,6 +737,28 @@ class TestRespondents(PartyTestClient):
         self.resend_verification_email_expired_token(token)
         # Then a notification is sent the the respondent's email adddress
         self.assertTrue(self.mock_notify.request_to_notify.called)
+
+    def test_resend_account_email_change_expired_token_sends_calls_notify(self):
+        # Given a token is used that has already been declared to be expired
+        my_respondent = MockRespondent()
+        my_respondent.attributes(emailAddress='res2@example.com')
+        my_respondent.attributes(pendingEmailAddress='res1@example.com')
+        respondent = self.populate_with_respondent(respondent=my_respondent.as_respondent())
+        token = self.generate_valid_token_for_email_change('res1@example.com')
+        # When the resend verification with expired token endpoint is hit
+        self.resend_account_email_change_expired_token(token)
+        # Then a notification is sent the the respondent's email adddress
+        self.assertTrue(self.mock_notify.request_to_notify.called)
+
+    def test_resend_account_email_change_expired_token_respondent_not_found(self):
+        # The token is valid but the respondent doesn't exist
+        current_app.config['EMAIL_TOKEN_EXPIRY'] = -1
+        token = self.generate_valid_token_for_email_change('invalid@email.com')
+        # When the resend verification with expired token endpoint is hit
+        response = self.resend_account_email_change_expired_token(token, 404)
+        # Then an email is not sent and a message saying there is no respondent is returned
+        self.assertFalse(self.mock_notify.request_to_notify.called)
+        self.assertIn("Respondent does not exist", response['description'])
 
     def test_resend_verification_email_expired_token_respondent_not_found(self):
         # The token is valid but the respondent doesn't exist

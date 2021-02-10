@@ -298,7 +298,17 @@ def change_respondent(payload, session):
 
     respondent.pending_email_address = new_email_address
 
-    _send_email_verification(respondent.party_uuid, new_email_address)
+    # check if respondent has initiated this request
+    if 'change_requested_by_respondent' in payload:
+        verification_url = PublicWebsite().confirm_account_email_change_url(new_email_address)
+        personalisation = {'CONFIRM_EMAIL_URL': verification_url, 'FIRST_NAME': respondent.first_name}
+        logger.info('Account change email URL for party_id', party_id=str(respondent.party_uuid), url=verification_url)
+        _send_account_email_change_email(personalisation,
+                                         template='verify_account_email_change',
+                                         email=new_email_address,
+                                         party_id=respondent.party_uuid)
+    else:
+        _send_email_verification(respondent.party_uuid, new_email_address)
 
     logger.info('Verification email sent for changing respondents email', respondent_id=str(respondent.party_uuid))
 
@@ -524,7 +534,19 @@ def put_email_verification(token, tran, session):
         respondent = query_respondent_by_pending_email(email_address, session)
 
         if respondent:
+            # Get old email address
+            old_email_address = respondent.email_address
             update_verified_email_address(respondent, tran)
+            # send confirmation email to old email address
+            personalisation = {
+                'FIRST_NAME': respondent.first_name,
+                'NEW_EMAIL': respondent.email_address
+            }
+            logger.info("Sending change of email on account to previously held email address")
+            _send_account_email_change_email(personalisation=personalisation,
+                                             template='confirm_change_to_account_email',
+                                             email=old_email_address,
+                                             party_id=respondent.party_uuid)
         else:
             logger.info("Unable to find respondent by pending email")
             raise NotFound("Unable to find user while checking email verification token")
@@ -601,6 +623,33 @@ def resend_verification_email_by_uuid(party_uuid, session):
     response = _resend_verification_email(respondent)
     logger.info('Verification email successfully resent', party_uuid=party_uuid)
     return response
+
+
+@with_query_only_db_session
+def resend_account_email_change_verification_email_expired_token(token, session):
+    """
+    Check and resend an email on account email change when expired token
+    :param token: the expired token
+    :param session: database session
+    :return: response
+    """
+    logger.info('Attempting to resend account email change email with expired token', token=token)
+    email_address = decode_email_token(token)
+    respondent = query_respondent_by_pending_email(email_address, session)
+
+    if not respondent:
+        logger.info("Respondent does not exist", token=token)
+        raise NotFound("Respondent does not exist")
+
+    verification_url = PublicWebsite().confirm_account_email_change_url(email_address)
+    personalisation = {'CONFIRM_EMAIL_URL': verification_url, 'FIRST_NAME': respondent.first_name}
+    logger.info('Account change email URL for party_id', party_id=str(respondent.party_uuid), url=verification_url)
+    _send_account_email_change_email(personalisation,
+                                     template='verify_account_email_change',
+                                     email=email_address,
+                                     party_id=respondent.party_uuid)
+    logger.info('Successfully resent account email change verification email', token=token)
+    return {'message': EMAIL_VERIFICATION_SENT}
 
 
 @with_query_only_db_session
@@ -704,6 +753,21 @@ def _send_email_verification(party_id, email):
                                                             personalisation=personalisation,
                                                             reference=str(party_id))
         logger.info('Verification email sent', party_id=str(party_id))
+    except RasNotifyError:
+        # Note: intentionally suppresses exception
+        logger.error('Error sending verification email for party_id', party_id=str(party_id))
+
+
+def _send_account_email_change_email(personalisation, template, email, party_id):
+    """
+    Send an email to confirm changes to respondent account
+    """
+    try:
+        logger.info('sending confirmation email for respondent account change', party_id=str(party_id))
+        NotifyGateway(current_app.config).request_to_notify(email=email,
+                                                            template_name=template,
+                                                            personalisation=personalisation)
+        logger.info('confirmation email for respondent account change sent', party_id=str(party_id))
     except RasNotifyError:
         # Note: intentionally suppresses exception
         logger.error('Error sending verification email for party_id', party_id=str(party_id))
