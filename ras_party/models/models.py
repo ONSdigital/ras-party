@@ -119,7 +119,7 @@ class Business(Base):
         :return: A dict containing both the summary data and business attributes for the business
         :rtype: dict
         """
-        d = self.to_business_summary_dict()
+        d = self.to_business_summary_dict(collection_exercise_id)
         attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
         return dict(d, **attributes.attributes)
 
