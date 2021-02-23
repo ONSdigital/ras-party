@@ -329,7 +329,6 @@ class TestParties(PartyTestClient):
 
     def test_get_party_with_invalid_unit_type(self):
         self.get_party_by_id('XX', '123', 400)
-        self.get_party_by_ref('XX', '123', 400)
 
     def test_get_party_with_nonexistent_ref(self):
         self.get_party_by_ref('B', '123', 404)
