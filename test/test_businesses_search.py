@@ -34,9 +34,7 @@ class TestBusinessesSearch(PartyTestClient):
         self.assertEqual(response['businesses'][0]['ruref'], business['sampleUnitRef'])
 
     def test_get_business_by_search_name(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_search_name') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
 
         # given there is a business to search
         business = self.post_to_businesses(mock_business, 200)
@@ -70,9 +68,7 @@ class TestBusinessesSearch(PartyTestClient):
         self.assertEqual(response['businesses'][0]['trading_as'], business['trading_as'])
 
     def test_get_business_by_search_partial_ru(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_search_partial_ru') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
 
         # given there is a business to search
         business = self.post_to_businesses(mock_business, 200)

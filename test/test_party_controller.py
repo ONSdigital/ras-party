@@ -73,21 +73,19 @@ class TestParties(PartyTestClient):
         self.put_to_businesses_sample_link(sample_id, put_data, 200)
 
     def test_post_valid_business_adds_to_db(self):
-        mock_business = MockBusiness().attributes(source='test_post_valid_business_adds_to_db').as_business()
+        mock_business = MockBusiness().as_business()
         self.post_to_businesses(mock_business, 200)
 
         self.assertEqual(len(businesses()), 1)
 
     def test_post_valid_party_adds_to_db(self):
-        mock_party = MockBusiness().attributes(source='test_post_valid_party_adds_to_db').as_party()
+        mock_party = MockBusiness().as_party()
         self.post_to_parties(mock_party, 200)
 
         self.assertEqual(len(businesses()), 1)
 
     def test_get_business_by_id_returns_correct_representation(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_id_returns_correct_representation') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
         party_id = self.post_to_businesses(mock_business, 200)['id']
         self._make_business_attributes_active(mock_business)
 
@@ -162,18 +160,14 @@ class TestParties(PartyTestClient):
         self.assertEqual(response['description'], """'gibberish' is not a valid UUID format for property 'id'""")
 
     def test_get_business_by_id_with_no_active_attributes_returns_404(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_id_with_no_active_attributes_returns_404') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
         party_id = self.post_to_businesses(mock_business, 200)['id']
 
         self.get_business_by_id(party_id, 404)
 
     def test_get_business_by_id_and_collection_exercise_returns_correct_representation(self):
         # Post business and link to sample/collection exercise
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_id_and_collection_exercise_returns_correct_representation') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
         self.post_to_businesses(mock_business, 200)
         sample_id = mock_business['sampleSummaryId']
         put_data = {'collectionExerciseId': 'test_id'}
@@ -223,13 +217,12 @@ class TestParties(PartyTestClient):
         self.put_to_businesses_sample_link(sample_id, put_data, 200)
 
     def test_put_business_sample_link_returns_400_when_no_ce(self):
-        mock_business = MockBusiness()\
-            .attributes(source='test_put_business_sample_link_returns_400_when_no_ce').as_business()
+        mock_business = MockBusiness().as_business()
         sample_id = mock_business['sampleSummaryId']
         self.put_to_businesses_sample_link(sample_id, {}, 400)
 
     def test_get_business_by_ref_returns_correct_representation_verbose(self):
-        mock_business = MockBusiness().as_party()
+        mock_business = MockBusiness().as_business()
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business)
 
@@ -253,17 +246,13 @@ class TestParties(PartyTestClient):
             self.assertTrue(x in response)
 
     def test_get_party_by_id_no_active_attributes_returns_404(self):
-        mock_party_b = MockBusiness() \
-            .attributes(source='test_get_party_by_id_no_active_attributes_returns_404') \
-            .as_party()
+        mock_party_b = MockBusiness().as_party()
         party_id_b = self.post_to_parties(mock_party_b, 200)['id']
 
         self.get_party_by_id('B', party_id_b, 404)
 
     def test_get_party_by_ref_returns_correct_representation(self):
-        mock_party_b = MockBusiness() \
-            .attributes(source='test_get_party_by_ref_returns_correct_representation') \
-            .as_party()
+        mock_party_b = MockBusiness().as_party()
         self.post_to_parties(mock_party_b, 200)
         self._make_business_attributes_active(mock_party_b)
         response = self.get_party_by_ref('B', mock_party_b['sampleUnitRef'])
@@ -321,7 +310,7 @@ class TestParties(PartyTestClient):
         self.get_business_by_ref('123', 404)
 
     def test_post_invalid_party(self):
-        mock_party = MockBusiness().attributes(source='test_post_valid_party_adds_to_db').as_party()
+        mock_party = MockBusiness().as_party()
         del mock_party['sampleUnitRef']
         self.post_to_parties(mock_party, 400)
 
@@ -333,9 +322,7 @@ class TestParties(PartyTestClient):
 
     def test_get_party_by_survey_id_and_enrolment_statuses_with_valid_enrolment(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_id_returns_correct_representation') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
         mock_business['id'] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
@@ -348,9 +335,7 @@ class TestParties(PartyTestClient):
 
     def test_get_party_by_survey_id_and_enrolment_statuses_with_invalid_enrolment(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_id_returns_correct_representation') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
         mock_business['id'] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
