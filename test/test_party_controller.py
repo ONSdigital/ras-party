@@ -97,13 +97,8 @@ class TestParties(PartyTestClient):
         self.assertEqual(response.get('trading_as'), 'Tradstyle-1 Tradstyle-2 Tradstyle-3')
 
     def test_get_business_by_ids_returns_correct_representation(self):
-        mock_business_1 = MockBusiness() \
-            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
-            .as_business()
-
-        mock_business_2 = MockBusiness() \
-            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
-            .as_business()
+        mock_business_1 = MockBusiness().as_business()
+        mock_business_2 = MockBusiness().as_business()
 
         party_id_1 = self.post_to_businesses(mock_business_1, 200)['id']
         party_id_2 = self.post_to_businesses(mock_business_2, 200)['id']
@@ -124,13 +119,8 @@ class TestParties(PartyTestClient):
         self.assertEqual(res_dict[party_id_2].get('name'), mock_business_2.get('name'))
 
     def test_get_business_by_ids_with_an_unknown_id_still_returns_correct_representation_for_other_ids(self):
-        mock_business_1 = MockBusiness() \
-            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
-            .as_business()
-
-        mock_business_2 = MockBusiness() \
-            .attributes(source='test_get_business_by_ids_returns_correct_representation') \
-            .as_business()
+        mock_business_1 = MockBusiness().as_business()
+        mock_business_2 = MockBusiness().as_business()
 
         party_id_1 = self.post_to_businesses(mock_business_1, 200)['id']
         party_id_2 = self.post_to_businesses(mock_business_2, 200)['id']
@@ -196,9 +186,7 @@ class TestParties(PartyTestClient):
         self.assertEqual(response.get('trading_as'), 'Tradstyle-1 Tradstyle-2 Tradstyle-3')
 
     def test_get_business_by_id_returns_correct_representation_verbose(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_id_returns_correct_representation_summary') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
         party_id = self.post_to_businesses(mock_business, 200)['id']
         self._make_business_attributes_active(mock_business)
 
@@ -206,7 +194,7 @@ class TestParties(PartyTestClient):
         self.assertTrue(len(response.items()) >= len(mock_business.items()))
 
     def test_put_business_sample_link_200(self):
-        mock_business = MockBusiness().attributes(source='test_put_business_sample_link_200').as_business()
+        mock_business = MockBusiness().as_business()
         self.post_to_businesses(mock_business, 200)
 
         self.assertEqual(len(businesses()), 1)
@@ -233,9 +221,7 @@ class TestParties(PartyTestClient):
             self.assertIn(x, response)
 
     def test_get_party_by_id_returns_correct_representation(self):
-        mock_party_b = MockBusiness() \
-            .attributes(source='test_get_party_by_id_returns_correct_representation') \
-            .as_party()
+        mock_party_b = MockBusiness().as_party()
         party_id_b = self.post_to_parties(mock_party_b, 200)['id']
         self._make_business_attributes_active(mock_party_b)
 
@@ -262,8 +248,7 @@ class TestParties(PartyTestClient):
             self.assertTrue(x in response)
 
     def test_existing_business_can_be_updated(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_existing_business_can_be_updated', version=1)
+        mock_business = MockBusiness().attributes(version=1)
         response_1 = self.post_to_businesses(mock_business.as_business(), 200)
 
         self.assertEqual(len(businesses()), 1)
@@ -275,8 +260,7 @@ class TestParties(PartyTestClient):
         self.assertEqual(response_2['attributes']['version'], 2)
 
     def test_existing_party_can_be_updated(self):
-        mock_party = MockBusiness() \
-            .attributes(source='test_existing_party_can_be_updated', version=1)
+        mock_party = MockBusiness().attributes(version=1)
 
         response_1 = self.post_to_parties(mock_party.as_party(), 200)
         self.assertEqual(len(businesses()), 1)

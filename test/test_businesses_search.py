@@ -18,9 +18,7 @@ class TestBusinessesSearch(PartyTestClient):
         self.put_to_businesses_sample_link(sample_id, put_data, 200)
 
     def test_get_business_by_search_ru(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_search_ru') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
 
         # given there is a business to search
         business = self.post_to_businesses(mock_business, 200)
@@ -50,9 +48,7 @@ class TestBusinessesSearch(PartyTestClient):
         self.assertEqual(response['businesses'][0]['trading_as'], business['trading_as'])
 
     def test_get_business_by_search_trading_as(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_search_name') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
 
         # given there is a business to search
         business = self.post_to_businesses(mock_business, 200)
@@ -82,9 +78,7 @@ class TestBusinessesSearch(PartyTestClient):
         self.assertEqual(response['businesses'][0]['ruref'], business['sampleUnitRef'])
 
     def test_get_business_by_search_partial_name(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_search_partial_name') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
 
         # given there is a business to search
         business = self.post_to_businesses(mock_business, 200)
@@ -100,9 +94,7 @@ class TestBusinessesSearch(PartyTestClient):
         self.assertEqual(response['businesses'][0]['trading_as'], business['trading_as'])
 
     def test_get_business_by_search_key_words_in_name(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_search_key_words_in_name') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
 
         # given there is a business to search
         business = self.post_to_businesses(mock_business, 200)
@@ -119,9 +111,7 @@ class TestBusinessesSearch(PartyTestClient):
         self.assertEqual(response['businesses'][0]['trading_as'], business['trading_as'])
 
     def test_get_business_by_search_distinct_multi_names(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_search_partial_ru') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
 
         # given there is a business with multiple names to search
         self.post_to_businesses(mock_business, 200)
@@ -193,9 +183,7 @@ class TestBusinessesSearch(PartyTestClient):
         self.assertEqual(expected_count, response['total_business_count'])
 
     def test_get_business_by_search_inactive_business_attributes(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_search_partial_ru') \
-            .as_business()
+        mock_business = MockBusiness().as_business()
 
         # given there is a business but it's attributes are not linked to a collection exercise (inactive)
         name = self.post_to_businesses(mock_business, 200)['name']
