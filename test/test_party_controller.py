@@ -229,9 +229,7 @@ class TestParties(PartyTestClient):
         self.put_to_businesses_sample_link(sample_id, {}, 400)
 
     def test_get_business_by_ref_returns_correct_representation_verbose(self):
-        mock_business = MockBusiness() \
-            .attributes(source='test_get_business_by_ref_returns_correct_representation') \
-            .as_business()
+        mock_business = MockBusiness().as_party()
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business)
 
