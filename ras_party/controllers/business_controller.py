@@ -17,24 +17,21 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 @with_query_only_db_session
-def get_business_by_ref(ref, session, verbose=False):
+def get_business_by_ref(ref, session):
     """
     Get a Business by its unique business reference
 
     :param ref: Reference of the Business to return
     :type ref: str
-    :param verbose: Verbosity of business details
     :returns: A business object containing the data for the business
     :rtype: Business
     """
     business = query_business_by_ref(ref, session)
     if not business:
-        return None
+        logger.info("Business with reference does not exist.", ru_ref=ref)
+        raise NotFound("Business with reference does not exist.")
 
-    if verbose:
-        return business.to_business_dict()
-
-    return business.to_business_summary_dict()
+    return business.to_party_dict()
 
 
 @with_query_only_db_session
