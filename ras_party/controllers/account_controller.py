@@ -71,7 +71,7 @@ def post_respondent(party, session):
         logger.info("Inactive enrolment code")
         raise BadRequest("Enrolment code is not active")
 
-    existing = query_respondent_by_email(party['emailAddress'], session)
+    existing = query_respondent_by_email(party['emailAddress'].lower(), session)
     if existing:
         logger.info("Email already exists", party_uuid=str(existing.party_uuid))
         raise BadRequest("Email address already exists")
@@ -92,7 +92,7 @@ def post_respondent(party, session):
     # Chain of enrolment processes
     translated_party = {
         'party_uuid': party.get('id') or str(uuid.uuid4()),
-        'email_address': party['emailAddress'],
+        'email_address': party['emailAddress'].lower(),
         'first_name': party['firstName'],
         'last_name': party['lastName'],
         'telephone': party['telephone'],
@@ -121,7 +121,7 @@ def post_respondent(party, session):
         session.rollback()
         raise
 
-    _send_email_verification(respondent.party_uuid, party['emailAddress'])
+    _send_email_verification(respondent.party_uuid, party['emailAddress'].lower())
 
     return respondent.to_respondent_dict()
 
@@ -158,7 +158,7 @@ def _add_enrolment_and_auth(business, business_id, case_id, party, session, surv
         raise  # re raise the exception aimed at the generic handler
     else:
         # Register user to auth server after successful commit
-        oauth_response = OauthClient().create_account(party['emailAddress'], party['password'])
+        oauth_response = OauthClient().create_account(party['emailAddress'].lower(), party['password'])
         if not oauth_response.status_code == 201:
             logger.info('Registering respondent auth service responded with', status=oauth_response.status_code,
                         content=oauth_response.content)
