@@ -1859,4 +1859,4 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent()
         mock_respondent = self.mock_respondent.copy()
         mock_respondent['emailAddress'] = 'A@z.com'
-        self.post_to_respondents(payload=mock_respondent, expected_status=409)
+        self.post_to_respondents(payload=mock_respondent, expected_status=400)
