@@ -209,17 +209,36 @@ class TestParties(PartyTestClient):
         sample_id = mock_business['sampleSummaryId']
         self.put_to_businesses_sample_link(sample_id, {}, 400)
 
-    # TODO: Uncomment test and fix
-    # def test_get_business_by_ref_returns_correct_representation_verbose(self):
-    #     mock_business = MockBusiness().as_business()
-    #     self.post_to_businesses(mock_business, 200)
-    #     self._make_business_attributes_active(mock_business)
-    #
-    #     response = self.get_business_by_ref(mock_business['sampleUnitRef'])
-    #
-    #     del mock_business['sampleSummaryId']
-    #     for x in mock_business:
-    #         self.assertIn(x, response)
+    def test_get_business_by_ref_returns_correct_representation(self):
+        mock_business = MockBusiness().as_business()
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business)
+
+        ru_ref = mock_business['sampleUnitRef']
+        actual = self.get_business_by_ref(ru_ref)
+        expected = {'associations': [],
+                    'attributes': {'birthdate': '1/1/2001', 'cell_no': 1, 'checkletter': 'A',
+                                   'currency': 'S', 'entname1': 'Ent-1', 'entname2': 'Ent-2', 'entname3': 'Ent-3',
+                                   'entref': 'Entref', 'entremkr': 'Entremkr', 'formType': 'FormType',
+                                   'formtype': 'formtype', 'froempment': 8, 'frosic2007': 'frosic2007',
+                                   'frosic92': 'frosic92', 'frotover': 9, 'inclexcl': 'inclexcl',
+                                   'legalstatus': 'Legal Status', 'name': 'Runame-1 Runame-2 Runame-3',
+                                   'region': 'UK', 'runame1': 'Runame-1', 'runame2': 'Runame-2', 'runame3': 'Runame-3',
+                                   'ruref': ru_ref, 'rusic2007': 'rusic2007', 'rusic92': 'rusic92',
+                                   'seltype': 'seltype', 'trading_as': 'Tradstyle-1 Tradstyle-2 Tradstyle-3',
+                                   'tradstyle1': 'Tradstyle-1',
+                                   'tradstyle2': 'Tradstyle-2', 'tradstyle3': 'Tradstyle-3'},
+                    'id': '6caa6a5b-94a0-4332-8020-8cbf793e4077',
+                    'name': 'Runame-1 Runame-2 Runame-3',
+                    'sampleSummaryId': ru_ref,
+                    'sampleUnitRef': ru_ref,
+                    'sampleUnitType': 'B',
+                    'trading_as': 'Tradstyle-1 Tradstyle-2 Tradstyle-3'}
+
+        # Id is random each time.
+        del actual['id']
+        del expected['id']
+        self.assertDictEqual(expected, actual)
 
     def test_get_party_by_id_returns_correct_representation(self):
         mock_party_b = MockBusiness().as_party()
