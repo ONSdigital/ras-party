@@ -1854,3 +1854,9 @@ class TestRespondents(PartyTestClient):
             db.configure_mock(**{'session.return_value': MagicMock(**{'commit.side_effect': SQLAlchemyError})})
             response = self.delete_user(f"/party-api/v1/respondents/user@domain.com")
             self.assertEqual(500, response.status_code)
+
+    def test_respondent_emails_are_case_insensitive(self):
+        self.populate_with_respondent()
+        mock_respondent = self.mock_respondent.copy()
+        mock_respondent['emailAddress'] = 'A@z.com'
+        self.post_to_respondents(payload=mock_respondent, expected_status=400)
