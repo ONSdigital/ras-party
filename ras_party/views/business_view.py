@@ -67,16 +67,10 @@ def get_business_attributes_by_id(business_id):
 
 
 @business_view.route('/businesses/ref/<ref>', methods=['GET'])
+@business_view.route('/parties/type/B/ref/<ref>', methods=['GET'])
 def get_business_by_ref(ref):
-    verbose = request.args.get('verbose', '')
-    verbose = True if verbose and verbose.lower() == 'true' else False
-
-    business = business_controller.get_business_by_ref(ref, verbose=verbose)
-
-    if not business:
-        logger.info("Business with reference does not exist", reference=ref, url=request.url, status=404)
-        raise NotFound(description="Business with reference does not exist")
-
+    # Temporarily map the old party url to this to aid in the transition away from /parties urls
+    business = business_controller.get_business_by_ref(ref)
     return jsonify(business)
 
 

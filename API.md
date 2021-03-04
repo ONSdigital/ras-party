@@ -109,11 +109,10 @@
 
 ### Get Business Details by Reference Number
 
-* `GET /businesses/ref/<ref>`
+* `GET /businesses/ref/<ref>` OR `GET /party-api/v1/parties/type/B/ref/<ref>`
   * Gets business information from reference number.
   * Must be provided a **known** business reference in the url string.
   * An **unknown** reference will return a `404`.
-  * **Optional attribute:** `?verbose=true` also returns `attributes`, see below.
 
 ### Example JSON Response
 
@@ -140,47 +139,14 @@
             ],
             "partyId": "<partyId>"
         }
-    ]
-}
-```
-
-### Example JSON response with `verbose=true`
-
-```json
- {
-    "birthdate": "01/09/1993",
-    "cellNo": 0,
-    "checkletter": "F",
-    "currency": "S",
-    "entname1": "ENTNAME1_COMPANY1",
-    "entname2": "ENTNAME2_COMPANY1",
-    "entname3": "",
-    "entref": "9900000576",
-    "entrepmkr": "E",
-    "formtype": "0001",
-    "froempment": 8478,
-    "frosic2007": "45320",
-    "frosic92": "50300",
-    "frotover": 7,
+    ],
     "id": "<id>",
-    "inclexcl": "D",
-    "legalstatus": "1",
     "name": "RUNAME1_COMPANY1 RUNNAME2_COMPANY1",
-    "region": "FE",
-    "runame1": "RUNAME1_COMPANY1",
-    "runame2": "RUNNAME2_COMPANY1",
-    "runame3": "",
-    "rusic2007": "45320",
-    "rusic92": "50300",
     "sampleSummaryId": "<sampleSummaryId>",
     "sampleUnitId": "<sampleUnitId>",
     "sampleUnitRef": "<sampleUnitRef>",
     "sampleUnitType": "B",
-    "seltype": "C",
     "trading_as": "TOTAL UK ACTIVITY",
-    "tradstyle1": "TOTAL UK ACTIVITY",
-    "tradstyle2": "",
-    "tradstyle3": ""
 }
 ```
 
@@ -437,8 +403,6 @@ Returns:
 
 ### Get Party Details
 
-* `GET /party-api/v1/parties/type/B/ref/<ref>`
-  * When generic party type 'B' (business) is requested this returns a generic party representation of the business resource. This representation will include any respondents associated with the business and any survey enrolments they have.
 * `GET /party-api/v1/parties/type/B/id/<id>`
   * Same response as above but requires a `party_uuid` rather than a ref.
 

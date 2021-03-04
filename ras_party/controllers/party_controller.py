@@ -43,27 +43,6 @@ def parties_post(party_data, session):
 
 
 @with_query_only_db_session
-def get_party_by_ref(sample_unit_type, sample_unit_ref, session):
-    """
-    Get a business by its ru ref.
-
-    :param sample_unit_ref: Reference of the Party to return
-    :type sample_unit_ref: str
-    :returns: Returns a Business object with data for the reporting unit
-    :rtype: Business
-    """
-    if sample_unit_type != Business.UNIT_TYPE:
-        logger.info("Wrong sampleUnitType", type=sample_unit_type)
-        raise BadRequest(f'sampleUnitType must be of type {Business.UNIT_TYPE}')
-    business = query_business_by_ref(sample_unit_ref, session)
-    if not business:
-        logger.info("Business with reference does not exist.", reference=sample_unit_ref, status=404)
-        raise NotFound("Business with reference does not exist.")
-
-    return business.to_party_dict()
-
-
-@with_query_only_db_session
 def get_party_by_id(sample_unit_type, party_id, session):
     """
     Get a party by its party_id.  Need to provide the type of party, otherwise it will

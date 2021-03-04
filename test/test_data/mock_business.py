@@ -59,11 +59,7 @@ class MockBusiness:
         return self._attributes
 
     def as_party(self):
-
-        def translate(k):
-            return 'sampleUnitRef' if k == 'businessRef' else k
-
-        attributes = {translate(k): v for k, v in self._attributes.items()}
+        attributes = {k: v for k, v in self._attributes.items()}
         props, attrs = partition_dict(attributes, self.REQUIRED_ATTRIBUTES)
 
         props['attributes'] = attrs

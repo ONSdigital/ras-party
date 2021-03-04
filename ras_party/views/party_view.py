@@ -29,12 +29,6 @@ def post_party():
     return jsonify(response)
 
 
-@party_view.route('/parties/type/<sample_unit_type>/ref/<sample_unit_ref>', methods=['GET'])
-def get_party_by_ref(sample_unit_type, sample_unit_ref):
-    response = party_controller.get_party_by_ref(sample_unit_type, sample_unit_ref)
-    return jsonify(response)
-
-
 @party_view.route('/parties/type/<sample_unit_type>/id/<id>', methods=['GET'])
 def get_party_by_id(sample_unit_type, id):
     survey_id = request.args.get('survey_id')
