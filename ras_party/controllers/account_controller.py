@@ -569,6 +569,13 @@ def put_email_verification(token, tran, session):
 
 
 def update_verified_email_address(respondent, tran):
+    """
+    Update the email address in the auth service.
+
+    :param respondent: A respondent object
+    :type respondent: Respondent
+    :param tran: A transaction session (used to handle rollbacks on failures)
+    """
     logger.info('Attempting to update verified email address')
 
     new_email_address = respondent.pending_email_address
