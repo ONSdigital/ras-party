@@ -10,7 +10,7 @@ from run import create_app, initialise_db
 
 
 """
-This is a duplicate of run.py, with minor modifications to support gunicorn execution.
+This is a duplicate of run.py, with minor modifications to support gunicorn execution
 """
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
