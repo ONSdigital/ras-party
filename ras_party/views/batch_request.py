@@ -4,7 +4,7 @@ import structlog
 from flask import Blueprint, current_app, make_response, request
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.exceptions import abort
-from ras_party.controllers import respondent_controller
+from ras_party.controllers import respondent_controller, share_survey_controller
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 batch_request = Blueprint('batch_request', __name__)
@@ -85,3 +85,12 @@ def batch():
         })
 
     return make_response(json.dumps(responses), 207)
+
+
+@batch_request.route('/batch/pending-surveys', methods=['DELETE'])
+def delete_pending_surveys_deletion():
+    """
+    Endpoint Exposed for Kubernetes Cronjob to delete expired pending surveys
+    """
+    share_survey_controller.delete_pending_shares()
+    return '', 204
