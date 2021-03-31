@@ -46,32 +46,39 @@ def share_survey_users():
 
 
 @share_survey_view.route('/pending-shares', methods=['POST'])
-def post_business():
+def post_pending_shares():
     """
      Creates new records for pending shares
      accepted payload example:
-     { "business_id": {
+     {  pending_shares: [{
+            "business_id": "business_id"
             "survey_id": "survey_id",
             "email_address": "email_address"
         },
-        "business_id": {
+        {
+            "business_id": "business_id":
             "survey_id": "survey_id",
             "email_address": "email_address"
-        }
+        }]
      }
     """
     payload = request.get_json() or {}
-    for business in payload:
-        # Validation, curation and checks
-        expected = ('email_address', 'survey_id')
-
-        v = Validator(Exists(*expected))
-        if not v.validate(payload[business]):
-            logger.debug(v.errors)
-            return BadRequest(v.errors)
-        for survey in payload:
-            share_survey_controller.pending_share_create(business_id=business,
-                                                         survey_id=survey,
-                                                         email_address=payload[business]['email_address'])
-    # TODO: Add logic to send email
-    return make_response(jsonify({"created": "success"}), 201)
+    try:
+        pending_shares = payload['pending_shares']
+        if len(pending_shares) == 0:
+            return BadRequest('Payload Invalid')
+        for share in pending_shares:
+            # Validation, curation and checks
+            expected = ('email_address', 'survey_id', 'business_id')
+            v = Validator(Exists(*expected))
+            if not v.validate(share):
+                logger.debug(v.errors)
+                return BadRequest(v.errors)
+        for pending_share in pending_shares:
+            share_survey_controller.pending_share_create(business_id=pending_share['business_id'],
+                                                         survey_id=pending_share['survey_id'],
+                                                         email_address=pending_share['email_address'])
+            # TODO: Add logic to send email
+        return make_response(jsonify({"created": "success"}), 201)
+    except KeyError:
+        return BadRequest('Payload Invalid')

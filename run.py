@@ -12,7 +12,6 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql import exists, select
 
 from logger_config import logger_initial_config
-from ras_party.views import share_survey_view
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 

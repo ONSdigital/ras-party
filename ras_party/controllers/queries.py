@@ -10,7 +10,7 @@ from ras_party.support.util import obfuscate_email
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
-def query_enrolment_by_business_and_survey(business_id, survey_id, session):
+def query_enrolment_by_business_and_survey_and_status(business_id, survey_id, session):
     """
     Query to return total enrolments against businesses is and survey id
     :param business_id: business party id
@@ -20,7 +20,9 @@ def query_enrolment_by_business_and_survey(business_id, survey_id, session):
     """
     logger.info('Querying enrolment by business_id and survey_id', business_id=business_id, survey_id=survey_id)
     return session.query(Enrolment).filter(
-        Enrolment.business_id == business_id).filter(Enrolment.survey_id == survey_id)
+        Enrolment.business_id == business_id).filter(
+        Enrolment.survey_id == survey_id).filter(or_(Enrolment.status == EnrolmentStatus.ENABLED,
+                                                     Enrolment.status == EnrolmentStatus.PENDING))
 
 
 def query_pending_shares_by_business_and_survey(business_id, survey_id, session):

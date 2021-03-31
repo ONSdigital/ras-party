@@ -42,6 +42,7 @@ class PartyTestClient(TestCase):
         logger_initial_config(log_level=app.config['LOGGING_LEVEL'])
         app.config['PARTY_SCHEMA'] = party_schema.schema
         app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'])
+        app.config['EMAIL_TOKEN_EXPIRY'] = 0
         return app
 
     def tearDown(self):
@@ -323,3 +324,28 @@ class PartyTestClient(TestCase):
                                     data=json.dumps(payload))
         self.assertStatus(response, expected_status)
         return response.get_data(as_text=True)
+
+    def get_share_survey_users(self, business_id, survey_id, expected_status=200):
+        data = {
+            'business_id': business_id,
+            'survey_id': survey_id,
+        }
+        response = self.client.get(f'/party-api/v1/share-survey-users-count', json=data, headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def post_share_surveys(self, payload, expected_status=201):
+        response = self.client.post(f'/party-api/v1/pending-shares',
+                                    json=payload, headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def post_share_surveys_fail(self, payload, expected_status=400):
+        response = self.client.post(f'/party-api/v1/pending-shares',
+                                    json=payload, headers=self.auth_headers)
+        self.assertStatus(response, expected_status)
+        return response
+
+    def delete_share_surveys(self, expected_status=204):
+        response = self.client.delete(f'/party-api/v1/batch/pending-surveys', headers=self.auth_headers)
+        self.assertStatus(response, expected_status)
