@@ -78,4 +78,4 @@ crons:
   expiredShareSurveyScheduler:
     name: party-scheduler-remove-expired-share-surveys
     cron: "*/15 * * * *"
-    target: "party-api/v1/batch/pending-surveys"
+    target: "party-api/v1/batch/pending-shares"

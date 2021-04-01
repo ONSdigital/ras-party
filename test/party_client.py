@@ -347,5 +347,5 @@ class PartyTestClient(TestCase):
         return response
 
     def delete_share_surveys(self, expected_status=204):
-        response = self.client.delete(f'/party-api/v1/batch/pending-surveys', headers=self.auth_headers)
+        response = self.client.delete(f'/party-api/v1/batch/pending-shares', headers=self.auth_headers)
         self.assertStatus(response, expected_status)

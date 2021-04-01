@@ -87,10 +87,11 @@ def batch():
     return make_response(json.dumps(responses), 207)
 
 
-@batch_request.route('/batch/pending-surveys', methods=['DELETE'])
+@batch_request.route('/batch/pending-shares', methods=['DELETE'])
 def delete_pending_surveys_deletion():
     """
     Endpoint Exposed for Kubernetes Cronjob to delete expired pending surveys
     """
+    logger.info('Attempting to delete expired pending shares')
     share_survey_controller.delete_pending_shares()
     return '', 204

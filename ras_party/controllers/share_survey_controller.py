@@ -61,3 +61,4 @@ def delete_pending_shares(session):
     _expired_hrs = datetime.utcnow() - timedelta(seconds=float(current_app.config["EMAIL_TOKEN_EXPIRY"]))
     pending_shares = session.query(PendingShares).filter(PendingShares.time_shared < _expired_hrs)
     pending_shares.delete()
+    logger.info('Deletion complete')
