@@ -330,7 +330,24 @@ class PartyTestClient(TestCase):
             'business_id': business_id,
             'survey_id': survey_id,
         }
-        response = self.client.get(f'/party-api/v1/share-survey-users-count', json=data, headers=self.auth_headers)
+        response = self.client.get(f'/party-api/v1/share-survey-users-count', query_string=data,
+                                   headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def get_share_survey_users_not_found(self, business_id, survey_id, expected_status=404):
+        data = {
+            'business_id': business_id,
+            'survey_id': survey_id,
+        }
+        response = self.client.get(f'/party-api/v1/share-survey-users-count', query_string=data,
+                                   headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def get_share_survey_users_bad_request(self, expected_status=400):
+        response = self.client.get(f'/party-api/v1/share-survey-users-count',
+                                   headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
@@ -343,8 +360,8 @@ class PartyTestClient(TestCase):
     def post_share_surveys_fail(self, payload, expected_status=400):
         response = self.client.post(f'/party-api/v1/pending-shares',
                                     json=payload, headers=self.auth_headers)
-        self.assertStatus(response, expected_status)
-        return response
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
 
     def delete_share_surveys(self, expected_status=204):
         response = self.client.delete(f'/party-api/v1/batch/pending-shares', headers=self.auth_headers)

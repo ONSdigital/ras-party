@@ -4,7 +4,6 @@ from functools import wraps
 import structlog
 from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import exc
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 

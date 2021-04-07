@@ -121,6 +121,39 @@ class TestShareSurvey(PartyTestClient):
         # Then
         self.assertEqual(response, 2)
 
+    def test_share_survey_users_with_pending_share_bad_request(self):
+        # Given
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(business_id=mock_business['id'],
+                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.populate_with_enrolment()  # NOQA
+        self.populate_pending_share()
+        # When
+        response = self.get_share_survey_users_bad_request()
+        # Then
+        self.assertEqual(response['description'], 'Business id and Survey id is required for this request.')
+
+    def test_share_survey_users_with_pending_share_not_found(self):
+        # Given
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(business_id=mock_business['id'],
+                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.populate_with_enrolment()  # NOQA
+        self.populate_pending_share()
+        # When
+        response = self.get_share_survey_users_not_found('3b136c4b-7a14-4904-9e01-13364dd7b973',
+                                                         DEFAULT_SURVEY_UUID)
+        # Then
+        self.assertEqual(response['description'], 'Business with party id does not exist')
+
     def test_share_survey_users_with_enrolment_disabled(self):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
@@ -196,6 +229,7 @@ class TestShareSurvey(PartyTestClient):
         payload = {}
         # Then
         response = self.post_share_surveys_fail(payload)
+        self.assertEqual(response['description'], 'Payload Invalid - Pending share key missing')
 
     def test_post_pending_shares_fail_invalid_payload_size(self):
         # Given
@@ -210,6 +244,7 @@ class TestShareSurvey(PartyTestClient):
         payload = {"pending_shares": []}
         # Then
         response = self.post_share_surveys_fail(payload)
+        self.assertEqual(response['description'], 'Payload Invalid - pending_shares list is empty')
 
     def test_post_pending_shares_fail_validation(self):
         # Given
@@ -233,6 +268,7 @@ class TestShareSurvey(PartyTestClient):
         }
         # Then
         response = self.post_share_surveys_fail(payload)
+        self.assertEqual(response['description'], ["Required key 'email_address' is missing."])
 
     def test_delete_pending_shares_success(self):
         # Given
