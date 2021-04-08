@@ -46,8 +46,8 @@ def pending_share_create(business_id, survey_id, email_address, shared_by, sessi
     :type survey_id: str
     :param email_address: email_address
     :type email_address: str
-    :param shared_by: respondent_id
-    :type shared_by: int
+    :param shared_by: respondent_party_uuid
+    :type shared_by: uuid
     :param session: db session
     :rtype: void
     """

@@ -313,8 +313,7 @@ class Respondent(Base):
             'telephone': self.telephone,
             'status': RespondentStatus(self.status).name,
             'markForDeletion': self.mark_for_deletion,
-            'associations': self._get_business_associations(self.businesses),
-            'respondent_id': self.id
+            'associations': self._get_business_associations(self.businesses)
         }
 
         return filter_falsey_values(d)
@@ -369,7 +368,7 @@ class PendingShares(Base):
     business_id = Column(GUID, primary_key=True)
     survey_id = Column(Text, primary_key=True)
     time_shared = Column(DateTime, default=datetime.datetime.utcnow)
-    shared_by = Column(Integer)
+    shared_by = Column(GUID)
     batch_no = Column(GUID, default=uuid.uuid4)
     Index('pending_shares_business_idx', business_id)
     Index('pending_shares_email_address_idx', email_address)
@@ -379,5 +378,7 @@ class PendingShares(Base):
     __table_args__ = (
         ForeignKeyConstraint(['business_id'],
                              ['business.party_uuid']),
+        ForeignKeyConstraint(['shared_by'],
+                             ['respondent.party_uuid']),
         UniqueConstraint('email_address', 'business_id', 'survey_id', name='u_constraint'),
     )
