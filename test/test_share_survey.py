@@ -201,12 +201,14 @@ class TestShareSurvey(PartyTestClient):
         payload = {"pending_shares": [{
             "business_id": DEFAULT_BUSINESS_UUID,
             "survey_id": DEFAULT_SURVEY_UUID,
-            "email_address": "test@test.com"
+            "email_address": "test@test.com",
+            "shared_by": 1
         },
             {
                 "business_id": DEFAULT_BUSINESS_UUID,
                 "survey_id": 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef99',
-                "email_address": "test@test.com"
+                "email_address": "test@test.com",
+                "shared_by": 1
             }]
         }
         response = self.post_share_surveys(payload)
@@ -259,11 +261,13 @@ class TestShareSurvey(PartyTestClient):
         payload = {"pending_shares": [{
             "business_id": DEFAULT_BUSINESS_UUID,
             "survey_id": DEFAULT_SURVEY_UUID,
+            "shared_by": 1
         },
             {
                 "business_id": DEFAULT_BUSINESS_UUID,
                 "survey_id": 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef99',
-                "email_address": "test@test.com"
+                "email_address": "test@test.com",
+                "shared_by": 1
             }]
         }
         # Then

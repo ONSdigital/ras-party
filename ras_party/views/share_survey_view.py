@@ -2,6 +2,7 @@ import logging
 
 import structlog
 from flask import Blueprint, request, make_response, jsonify, current_app
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers import share_survey_controller
@@ -52,12 +53,14 @@ def post_pending_shares():
      {  pending_shares: [{
             "business_id": "business_id"
             "survey_id": "survey_id",
-            "email_address": "email_address"
+            "email_address": "email_address",
+            "shared_by": "respondent_id"
         },
         {
             "business_id": "business_id":
             "survey_id": "survey_id",
-            "email_address": "email_address"
+            "email_address": "email_address",
+            "shared_by": "respondent_id"
         }]
      }
     """
@@ -68,7 +71,7 @@ def post_pending_shares():
             raise BadRequest('Payload Invalid - pending_shares list is empty')
         for share in pending_shares:
             # Validation, curation and checks
-            expected = ('email_address', 'survey_id', 'business_id')
+            expected = ('email_address', 'survey_id', 'business_id', 'shared_by')
             v = Validator(Exists(*expected))
             if not v.validate(share):
                 logger.debug(v.errors)
@@ -76,8 +79,12 @@ def post_pending_shares():
         for pending_share in pending_shares:
             share_survey_controller.pending_share_create(business_id=pending_share['business_id'],
                                                          survey_id=pending_share['survey_id'],
-                                                         email_address=pending_share['email_address'])
+                                                         email_address=pending_share['email_address'],
+                                                         shared_by=pending_share['shared_by'])
             # TODO: Add logic to send email
         return make_response(jsonify({"created": "success"}), 201)
     except KeyError:
         raise BadRequest('Payload Invalid - Pending share key missing')
+
+    except SQLAlchemyError:
+        raise BadRequest('This share is already in progress')

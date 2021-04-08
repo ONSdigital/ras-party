@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 import structlog
 from flask import current_app
+from sqlalchemy.exc import SQLAlchemyError
 
 from ras_party.controllers.queries import query_enrolment_by_business_and_survey_and_status, \
     query_pending_shares_by_business_and_survey
@@ -35,7 +36,7 @@ def get_users_enrolled_and_pending_share_against_business_and_survey(business_id
 
 
 @with_db_session
-def pending_share_create(business_id, survey_id, email_address, session):
+def pending_share_create(business_id, survey_id, email_address, shared_by, session):
     """
     creates a new record for pending share
     Returns void
@@ -45,10 +46,13 @@ def pending_share_create(business_id, survey_id, email_address, session):
     :type survey_id: str
     :param email_address: email_address
     :type email_address: str
+    :param shared_by: respondent_id
+    :type shared_by: int
     :param session: db session
     :rtype: void
     """
-    pending_share = PendingShares(business_id=business_id, survey_id=survey_id, email_address=email_address)
+    pending_share = PendingShares(business_id=business_id, survey_id=survey_id, email_address=email_address,
+                                  shared_by=shared_by)
     session.add(pending_share)
 
 
