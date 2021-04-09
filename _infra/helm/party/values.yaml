@@ -74,3 +74,8 @@ crons:
     name: party-scheduler-delete-respondents
     cron: "0 3 * * *"
     target: "party-api/v1/batch/respondents"
+
+  expiredShareSurveyScheduler:
+    name: party-scheduler-remove-expired-share-surveys
+    cron: "*/15 * * * *"
+    target: "party-api/v1/batch/pending-shares"

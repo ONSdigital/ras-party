@@ -13,7 +13,6 @@ from sqlalchemy.sql import exists, select
 
 from logger_config import logger_initial_config
 
-
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
@@ -32,11 +31,13 @@ def create_app(config=None):
     from ras_party.views.info_view import info_view
     from ras_party.views.batch_request import batch_request
     from ras_party import error_handlers
+    from ras_party.views.share_survey_view import share_survey_view
     app.register_blueprint(party_view, url_prefix='/party-api/v1')
     app.register_blueprint(account_view, url_prefix='/party-api/v1')
     app.register_blueprint(business_view, url_prefix='/party-api/v1')
     app.register_blueprint(respondent_view, url_prefix='/party-api/v1')
     app.register_blueprint(batch_request, url_prefix='/party-api/v1')
+    app.register_blueprint(share_survey_view, url_prefix='/party-api/v1')
     app.register_blueprint(info_view)
     app.register_blueprint(error_handlers.blueprint)
 

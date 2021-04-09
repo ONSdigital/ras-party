@@ -5,7 +5,8 @@ import uuid
 
 import structlog
 from jsonschema import Draft4Validator
-from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint, Index, Boolean
+from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey, ForeignKeyConstraint, Index, Boolean, \
+    UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -14,7 +15,6 @@ from werkzeug.exceptions import NotFound
 
 from ras_party.models import GUID
 from ras_party.support.util import filter_falsey_values, partition_dict
-
 
 Base = declarative_base()
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -183,7 +183,7 @@ class BusinessAttributes(Base):
     collection_exercise = Column(Text)
     attributes = Column(JSONB)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
-    name = Column(Text)   # New columns placed at end of list in case code uses positional rather than named references
+    name = Column(Text)  # New columns placed at end of list in case code uses positional rather than named references
     trading_as = Column(Text)
     Index('attributes_name_idx', name)
     Index('attributes_trading_as_idx', trading_as)
@@ -359,4 +359,26 @@ class Enrolment(Base):
     __table_args__ = (
         ForeignKeyConstraint(['business_id', 'respondent_id'],
                              ['business_respondent.business_id', 'business_respondent.respondent_id']),
+    )
+
+
+class PendingShares(Base):
+    __tablename__ = 'pending_shares'
+    email_address = Column(Text, primary_key=True)
+    business_id = Column(GUID, primary_key=True)
+    survey_id = Column(Text, primary_key=True)
+    time_shared = Column(DateTime, default=datetime.datetime.utcnow)
+    shared_by = Column(GUID)
+    batch_no = Column(GUID, default=uuid.uuid4)
+    Index('pending_shares_business_idx', business_id)
+    Index('pending_shares_email_address_idx', email_address)
+    Index('pending_shares_survey_idx', survey_id)
+    Index('pending_shares_time_shared_idx', time_shared)
+
+    __table_args__ = (
+        ForeignKeyConstraint(['business_id'],
+                             ['business.party_uuid']),
+        ForeignKeyConstraint(['shared_by'],
+                             ['respondent.party_uuid']),
+        UniqueConstraint('email_address', 'business_id', 'survey_id', name='u_constraint'),
     )

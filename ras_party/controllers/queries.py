@@ -4,11 +4,38 @@ import structlog
 from sqlalchemy import func, and_, or_, distinct
 
 from ras_party.models.models import Business, BusinessAttributes, BusinessRespondent, \
-    Enrolment, EnrolmentStatus, Respondent
+    Enrolment, EnrolmentStatus, Respondent, PendingShares
 from ras_party.support.util import obfuscate_email
 
-
 logger = structlog.wrap_logger(logging.getLogger(__name__))
+
+
+def query_enrolment_by_business_and_survey_and_status(business_id, survey_id, session):
+    """
+    Query to return total enrolments against businesses is and survey id
+    :param business_id: business party id
+    :param survey_id: survey id
+    :param session: db session
+    :return: the enrolment
+    """
+    logger.info('Querying enrolment by business_id and survey_id', business_id=business_id, survey_id=survey_id)
+    return session.query(Enrolment).filter(
+        Enrolment.business_id == business_id).filter(
+        Enrolment.survey_id == survey_id).filter(or_(Enrolment.status == EnrolmentStatus.ENABLED,
+                                                     Enrolment.status == EnrolmentStatus.PENDING))
+
+
+def query_pending_shares_by_business_and_survey(business_id, survey_id, session):
+    """
+    Query to return total pending share against businesses is and survey id
+    :param business_id: business party id
+    :param survey_id: survey id
+    :param session: db session
+    :return: the pending share
+    """
+    logger.info('Querying pending share by business_id and survey_id', business_id=business_id, survey_id=survey_id)
+    return session.query(PendingShares).filter(
+        PendingShares.business_id == business_id).filter(PendingShares.survey_id == survey_id)
 
 
 def query_businesses_by_party_uuids(party_uuids, session):
@@ -113,7 +140,7 @@ def query_respondent_by_names_and_emails(first_name, last_name, email, page, lim
     if email:
         conditions.append(Respondent.email_address.ilike(f"%{email}%"))
 
-    offset = (page-1) * limit
+    offset = (page - 1) * limit
 
     filtered_records = session.query(Respondent).filter(and_(*conditions))
 
@@ -199,7 +226,6 @@ def update_respondent_details(respondent_data, respondent_id, session):
 
     if respondent_details.first_name != respondent_data['firstName'] or respondent_details.last_name != \
             respondent_data['lastName'] or respondent_details.telephone != respondent_data['telephone']:
-
         session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update({
             Respondent.first_name: respondent_data['firstName'],
             Respondent.last_name: respondent_data['lastName'],
@@ -222,10 +248,10 @@ def search_businesses(search_query, page, limit, session):
     bound_logger.info('Searching businesses by name with search query')
     if len(search_query) == 11 and search_query.isdigit():
         bound_logger.info("Query looks like an ru_ref, searching only on ru_ref")
-        result = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
+        result = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref) \
             .join(Business).filter(Business.business_ref == search_query).distinct().all()
         if result:
-            return result, len(result)      # ru ref searches do not need to support pagination
+            return result, len(result)  # ru ref searches do not need to support pagination
         bound_logger.info("Didn't find an ru_ref, searching everything")
 
     filters = []
@@ -244,12 +270,12 @@ def search_businesses(search_query, page, limit, session):
     filters.append(and_(*trading_as_filters))
 
     bound_logger.unbind('search_query')
-    query = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)\
-        .join(Business)\
-        .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None)))\
-        .distinct().order_by(BusinessAttributes.name)          # Build the query
+    query = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref) \
+        .join(Business) \
+        .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None))) \
+        .distinct().order_by(BusinessAttributes.name)  # Build the query
 
-    results = query.limit(limit).offset((page-1)*limit).all()  # Execute the query
+    results = query.limit(limit).offset((page - 1) * limit).all()  # Execute the query
     if page == 1 and len(results) < limit:
         total_business_count = len(results)
     else:
