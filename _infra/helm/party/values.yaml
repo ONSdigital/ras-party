@@ -60,6 +60,9 @@ email:
     notifyRequestPasswordChangeTemplate: c45c59ff-7771-4de4-a66b-ce50b108390a
     notifyVerifyAccountEmailChangeTemplate: 4f128de3-4183-420e-84fd-d6c31594edd5
     notifyConfirmAccountEmailChangeTemplate: 1e085049-cfa3-45a0-9c8f-6863ab4d569d
+    notifyShareSurveyAccessNewAccountTemplate: 91c2f433-8dca-4f4e-93b2-6721deeb0829
+    notifyShareSurveyAccessExistingAccountTemplate: 2b764ea1-0ad0-4240-b417-090067a252cf
+    notifyShareSurveyAccessCancellationTemplate: 1553fb20-bb93-4577-a4c4-99e0b0744252
   callback:
     protocol: http
     host: localhost

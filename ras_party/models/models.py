@@ -382,3 +382,14 @@ class PendingShares(Base):
                              ['respondent.party_uuid']),
         UniqueConstraint('email_address', 'business_id', 'survey_id', name='u_constraint'),
     )
+
+    def to_share_dict(self):
+        d = {
+            'email_address': self.email_address,
+            'business_id': self.business_id,
+            'survey_id': self.survey_id,
+            'shared_by': self.shared_by,
+            'batch_no': self.batch_no
+        }
+
+        return filter_falsey_values(d)
