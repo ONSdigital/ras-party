@@ -1,4 +1,5 @@
 import uuid
+from unittest.mock import MagicMock, patch
 
 from ras_party.controllers import account_controller
 from ras_party.controllers.queries import query_business_by_party_uuid, query_respondent_by_party_uuid, \
@@ -8,7 +9,7 @@ from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from test.mocks import MockRequests
 from test.party_client import PartyTestClient
-from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID
+from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID, DEFAULT_RESPONDENT_UUID
 from test.test_data.mock_business import MockBusiness
 from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDisabled, MockEnrolmentPending
 from test.test_data.mock_respondent import MockRespondent, MockRespondentWithIdActive, MockRespondentWithId
@@ -29,6 +30,8 @@ class TestShareSurvey(PartyTestClient):
         self.mock_enrolment_pending = MockEnrolmentPending().attributes().as_enrolment()
         self.mock_pending_share = MockPendingShares().attributes().as_pending_shares()
         self.pending_share = None
+        self.mock_notify = MagicMock()
+        account_controller.NotifyGateway = MagicMock(return_value=self.mock_notify)
 
     @with_db_session
     def populate_pending_share(self, session, pending_share=None):
@@ -211,12 +214,15 @@ class TestShareSurvey(PartyTestClient):
                 "shared_by": self.mock_respondent_with_id['id']
             }]
         }
-        response = self.post_share_surveys(payload)
-        # Then
-        self.assertEqual(response, {'created': 'success'})
-        self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
-        self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID,
-                                                          'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef99'))
+        with patch('ras_party.views.share_survey_view.send_pending_share_email') as pending_share_email:
+            response = self.post_share_surveys(payload)
+            # Then
+            self.assertEqual(response, {'created': 'success'})
+            self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
+            self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID,
+                                                              'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef99'))
+            pending_share_email.assert_called()
+            pending_share_email.assert_called_once()
 
     def test_post_pending_shares_fail_invalid_payload(self):
         # Given
@@ -285,8 +291,10 @@ class TestShareSurvey(PartyTestClient):
                                                respondent_id=self.mock_respondent_with_id['id'])  # NOQA
         self.populate_pending_share()
         self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
-        # When
-        response = self.delete_share_surveys()
+        with patch('ras_party.views.batch_request.send_pending_share_email') as pending_share_email:
+            self.delete_share_surveys()
+            pending_share_email.assert_called()
+            pending_share_email.assert_called_once()
 
 
 class MockPendingShares:
@@ -294,7 +302,8 @@ class MockPendingShares:
         self._attributes = {
             'email_address': 'test@test.com',
             'business_id': DEFAULT_BUSINESS_UUID,
-            'survey_id': DEFAULT_SURVEY_UUID
+            'survey_id': DEFAULT_SURVEY_UUID,
+            'shared_by': DEFAULT_RESPONDENT_UUID
         }
 
     def attributes(self, **kwargs):

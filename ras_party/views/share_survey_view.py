@@ -84,7 +84,7 @@ def post_pending_shares():
                 raise BadRequest(v.errors)
         respondent = get_respondent_by_id(pending_shares[0]['shared_by'])
         try:
-            existing_account = get_respondent_by_email(pending_shares[0]['email_address'])
+            get_respondent_by_email(pending_shares[0]['email_address'])
             email_template = 'share_survey_access_existing_account'
         except NotFound:
             email_template = 'share_survey_access_new_account'
@@ -99,12 +99,12 @@ def post_pending_shares():
                                                          email_address=pending_share['email_address'],
                                                          shared_by=pending_share['shared_by'],
                                                          batch_number=batch_number)
-        # Add logic to send email
+        # logic to send email
         verification_url = PublicWebsite().share_survey(batch_number)
         personalisation = {'CONFIRM_EMAIL_URL': verification_url,
                            'ORIGINATOR_EMAIL_ADDRESS': respondent['emailAddress'],
                            'BUSINESSES': business_list}
-        _send_pending_share_email(personalisation, email_template, pending_shares[0]['email_address'], batch_number)
+        send_pending_share_email(personalisation, email_template, pending_shares[0]['email_address'], batch_number)
         return make_response(jsonify({"created": "success"}), 201)
     except KeyError:
         raise BadRequest('Payload Invalid - Pending share key missing')
@@ -113,9 +113,13 @@ def post_pending_shares():
         raise BadRequest('This share is already in progress')
 
 
-def _send_pending_share_email(personalisation, template, email, batch_id):
+def send_pending_share_email(personalisation: dict, template: str, email: str, batch_id):
     """
     Send an email for sharing surveys
+    :param personalisation dict of personalisation
+    :param template str template name
+    :param email str email id
+    :param batch_id uuid batch_id
     """
     try:
         logger.info('sending email for survey share', batch_id=str(batch_id))
