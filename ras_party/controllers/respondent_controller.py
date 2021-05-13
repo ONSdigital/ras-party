@@ -137,7 +137,7 @@ def delete_respondent_by_email(email, session):
 
 
 @with_query_only_db_session
-def get_respondent_by_email(email, session):
+def get_respondent_by_email(email: str, session):
     """
     Get a verified respondent by its email address.
     Returns either the unique respondent identified by the supplied email address, or otherwise raises
