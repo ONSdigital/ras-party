@@ -9,7 +9,7 @@ from werkzeug.exceptions import InternalServerError
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
-def generate_email_token(email):
+def generate_email_token(email: str):
     """Creates a token based on a provided email address
 
     :param email: email address of the respondent
