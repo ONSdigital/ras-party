@@ -111,12 +111,11 @@ def delete_respondents_marked_for_deletion(session):
 
 
 @with_db_session
-def delete_respondent_by_email(email, session):
+def delete_respondent_by_email(email: str, session):
     """
     Delete a Respondent by its email
 
     :param email: Id of Respondent to delete
-    :type email: str
     :return: On success it returns None, on failure will raise one of many different exceptions
     """
     logger.info("Starting to delete respondent", email=obfuscate_email(email))

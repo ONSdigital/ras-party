@@ -17,12 +17,11 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 @with_query_only_db_session
-def get_business_by_ref(ref, session):
+def get_business_by_ref(ref: str, session):
     """
     Get a Business by its unique business reference
 
     :param ref: Reference of the Business to return
-    :type ref: str
     :returns: A business object containing the data for the business
     :rtype: Business
     """
@@ -92,12 +91,11 @@ def get_business_attributes(business_id, session, collection_exercise_ids=None):
 
 
 @with_query_only_db_session
-def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_id=None):
+def get_business_by_id(party_uuid: str, session, verbose=False, collection_exercise_id=None):
     """
     Get a Business by its Party ID
 
     :param party_uuid: ID of Party to return
-    :type party_uuid: str
     :param verbose: Verbosity of business details
     :param collection_exercise_id: ID of Collection Exercise version of party
     :type collection_exercise_id: str
