@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 import structlog
 from flask import Blueprint, request, make_response, jsonify, current_app
@@ -7,7 +8,11 @@ from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers import share_survey_controller
 from ras_party.controllers.business_controller import get_business_by_id
+from ras_party.controllers.notify_gateway import NotifyGateway
+from ras_party.controllers.respondent_controller import get_respondent_by_id, get_respondent_by_email
 from ras_party.controllers.validate import Validator, Exists
+from ras_party.exceptions import RasNotifyError
+from ras_party.support.public_website import PublicWebsite
 from ras_party.views.account_view import auth
 
 share_survey_view = Blueprint('share_survey_view', __name__)
@@ -67,6 +72,7 @@ def post_pending_shares():
     payload = request.get_json() or {}
     try:
         pending_shares = payload['pending_shares']
+        business_list = []
         if len(pending_shares) == 0:
             raise BadRequest('Payload Invalid - pending_shares list is empty')
         for share in pending_shares:
@@ -76,15 +82,51 @@ def post_pending_shares():
             if not v.validate(share):
                 logger.debug(v.errors)
                 raise BadRequest(v.errors)
+        respondent = get_respondent_by_id(pending_shares[0]['shared_by'])
+        try:
+            get_respondent_by_email(pending_shares[0]['email_address'])
+            email_template = 'share_survey_access_existing_account'
+        except NotFound:
+            email_template = 'share_survey_access_new_account'
+        if not respondent:
+            raise BadRequest('Originator unknown')
+        batch_number = uuid.uuid4()
         for pending_share in pending_shares:
+            business = get_business_by_id(pending_share['business_id'])
+            business_list.append(business['name'])
             share_survey_controller.pending_share_create(business_id=pending_share['business_id'],
                                                          survey_id=pending_share['survey_id'],
                                                          email_address=pending_share['email_address'],
-                                                         shared_by=pending_share['shared_by'])
-            # TODO: Add logic to send email
+                                                         shared_by=pending_share['shared_by'],
+                                                         batch_number=batch_number)
+        # logic to send email
+        verification_url = PublicWebsite().share_survey(batch_number)
+        personalisation = {'CONFIRM_EMAIL_URL': verification_url,
+                           'ORIGINATOR_EMAIL_ADDRESS': respondent['emailAddress'],
+                           'BUSINESSES': business_list}
+        send_pending_share_email(personalisation, email_template, pending_shares[0]['email_address'], batch_number)
         return make_response(jsonify({"created": "success"}), 201)
     except KeyError:
         raise BadRequest('Payload Invalid - Pending share key missing')
 
     except SQLAlchemyError:
         raise BadRequest('This share is already in progress')
+
+
+def send_pending_share_email(personalisation: dict, template: str, email: str, batch_id):
+    """
+    Send an email for sharing surveys
+    :param personalisation dict of personalisation
+    :param template str template name
+    :param email str email id
+    :param batch_id uuid batch_id
+    """
+    try:
+        logger.info('sending email for survey share', batch_id=str(batch_id))
+        NotifyGateway(current_app.config).request_to_notify(email=email,
+                                                            template_name=template,
+                                                            personalisation=personalisation)
+        logger.info('email for survey share sent', batch_id=str(batch_id))
+    except RasNotifyError:
+        # Note: intentionally suppresses exception
+        logger.error('Error sending sending email for survey share', batch_id=str(batch_id))

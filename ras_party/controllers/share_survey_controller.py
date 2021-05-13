@@ -36,7 +36,7 @@ def get_users_enrolled_and_pending_share_against_business_and_survey(business_id
 
 
 @with_db_session
-def pending_share_create(business_id, survey_id, email_address, shared_by, session):
+def pending_share_create(business_id, survey_id, email_address, shared_by, batch_number, session):
     """
     creates a new record for pending share
     Returns void
@@ -49,10 +49,12 @@ def pending_share_create(business_id, survey_id, email_address, shared_by, sessi
     :param shared_by: respondent_party_uuid
     :type shared_by: uuid
     :param session: db session
+    :param batch_number: batch_number
+    :type batch_number: uuid
     :rtype: void
     """
     pending_share = PendingShares(business_id=business_id, survey_id=survey_id, email_address=email_address,
-                                  shared_by=shared_by)
+                                  shared_by=shared_by, batch_no=batch_number)
     session.add(pending_share)
 
 
@@ -66,3 +68,16 @@ def delete_pending_shares(session):
     pending_shares = session.query(PendingShares).filter(PendingShares.time_shared < _expired_hrs)
     pending_shares.delete()
     logger.info('Deletion complete')
+
+
+@with_db_session
+def get_unique_pending_shares(session):
+    """
+    Gets unique pending shares which has passed expiration duration based on batch_id
+    :param session A db session
+    """
+    _expired_hrs = datetime.utcnow() - timedelta(seconds=float(current_app.config["EMAIL_TOKEN_EXPIRY"]))
+    pending_shares_ready_for_deletion = session.query(PendingShares).filter(PendingShares.time_shared < _expired_hrs)\
+        .distinct(PendingShares.batch_no)
+    unique_batch_record = pending_shares_ready_for_deletion.distinct(PendingShares.batch_no)
+    return [unique_batch_record.to_share_dict() for unique_batch_record in unique_batch_record]

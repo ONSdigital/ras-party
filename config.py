@@ -46,10 +46,20 @@ class Config(object):
     NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = os.getenv('NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE',
                                                         'confirm_password_change_id')
     NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE_TEMPLATE = os.getenv('NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE_TEMPLATE',
-                                                   'verify_account_email_change')
+                                                            'verify_account_email_change')
     NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE_TEMPLATE = os.getenv('NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE_TEMPLATE',
-                                                    'confirm_account_email_change')
+                                                             'confirm_account_email_change')
     NOTIFY_ACCOUNT_LOCKED_TEMPLATE = os.getenv('NOTIFY_ACCOUNT_LOCKED_TEMPLATE', 'account_locked_id')
+
+    SHARE_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE = os.getenv('SHARE_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE',
+                                                         'share_survey_access_new_account')
+
+    SHARE_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE = os.getenv('SHARE_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE',
+                                                              'share_survey_access_existing_account')
+
+    SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE = os.getenv('SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE',
+                                                          'share_survey_access_cancellation')
+
     SEND_EMAIL_TO_GOV_NOTIFY = _is_true(os.getenv('SEND_EMAIL_TO_GOV_NOTIFY', True))
 
 

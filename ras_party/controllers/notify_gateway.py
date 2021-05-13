@@ -22,6 +22,9 @@ class NotifyGateway:
         self.notify_account_locked = config['NOTIFY_ACCOUNT_LOCKED_TEMPLATE']
         self.verify_account_email_change = config['NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE_TEMPLATE']
         self.confirm_account_email_change = config['NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE_TEMPLATE']
+        self.share_survey_access_new_account = config['SHARE_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE']
+        self.share_survey_access_existing_account = config['SHARE_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE']
+        self.share_survey_access_cancellation = config['SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE']
         self.project_id = self.config['GOOGLE_CLOUD_PROJECT']
         self.topic_id = self.config['PUBSUB_TOPIC']
         self.publisher = None
@@ -99,7 +102,10 @@ class NotifyGateway:
                      'request_password_change': self.request_password_change_template,
                      'email_verification': self.email_verification_template,
                      'verify_account_email_change': self.verify_account_email_change,
-                     'confirm_change_to_account_email': self.confirm_account_email_change}
+                     'confirm_change_to_account_email': self.confirm_account_email_change,
+                     'share_survey_access_new_account': self.share_survey_access_new_account,
+                     'share_survey_access_existing_account': self.share_survey_access_existing_account,
+                     'share_survey_access_cancellation': self.share_survey_access_cancellation}
         if template_name in templates:
             return templates[template_name]
         else:

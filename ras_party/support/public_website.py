@@ -17,6 +17,14 @@ class PublicWebsite:
     def confirm_account_email_change_url(self, email):
         return f'{self.website_uri}/my-account/confirm-account-email-change/{self._generate_token(email)}'
 
+    def share_survey(self, batch_number):
+        return f'{self.website_uri}/my-account/' \
+               f'share-surveys/accept-share-surveys/{self._generate_token(str(batch_number))}'
+
+    def resend_share_survey(self, batch_number):
+        return f'{self.website_uri}/my-account/' \
+               f'share-surveys/resend-share-surveys/{self._generate_token(str(batch_number))}'
+
     @staticmethod
     def _generate_token(email):
         return generate_email_token(email)

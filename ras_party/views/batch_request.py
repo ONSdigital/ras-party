@@ -5,6 +5,10 @@ from flask import Blueprint, current_app, make_response, request
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.exceptions import abort
 from ras_party.controllers import respondent_controller, share_survey_controller
+from ras_party.controllers.respondent_controller import get_respondent_by_id
+from ras_party.controllers.share_survey_controller import get_unique_pending_shares
+from ras_party.support.public_website import PublicWebsite
+from ras_party.views.share_survey_view import send_pending_share_email
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 batch_request = Blueprint('batch_request', __name__)
@@ -93,5 +97,28 @@ def delete_pending_surveys_deletion():
     Endpoint Exposed for Kubernetes Cronjob to delete expired pending surveys
     """
     logger.info('Attempting to delete expired pending shares')
+    unique_pending_share_to_be_emailed = get_unique_pending_shares()
     share_survey_controller.delete_pending_shares()
+    if len(unique_pending_share_to_be_emailed) > 0:
+        logger.info('number of cancellation emails to be sent', count=len(unique_pending_share_to_be_emailed))
+        send_share_survey_cancellation_emails(unique_pending_share_to_be_emailed)
     return '', 204
+
+
+def send_share_survey_cancellation_emails(unique_pending_share_to_be_emailed: list):
+    """
+    sends pending share survey cancellation email
+    :param unique_pending_share_to_be_emailed list of unique pending share record
+    """
+    logger.info('sending share survey cancellation emails')
+    for data in unique_pending_share_to_be_emailed:
+        respondent = get_respondent_by_id(str(data['shared_by']))
+        logger.info('sending share survey cancellation email', respondent=str(respondent['id']))
+        verification_url = PublicWebsite().resend_share_survey(data['batch_no'])
+        personalisation = {'RESEND_EMAIL_URL': verification_url,
+                           'COLLEAGUE_EMAIL_ADDRESS': data['email_address'],
+                           'NAME': respondent['firstName']}
+        send_pending_share_email(personalisation, 'share_survey_access_cancellation', respondent['emailAddress'],
+                                 data['batch_no'])
+        logger.info('share survey cancellation email send successfully', respondent=str(respondent['id']))
+    logger.info('share survey cancellation emails send successfully')

@@ -188,6 +188,12 @@ spec:
             value: "{{ .Values.email.templates.notifyVerifyAccountEmailChangeTemplate }}"
           - name: NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE_TEMPLATE
             value: "{{ .Values.email.templates.notifyConfirmAccountEmailChangeTemplate }}"
+          - name: SHARE_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE
+            value: "{{ .Values.email.templates.notifyShareSurveyAccessNewAccountTemplate }}"
+          - name: SHARE_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE
+            value: "{{ .Values.email.templates.notifyShareSurveyAccessExistingAccountTemplate }}"
+          - name: SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE
+            value: "{{ .Values.email.templates.notifyShareSurveyAccessCancellationTemplate }}"
           - name: NOTIFY_ACCOUNT_LOCKED_TEMPLATE
             value: {{ .Values.email.templates.notifyAccountLockedTemplate }}
           - name: SECURITY_USER_NAME
