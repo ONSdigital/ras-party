@@ -452,7 +452,7 @@ def resend_password_email_expired_token(token, session):
 
 
 @with_db_session
-def notify_change_account_status(payload, party_id, session):
+def notify_change_account_status(payload, party_id: str, session):
     status = payload['status_change']
 
     respondent = query_respondent_by_party_uuid(party_id, session)
