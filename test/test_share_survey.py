@@ -7,12 +7,15 @@ from ras_party.controllers.queries import query_business_by_party_uuid, query_re
 from ras_party.models.models import Enrolment, PendingShares, BusinessRespondent, RespondentStatus, Respondent
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
+from ras_party.support.util import partition_dict
+from ras_party.support.verification import generate_email_token
 from test.mocks import MockRequests
 from test.party_client import PartyTestClient
 from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID, DEFAULT_RESPONDENT_UUID
 from test.test_data.mock_business import MockBusiness
 from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDisabled, MockEnrolmentPending
-from test.test_data.mock_respondent import MockRespondent, MockRespondentWithIdActive, MockRespondentWithId
+from test.test_data.mock_respondent import MockRespondent, MockRespondentWithIdActive, MockRespondentWithId, \
+    MockNewRespondentWithId
 
 
 class TestShareSurvey(PartyTestClient):
@@ -23,6 +26,7 @@ class TestShareSurvey(PartyTestClient):
         Requests._lib = self.mock_requests
         self.mock_respondent = MockRespondent().attributes().as_respondent()
         self.mock_respondent_with_id = MockRespondentWithId().attributes().as_respondent()
+        self.mock_respondent_test_with_id = MockNewRespondentWithId().attributes().as_respondent()
         self.mock_respondent_with_id_active = MockRespondentWithIdActive().attributes().as_respondent()
         self.respondent = None
         self.mock_enrolment_enabled = MockEnrolmentEnabled().attributes().as_enrolment()
@@ -84,7 +88,7 @@ class TestShareSurvey(PartyTestClient):
     @with_db_session
     def is_pending_survey_registered(self, business_id, survey_id, session):
         pending_survey = query_pending_shares_by_business_and_survey(business_id, survey_id, session)
-        return True if pending_survey else False
+        return True if pending_survey.count() != 0 else False
 
     def _make_business_attributes_active(self, mock_business):
         sample_id = mock_business['sampleSummaryId']
@@ -296,6 +300,58 @@ class TestShareSurvey(PartyTestClient):
             pending_share_email.assert_called()
             pending_share_email.assert_called_once()
 
+    def test_share_survey_verification_token_success(self):
+        # Given
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(business_id=mock_business['id'],
+                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.populate_pending_share()
+        self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
+        response = self.verify_share_surveys(generate_email_token(str(self.mock_pending_share['batch_no'])))
+        self.assertEqual(response[0]['batch_no'], str(self.mock_pending_share['batch_no']))
+
+    def test_share_survey_verification_token_fail(self):
+        # Given
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(business_id=mock_business['id'],
+                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        response = self.verify_share_surveys(generate_email_token(str(self.mock_pending_share['batch_no'])), 404)
+
+    def test_accept_share_survey_verification_success(self):
+        # Given
+        self.populate_with_respondent(respondent=self.mock_respondent_test_with_id)
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(business_id=mock_business['id'],
+                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.populate_pending_share()
+        self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
+        self.confirm_share_survey(self.mock_pending_share['batch_no'])
+        self.assertFalse(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
+
+    def test_accept_share_survey_verification_fail(self):
+        # Given
+        self.populate_with_respondent(respondent=self.mock_respondent_test_with_id)
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(business_id=mock_business['id'],
+                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.confirm_share_survey(self.mock_pending_share['batch_no'], 404)
+
 
 class MockPendingShares:
     def __init__(self):
@@ -303,7 +359,8 @@ class MockPendingShares:
             'email_address': 'test@test.com',
             'business_id': DEFAULT_BUSINESS_UUID,
             'survey_id': DEFAULT_SURVEY_UUID,
-            'shared_by': DEFAULT_RESPONDENT_UUID
+            'shared_by': DEFAULT_RESPONDENT_UUID,
+            'batch_no': uuid.uuid1()
         }
 
     def attributes(self, **kwargs):

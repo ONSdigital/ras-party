@@ -10,6 +10,7 @@ from ras_party.controllers import share_survey_controller
 from ras_party.controllers.business_controller import get_business_by_id
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.respondent_controller import get_respondent_by_id, get_respondent_by_email
+from ras_party.controllers.share_survey_controller import accept_share_survey
 from ras_party.controllers.validate import Validator, Exists
 from ras_party.exceptions import RasNotifyError
 from ras_party.support.public_website import PublicWebsite
@@ -130,3 +131,24 @@ def send_pending_share_email(personalisation: dict, template: str, email: str, b
     except RasNotifyError:
         # Note: intentionally suppresses exception
         logger.error('Error sending sending email for survey share', batch_id=str(batch_id))
+
+
+@share_survey_view.route('/share-survey/verification/<token>', methods=['GET'])
+def share_survey_verification(token):
+    """
+    Verifies share survey verification email
+    :param token
+    :return json
+    """
+    response = share_survey_controller.validate_share_survey_token(token)
+    return make_response(jsonify(response), 200)
+
+
+@share_survey_view.route('/share-survey/confirm-pending-shares/<batch_no>', methods=['POST'])
+def confirm_pending_shares(batch_no):
+    """
+    Confirms pending share survey
+    :param batch_no
+    """
+    accept_share_survey(batch_no)
+    return make_response(jsonify(), 201)
