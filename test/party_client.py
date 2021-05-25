@@ -378,4 +378,4 @@ class PartyTestClient(TestCase):
         self.app.config['EMAIL_TOKEN_EXPIRY'] = 36000
         response = self.client.post(f'/party-api/v1/share-survey/confirm-pending-shares/{batch_no}',
                                     headers=self.auth_headers)
-        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        self.assertStatus(response, expected_status, response.json)

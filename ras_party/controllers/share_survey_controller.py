@@ -155,13 +155,10 @@ def accept_share_survey(batch_no, session):
 
             except SQLAlchemyError as e:
                 logger.exception('Unable to confirm pending share survey', batch_no=batch_no)
-                session.rollback()
-                raise  # re raise the exception aimed at the generic handler
         else:
             logger.info('Ignoring respondent as already enrolled', business_id=business_id, survey_id=survey_id,
                         email=share_surveys_list[0]['email_address'])
         delete_share_survey_by_batch_no(batch_no, session)
-        session.commit()
 
 
 def is_already_enrolled(survey_id, respondent_pk, business_id, session):

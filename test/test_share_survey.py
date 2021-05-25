@@ -7,7 +7,6 @@ from ras_party.controllers.queries import query_business_by_party_uuid, query_re
 from ras_party.models.models import Enrolment, PendingShares, BusinessRespondent, RespondentStatus, Respondent
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
-from ras_party.support.util import partition_dict
 from ras_party.support.verification import generate_email_token
 from test.mocks import MockRequests
 from test.party_client import PartyTestClient
