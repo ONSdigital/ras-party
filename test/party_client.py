@@ -366,3 +366,16 @@ class PartyTestClient(TestCase):
     def delete_share_surveys(self, expected_status=204):
         response = self.client.delete(f'/party-api/v1/batch/pending-shares', headers=self.auth_headers)
         self.assertStatus(response, expected_status)
+
+    def verify_share_surveys(self, token, expected_status=200):
+        self.app.config['EMAIL_TOKEN_EXPIRY'] = 36000
+        response = self.client.get(f'/party-api/v1/share-survey/verification/{token}',
+                                   headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def confirm_share_survey(self, batch_no, expected_status=201):
+        self.app.config['EMAIL_TOKEN_EXPIRY'] = 36000
+        response = self.client.post(f'/party-api/v1/share-survey/confirm-pending-shares/{batch_no}',
+                                    headers=self.auth_headers)
+        self.assertStatus(response, expected_status, response.json)

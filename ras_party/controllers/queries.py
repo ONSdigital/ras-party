@@ -285,6 +285,28 @@ def search_businesses(search_query, page, limit, session):
     return results, total_business_count
 
 
+def query_share_survey_by_batch_no(batch_no, session):
+    """
+     Query to return share survey by batch no.
+     :param batch_no: UUID
+     :return: share surveys
+    """
+    logger.info('Querying share_surveys', batch_no=batch_no)
+    response = session.query(PendingShares).filter(PendingShares.batch_no == batch_no).all()
+    return response
+
+
+def delete_share_survey_by_batch_no(batch_no, session):
+    """
+     Query to delete existing share survey by batch no.
+     :param batch_no: UUID
+     :return: share surveys
+    """
+    logger.info('Querying share_surveys', batch_no=batch_no)
+    response = session.query(PendingShares).filter(PendingShares.batch_no == batch_no).delete()
+    return response
+
+
 def query_enrolment_by_survey_business_respondent(respondent_id, business_id, survey_id, session):
     """
     Query to return enrolment based on respondent id, business id and survey
