@@ -55,6 +55,33 @@ class MockRespondentWithId:
         return props
 
 
+class MockNewRespondentWithId:
+    def __init__(self):
+        self._attributes = {
+            'id': '438df968-7c9c-4cd4-a89b-ac88cf0bfdf3',
+            'sampleUnitType': 'BI',
+            'firstName': 'A',
+            'lastName': 'Z',
+            'emailAddress': 'test@test.com',
+            'telephone': '123',
+            'mark_for_deletion': False,
+            'enrolment_code': 'fb747cq725lj',
+            'password': 'banana'
+        }
+
+    def attributes(self, **kwargs):
+        self._attributes.update(kwargs)
+        return self
+
+    def as_respondent(self):
+        return self._attributes
+
+    def as_party(self):
+        props, attrs = partition_dict(self._attributes, ['id', 'sampleUnitType'])
+        props['attributes'] = attrs
+        return props
+
+
 class MockRespondentWithIdSuspended:
     def __init__(self):
         self._attributes = {
