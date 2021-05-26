@@ -351,6 +351,56 @@ class TestShareSurvey(PartyTestClient):
                                                respondent_id=self.mock_respondent_with_id['id'])  # NOQA
         self.confirm_share_survey(self.mock_pending_share['batch_no'], 404)
 
+    def test_post_share_survey_respondent_success(self):
+        # Given
+        self.populate_with_respondent(respondent=self.mock_respondent_test_with_id)
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(business_id=mock_business['id'],
+                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.populate_pending_share()
+        self.get_pending_share_with_batch_no(self.mock_pending_share['batch_no'])
+        payload = {
+            'emailAddress': 'testing@test.com',
+            'firstName': 'Test',
+            'lastName': 'Test',
+            'password': 'Something',
+            'telephone': '076843676789',
+            'batch_no': str(self.mock_pending_share['batch_no'])
+        }
+        self.post_share_survey_respondent(payload=payload)
+        self.get_respondent_by_email(payload={'email': 'testing@test.com'})
+        self.get_pending_share_with_batch_no(self.mock_pending_share['batch_no'],
+                                             expected_status=404,
+                                             expected_quantity=0)
+
+    def test_post_share_survey_respondent_fail(self):
+        # Given
+        self.populate_with_respondent(respondent=self.mock_respondent_test_with_id)
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
+        mock_business = MockBusiness().as_business()
+        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(business_id=mock_business['id'],
+                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.populate_pending_share()
+        self.get_pending_share_with_batch_no(self.mock_pending_share['batch_no'])
+        payload = {
+            'emailAddress': 'testing@test.com',
+            'firstName': 'Test',
+            'lastName': 'Test',
+            'telephone': '076843676789',
+            'batch_no': str(self.mock_pending_share['batch_no'])
+        }
+        self.post_share_survey_respondent(payload=payload, expected_status=400)
+        self.get_pending_share_with_batch_no(self.mock_pending_share['batch_no'],
+                                             expected_status=200,
+                                             expected_quantity=1)
+
 
 class MockPendingShares:
     def __init__(self):

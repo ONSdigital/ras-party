@@ -10,7 +10,7 @@ from ras_party.controllers import share_survey_controller
 from ras_party.controllers.business_controller import get_business_by_id
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.respondent_controller import get_respondent_by_id, get_respondent_by_email
-from ras_party.controllers.share_survey_controller import accept_share_survey
+from ras_party.controllers.share_survey_controller import get_share_survey_by_batch_number, confirm_share_survey
 from ras_party.controllers.validate import Validator, Exists
 from ras_party.exceptions import RasNotifyError
 from ras_party.support.public_website import PublicWebsite
@@ -150,5 +150,15 @@ def confirm_pending_shares(batch_no):
     Confirms pending share survey
     :param batch_no
     """
-    accept_share_survey(batch_no)
+    confirm_share_survey(batch_no)
     return make_response(jsonify(), 201)
+
+
+@share_survey_view.route('/share-survey/<batch_no>', methods=['GET'])
+def get_pending_share_with_batch_no(batch_no):
+    """
+    Confirms pending share survey
+    :param batch_no
+    """
+    response = get_share_survey_by_batch_number(batch_no)
+    return make_response(jsonify(response), 200)
