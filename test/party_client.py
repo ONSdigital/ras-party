@@ -10,8 +10,8 @@ from ras_party.models.models import Business, Respondent, BusinessRespondent, En
 from ras_party.support.session_decorator import with_db_session
 from run import create_app, create_database
 from test.fixtures import party_schema
-from test.test_data.mock_business import MockBusiness
 from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID
+from test.test_data.mock_business import MockBusiness
 
 
 @with_db_session
@@ -379,3 +379,16 @@ class PartyTestClient(TestCase):
         response = self.client.post(f'/party-api/v1/share-survey/confirm-pending-shares/{batch_no}',
                                     headers=self.auth_headers)
         self.assertStatus(response, expected_status, response.json)
+
+    def post_share_survey_respondent(self, payload, expected_status=201):
+        response = self.client.post(f'/party-api/v1/share-survey-respondent',
+                                    json=payload,
+                                    headers=self.auth_headers)
+        self.assertStatus(response, expected_status, response.json)
+
+    def get_pending_share_with_batch_no(self, batch_no, expected_status=200, expected_quantity=1):
+        response = self.client.get(f'/party-api/v1/share-survey/{batch_no}',
+                                   headers=self.auth_headers)
+        self.assertStatus(response, expected_status)
+        if expected_quantity != 0:
+            self.assertEqual(len(response.json), expected_quantity)
