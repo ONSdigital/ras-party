@@ -96,8 +96,7 @@ def get_unique_pending_shares(session):
     return [unique_batch_record.to_share_dict() for unique_batch_record in unique_batch_record]
 
 
-@with_db_session
-def validate_share_survey_token(token, session):
+def validate_share_survey_token(token):
     """
     Validates the share survey token and returns the pending shares against the batch number
     :param: token
@@ -114,7 +113,7 @@ def validate_share_survey_token(token, session):
     except (BadSignature, BadData):
         logger.exception("Bad token in validate_share_survey_token")
         raise NotFound("Unknown batch number in token")
-    return _get_share_survey_by_batch_number(batch_no, session)
+    return get_share_survey_by_batch_number(batch_no)
 
 
 @with_db_session
@@ -190,7 +189,8 @@ def is_already_enrolled(survey_id, respondent_pk, business_id, session):
     return False if not enrolment else True
 
 
-def _get_share_survey_by_batch_number(batch_number, session):
+@with_db_session
+def get_share_survey_by_batch_number(batch_number, session):
     """
     gets list of share surveys against the batch number
     :param batch_number: share survey batch number
@@ -204,20 +204,6 @@ def _get_share_survey_by_batch_number(batch_number, session):
     if len(share_surveys) == 0:
         raise NotFound('Batch number does not exist')
     return [share_survey.to_share_dict() for share_survey in share_surveys]
-
-
-@with_db_session
-def get_share_survey_by_batch_number(batch_number, session):
-    """
-        gets list of share surveys against the batch number  with new db session
-        :param batch_number: share survey batch number
-        :type batch_number: uuid
-        :param session: db session
-        :type session: db session
-        :return: list of pending share surveys
-        :rtype: list
-    """
-    return _get_share_survey_by_batch_number(batch_number, session)
 
 
 # flake8: noqa: C901
