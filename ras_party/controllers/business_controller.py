@@ -5,12 +5,20 @@ import structlog
 from flask import current_app
 from werkzeug.exceptions import BadRequest, NotFound
 
-from ras_party.controllers.queries import query_business_by_ref, query_business_by_party_uuid, \
-    query_businesses_by_party_uuids, search_businesses, query_business_attributes, \
-    query_business_attributes_by_collection_exercise
+from ras_party.controllers.queries import (
+    query_business_by_ref,
+    query_business_by_party_uuid,
+    query_businesses_by_party_uuids,
+    search_businesses,
+    query_business_attributes,
+    query_business_attributes_by_collection_exercise,
+)
 from ras_party.controllers.validate import Validator, Exists
 from ras_party.models.models import Business, BusinessAttributes
-from ras_party.support.session_decorator import with_db_session, with_query_only_db_session
+from ras_party.support.session_decorator import (
+    with_db_session,
+    with_query_only_db_session,
+)
 
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -49,7 +57,9 @@ def get_businesses_by_ids(party_uuids, session):
             uuid.UUID(party_uuid)
         except ValueError:
             logger.info("Invalid party uuid value", party_uuid=party_uuid)
-            raise BadRequest(f"'{party_uuid}' is not a valid UUID format for property 'id'")
+            raise BadRequest(
+                f"'{party_uuid}' is not a valid UUID format for property 'id'"
+            )
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
     return [business.to_business_summary_dict() for business in businesses]
@@ -74,21 +84,33 @@ def get_business_attributes(business_id, session, collection_exercise_ids=None):
         uuid.UUID(business_id)
     except ValueError:
         logger.warning("Invalid party uuid value", business_id=business_id)
-        raise BadRequest(f"'{business_id}' is not a valid UUID format for property 'id'")
+        raise BadRequest(
+            f"'{business_id}' is not a valid UUID format for property 'id'"
+        )
 
     if collection_exercise_ids:
         for collection_exercise_id in collection_exercise_ids:
             try:
                 uuid.UUID(collection_exercise_id)
             except ValueError:
-                logger.warning("Invalid collection exercise uuid value", collection_exercise_id=collection_exercise_id)
-                raise BadRequest(f"'{collection_exercise_id}' is not a valid UUID format for property 'id'")
-        attributes = query_business_attributes_by_collection_exercise(business_id, collection_exercise_ids, session)
+                logger.warning(
+                    "Invalid collection exercise uuid value",
+                    collection_exercise_id=collection_exercise_id,
+                )
+                raise BadRequest(
+                    f"'{collection_exercise_id}' is not a valid UUID format for property 'id'"
+                )
+        attributes = query_business_attributes_by_collection_exercise(
+            business_id, collection_exercise_ids, session
+        )
     else:
         attributes = query_business_attributes(business_id, session)
 
-    return {attribute.collection_exercise: attribute.to_dict()
-            for attribute in attributes if attribute.collection_exercise}
+    return {
+        attribute.collection_exercise: attribute.to_dict()
+        for attribute in attributes
+        if attribute.collection_exercise
+    }
 
 
 @with_query_only_db_session
@@ -120,7 +142,9 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
     if verbose:
         return business.to_business_dict(collection_exercise_id=collection_exercise_id)
 
-    return business.to_business_summary_dict(collection_exercise_id=collection_exercise_id)
+    return business.to_business_summary_dict(
+        collection_exercise_id=collection_exercise_id
+    )
 
 
 @with_db_session
@@ -135,15 +159,15 @@ def businesses_post(business_data, session):
     party_data = Business.to_party(business_data)
 
     # FIXME: this is incorrect, it doesn't make sense to require sampleUnitType for the concrete endpoints
-    errors = Business.validate(party_data, current_app.config['PARTY_SCHEMA'])
+    errors = Business.validate(party_data, current_app.config["PARTY_SCHEMA"])
     if errors:
-        errors = [e.split('\n')[0] for e in errors]
+        errors = [e.split("\n")[0] for e in errors]
         logger.debug(errors)
         raise BadRequest(errors)
 
-    business = query_business_by_ref(party_data['sampleUnitRef'], session)
+    business = query_business_by_ref(party_data["sampleUnitRef"], session)
     if business:
-        party_data['id'] = str(business.party_uuid)
+        party_data["id"] = str(business.party_uuid)
         business.add_versioned_attributes(party_data)
         session.merge(business)
     else:
@@ -162,19 +186,25 @@ def businesses_sample_ce_link(sample, ce_data, session):
     :param session: database session.
     """
 
-    v = Validator(Exists('collectionExerciseId'))
+    v = Validator(Exists("collectionExerciseId"))
     if not v.validate(ce_data):
         logger.debug(v.errors)
         raise BadRequest(v.errors)
 
-    collection_exercise_id = ce_data['collectionExerciseId']
+    collection_exercise_id = ce_data["collectionExerciseId"]
 
-    session.query(BusinessAttributes).filter(BusinessAttributes.sample_summary_id == sample)\
-        .update({'collection_exercise': collection_exercise_id})
+    session.query(BusinessAttributes).filter(
+        BusinessAttributes.sample_summary_id == sample
+    ).update({"collection_exercise": collection_exercise_id})
 
 
 @with_query_only_db_session
 def get_businesses_by_search_query(search_query, page, limit, session):
-    businesses, total_business_count = search_businesses(search_query, page, limit, session)
-    businesses = [{"ruref": business[2], "trading_as": business[1], "name": business[0]} for business in businesses]
+    businesses, total_business_count = search_businesses(
+        search_query, page, limit, session
+    )
+    businesses = [
+        {"ruref": business[2], "trading_as": business[1], "name": business[0]}
+        for business in businesses
+    ]
     return businesses, total_business_count

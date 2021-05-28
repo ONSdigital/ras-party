@@ -10,19 +10,19 @@ from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision = 'ac604d2cf763'
-down_revision = 'dfeba9ccfc46'
+revision = "ac604d2cf763"
+down_revision = "dfeba9ccfc46"
 branch_labels = None
 depends_on = None
 
 
 def upgrade():
     op.add_column(
-        'respondent',
-        sa.Column('pending_email_address', sa.Text, nullable=True),
-        schema='partysvc'
+        "respondent",
+        sa.Column("pending_email_address", sa.Text, nullable=True),
+        schema="partysvc",
     )
 
 
 def downgrade():
-    op.drop_column('respondent', 'pending_email_address', schema='partysvc')
+    op.drop_column("respondent", "pending_email_address", schema="partysvc")

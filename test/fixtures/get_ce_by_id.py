@@ -1,4 +1,4 @@
-response = '''{
+response = """{
     "id": "c6467711-21eb-4e78-804c-1db8392f93fb",
     "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
     "name": "201601",
@@ -22,4 +22,4 @@ response = '''{
         "actionPlanId": "b1f46e33-a3ef-4e50-939d-c18f8a9f11bb"
       }
     ]
-}'''
+}"""

@@ -5,16 +5,16 @@ from ras_party.support.requests_wrapper import Requests
 
 class OauthClient:
     def __init__(self):
-        self.service = current_app.config['AUTH_URL']
+        self.service = current_app.config["AUTH_URL"]
 
     @property
     def admin_url(self):
-        return f'{self.service}/api/account/create'
+        return f"{self.service}/api/account/create"
 
     def create_account(self, username, password):
         payload = {
-            'username': username,
-            'password': password,
+            "username": username,
+            "password": password,
         }
         return Requests.post(self.admin_url, data=payload)
 

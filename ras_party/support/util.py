@@ -24,7 +24,7 @@ def model_to_dict(model, exclude=None):
     :return: New dictionary consisting of property-values
     """
     exclude = exclude or []
-    exclude.append('_sa_instance_state')
+    exclude.append("_sa_instance_state")
     return {k: v for k, v in model.__dict__.items() if k not in exclude}
 
 
@@ -44,19 +44,21 @@ def partition_dict(d, in_left):
 
 def flatten_keys(d, prefix=None):
 
-    prefix = prefix or ''
+    prefix = prefix or ""
     result = []
 
     for k, v in d.items():
-        result.append('.'.join([prefix, k] if prefix else [k]))
+        result.append(".".join([prefix, k] if prefix else [k]))
         if isinstance(v, dict):
-            result.extend(flatten_keys(v, prefix='.'.join([prefix, k] if prefix else [k])))
+            result.extend(
+                flatten_keys(v, prefix=".".join([prefix, k] if prefix else [k]))
+            )
 
     return result
 
 
 def build_url(template, config, *args):
-    url = template.format(config['scheme'], config['host'], config['port'], *args)
+    url = template.format(config["scheme"], config["host"], config["port"], *args)
     return url
 
 
@@ -66,7 +68,7 @@ def obfuscate_email(email):
     """
     if email is None:
         return None
-    splitmail = email.split('@')
+    splitmail = email.split("@")
     # If the prefix is 1 character, then we can't obfuscate it
     if len(splitmail[0]) <= 1:
         prefix = splitmail[0]
@@ -74,7 +76,7 @@ def obfuscate_email(email):
         prefix = f'{splitmail[0][0]}{"*"*(len(splitmail[0])-2)}{splitmail[0][-1]}'
     # If the domain is missing or 1 character, then we can't obfuscate it
     if len(splitmail) <= 1 or len(splitmail[1]) <= 1:
-        return f'{prefix}'
+        return f"{prefix}"
     else:
         domain = f'{splitmail[1][0]}{"*"*(len(splitmail[1])-2)}{splitmail[1][-1]}'
-        return f'{prefix}@{domain}'
+        return f"{prefix}@{domain}"

@@ -1,5 +1,6 @@
 import sys
 import os
+
 parent_dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(parent_dir_path)
 
@@ -11,8 +12,10 @@ from datetime import datetime
 
 from config import Config
 
+
 def random_char(y):
-    return ''.join(random.choice(string.ascii_letters) for x in range(y))
+    return "".join(random.choice(string.ascii_letters) for x in range(y))
+
 
 try:
 
@@ -44,15 +47,15 @@ try:
 
     connection.commit()
     count = cursor.rowcount
-    print (count, "Record inserted successfully into mobile table")
+    print(count, "Record inserted successfully into mobile table")
 
 except (Exception, psycopg2.Error) as error:
-    if(connection):
+    if connection:
         print("Failed to insert record into mobile table", error)
 
 finally:
-    #closing database connection.
-    if(connection):
+    # closing database connection.
+    if connection:
         cursor.close()
         connection.close()
         print("PostgreSQL connection is closed")

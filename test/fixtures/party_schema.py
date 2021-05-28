@@ -32,10 +32,10 @@ schema = {
                 "rusic92": {"type": "string"},
                 "seltype": {"type": "string"},
                 "tradstyle1": {"type": "string"},
-                "cell_no": {"type": "integer"}
+                "cell_no": {"type": "integer"},
             },
-            "required": ["runame1", "runame2"]
-        }
+            "required": ["runame1", "runame2"],
+        },
     },
-    "required": ["sampleUnitRef", "sampleUnitType", "sampleSummaryId"]
+    "required": ["sampleUnitRef", "sampleUnitType", "sampleSummaryId"],
 }

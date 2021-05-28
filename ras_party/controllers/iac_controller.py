@@ -27,9 +27,7 @@ def disable_iac(enrolment_code, case_id):
     :raises ValueError:  Raised when the response doesn't return json (on a 500 response?)
     """
     iac_url = f'{current_app.config["IAC_URL"]}/iacs/{enrolment_code}'
-    payload = {
-        "updatedBy": "Party Service"
-    }
+    payload = {"updatedBy": "Party Service"}
     response = Requests.put(iac_url, json=payload)
     try:
         response.raise_for_status()

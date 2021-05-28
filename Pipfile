@@ -24,6 +24,8 @@ sqlalchemy-utils = "*"
 structlog = "*"
 requestsdefaulter = "*"
 psycopg2-binary = "*"
+mypy = "*"
+MonkeyType = "*"
 
 [dev-packages]
 coverage = "*"

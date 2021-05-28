@@ -9,7 +9,7 @@ from werkzeug.exceptions import BadRequest, NotFound
 from ras_party.controllers import respondent_controller
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
-respondent_view = Blueprint('respondent_view', __name__)
+respondent_view = Blueprint("respondent_view", __name__)
 auth = HTTPBasicAuth()
 
 
@@ -21,13 +21,13 @@ def before_respondent_view():
 
 @auth.get_password
 def get_pw(username):
-    config_username = current_app.config['SECURITY_USER_NAME']
-    config_password = current_app.config['SECURITY_USER_PASSWORD']
+    config_username = current_app.config["SECURITY_USER_NAME"]
+    config_password = current_app.config["SECURITY_USER_PASSWORD"]
     if username == config_username:
         return config_password
 
 
-@respondent_view.route('/respondents', methods=['GET'])
+@respondent_view.route("/respondents", methods=["GET"])
 def get_respondents():
     """Get respondents by id or a combination of firstName, lastName and EmailAddress
     Note, result set for names and email includes total record count to support pagination, get by id does not
@@ -46,7 +46,9 @@ def get_respondents():
     if ids:
         response = respondent_controller.get_respondent_by_ids(ids)
     else:
-        response = respondent_controller.get_respondents_by_name_and_email(first_name, last_name, email, page, limit)
+        response = respondent_controller.get_respondents_by_name_and_email(
+            first_name, last_name, email, page, limit
+        )
     return jsonify(response)
 
 
@@ -60,11 +62,15 @@ def _validate_get_respondent_params(ids, first_name, last_name, email):
     """
 
     if not (ids or first_name or last_name or email):
-        logger.info("Invalid params: either id , first_name or last_name or email are required")
+        logger.info(
+            "Invalid params: either id , first_name or last_name or email are required"
+        )
         raise BadRequest("id or one of first_name, last_name and email are required")
 
     if ids and (first_name or last_name or email):
-        logger.info("Invalid params: id not valid with first_name or last_name or email")
+        logger.info(
+            "Invalid params: id not valid with first_name or last_name or email"
+        )
         raise BadRequest("id not valid with first_name or last_name or email")
 
     if ids:
@@ -72,38 +78,43 @@ def _validate_get_respondent_params(ids, first_name, last_name, email):
             try:
                 uuid.UUID(party_id)
             except ValueError:
-                logger.info("Invalid params: party_id value is not a valid UUID", party_id=party_id)
-                raise BadRequest(f"'{party_id}' is not a valid UUID format for property 'id'")
+                logger.info(
+                    "Invalid params: party_id value is not a valid UUID",
+                    party_id=party_id,
+                )
+                raise BadRequest(
+                    f"'{party_id}' is not a valid UUID format for property 'id'"
+                )
 
 
-@respondent_view.route('/respondents/id/<respondent_id>', methods=['GET'])
+@respondent_view.route("/respondents/id/<respondent_id>", methods=["GET"])
 def get_respondent_by_id(respondent_id):
     response = respondent_controller.get_respondent_by_id(respondent_id)
     return jsonify(response)
 
 
-@respondent_view.route('/respondents/email', methods=['GET'])
+@respondent_view.route("/respondents/email", methods=["GET"])
 def get_respondent_by_email():
     payload = request.get_json()
-    email = payload['email']
+    email = payload["email"]
     response = respondent_controller.get_respondent_by_email(email)
     return jsonify(response)
 
 
-@respondent_view.route('/respondents/<email>', methods=['DELETE'])
+@respondent_view.route("/respondents/<email>", methods=["DELETE"])
 def delete_respondent_by_email(email):
     response = respondent_controller.update_respondent_mark_for_deletion(email)
     return response
 
 
-@respondent_view.route('/respondents/id/<respondent_id>', methods=['PUT'])
+@respondent_view.route("/respondents/id/<respondent_id>", methods=["PUT"])
 def change_respondent_details(respondent_id):
     payload = request.get_json()
     respondent_controller.change_respondent_details(payload, respondent_id)
-    return make_response('Successfully updated respondent details', 200)
+    return make_response("Successfully updated respondent details", 200)
 
 
-@respondent_view.route('/respondents/claim')
+@respondent_view.route("/respondents/claim")
 def validate_respondent_claim():
     """Validates if the respondent has a claim on a specific business and survey
     Both valid and invalid claims return 200 with the difference being indicated in the response body.
@@ -117,11 +128,17 @@ def validate_respondent_claim():
     survey_id = request.args.get("survey_id", default="").strip()
 
     if not business_id or not survey_id or not respondent_id:
-        logger.info("either respondent id, business id or survey id are missing",
-                    respondent_id=respondent_id, business_id=business_id, survey_id=survey_id)
+        logger.info(
+            "either respondent id, business id or survey id are missing",
+            respondent_id=respondent_id,
+            business_id=business_id,
+            survey_id=survey_id,
+        )
         raise BadRequest("respondent id and business id and survey id are required")
 
-    if respondent_controller.does_user_have_claim(respondent_id, business_id, survey_id):
-        return make_response('Valid', 200)
+    if respondent_controller.does_user_have_claim(
+        respondent_id, business_id, survey_id
+    ):
+        return make_response("Valid", 200)
 
-    return make_response('Invalid', 200)
+    return make_response("Invalid", 200)

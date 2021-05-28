@@ -15,11 +15,15 @@ class TestSessionDecorator(unittest.TestCase):
 
     def test_session_decorator_removes_session(self):
         # Given
-        def do_nothing(session): pass
+        def do_nothing(session):
+            pass
+
         session_instance = Mock()
         # When
         with self.app.app_context():
-            with patch('ras_party.support.session_decorator.current_app') as current_app:
+            with patch(
+                "ras_party.support.session_decorator.current_app"
+            ) as current_app:
                 current_app.db.session.return_value = session_instance
                 handle_session(do_nothing, [], {})
 
@@ -28,11 +32,15 @@ class TestSessionDecorator(unittest.TestCase):
 
     def test_session_decorator_rollback_exception(self):
         # Given
-        def raise_exception(session): raise Exception
+        def raise_exception(session):
+            raise Exception
+
         session_instance = Mock()
         # When
         with self.app.app_context():
-            with patch('ras_party.support.session_decorator.current_app') as current_app:
+            with patch(
+                "ras_party.support.session_decorator.current_app"
+            ) as current_app:
                 current_app.db.session.return_value = session_instance
                 self.assertRaises(Exception, handle_session, raise_exception, [], {})
 

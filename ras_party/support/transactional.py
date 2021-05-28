@@ -34,14 +34,16 @@ class Transaction:
         else:
             logger.info("No rollback actions are required.")
         for i, action in enumerate(self._compensating_actions):
-            logger.info("Applying compensating action", number=i+1)
+            logger.info("Applying compensating action", number=i + 1)
             self._apply(action)
 
     def _apply(self, f):
         try:
             f()
         except Exception:
-            logger.exception("Fatal: error while attempting to compensate a distributed transaction.")
+            logger.exception(
+                "Fatal: error while attempting to compensate a distributed transaction."
+            )
             raise
 
 
@@ -50,11 +52,12 @@ def transactional(f):
     Convenience decorator to inject a Transaction instance into the wrapped function.
     Exception from the wrapped function causes the rollback action(s) to be applied.
     """
+
     @wraps(f)
     def wrapper(*args, **kwargs):
         tran = Transaction()
         try:
-            kwargs['tran'] = tran
+            kwargs["tran"] = tran
             result = f(*args, **kwargs)
             tran.commit()
             return result

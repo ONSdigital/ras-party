@@ -19,14 +19,14 @@ class TestNotifyGatewayUnit(TestCase):
 
     @staticmethod
     def create_app():
-        return create_app('TestingConfig')
+        return create_app("TestingConfig")
 
     def test_get_template_with_fake_template_name(self):
         # Given a mocked notify gateway
 
         notify = NotifyGateway(current_app.config)
         # When given a fake template name
-        template_name = 'fake_name'
+        template_name = "fake_name"
         # Then a key error is raised
         with self.assertRaises(KeyError):
             notify._get_template_id(template_name)
@@ -34,31 +34,45 @@ class TestNotifyGatewayUnit(TestCase):
     def test_request_to_notify_with_pubsub_no_personalisation(self):
         """Tests what is sent to pubsub when no personalisation is added"""
         publisher = MagicMock()
-        publisher.topic_path.return_value = 'projects/test-project-id/topics/ras-rm-notify-test'
+        publisher.topic_path.return_value = (
+            "projects/test-project-id/topics/ras-rm-notify-test"
+        )
         # Given a mocked notify gateway
         notify = NotifyGateway(current_app.config)
         notify.publisher = publisher
-        result = notify.request_to_notify('test@email.com', 'notify_account_locked')
-        data = b'{"notify": {"email_address": "test@email.com", ' \
-               b'"template_id": "account_locked_id", "personalisation": {}}}'
+        result = notify.request_to_notify("test@email.com", "notify_account_locked")
+        data = (
+            b'{"notify": {"email_address": "test@email.com", '
+            b'"template_id": "account_locked_id", "personalisation": {}}}'
+        )
 
         publisher.publish.assert_called()
-        publisher.publish.assert_called_with('projects/test-project-id/topics/ras-rm-notify-test', data=data)
+        publisher.publish.assert_called_with(
+            "projects/test-project-id/topics/ras-rm-notify-test", data=data
+        )
         self.assertIsNone(result)
 
     def test_request_to_notify_with_pubsub_with_personalisation(self):
         """Tests what is sent to pubsub when personalisation is added"""
         publisher = MagicMock()
-        publisher.topic_path.return_value = 'projects/test-project-id/topics/ras-rm-notify-test'
+        publisher.topic_path.return_value = (
+            "projects/test-project-id/topics/ras-rm-notify-test"
+        )
         # Given a mocked notify gateway
         notify = NotifyGateway(current_app.config)
         notify.publisher = publisher
         personalisation = {"first_name": "testy", "last_name": "surname"}
-        result = notify.request_to_notify('test@email.com', 'notify_account_locked', personalisation)
-        data = b'{"notify": {"email_address": "test@email.com", "template_id": "account_locked_id",' \
-               b' "personalisation": {"first_name": "testy", "last_name": "surname"}}}'
+        result = notify.request_to_notify(
+            "test@email.com", "notify_account_locked", personalisation
+        )
+        data = (
+            b'{"notify": {"email_address": "test@email.com", "template_id": "account_locked_id",'
+            b' "personalisation": {"first_name": "testy", "last_name": "surname"}}}'
+        )
         publisher.publish.assert_called()
-        publisher.publish.assert_called_with('projects/test-project-id/topics/ras-rm-notify-test', data=data)
+        publisher.publish.assert_called_with(
+            "projects/test-project-id/topics/ras-rm-notify-test", data=data
+        )
         self.assertIsNone(result)
 
     def test_request_to_notify_with_pubsub_timeout_error(self):
@@ -72,4 +86,4 @@ class TestNotifyGatewayUnit(TestCase):
         notify = NotifyGateway(current_app.config)
         notify.publisher = publisher
         with self.assertRaises(RasNotifyError):
-            notify.request_to_notify('test@email.com', 'notify_account_locked')
+            notify.request_to_notify("test@email.com", "notify_account_locked")

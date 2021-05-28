@@ -1,4 +1,4 @@
-response = '''{
+response = """{
   "id": "7bc5d41b-0549-40b3-ba76-42f6d4cf3fdb",
   "collectionInstrumentId": "40c7c047-4fb3-4abe-926e-bf19fa2c0a1e",
   "partyId": "3b136c4b-7a14-4904-9e01-13364dd7b972",
@@ -37,4 +37,4 @@ response = '''{
       "createdDateTime": "2017-04-10T08:48:49Z"
     }
   ]
-}'''
+}"""

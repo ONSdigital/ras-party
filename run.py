@@ -32,12 +32,13 @@ def create_app(config=None):
     from ras_party.views.batch_request import batch_request
     from ras_party import error_handlers
     from ras_party.views.share_survey_view import share_survey_view
-    app.register_blueprint(party_view, url_prefix='/party-api/v1')
-    app.register_blueprint(account_view, url_prefix='/party-api/v1')
-    app.register_blueprint(business_view, url_prefix='/party-api/v1')
-    app.register_blueprint(respondent_view, url_prefix='/party-api/v1')
-    app.register_blueprint(batch_request, url_prefix='/party-api/v1')
-    app.register_blueprint(share_survey_view, url_prefix='/party-api/v1')
+
+    app.register_blueprint(party_view, url_prefix="/party-api/v1")
+    app.register_blueprint(account_view, url_prefix="/party-api/v1")
+    app.register_blueprint(business_view, url_prefix="/party-api/v1")
+    app.register_blueprint(respondent_view, url_prefix="/party-api/v1")
+    app.register_blueprint(batch_request, url_prefix="/party-api/v1")
+    app.register_blueprint(share_survey_view, url_prefix="/party-api/v1")
     app.register_blueprint(info_view)
     app.register_blueprint(error_handlers.blueprint)
 
@@ -53,18 +54,23 @@ def create_database(db_connection, db_schema):
 
     engine = create_engine(db_connection)
     session = scoped_session(sessionmaker(), scopefunc=current_request)
-    session.configure(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    session.configure(
+        bind=engine, autoflush=False, autocommit=False, expire_on_commit=False
+    )
     engine.session = session
 
     logger.info("Creating database")
 
-    if db_connection.startswith('postgres'):
+    if db_connection.startswith("postgres"):
         # fix-up the postgres schema:
         for t in models.Base.metadata.sorted_tables:
             t.schema = db_schema
 
-        q = exists(select([column('schema_name')]).select_from(text("information_schema.schemata"))
-                   .where(text(f"schema_name = '{db_schema}'")))
+        q = exists(
+            select([column("schema_name")])
+            .select_from(text("information_schema.schemata"))
+            .where(text(f"schema_name = '{db_schema}'"))
+        )
 
         if not session().query(q).scalar():
             logger.info("Creating schema", schema=db_schema)
@@ -84,29 +90,40 @@ def create_database(db_connection, db_schema):
 
 
 def retry_if_database_error(exception):
-    logger.error('Database error has occurred', error=exception)
-    return isinstance(exception, DatabaseError) and not isinstance(exception, ProgrammingError)
+    logger.error("Database error has occurred", error=exception)
+    return isinstance(exception, DatabaseError) and not isinstance(
+        exception, ProgrammingError
+    )
 
 
-@retry(retry_on_exception=retry_if_database_error, wait_fixed=2000, stop_max_delay=30000, wrap_exception=True)
+@retry(
+    retry_on_exception=retry_if_database_error,
+    wait_fixed=2000,
+    stop_max_delay=30000,
+    wrap_exception=True,
+)
 def initialise_db(app):
     # TODO: this isn't entirely safe, use a get_db() lazy initializer instead...
-    app.db = create_database(app.config['DATABASE_URI'], app.config['DATABASE_SCHEMA'])
+    app.db = create_database(app.config["DATABASE_URI"], app.config["DATABASE_SCHEMA"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = create_app()
-    with open(app.config['PARTY_SCHEMA']) as io:
-        app.config['PARTY_SCHEMA'] = loads(io.read())
+    with open(app.config["PARTY_SCHEMA"]) as io:
+        app.config["PARTY_SCHEMA"] = loads(io.read())
 
-    logger_initial_config(log_level=app.config['LOGGING_LEVEL'])
+    logger_initial_config(log_level=app.config["LOGGING_LEVEL"])
 
     try:
         initialise_db(app)
     except RetryError:
-        logger.exception('Failed to initialise database')
+        logger.exception("Failed to initialise database")
         exit(1)
 
-    scheme, host, port = app.config['SCHEME'], app.config['HOST'], int(app.config['PORT'])
+    scheme, host, port = (
+        app.config["SCHEME"],
+        app.config["HOST"],
+        int(app.config["PORT"]),
+    )
 
-    app.run(debug=app.config['DEBUG'], host=host, port=port)
+    app.run(debug=app.config["DEBUG"], host=host, port=port)

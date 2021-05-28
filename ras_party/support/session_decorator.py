@@ -15,11 +15,19 @@ def handle_session(f, args, kwargs):
         session.commit()
         return result
     except SQLAlchemyError as exc:
-        logger.error(f"Rolling back database session due to {exc.__class__.__name__}", exc_info=True)
+        logger.error(
+            f"Rolling back database session due to {exc.__class__.__name__}",
+            exc_info=True,
+        )
         session.rollback()
-        raise SQLAlchemyError(f"{exc.__class__.__name__} occurred when committing to database", code=exc.code)
+        raise SQLAlchemyError(
+            f"{exc.__class__.__name__} occurred when committing to database",
+            code=exc.code,
+        )
     except Exception:
-        logger.error("Rolling back database session due to uncaught exception", exc_info=True)
+        logger.error(
+            "Rolling back database session due to uncaught exception", exc_info=True
+        )
         session.rollback()
         raise
     finally:
