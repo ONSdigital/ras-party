@@ -38,6 +38,11 @@ jobs:
           docker-compose up -d
           pip install pipenv
           pipenv install --dev
+      - name: DO LINTING STUFF
+        run: |
+          pipenv run mypy --ignore-missing-imports .
+          black .
+          isort .
       - name: Run tests
         run: make test
       - uses: google-github-actions/setup-gcloud@master
