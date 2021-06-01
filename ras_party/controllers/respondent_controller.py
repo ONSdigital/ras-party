@@ -7,26 +7,15 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers.account_controller import (
-    change_respondent,
-    get_single_respondent_by_email,
-)
-from ras_party.models.models import (
-    Enrolment,
-    BusinessRespondent,
-    PendingEnrolment,
-    Respondent,
-)
+    change_respondent, get_single_respondent_by_email)
 from ras_party.controllers.queries import (
-    query_respondent_by_party_uuid,
-    query_respondent_by_email,
-    update_respondent_details,
-    query_respondent_by_names_and_emails,
-    query_respondent_by_party_uuids,
-)
-from ras_party.support.session_decorator import (
-    with_db_session,
-    with_query_only_db_session,
-)
+    query_respondent_by_email, query_respondent_by_names_and_emails,
+    query_respondent_by_party_uuid, query_respondent_by_party_uuids,
+    update_respondent_details)
+from ras_party.models.models import (BusinessRespondent, Enrolment,
+                                     PendingEnrolment, Respondent)
+from ras_party.support.session_decorator import (with_db_session,
+                                                 with_query_only_db_session)
 from ras_party.support.util import obfuscate_email
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))

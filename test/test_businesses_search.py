@@ -1,9 +1,9 @@
 import copy
-from ras_party.support.requests_wrapper import Requests
-
 from test.mocks import MockRequests
 from test.party_client import PartyTestClient
-from test.test_data.mock_business import MockBusiness, DEFAULT_ATTRIBUTES
+from test.test_data.mock_business import DEFAULT_ATTRIBUTES, MockBusiness
+
+from ras_party.support.requests_wrapper import Requests
 
 
 class TestBusinessesSearch(PartyTestClient):

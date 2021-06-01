@@ -1,9 +1,8 @@
 import unittest
-from unittest.mock import patch, Mock
-
-from ras_party.support.session_decorator import handle_session
+from unittest.mock import Mock, patch
 
 from app import create_app
+from ras_party.support.session_decorator import handle_session
 
 
 class TestSessionDecorator(unittest.TestCase):

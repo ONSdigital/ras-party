@@ -4,31 +4,22 @@ from datetime import datetime, timedelta
 
 import structlog
 from flask import current_app
-from itsdangerous import SignatureExpired, BadSignature, BadData
+from itsdangerous import BadData, BadSignature, SignatureExpired
 from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.exceptions import Conflict, NotFound, InternalServerError
+from werkzeug.exceptions import Conflict, InternalServerError, NotFound
 
 from ras_party.controllers.queries import (
+    delete_share_survey_by_batch_no, query_business_by_party_uuid,
+    query_business_respondent_by_respondent_id_and_business_id,
     query_enrolment_by_business_and_survey_and_status,
     query_pending_shares_by_business_and_survey,
-    query_share_survey_by_batch_no,
-    query_business_by_party_uuid,
-    query_respondent_by_party_uuid,
-    query_business_respondent_by_respondent_id_and_business_id,
-    delete_share_survey_by_batch_no,
-)
+    query_respondent_by_party_uuid, query_share_survey_by_batch_no)
 from ras_party.controllers.respondent_controller import get_respondent_by_email
-from ras_party.models.models import (
-    PendingShares,
-    BusinessRespondent,
-    Enrolment,
-    EnrolmentStatus,
-)
-from ras_party.support.session_decorator import (
-    with_query_only_db_session,
-    with_db_session,
-)
+from ras_party.models.models import (BusinessRespondent, Enrolment,
+                                     EnrolmentStatus, PendingShares)
+from ras_party.support.session_decorator import (with_db_session,
+                                                 with_query_only_db_session)
 from ras_party.support.verification import decode_email_token
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))

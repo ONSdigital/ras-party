@@ -1,41 +1,29 @@
 import uuid
+from test.mocks import MockRequests
+from test.party_client import PartyTestClient
+from test.test_data.default_test_values import (DEFAULT_BUSINESS_UUID,
+                                                DEFAULT_RESPONDENT_UUID,
+                                                DEFAULT_SURVEY_UUID)
+from test.test_data.mock_business import MockBusiness
+from test.test_data.mock_enrolment import (MockEnrolmentDisabled,
+                                           MockEnrolmentEnabled,
+                                           MockEnrolmentPending)
+from test.test_data.mock_respondent import (MockNewRespondentWithId,
+                                            MockRespondent,
+                                            MockRespondentWithId,
+                                            MockRespondentWithIdActive)
 from unittest.mock import MagicMock, patch
 
 from ras_party.controllers import account_controller
 from ras_party.controllers.queries import (
-    query_business_by_party_uuid,
-    query_respondent_by_party_uuid,
-    query_pending_shares_by_business_and_survey,
-)
-from ras_party.models.models import (
-    Enrolment,
-    PendingShares,
-    BusinessRespondent,
-    RespondentStatus,
-    Respondent,
-)
+    query_business_by_party_uuid, query_pending_shares_by_business_and_survey,
+    query_respondent_by_party_uuid)
+from ras_party.models.models import (BusinessRespondent, Enrolment,
+                                     PendingShares, Respondent,
+                                     RespondentStatus)
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.verification import generate_email_token
-from test.mocks import MockRequests
-from test.party_client import PartyTestClient
-from test.test_data.default_test_values import (
-    DEFAULT_BUSINESS_UUID,
-    DEFAULT_SURVEY_UUID,
-    DEFAULT_RESPONDENT_UUID,
-)
-from test.test_data.mock_business import MockBusiness
-from test.test_data.mock_enrolment import (
-    MockEnrolmentEnabled,
-    MockEnrolmentDisabled,
-    MockEnrolmentPending,
-)
-from test.test_data.mock_respondent import (
-    MockRespondent,
-    MockRespondentWithIdActive,
-    MockRespondentWithId,
-    MockNewRespondentWithId,
-)
 
 
 class TestShareSurvey(PartyTestClient):

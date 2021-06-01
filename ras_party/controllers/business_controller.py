@@ -1,25 +1,19 @@
-import uuid
 import logging
+import uuid
 
 import structlog
 from flask import current_app
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers.queries import (
-    query_business_by_ref,
-    query_business_by_party_uuid,
-    query_businesses_by_party_uuids,
-    search_businesses,
     query_business_attributes,
     query_business_attributes_by_collection_exercise,
-)
-from ras_party.controllers.validate import Validator, Exists
+    query_business_by_party_uuid, query_business_by_ref,
+    query_businesses_by_party_uuids, search_businesses)
+from ras_party.controllers.validate import Exists, Validator
 from ras_party.models.models import Business, BusinessAttributes
-from ras_party.support.session_decorator import (
-    with_db_session,
-    with_query_only_db_session,
-)
-
+from ras_party.support.session_decorator import (with_db_session,
+                                                 with_query_only_db_session)
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 

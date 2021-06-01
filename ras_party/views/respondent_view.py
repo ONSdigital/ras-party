@@ -2,7 +2,7 @@ import logging
 import uuid
 
 import structlog
-from flask import Blueprint, current_app, make_response, jsonify, request
+from flask import Blueprint, current_app, jsonify, make_response, request
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.exceptions import BadRequest, NotFound
 

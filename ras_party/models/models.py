@@ -5,17 +5,9 @@ import uuid
 
 import structlog
 from jsonschema import Draft4Validator
-from sqlalchemy import (
-    Column,
-    Integer,
-    Text,
-    DateTime,
-    ForeignKey,
-    ForeignKeyConstraint,
-    Index,
-    Boolean,
-    UniqueConstraint,
-)
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey,
+                        ForeignKeyConstraint, Index, Integer, Text,
+                        UniqueConstraint)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship

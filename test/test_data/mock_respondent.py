@@ -1,5 +1,6 @@
-from ras_party.support.util import partition_dict
 from test.test_data.default_test_values import DEFAULT_RESPONDENT_UUID
+
+from ras_party.support.util import partition_dict
 
 
 class MockRespondent:

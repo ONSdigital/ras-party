@@ -1,11 +1,12 @@
 from unittest.mock import patch
-from flask_testing import TestCase
 
 from flask import request
+from flask_testing import TestCase
 from requests import Request, RequestException, Response
 from werkzeug.exceptions import NotFound
 
-from ras_party.error_handlers import http_error, http_exception_handler, exception_error
+from ras_party.error_handlers import (exception_error, http_error,
+                                      http_exception_handler)
 from run import create_app
 
 

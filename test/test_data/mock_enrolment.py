@@ -1,7 +1,5 @@
-from test.test_data.default_test_values import (
-    DEFAULT_BUSINESS_UUID,
-    DEFAULT_SURVEY_UUID,
-)
+from test.test_data.default_test_values import (DEFAULT_BUSINESS_UUID,
+                                                DEFAULT_SURVEY_UUID)
 
 
 class MockEnrolmentEnabled:

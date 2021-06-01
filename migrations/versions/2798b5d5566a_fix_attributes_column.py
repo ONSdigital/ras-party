@@ -11,7 +11,6 @@ import sys
 
 from alembic import op
 
-
 # hack to allow for imports from project directory
 sys.path.append(os.path.abspath(os.getcwd()))
 

@@ -1,12 +1,11 @@
 import logging
 
 import structlog
-from flask import Blueprint, request, current_app, jsonify
+from flask import Blueprint, current_app, jsonify, request
 from flask_httpauth import HTTPBasicAuth
-from werkzeug.exceptions import NotFound, BadRequest
+from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers import business_controller
-
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 business_view = Blueprint("business_view", __name__)

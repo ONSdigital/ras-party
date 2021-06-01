@@ -2,7 +2,6 @@ import logging
 
 import requests
 import structlog
-
 from flask import current_app
 
 from ras_party.support.requests_wrapper import Requests

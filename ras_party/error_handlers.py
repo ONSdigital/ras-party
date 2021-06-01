@@ -6,7 +6,6 @@ from flask import jsonify, request
 from requests import RequestException
 from werkzeug.exceptions import HTTPException
 
-
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 blueprint = flask.Blueprint("error_handlers", __name__)

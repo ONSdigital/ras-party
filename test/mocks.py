@@ -1,15 +1,8 @@
 import json
 from collections import defaultdict
-
-from test.fixtures import (
-    get_case_by_iac,
-    get_cases_by_party,
-    get_casegroups_by_party,
-    get_ce_by_id,
-    get_ces_by_survey,
-    get_survey_by_id,
-    get_iac,
-)
+from test.fixtures import (get_case_by_iac, get_casegroups_by_party,
+                           get_cases_by_party, get_ce_by_id, get_ces_by_survey,
+                           get_iac, get_survey_by_id)
 
 
 class MockResponse:

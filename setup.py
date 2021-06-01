@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 NAME = "ras_party"
 VERSION = "0.0.2"

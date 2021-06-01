@@ -2,6 +2,22 @@
 
 import json
 import uuid
+from test.mocks import MockRequests, MockResponse
+from test.party_client import (PartyTestClient,
+                               business_respondent_associations, businesses,
+                               enrolments, respondents)
+from test.test_data.default_test_values import (ALTERNATE_SURVEY_UUID,
+                                                DEFAULT_BUSINESS_UUID,
+                                                DEFAULT_RESPONDENT_UUID,
+                                                DEFAULT_SURVEY_UUID)
+from test.test_data.mock_enrolment import (MockEnrolmentDisabled,
+                                           MockEnrolmentEnabled,
+                                           MockEnrolmentPending)
+from test.test_data.mock_respondent import (MockRespondent,
+                                            MockRespondentWithId,
+                                            MockRespondentWithIdActive,
+                                            MockRespondentWithIdSuspended,
+                                            MockRespondentWithPendingEmail)
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
@@ -12,49 +28,16 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 
 from ras_party.controllers import account_controller, respondent_controller
-from ras_party.controllers.queries import (
-    query_respondent_by_party_uuid,
-    query_business_by_party_uuid,
-)
+from ras_party.controllers.queries import (query_business_by_party_uuid,
+                                           query_respondent_by_party_uuid)
 from ras_party.exceptions import RasNotifyError
-from ras_party.models.models import (
-    Business,
-    BusinessRespondent,
-    Enrolment,
-    RespondentStatus,
-    Respondent,
-    PendingEnrolment,
-)
+from ras_party.models.models import (Business, BusinessRespondent, Enrolment,
+                                     PendingEnrolment, Respondent,
+                                     RespondentStatus)
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.verification import generate_email_token
-from test.mocks import MockRequests, MockResponse
-from test.party_client import (
-    PartyTestClient,
-    respondents,
-    businesses,
-    business_respondent_associations,
-    enrolments,
-)
-from test.test_data.mock_enrolment import (
-    MockEnrolmentEnabled,
-    MockEnrolmentDisabled,
-    MockEnrolmentPending,
-)
-from test.test_data.mock_respondent import (
-    MockRespondent,
-    MockRespondentWithId,
-    MockRespondentWithIdActive,
-    MockRespondentWithIdSuspended,
-    MockRespondentWithPendingEmail,
-)
-from test.test_data.default_test_values import (
-    DEFAULT_BUSINESS_UUID,
-    DEFAULT_SURVEY_UUID,
-    DEFAULT_RESPONDENT_UUID,
-)
-from test.test_data.default_test_values import ALTERNATE_SURVEY_UUID
 
 
 class TestRespondents(PartyTestClient):

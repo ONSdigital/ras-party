@@ -3,54 +3,38 @@ import uuid
 
 import structlog
 from flask import current_app
-from itsdangerous import SignatureExpired, BadSignature, BadData
+from itsdangerous import BadData, BadSignature, SignatureExpired
 from requests import HTTPError
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from werkzeug.exceptions import (
-    BadRequest,
-    Conflict,
-    InternalServerError,
-    NotFound,
-    UnprocessableEntity,
-)
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
+from werkzeug.exceptions import (BadRequest, Conflict, InternalServerError,
+                                 NotFound, UnprocessableEntity)
 
 from ras_party.clients.oauth_client import OauthClient
-from ras_party.controllers.case_controller import (
-    get_cases_for_casegroup,
-    post_case_event,
-)
+from ras_party.controllers.case_controller import (get_cases_for_casegroup,
+                                                   post_case_event)
 from ras_party.controllers.iac_controller import disable_iac, request_iac
 from ras_party.controllers.notify_gateway import NotifyGateway
-from ras_party.controllers.queries import count_enrolment_by_survey_business
 from ras_party.controllers.queries import (
+    count_enrolment_by_survey_business,
+    query_all_non_disabled_enrolments_respondent, query_business_by_party_uuid,
     query_business_respondent_by_respondent_id_and_business_id,
-)
-from ras_party.controllers.queries import query_enrolment_by_survey_business_respondent
-from ras_party.controllers.queries import (
-    query_respondent_by_email,
-    query_respondent_by_pending_email,
-)
-from ras_party.controllers.queries import (
-    query_respondent_by_party_uuid,
-    query_business_by_party_uuid,
-)
-from ras_party.controllers.queries import query_all_non_disabled_enrolments_respondent
-from ras_party.controllers.queries import query_single_respondent_by_email
+    query_enrolment_by_survey_business_respondent, query_respondent_by_email,
+    query_respondent_by_party_uuid, query_respondent_by_pending_email,
+    query_single_respondent_by_email)
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import RasNotifyError
-from ras_party.models.models import BusinessRespondent, Enrolment, EnrolmentStatus
-from ras_party.models.models import PendingEnrolment, Respondent, RespondentStatus
+from ras_party.models.models import (BusinessRespondent, Enrolment,
+                                     EnrolmentStatus, PendingEnrolment,
+                                     Respondent, RespondentStatus)
 from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
-from ras_party.support.session_decorator import (
-    with_db_session,
-    with_query_only_db_session,
-)
-from ras_party.support.session_decorator import with_quiet_db_session
+from ras_party.support.session_decorator import (with_db_session,
+                                                 with_query_only_db_session,
+                                                 with_quiet_db_session)
 from ras_party.support.transactional import transactional
-from ras_party.support.verification import decode_email_token
 from ras_party.support.util import obfuscate_email
+from ras_party.support.verification import decode_email_token
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 

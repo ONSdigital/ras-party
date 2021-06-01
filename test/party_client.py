@@ -1,17 +1,18 @@
 import base64
 import json
+from test.fixtures import party_schema
+from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID
+from test.test_data.mock_business import MockBusiness
 from urllib.parse import urlencode
 
 from flask import current_app
 from flask_testing import TestCase
 
 from logger_config import logger_initial_config
-from ras_party.models.models import Business, Respondent, BusinessRespondent, Enrolment
+from ras_party.models.models import (Business, BusinessRespondent, Enrolment,
+                                     Respondent)
 from ras_party.support.session_decorator import with_db_session
 from run import create_app, create_database
-from test.fixtures import party_schema
-from test.test_data.mock_business import MockBusiness
-from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID
 
 
 @with_db_session

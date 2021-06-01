@@ -1,8 +1,7 @@
-from flask import Blueprint, request, current_app, jsonify
+from flask import Blueprint, current_app, jsonify, request
 from flask_httpauth import HTTPBasicAuth
 
 from ras_party.controllers import party_controller
-
 
 party_view = Blueprint("party_view", __name__)
 auth = HTTPBasicAuth()

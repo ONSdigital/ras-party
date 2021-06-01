@@ -1,12 +1,16 @@
 import json
 import logging
+
 import structlog
 from flask import Blueprint, current_app, make_response, request
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.exceptions import abort
-from ras_party.controllers import respondent_controller, share_survey_controller
+
+from ras_party.controllers import (respondent_controller,
+                                   share_survey_controller)
 from ras_party.controllers.respondent_controller import get_respondent_by_id
-from ras_party.controllers.share_survey_controller import get_unique_pending_shares
+from ras_party.controllers.share_survey_controller import \
+    get_unique_pending_shares
 from ras_party.support.public_website import PublicWebsite
 from ras_party.views.share_survey_view import send_pending_share_email
 

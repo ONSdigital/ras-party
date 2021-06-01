@@ -1,7 +1,7 @@
 import logging
 
 import structlog
-from flask import Blueprint, request, current_app, make_response, jsonify
+from flask import Blueprint, current_app, jsonify, make_response, request
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.exceptions import BadRequest
 

@@ -9,7 +9,6 @@ import json
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision = "dfeba9ccfc46"
 down_revision = "2798b5d5566a"

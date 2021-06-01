@@ -1,17 +1,12 @@
 import logging
 
 import structlog
-from sqlalchemy import func, and_, or_, distinct
+from sqlalchemy import and_, distinct, func, or_
 
-from ras_party.models.models import (
-    Business,
-    BusinessAttributes,
-    BusinessRespondent,
-    Enrolment,
-    EnrolmentStatus,
-    Respondent,
-    PendingShares,
-)
+from ras_party.models.models import (Business, BusinessAttributes,
+                                     BusinessRespondent, Enrolment,
+                                     EnrolmentStatus, PendingShares,
+                                     Respondent)
 from ras_party.support.util import obfuscate_email
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))

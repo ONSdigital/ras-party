@@ -2,7 +2,7 @@ import logging
 import uuid
 
 import structlog
-from flask import Blueprint, request, make_response, jsonify, current_app
+from flask import Blueprint, current_app, jsonify, make_response, request
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -10,11 +10,9 @@ from ras_party.controllers import share_survey_controller
 from ras_party.controllers.business_controller import get_business_by_id
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.respondent_controller import (
-    get_respondent_by_id,
-    get_respondent_by_email,
-)
+    get_respondent_by_email, get_respondent_by_id)
 from ras_party.controllers.share_survey_controller import accept_share_survey
-from ras_party.controllers.validate import Validator, Exists
+from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import RasNotifyError
 from ras_party.support.public_website import PublicWebsite
 from ras_party.views.account_view import auth

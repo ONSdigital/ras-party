@@ -5,8 +5,8 @@ from json import loads
 import structlog
 from flask import Flask, _app_ctx_stack
 from flask_cors import CORS
-from retrying import retry, RetryError
-from sqlalchemy import create_engine, column, text
+from retrying import RetryError, retry
+from sqlalchemy import column, create_engine, text
 from sqlalchemy.exc import DatabaseError, ProgrammingError
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql import exists, select
@@ -24,13 +24,13 @@ def create_app(config=None):
     app.config.from_object(app_config)
 
     # register view blueprints
-    from ras_party.views.party_view import party_view
-    from ras_party.views.business_view import business_view
-    from ras_party.views.respondent_view import respondent_view
-    from ras_party.views.account_view import account_view
-    from ras_party.views.info_view import info_view
-    from ras_party.views.batch_request import batch_request
     from ras_party import error_handlers
+    from ras_party.views.account_view import account_view
+    from ras_party.views.batch_request import batch_request
+    from ras_party.views.business_view import business_view
+    from ras_party.views.info_view import info_view
+    from ras_party.views.party_view import party_view
+    from ras_party.views.respondent_view import respondent_view
     from ras_party.views.share_survey_view import share_survey_view
 
     app.register_blueprint(party_view, url_prefix="/party-api/v1")

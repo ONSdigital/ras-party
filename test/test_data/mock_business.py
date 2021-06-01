@@ -3,7 +3,6 @@ import random
 
 from ras_party.support.util import partition_dict
 
-
 DEFAULT_ATTRIBUTES = {
     "sampleUnitType": "B",
     "birthdate": "1/1/2001",

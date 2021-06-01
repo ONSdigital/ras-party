@@ -6,11 +6,11 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB
 
-
 # hack to allow for imports from project directory
 sys.path.append(os.path.abspath(os.getcwd()))
 
-from ras_party.models import GUID  # NOQA # pylint: disable=wrong-import-position
+from ras_party.models import \
+    GUID  # NOQA # pylint: disable=wrong-import-position
 
 # revision identifiers, used by Alembic.
 

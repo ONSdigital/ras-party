@@ -5,7 +5,6 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-
 # hack to allow for imports from project directory
 sys.path.append(os.path.abspath(os.getcwd()))
 

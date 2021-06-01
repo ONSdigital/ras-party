@@ -1,7 +1,6 @@
-from flask import Blueprint, make_response, jsonify
+from flask import Blueprint, jsonify, make_response
 
 from ras_party.controllers import info_controller
-
 
 info_view = Blueprint("info_view", __name__)
 

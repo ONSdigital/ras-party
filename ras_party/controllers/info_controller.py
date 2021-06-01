@@ -3,7 +3,6 @@ from pathlib import Path
 
 from flask import current_app
 
-
 _health_check = {}
 
 if Path("git_info").exists():
