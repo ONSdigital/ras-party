@@ -11,10 +11,9 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 def handle_session(f, args, kwargs):
     session = current_app.db.session()
     try:
-        with session.begin():
-            result = f(*args, session=session, **kwargs)
-            session.commit()
-            return result
+        result = f(*args, session=session, **kwargs)
+        session.commit()
+        return result
     except SQLAlchemyError as exc:
         logger.error(f"Rolling back database session due to {exc.__class__.__name__}", exc_info=True)
         session.rollback()
