@@ -1,8 +1,6 @@
 import unittest
 from unittest.mock import patch, Mock
 
-from flask.globals import session
-
 from ras_party.support.session_decorator import handle_session
 
 from app import create_app
@@ -23,9 +21,6 @@ class TestSessionDecorator(unittest.TestCase):
         with self.app.app_context():
             with patch('ras_party.support.session_decorator.current_app') as current_app:
                 current_app.db.session.return_value = session_instance
-                current_app.db.session.return_value.commit.return_value = None
-                current_app.db.session.return_value.rollback.return_value = None
-                current_app.db.session.return_value.remove.return_value = None
                 handle_session(do_nothing, [], {})
 
                 # Then
@@ -39,9 +34,6 @@ class TestSessionDecorator(unittest.TestCase):
         with self.app.app_context():
             with patch('ras_party.support.session_decorator.current_app') as current_app:
                 current_app.db.session.return_value = session_instance
-                current_app.db.session.return_value.commit.return_value = None
-                current_app.db.session.return_value.rollback.return_value = None
-                current_app.db.session.return_value.remove.return_value = None
                 self.assertRaises(Exception, handle_session, raise_exception, [], {})
 
                 # Then
