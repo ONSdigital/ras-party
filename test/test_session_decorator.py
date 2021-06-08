@@ -7,7 +7,7 @@ from app import create_app
 
 
 class SessionMock(Mock):
-    def remove(self):
+    def commit(self):
         pass
 
     def rollback(self):
