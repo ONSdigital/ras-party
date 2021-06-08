@@ -1,20 +1,12 @@
 import unittest
 from unittest.mock import patch, Mock
 
+from flask.globals import session
+
 from ras_party.support.session_decorator import handle_session
 
 from app import create_app
 
-
-class SessionMock(Mock):
-    def commit(self):
-        pass
-
-    def rollback(self):
-        pass
-
-    def remove(self):
-        pass
 
 class TestSessionDecorator(unittest.TestCase):
     def setUp(self):
@@ -26,11 +18,14 @@ class TestSessionDecorator(unittest.TestCase):
     def test_session_decorator_removes_session(self):
         # Given
         def do_nothing(session): pass
-        session_instance = SessionMock()
+        session_instance = Mock()
         # When
         with self.app.app_context():
             with patch('ras_party.support.session_decorator.current_app') as current_app:
                 current_app.db.session.return_value = session_instance
+                current_app.db.session.return_value.commit.return_value = None
+                current_app.db.session.return_value.rollback.return_value = None
+                current_app.db.session.return_value.remove.return_value = None
                 handle_session(do_nothing, [], {})
 
                 # Then
@@ -39,11 +34,14 @@ class TestSessionDecorator(unittest.TestCase):
     def test_session_decorator_rollback_exception(self):
         # Given
         def raise_exception(session): raise Exception
-        session_instance = SessionMock()
+        session_instance = Mock()
         # When
         with self.app.app_context():
             with patch('ras_party.support.session_decorator.current_app') as current_app:
                 current_app.db.session.return_value = session_instance
+                current_app.db.session.return_value.commit.return_value = None
+                current_app.db.session.return_value.rollback.return_value = None
+                current_app.db.session.return_value.remove.return_value = None
                 self.assertRaises(Exception, handle_session, raise_exception, [], {})
 
                 # Then
