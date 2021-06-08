@@ -6,6 +6,16 @@ from ras_party.support.session_decorator import handle_session
 from app import create_app
 
 
+class SessionMock(Mock):
+    def remove(self):
+        pass
+
+    def rollback(self):
+        pass
+
+    def remove(self):
+        pass
+
 class TestSessionDecorator(unittest.TestCase):
     def setUp(self):
         """setup test environment"""
@@ -16,7 +26,7 @@ class TestSessionDecorator(unittest.TestCase):
     def test_session_decorator_removes_session(self):
         # Given
         def do_nothing(session): pass
-        session_instance = Mock()
+        session_instance = SessionMock()
         # When
         with self.app.app_context():
             with patch('ras_party.support.session_decorator.current_app') as current_app:
@@ -29,7 +39,7 @@ class TestSessionDecorator(unittest.TestCase):
     def test_session_decorator_rollback_exception(self):
         # Given
         def raise_exception(session): raise Exception
-        session_instance = Mock()
+        session_instance = SessionMock()
         # When
         with self.app.app_context():
             with patch('ras_party.support.session_decorator.current_app') as current_app:
