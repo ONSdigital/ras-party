@@ -55,6 +55,7 @@ def create_database(db_connection, db_schema):
     session = scoped_session(sessionmaker(), scopefunc=current_request)
     session.configure(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
     engine.session = session
+    models.Base.query = session.query_property()
 
     logger.info("Creating database")
 
