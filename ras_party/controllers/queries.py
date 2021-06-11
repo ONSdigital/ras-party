@@ -249,7 +249,7 @@ def search_businesses(search_query, page, limit, session):
     if len(search_query) == 11 and search_query.isdigit():
         bound_logger.info("Query looks like an ru_ref, searching only on ru_ref")
         result = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref) \
-            .join(Business).filter(Business.business_ref == search_query).distinct().all()
+            .select_from(BusinessAttributes).join(Business).filter(Business.business_ref == search_query).distinct().all()
         if result:
             return result, len(result)  # ru ref searches do not need to support pagination
         bound_logger.info("Didn't find an ru_ref, searching everything")
@@ -271,7 +271,7 @@ def search_businesses(search_query, page, limit, session):
 
     bound_logger.unbind('search_query')
     query = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref) \
-        .join(Business) \
+        .select_from(BusinessAttributes).join(Business) \
         .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None))) \
         .distinct().order_by(BusinessAttributes.name)  # Build the query
 
