@@ -20,6 +20,7 @@ def create_app(config=None):
     # create and configure the Flask app.
     app = Flask(__name__)
     app.name = "ras-party"
+    logger.info("Creating app", name=app.name)
     app_config = f"config.{config or os.environ.get('APP_SETTINGS', 'Config')}"
     app.config.from_object(app_config)
 
