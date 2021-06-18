@@ -16,13 +16,13 @@ from ras_party.exceptions import RasNotifyError
 from ras_party.support.public_website import PublicWebsite
 from ras_party.views.account_view import auth
 
-share_survey_view = Blueprint('share_survey_view', __name__)
+transfer_survey_view = Blueprint('transfer_survey_view', __name__)
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
-@share_survey_view.before_request
+@transfer_survey_view.before_request
 @auth.login_required
-def before_share_survey_view():
+def before_transfer_survey_view():
     pass
 
 
@@ -34,10 +34,10 @@ def get_pw(username):
         return config_password
 
 
-@share_survey_view.route('/share-survey-users-count', methods=['GET'])
-def share_survey_users():
+@transfer_survey_view.route('/transfer-survey-users-count', methods=['GET'])
+def transfer_survey_users():
     """
-    Get total users count who are already enrolled and pending share survey against business id and survey id
+    Get total users count who are already enrolled and pending transfer survey against business id and survey id
     """
     business_id = request.args.get('business_id')
     survey_id = request.args.get('survey_id')
@@ -45,18 +45,18 @@ def share_survey_users():
         # this is just to validate that the business_id exists
         get_business_by_id(business_id)
         response = pending_survey_controller.get_users_enrolled_and_pending_survey_against_business_and_survey(
-            business_id, survey_id, False)
+            business_id, survey_id, True)
         return make_response(jsonify(response), 200)
     else:
         raise BadRequest('Business id and Survey id is required for this request.')
 
 
-@share_survey_view.route('/share-surveys', methods=['POST'])
-def post_pending_share_surveys():
+@transfer_survey_view.route('/transfer-surveys', methods=['POST'])
+def post_pending_transfer_surveys():
     """
      Creates new records for pending shares
      accepted payload example:
-     {  pending_shares: [{
+     {  pending_transfers: [{
             "business_id": "business_id"
             "survey_id": "survey_id",
             "email_address": "email_address",
@@ -72,71 +72,72 @@ def post_pending_share_surveys():
     """
     payload = request.get_json() or {}
     try:
-        pending_shares = payload['pending_shares']
+        pending_transfers = payload['pending_transfers']
         business_list = []
-        if len(pending_shares) == 0:
-            raise BadRequest('Payload Invalid - pending_shares list is empty')
-        for share in pending_shares:
+        if len(pending_transfers) == 0:
+            raise BadRequest('Payload Invalid - pending_transfers list is empty')
+        for surveys in pending_transfers:
             # Validation, curation and checks
             expected = ('email_address', 'survey_id', 'business_id', 'shared_by')
             v = Validator(Exists(*expected))
-            if not v.validate(share):
+            if not v.validate(surveys):
                 logger.debug(v.errors)
                 raise BadRequest(v.errors)
-        respondent = get_respondent_by_id(pending_shares[0]['shared_by'])
+        respondent = get_respondent_by_id(pending_transfers[0]['shared_by'])
         try:
-            get_respondent_by_email(pending_shares[0]['email_address'])
-            email_template = 'share_survey_access_existing_account'
+            get_respondent_by_email(pending_transfers[0]['email_address'])
+            email_template = 'transfer_survey_access_existing_account'
         except NotFound:
-            email_template = 'share_survey_access_new_account'
+            email_template = 'transfer_survey_access_new_account'
         if not respondent:
             raise BadRequest('Originator unknown')
         batch_number = uuid.uuid4()
-        for pending_share in pending_shares:
-            business = get_business_by_id(pending_share['business_id'])
+        for pending_transfer in pending_transfers:
+            business = get_business_by_id(pending_transfer['business_id'])
             business_list.append(business['name'])
-            pending_survey_controller.pending_share_survey_create(business_id=pending_share['business_id'],
-                                                                  survey_id=pending_share['survey_id'],
-                                                                  email_address=pending_share['email_address'],
-                                                                  shared_by=pending_share['shared_by'],
-                                                                  batch_number=batch_number)
+            pending_survey_controller.pending_transfer_survey_create(business_id=pending_transfer['business_id'],
+                                                                     survey_id=pending_transfer['survey_id'],
+                                                                     email_address=pending_transfer['email_address'],
+                                                                     shared_by=pending_transfer['shared_by'],
+                                                                     batch_number=batch_number)
         # logic to send email
-        verification_url = PublicWebsite().share_survey(batch_number)
+        verification_url = PublicWebsite().transfer_survey(batch_number)
         personalisation = {'CONFIRM_EMAIL_URL': verification_url,
                            'ORIGINATOR_EMAIL_ADDRESS': respondent['emailAddress'],
                            'BUSINESSES': business_list}
-        send_pending_share_email(personalisation, email_template, pending_shares[0]['email_address'], batch_number)
+        send_pending_transfer_email(personalisation, email_template, pending_transfers[0]['email_address'],
+                                    batch_number)
         return make_response(jsonify({"created": "success"}), 201)
     except KeyError:
-        raise BadRequest('Payload Invalid - Pending share key missing')
+        raise BadRequest('Payload Invalid - Pending transfer key missing')
 
     except SQLAlchemyError:
-        raise BadRequest('This share is already in progress')
+        raise BadRequest('This transfer is already in progress')
 
 
-def send_pending_share_email(personalisation: dict, template: str, email: str, batch_id):
+def send_pending_transfer_email(personalisation: dict, template: str, email: str, batch_id):
     """
-    Send an email for sharing surveys
+    Send an email for transfer surveys
     :param personalisation dict of personalisation
     :param template str template name
     :param email str email id
     :param batch_id uuid batch_id
     """
     try:
-        logger.info('sending email for survey share', batch_id=str(batch_id))
+        logger.info('sending email for transfer share', batch_id=str(batch_id))
         NotifyGateway(current_app.config).request_to_notify(email=email,
                                                             template_name=template,
                                                             personalisation=personalisation)
-        logger.info('email for survey share sent', batch_id=str(batch_id))
+        logger.info('email for survey transfer sent', batch_id=str(batch_id))
     except RasNotifyError:
         # Note: intentionally suppresses exception
-        logger.error('Error sending sending email for survey share', batch_id=str(batch_id))
+        logger.error('Error sending email for survey transfer', batch_id=str(batch_id))
 
 
-@share_survey_view.route('/share-survey/verification/<token>', methods=['GET'])
+@transfer_survey_view.route('/transfer-survey/verification/<token>', methods=['GET'])
 def share_survey_verification(token):
     """
-    Verifies share survey verification email
+    Verifies transfer survey verification email
     :param token
     :return json
     """
@@ -144,20 +145,20 @@ def share_survey_verification(token):
     return make_response(jsonify(response), 200)
 
 
-@share_survey_view.route('/share-survey/confirm-pending-shares/<batch_no>', methods=['POST'])
-def confirm_pending_shares(batch_no):
+@transfer_survey_view.route('/transfer-survey/confirm-pending-transfers/<batch_no>', methods=['POST'])
+def confirm_pending_transfers(batch_no):
     """
-    Confirms pending share survey
+    Confirms pending transfer survey
     :param batch_no
     """
     confirm_share_survey(batch_no)
     return make_response(jsonify(), 201)
 
 
-@share_survey_view.route('/share-survey/<batch_no>', methods=['GET'])
-def get_pending_share_with_batch_no(batch_no):
+@transfer_survey_view.route('/transfer-survey/<batch_no>', methods=['GET'])
+def get_pending_transfer_with_batch_no(batch_no):
     """
-    Confirms pending share survey
+    Confirms pending transfer survey
     :param batch_no
     """
     response = get_pending_survey_by_batch_number(batch_no)

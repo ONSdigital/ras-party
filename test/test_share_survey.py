@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from ras_party.controllers import account_controller
 from ras_party.controllers.queries import query_business_by_party_uuid, query_respondent_by_party_uuid, \
     query_pending_shares_by_business_and_survey
-from ras_party.models.models import Enrolment, PendingShares, BusinessRespondent, RespondentStatus, Respondent
+from ras_party.models.models import Enrolment, PendingSurveys, BusinessRespondent, RespondentStatus, Respondent
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.verification import generate_email_token
@@ -40,7 +40,7 @@ class TestShareSurvey(PartyTestClient):
     def populate_pending_share(self, session, pending_share=None):
         if not pending_share:
             pending_share = self.mock_pending_share
-        self.pending_share = PendingShares(**pending_share)
+        self.pending_share = PendingSurveys(**pending_share)
         session.add(self.pending_share)
 
     @with_db_session

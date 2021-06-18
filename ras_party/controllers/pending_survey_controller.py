@@ -13,12 +13,12 @@ from werkzeug.exceptions import Conflict, NotFound, InternalServerError, BadRequ
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.account_controller import set_user_verified
 from ras_party.controllers.queries import query_enrolment_by_business_and_survey_and_status, \
-    query_pending_shares_by_business_and_survey, query_share_survey_by_batch_no, query_business_by_party_uuid, \
+    query_pending_shares_by_business_and_survey, query_pending_survey_by_batch_no, query_business_by_party_uuid, \
     query_respondent_by_party_uuid, query_business_respondent_by_respondent_id_and_business_id, \
-    delete_share_survey_by_batch_no
+    delete_pending_survey_by_batch_no
 from ras_party.controllers.respondent_controller import get_respondent_by_email
 from ras_party.controllers.validate import Validator, Exists
-from ras_party.models.models import PendingShares, BusinessRespondent, Enrolment, EnrolmentStatus, RespondentStatus, \
+from ras_party.models.models import PendingSurveys, BusinessRespondent, Enrolment, EnrolmentStatus, RespondentStatus, \
     Respondent
 from ras_party.support.session_decorator import with_query_only_db_session, with_db_session, with_quiet_db_session
 from ras_party.support.verification import decode_email_token
@@ -27,7 +27,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 @with_query_only_db_session
-def get_users_enrolled_and_pending_share_against_business_and_survey(business_id, survey_id, session):
+def get_users_enrolled_and_pending_survey_against_business_and_survey(business_id, survey_id, is_transfer, session):
     """
     Get total users count who are already enrolled and pending share survey against business id and survey id
     Returns total user count
@@ -35,6 +35,8 @@ def get_users_enrolled_and_pending_share_against_business_and_survey(business_id
     :type business_id: str
     :param survey_id: survey id
     :type survey_id: str
+    :param is_transfer: if the request is for transfer share
+    :type is_transfer: bool
     :param session: db session
     :rtype: int
     """
@@ -42,14 +44,14 @@ def get_users_enrolled_and_pending_share_against_business_and_survey(business_id
     bound_logger.info('Attempting to get enrolled users')
     enrolled_users = query_enrolment_by_business_and_survey_and_status(business_id, survey_id, session)
     bound_logger.info('Attempting to get pending survey users')
-    pending_survey_users = query_pending_shares_by_business_and_survey(business_id, survey_id, session)
+    pending_survey_users = query_pending_shares_by_business_and_survey(business_id, survey_id, session, is_transfer)
     total_users = enrolled_users.count() + pending_survey_users.count()
     bound_logger.info(f'total users count {total_users}')
     return total_users
 
 
 @with_db_session
-def pending_share_create(business_id, survey_id, email_address, shared_by, batch_number, session):
+def pending_share_survey_create(business_id, survey_id, email_address, shared_by, batch_number, session):
     """
     creates a new record for pending share
     Returns void
@@ -66,54 +68,77 @@ def pending_share_create(business_id, survey_id, email_address, shared_by, batch
     :type batch_number: uuid
     :rtype: void
     """
-    pending_share = PendingShares(business_id=business_id, survey_id=survey_id, email_address=email_address,
-                                  shared_by=shared_by, batch_no=batch_number)
+    pending_share = PendingSurveys(business_id=business_id, survey_id=survey_id, email_address=email_address,
+                                   shared_by=shared_by, batch_no=batch_number)
     session.add(pending_share)
 
 
 @with_db_session
-def delete_pending_shares(session):
+def pending_transfer_survey_create(business_id, survey_id, email_address, shared_by, batch_number, session):
+    """
+    creates a new record for pending share for transfers
+    Returns void
+    :param business_id: business party id
+    :type business_id: str
+    :param survey_id: survey id
+    :type survey_id: str
+    :param email_address: email_address
+    :type email_address: str
+    :param shared_by: respondent_party_uuid
+    :type shared_by: uuid
+    :param session: db session
+    :param batch_number: batch_number
+    :type batch_number: uuid
+    :rtype: void
+    """
+    pending_transfer = PendingSurveys(business_id=business_id, survey_id=survey_id, email_address=email_address,
+                                      shared_by=shared_by, batch_no=batch_number, is_transfer=True)
+    session.add(pending_transfer)
+
+
+@with_db_session
+def delete_pending_surveys(session):
     """
     Deletes all the existing pending shares which has passed expiration duration
     :param session A db session
     """
     _expired_hrs = datetime.utcnow() - timedelta(seconds=float(current_app.config["EMAIL_TOKEN_EXPIRY"]))
-    pending_shares = session.query(PendingShares).filter(PendingShares.time_shared < _expired_hrs)
+    pending_shares = session.query(PendingSurveys).filter(PendingSurveys.time_shared < _expired_hrs)
     pending_shares.delete()
     logger.info('Deletion complete')
 
 
 @with_db_session
-def get_unique_pending_shares(session):
+def get_unique_pending_surveys(session):
     """
     Gets unique pending shares which has passed expiration duration based on batch_id
     :param session A db session
     """
     _expired_hrs = datetime.utcnow() - timedelta(seconds=float(current_app.config["EMAIL_TOKEN_EXPIRY"]))
-    pending_shares_ready_for_deletion = session.query(PendingShares).filter(PendingShares.time_shared < _expired_hrs) \
-        .distinct(PendingShares.batch_no)
-    unique_batch_record = pending_shares_ready_for_deletion.distinct(PendingShares.batch_no)
-    return [unique_batch_record.to_share_dict() for unique_batch_record in unique_batch_record]
+    pending_shares_ready_for_deletion = session.query(PendingSurveys).filter(PendingSurveys.time_shared < _expired_hrs) \
+        .distinct(PendingSurveys.batch_no)
+    unique_batch_record = pending_shares_ready_for_deletion.distinct(PendingSurveys.batch_no)
+    return [unique_batch_record.to_pending_surveys_dict() for unique_batch_record in unique_batch_record]
 
 
-def validate_share_survey_token(token):
+def validate_pending_survey_token(token):
     """
-    Validates the share survey token and returns the pending shares against the batch number
+    Validates the share survey token and returns the pending surveys against the batch number
     :param: token
     :param: session
     :return: list of pending shares
     """
-    logger.info('Attempting to verify share survey', token=token)
+    logger.info('Attempting to verify share/transfer survey', token=token)
     try:
         duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         batch_no = uuid.UUID(decode_email_token(token, duration))
     except SignatureExpired:
-        logger.info("Expired share survey token")
-        raise Conflict("Expired share survey token")
+        logger.info("Expired share/transfer survey token")
+        raise Conflict("Expired share/transfer survey token")
     except (BadSignature, BadData):
-        logger.exception("Bad token in validate_share_survey_token")
+        logger.exception("Bad token in validate_pending_survey_token")
         raise NotFound("Unknown batch number in token")
-    return get_share_survey_by_batch_number(batch_no)
+    return get_pending_survey_by_batch_number(batch_no)
 
 
 @with_db_session
@@ -128,6 +153,18 @@ def confirm_share_survey(batch_no, session):
     accept_share_survey(session, batch_no)
 
 
+@with_db_session
+def confirm_transfer_survey(batch_no, session):
+    """
+    confirms transfer survey by creating a new db session
+    :param batch_no: transfer_survey batch number
+    :type batch_no: uuid
+    :param session: db session
+    :type session: session
+    """
+    accept_transfer_survey(session, batch_no)
+
+
 def accept_share_survey(session, batch_no, new_respondent=None):
     """
     Confirms share surveys
@@ -138,10 +175,10 @@ def accept_share_survey(session, batch_no, new_respondent=None):
     :param: session
     """
     logger.info('Attempting to confirm pending share survey', batch_no=batch_no)
-    share_surveys = query_share_survey_by_batch_no(batch_no, session)
+    share_surveys = query_pending_survey_by_batch_no(batch_no, session)
     if len(share_surveys) == 0:
         raise NotFound('Batch number does not exist')
-    share_surveys_list = [share_survey.to_share_dict() for share_survey in share_surveys]
+    share_surveys_list = [share_survey.to_pending_surveys_dict() for share_survey in share_surveys]
     if not new_respondent:
         respondent = get_respondent_by_email(share_surveys_list[0]['email_address'])
         new_respondent = query_respondent_by_party_uuid(respondent['id'], session)
@@ -171,7 +208,7 @@ def accept_share_survey(session, batch_no, new_respondent=None):
         else:
             logger.info('Ignoring respondent as already enrolled', business_id=business_id, survey_id=survey_id,
                         email=share_surveys_list[0]['email_address'])
-        delete_share_survey_by_batch_no(batch_no, session)
+        delete_pending_survey_by_batch_no(batch_no, session)
 
 
 def is_already_enrolled(survey_id, respondent_pk, business_id, session):
@@ -190,7 +227,7 @@ def is_already_enrolled(survey_id, respondent_pk, business_id, session):
 
 
 @with_db_session
-def get_share_survey_by_batch_number(batch_number, session):
+def get_pending_survey_by_batch_number(batch_number, session):
     """
     gets list of share surveys against the batch number
     :param batch_number: share survey batch number
@@ -200,10 +237,10 @@ def get_share_survey_by_batch_number(batch_number, session):
     :return: list of pending share surveys
     :rtype: list
     """
-    share_surveys = query_share_survey_by_batch_no(batch_number, session)
-    if len(share_surveys) == 0:
+    pending_surveys = query_pending_survey_by_batch_no(batch_number, session)
+    if len(pending_surveys) == 0:
         raise NotFound('Batch number does not exist')
-    return [share_survey.to_share_dict() for share_survey in share_surveys]
+    return [pending_surveys.to_pending_surveys_dict() for pending_surveys in pending_surveys]
 
 
 # flake8: noqa: C901
@@ -303,3 +340,51 @@ def _add_share_survey_respondent(session, translated_party, party):
 
     logger.info("New user has been registered via the auth-service", party_uuid=translated_party['party_uuid'])
     return respondent
+
+
+def accept_transfer_survey(session, batch_no, new_respondent=None):
+    """
+    Confirms transfer surveys
+    Creates Enrolment records
+    Business Respondent records
+    Removes pending shares
+    Removes Existing enrolment
+    :param: batch_no
+    :param: session
+    """
+    logger.info('Attempting to confirm transfer share survey', batch_no=batch_no)
+    transfer_surveys = query_pending_survey_by_batch_no(batch_no, session)
+    if len(transfer_surveys) == 0:
+        raise NotFound('Batch number does not exist')
+    transfer_surveys_list = [share_survey.to_pending_surveys_dict() for share_survey in transfer_surveys]
+    if not new_respondent:
+        respondent = get_respondent_by_email(transfer_surveys_list[0]['email_address'])
+        new_respondent = query_respondent_by_party_uuid(respondent['id'], session)
+
+    for transfer_share_survey in transfer_surveys_list:
+        business_id = transfer_share_survey['business_id']
+        survey_id = transfer_share_survey['survey_id']
+        business_respondent = query_business_respondent_by_respondent_id_and_business_id(
+            business_id, new_respondent.id, session)
+        if not business_respondent:
+            # Associate respondent with new business
+            business = query_business_by_party_uuid(business_id, session)
+            if not business:
+                logger.error("Could not find business", business_id=business_id)
+                raise InternalServerError("Could not locate business when creating business association")
+            business_respondent = BusinessRespondent(business=business, respondent=new_respondent)
+        if not is_already_enrolled(survey_id, new_respondent.id, business_id, session):
+            try:
+                with session.begin_nested():
+                    enrolment = Enrolment(business_respondent=business_respondent,
+                                          survey_id=transfer_share_survey['survey_id'],
+                                          status=EnrolmentStatus.ENABLED)
+                    session.add(enrolment)
+
+            except SQLAlchemyError as e:
+                logger.exception('Unable to confirm pending share survey', batch_no=batch_no)
+        else:
+            logger.info('Ignoring respondent as already enrolled', business_id=business_id, survey_id=survey_id,
+                        email=transfer_share_survey[0]['email_address'])
+        delete_pending_survey_by_batch_no(batch_no, session)
+        # TODO logic to unroll existing user

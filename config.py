@@ -23,7 +23,7 @@ class Config(object):
     PARTY_SCHEMA = os.getenv('PARTY_SCHEMA', 'ras_party/schemas/party_schema.json')
 
     DATABASE_SCHEMA = os.getenv('DATABASE_SCHEMA', 'partysvc')
-    DATABASE_URI = os.getenv('DATABASE_URI', "postgresql://postgres:postgres@localhost:5432/postgres")
+    DATABASE_URI = os.getenv('DATABASE_URI', "postgresql://postgres:postgres@localhost:5432/ras")
 
     SECURITY_USER_NAME = os.getenv('SECURITY_USER_NAME', 'admin')
     SECURITY_USER_PASSWORD = os.getenv('SECURITY_USER_PASSWORD', 'secret')
@@ -59,6 +59,15 @@ class Config(object):
 
     SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE = os.getenv('SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE',
                                                           'share_survey_access_cancellation')
+
+    TRANSFER_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE = os.getenv('TRANSFER_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE',
+                                                            'transfer_survey_access_new_account')
+
+    TRANSFER_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE = os.getenv('TRANSFER_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE',
+                                                                 'transfer_survey_access_existing_account')
+
+    TRANSFER_SURVEY_ACCESS_CANCELLATION_TEMPLATE = os.getenv('TRANSFER_SURVEY_ACCESS_CANCELLATION_TEMPLATE',
+                                                             'transfer_survey_access_cancellation')
 
     SEND_EMAIL_TO_GOV_NOTIFY = _is_true(os.getenv('SEND_EMAIL_TO_GOV_NOTIFY', True))
 

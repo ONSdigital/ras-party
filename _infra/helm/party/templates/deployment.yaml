@@ -194,6 +194,12 @@ spec:
             value: "{{ .Values.email.templates.notifyShareSurveyAccessExistingAccountTemplate }}"
           - name: SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE
             value: "{{ .Values.email.templates.notifyShareSurveyAccessCancellationTemplate }}"
+          - name: TRANSFER_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE
+            value: "{{ .Values.email.templates.notifyTransferSurveyAccessNewAccountTemplate }}"
+          - name: TRANSFER_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE
+            value: "{{ .Values.email.templates.notifyTransferSurveyAccessExistingAccountTemplate }}"
+          - name: TRANSFER_SURVEY_ACCESS_CANCELLATION_TEMPLATE
+            value: "{{ .Values.email.templates.notifyTransferSurveyAccessCancellationTemplate }}"
           - name: NOTIFY_ACCOUNT_LOCKED_TEMPLATE
             value: {{ .Values.email.templates.notifyAccountLockedTemplate }}
           - name: SECURITY_USER_NAME

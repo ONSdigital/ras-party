@@ -21,6 +21,10 @@ class PublicWebsite:
         return f'{self.website_uri}/my-account/' \
                f'share-surveys/accept-share-surveys/{self._generate_token(str(batch_number))}'
 
+    def transfer_survey(self, batch_number):
+        return f'{self.website_uri}/my-account/' \
+               f'transfer-surveys/accept-transfer-surveys/{self._generate_token(str(batch_number))}'
+
     def resend_share_survey(self, batch_number):
         return f'{self.website_uri}/my-account/' \
                f'share-surveys/resend-share-surveys/{self._generate_token(str(batch_number))}'

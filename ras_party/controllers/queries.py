@@ -4,7 +4,7 @@ import structlog
 from sqlalchemy import func, and_, or_, distinct
 
 from ras_party.models.models import Business, BusinessAttributes, BusinessRespondent, \
-    Enrolment, EnrolmentStatus, Respondent, PendingShares
+    Enrolment, EnrolmentStatus, Respondent, PendingSurveys
 from ras_party.support.util import obfuscate_email
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -25,17 +25,19 @@ def query_enrolment_by_business_and_survey_and_status(business_id, survey_id, se
                                                      Enrolment.status == EnrolmentStatus.PENDING))
 
 
-def query_pending_shares_by_business_and_survey(business_id, survey_id, session):
+def query_pending_shares_by_business_and_survey(business_id, survey_id, session, is_transfer):
     """
     Query to return total pending share against businesses is and survey id
     :param business_id: business party id
     :param survey_id: survey id
     :param session: db session
+    :param is_transfer: boolean if the query is for transfer survey or share survey
     :return: the pending share
     """
     logger.info('Querying pending share by business_id and survey_id', business_id=business_id, survey_id=survey_id)
-    return session.query(PendingShares).filter(
-        PendingShares.business_id == business_id).filter(PendingShares.survey_id == survey_id)
+    return session.query(PendingSurveys).filter(
+        PendingSurveys.business_id == business_id).filter(PendingSurveys.survey_id == survey_id). \
+        filter(PendingSurveys.is_transfer == is_transfer) # noqa
 
 
 def query_businesses_by_party_uuids(party_uuids, session):
@@ -43,6 +45,7 @@ def query_businesses_by_party_uuids(party_uuids, session):
     Query to return businesses based on party uuids
 
     :param party_uuids: a list of party uuids
+    :param session: db session
     :return: the businesses
     """
     logger.info('Querying businesses by party_uuids', party_uuids=party_uuids)
@@ -249,7 +252,8 @@ def search_businesses(search_query, page, limit, session):
     if len(search_query) == 11 and search_query.isdigit():
         bound_logger.info("Query looks like an ru_ref, searching only on ru_ref")
         result = session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref) \
-            .select_from(BusinessAttributes).join(Business).filter(Business.business_ref == search_query).distinct().all()
+            .select_from(BusinessAttributes).join(Business).filter(
+            Business.business_ref == search_query).distinct().all()
         if result:
             return result, len(result)  # ru ref searches do not need to support pagination
         bound_logger.info("Didn't find an ru_ref, searching everything")
@@ -285,25 +289,25 @@ def search_businesses(search_query, page, limit, session):
     return results, total_business_count
 
 
-def query_share_survey_by_batch_no(batch_no, session):
+def query_pending_survey_by_batch_no(batch_no, session):
     """
-     Query to return share survey by batch no.
+     Query to return pending survey by batch no.
      :param batch_no: UUID
      :return: share surveys
     """
     logger.info('Querying share_surveys', batch_no=batch_no)
-    response = session.query(PendingShares).filter(PendingShares.batch_no == batch_no).all()
+    response = session.query(PendingSurveys).filter(PendingSurveys.batch_no == batch_no).all()
     return response
 
 
-def delete_share_survey_by_batch_no(batch_no, session):
+def delete_pending_survey_by_batch_no(batch_no, session):
     """
-     Query to delete existing share survey by batch no.
+     Query to delete existing pending survey by batch no.
      :param batch_no: UUID
-     :return: share surveys
+     :return: pending surveys
     """
     logger.info('Querying share_surveys', batch_no=batch_no)
-    response = session.query(PendingShares).filter(PendingShares.batch_no == batch_no).delete()
+    response = session.query(PendingSurveys).filter(PendingSurveys.batch_no == batch_no).delete()
     return response
 
 

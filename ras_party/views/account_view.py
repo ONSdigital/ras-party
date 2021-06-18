@@ -5,7 +5,7 @@ from flask import Blueprint, request, current_app, make_response, jsonify
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.exceptions import BadRequest
 
-from ras_party.controllers import account_controller, share_survey_controller
+from ras_party.controllers import account_controller, pending_survey_controller
 from ras_party.controllers.validate import Exists, Validator
 
 account_view = Blueprint('account_view', __name__)
@@ -153,5 +153,5 @@ def post_share_survey_respondent():
     Creates and registers a new respondent against share survey email address and marks it active.
     """
     payload = request.get_json() or {}
-    response = share_survey_controller.post_share_survey_respondent(payload)
+    response = pending_survey_controller.post_share_survey_respondent(payload)
     return make_response(jsonify(response), 201)
