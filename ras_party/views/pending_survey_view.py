@@ -42,11 +42,12 @@ def pending_survey_users():
     """
     business_id = request.args.get('business_id')
     survey_id = request.args.get('survey_id')
+    is_transfer = request.args.get('is_transfer', False)
     if business_id and survey_id:
         # this is just to validate that the business_id exists
         get_business_by_id(business_id)
         response = pending_survey_controller.get_users_enrolled_and_pending_survey_against_business_and_survey(
-            business_id, survey_id, True)
+            business_id, survey_id, is_transfer)
         return make_response(jsonify(response), 200)
     else:
         raise BadRequest('Business id and Survey id is required for this request.')
@@ -173,7 +174,7 @@ def share_survey_verification(token):
     return make_response(jsonify(response), 200)
 
 
-@pending_survey_view.route('/pending-survey/confirm-pending-shares/<batch_no>', methods=['POST'])
+@pending_survey_view.route('/pending-survey/confirm-pending-surveys/<batch_no>', methods=['POST'])
 def confirm_pending_shares(batch_no):
     """
     Confirms pending share survey
@@ -183,7 +184,7 @@ def confirm_pending_shares(batch_no):
     return make_response(jsonify(), 201)
 
 
-@pending_survey_view.route('/pending-survey/<batch_no>', methods=['GET'])
+@pending_survey_view.route('/pending-surveys/<batch_no>', methods=['GET'])
 def get_pending_surveys_with_batch_no(batch_no):
     """
     Confirms pending share survey

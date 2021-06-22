@@ -97,11 +97,17 @@ def delete_pending_surveys_deletion():
     Endpoint Exposed for Kubernetes Cronjob to delete expired pending surveys
     """
     logger.info('Attempting to delete expired pending shares')
-    unique_pending_share_to_be_emailed = get_unique_pending_surveys()
+    unique_pending_share_surveys_to_be_emailed = get_unique_pending_surveys(False)
+    unique_pending_transfer_surveys_to_be_emailed = get_unique_pending_surveys(True)
     pending_survey_controller.delete_pending_surveys()
-    if len(unique_pending_share_to_be_emailed) > 0:
-        logger.info('number of cancellation emails to be sent', count=len(unique_pending_share_to_be_emailed))
-        send_share_survey_cancellation_emails(unique_pending_share_to_be_emailed)
+    if len(unique_pending_share_surveys_to_be_emailed) > 0:
+        logger.info('number of share surveys cancellation emails to be sent', count=len(
+            unique_pending_share_surveys_to_be_emailed))
+        send_share_survey_cancellation_emails(unique_pending_share_surveys_to_be_emailed)
+    if len(unique_pending_transfer_surveys_to_be_emailed) > 0:
+        logger.info('number of transfer surveys cancellation emails to be sent', count=len(
+            unique_pending_transfer_surveys_to_be_emailed))
+        send_transfer_survey_cancellation_emails(unique_pending_transfer_surveys_to_be_emailed)
     return '', 204
 
 
@@ -119,6 +125,25 @@ def send_share_survey_cancellation_emails(unique_pending_share_to_be_emailed: li
                            'COLLEAGUE_EMAIL_ADDRESS': data['email_address'],
                            'NAME': respondent['firstName']}
         send_pending_survey_email(personalisation, 'share_survey_access_cancellation', respondent['emailAddress'],
-                                 data['batch_no'])
+                                  data['batch_no'])
         logger.info('share survey cancellation email send successfully', respondent=str(respondent['id']))
     logger.info('share survey cancellation emails send successfully')
+
+
+def send_transfer_survey_cancellation_emails(unique_pending_transfer_to_be_emailed: list):
+    """
+    sends pending transfer survey cancellation email
+    :param unique_pending_transfer_to_be_emailed list of unique pending transfer record
+    """
+    logger.info('sending transfer survey cancellation emails')
+    for data in unique_pending_transfer_to_be_emailed:
+        respondent = get_respondent_by_id(str(data['shared_by']))
+        logger.info('sending transfer survey cancellation email', respondent=str(respondent['id']))
+        verification_url = PublicWebsite().resend_transfer_survey(data['batch_no'])
+        personalisation = {'RESEND_EMAIL_URL': verification_url,
+                           'COLLEAGUE_EMAIL_ADDRESS': data['email_address'],
+                           'NAME': respondent['firstName']}
+        send_pending_survey_email(personalisation, 'transfer_survey_access_cancellation', respondent['emailAddress'],
+                                  data['batch_no'])
+        logger.info('transfer survey cancellation email send successfully', respondent=str(respondent['id']))
+    logger.info('transfer survey cancellation emails send successfully')

@@ -25,7 +25,7 @@ def query_enrolment_by_business_and_survey_and_status(business_id, survey_id, se
                                                      Enrolment.status == EnrolmentStatus.PENDING))
 
 
-def query_pending_shares_by_business_and_survey(business_id, survey_id, session, is_transfer):
+def query_pending_surveys_by_business_and_survey(business_id, survey_id, session, is_transfer):
     """
     Query to return total pending share against businesses is and survey id
     :param business_id: business party id

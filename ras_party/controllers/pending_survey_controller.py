@@ -13,7 +13,7 @@ from werkzeug.exceptions import Conflict, NotFound, InternalServerError, BadRequ
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.account_controller import set_user_verified, get_single_respondent_by_email
 from ras_party.controllers.queries import query_enrolment_by_business_and_survey_and_status, \
-    query_pending_shares_by_business_and_survey, query_pending_survey_by_batch_no, query_business_by_party_uuid, \
+    query_pending_surveys_by_business_and_survey, query_pending_survey_by_batch_no, query_business_by_party_uuid, \
     query_respondent_by_party_uuid, query_business_respondent_by_respondent_id_and_business_id, \
     delete_pending_survey_by_batch_no
 from ras_party.controllers.respondent_controller import get_respondent_by_email, get_respondent_by_id, \
@@ -45,7 +45,7 @@ def get_users_enrolled_and_pending_survey_against_business_and_survey(business_i
     bound_logger.info('Attempting to get enrolled users')
     enrolled_users = query_enrolment_by_business_and_survey_and_status(business_id, survey_id, session)
     bound_logger.info('Attempting to get pending survey users')
-    pending_survey_users = query_pending_shares_by_business_and_survey(business_id, survey_id, session, is_transfer)
+    pending_survey_users = query_pending_surveys_by_business_and_survey(business_id, survey_id, session, is_transfer)
     total_users = enrolled_users.count() + pending_survey_users.count()
     bound_logger.info(f'total users count {total_users}')
     return total_users
@@ -89,13 +89,16 @@ def delete_pending_surveys(session):
 
 
 @with_db_session
-def get_unique_pending_surveys(session):
+def get_unique_pending_surveys(is_transfer, session):
     """
     Gets unique pending shares which has passed expiration duration based on batch_id
+    :param is_transfer bool true if the request is for transfer
     :param session A db session
     """
     _expired_hrs = datetime.utcnow() - timedelta(seconds=float(current_app.config["EMAIL_TOKEN_EXPIRY"]))
-    pending_shares_ready_for_deletion = session.query(PendingSurveys).filter(PendingSurveys.time_shared < _expired_hrs) \
+    pending_shares_ready_for_deletion = session.query(PendingSurveys)\
+        .filter(PendingSurveys.time_shared < _expired_hrs) \
+        .filter(PendingSurveys.is_transfer == is_transfer) \
         .distinct(PendingSurveys.batch_no)
     unique_batch_record = pending_shares_ready_for_deletion.distinct(PendingSurveys.batch_no)
     return [unique_batch_record.to_pending_surveys_dict() for unique_batch_record in unique_batch_record]
