@@ -8,7 +8,7 @@ from ras_party.controllers import respondent_controller, pending_survey_controll
 from ras_party.controllers.respondent_controller import get_respondent_by_id
 from ras_party.controllers.pending_survey_controller import get_unique_pending_surveys
 from ras_party.support.public_website import PublicWebsite
-from ras_party.views.share_survey_view import send_pending_share_email
+from ras_party.views.pending_survey_view import send_pending_survey_email
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 batch_request = Blueprint('batch_request', __name__)
@@ -118,7 +118,7 @@ def send_share_survey_cancellation_emails(unique_pending_share_to_be_emailed: li
         personalisation = {'RESEND_EMAIL_URL': verification_url,
                            'COLLEAGUE_EMAIL_ADDRESS': data['email_address'],
                            'NAME': respondent['firstName']}
-        send_pending_share_email(personalisation, 'share_survey_access_cancellation', respondent['emailAddress'],
+        send_pending_survey_email(personalisation, 'share_survey_access_cancellation', respondent['emailAddress'],
                                  data['batch_no'])
         logger.info('share survey cancellation email send successfully', respondent=str(respondent['id']))
     logger.info('share survey cancellation emails send successfully')

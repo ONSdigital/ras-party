@@ -1,12 +1,16 @@
 import logging
+import uuid
 
 import structlog
 from flask import Blueprint, request, current_app, make_response, jsonify
 from flask_httpauth import HTTPBasicAuth
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import account_controller, pending_survey_controller
+from ras_party.controllers.pending_survey_controller import get_pending_survey_by_batch_number
 from ras_party.controllers.validate import Exists, Validator
+from ras_party.views.respondent_view import get_respondent_by_id, delete_respondent_by_email
 
 account_view = Blueprint('account_view', __name__)
 
@@ -147,11 +151,12 @@ def put_edit_account_status(party_id):
     return make_response(jsonify(response), 200)
 
 
-@account_view.route('/share-survey-respondent', methods=['POST'])
-def post_share_survey_respondent():
+@account_view.route('/pending-survey-respondent', methods=['POST'])
+def post_pending_survey_respondent():
     """
-    Creates and registers a new respondent against share survey email address and marks it active.
+    Creates and registers a new respondent against share survey/ transfer survey
+    email address and marks it active.
     """
     payload = request.get_json() or {}
-    response = pending_survey_controller.post_share_survey_respondent(payload)
+    response = pending_survey_controller.post_pending_survey_respondent(payload)
     return make_response(jsonify(response), 201)
