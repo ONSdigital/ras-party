@@ -200,6 +200,8 @@ spec:
             value: "{{ .Values.email.templates.notifyTransferSurveyAccessExistingAccountTemplate }}"
           - name: TRANSFER_SURVEY_ACCESS_CANCELLATION_TEMPLATE
             value: "{{ .Values.email.templates.notifyTransferSurveyAccessCancellationTemplate }}"
+          - name: EMAIL_TOKEN_EXPIRY
+            value: "{{ .Values.email.tokenExpiry }}"
           - name: NOTIFY_ACCOUNT_LOCKED_TEMPLATE
             value: {{ .Values.email.templates.notifyAccountLockedTemplate }}
           - name: SECURITY_USER_NAME
