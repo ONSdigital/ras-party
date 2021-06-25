@@ -36,7 +36,7 @@ def get_users_enrolled_and_pending_survey_against_business_and_survey(business_i
     :type business_id: str
     :param survey_id: survey id
     :type survey_id: str
-    :param is_transfer: if the request is for transfer share
+    :param is_transfer: if the request is to transfer share
     :type is_transfer: bool
     :param session: db session
     :rtype: int
@@ -67,7 +67,7 @@ def pending_survey_create(business_id, survey_id, email_address, shared_by, batc
     :param session: db session
     :param batch_number: batch_number
     :type batch_number: uuid
-    :param is_transfer: True if the record is for transfer survey
+    :param is_transfer: True if the record is to transfer survey
     :type is_transfer: bool
     :rtype: void
     """
@@ -79,7 +79,7 @@ def pending_survey_create(business_id, survey_id, email_address, shared_by, batc
 @with_db_session
 def delete_pending_surveys(session):
     """
-    Deletes all the existing pending shares which has passed expiration duration
+    Deletes all the existing pending surveys which have expired
     :param session A db session
     """
     _expired_hrs = datetime.utcnow() - timedelta(seconds=float(current_app.config["EMAIL_TOKEN_EXPIRY"]))
@@ -92,11 +92,12 @@ def delete_pending_surveys(session):
 def get_unique_pending_surveys(is_transfer, session):
     """
     Gets unique pending shares which has passed expiration duration based on batch_id
-    :param is_transfer bool true if the request is for transfer
+    :param is_transfer: if the request is to transfer surveys
+    :type is_transfer: bool
     :param session A db session
     """
     _expired_hrs = datetime.utcnow() - timedelta(seconds=float(current_app.config["EMAIL_TOKEN_EXPIRY"]))
-    pending_shares_ready_for_deletion = session.query(PendingSurveys)\
+    pending_shares_ready_for_deletion = session.query(PendingSurveys) \
         .filter(PendingSurveys.time_shared < _expired_hrs) \
         .filter(PendingSurveys.is_transfer == is_transfer) \
         .distinct(PendingSurveys.batch_no)
@@ -109,7 +110,7 @@ def validate_pending_survey_token(token):
     Validates the share survey token and returns the pending surveys against the batch number
     :param: token
     :param: session
-    :return: list of pending shares
+    :return: list of pending surveys
     """
     logger.info('Attempting to verify share/transfer survey', token=token)
     try:
@@ -197,33 +198,44 @@ def accept_pending_survey(session, batch_no, new_respondent=None):
         session.commit()
         if pending_surveys_is_transfer:
             try:
-                remove_transfer_originator_business_association(pending_surveys_list[0]['shared_by'])
+                logger.info('About to remove the originator association to the business', business_id=business_id,
+                            party_uuid=pending_surveys_list[0]['shared_by'])
+                remove_transfer_originator_business_association(pending_surveys_list)
             except SQLAlchemyError as e:
-                logger.exception('Unable to remove previous enrolment for originator', batch_no=batch_no)
+                logger.exception('Unable to remove previous enrolment for originator', batch_no=batch_no,
+                                 party_uuid=pending_surveys_list[0]['shared_by'])
                 raise e
 
 
 @with_db_session
-def remove_transfer_originator_business_association(party_id, session):
+def remove_transfer_originator_business_association(pending_surveys_list, session):
     """
     De-register transfer originator from existing business association.
 
-    :param party_id: Id of Respondent to delete
-    :type party_id: UUID
+    :param pending_surveys_list: Pending surveys list
+    :type pending_surveys_list: List
     :param session
     :return: On success it returns None, on failure will raise one of many different exceptions
     """
+    party_id = pending_surveys_list[0]['shared_by']
     logger.info("Starting to de register transfer originator from business", party_id=party_id)
-
     transferred_by_respondent = get_respondent_by_id(str(party_id))
     respondent = get_single_respondent_by_email(transferred_by_respondent['emailAddress'], session)
-
-    session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
-    session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
-
-    logger.info("Un enrolled transfer originator for the surveys transferred",
-                party_uuid=str(respondent.party_uuid),
-                id=respondent.id)
+    for pending_survey in pending_surveys_list:
+        business_id = pending_survey['business_id']
+        survey_id = pending_survey['survey_id']
+        logger.info("Starting to de register transfer originator from business", party_id=party_id,
+                    business_id=business_id, survey_id=survey_id)
+        session.query(Enrolment).filter(
+            Enrolment.respondent_id == respondent.id).filter(
+            Enrolment.business_id == business_id).filter(
+            Enrolment.survey_id == survey_id).delete()
+        session.query(BusinessRespondent).filter(
+            BusinessRespondent.respondent_id == respondent.id).filter(
+            BusinessRespondent.business_id == business_id).delete()
+        logger.info("Un enrolled transfer originator for the surveys transferred",
+                    party_id=party_id,
+                    business_id=business_id, survey_id=survey_id)
 
 
 def is_already_enrolled(survey_id, respondent_pk, business_id, session):
