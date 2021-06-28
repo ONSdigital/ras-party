@@ -17,9 +17,10 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 def create_app(config=None):
-    # create and configure the Flask app
+    # create and configure the Flask app.
     app = Flask(__name__)
     app.name = "ras-party"
+    logger.info("Creating app", name=app.name)
     app_config = f"config.{config or os.environ.get('APP_SETTINGS', 'Config')}"
     app.config.from_object(app_config)
 
@@ -55,6 +56,7 @@ def create_database(db_connection, db_schema):
     session = scoped_session(sessionmaker(), scopefunc=current_request)
     session.configure(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
     engine.session = session
+    models.Base.query = session.query_property()
 
     logger.info("Creating database")
 
@@ -70,7 +72,7 @@ def create_database(db_connection, db_schema):
             logger.info("Creating schema", schema=db_schema)
             engine.execute(f"CREATE SCHEMA {db_schema}")
 
-            logger.info("Creating database tables.")
+            logger.info("Creating database tables")
             models.Base.metadata.create_all(engine)
         else:
             logger.info("Schema exists.", schema=db_schema)

@@ -1,21 +1,26 @@
 import logging
 import uuid
 from datetime import datetime, timedelta
+from urllib.error import HTTPError
 
 import structlog
 from flask import current_app
 from itsdangerous import SignatureExpired, BadSignature, BadData
 from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.exceptions import Conflict, NotFound, InternalServerError
+from werkzeug.exceptions import Conflict, NotFound, InternalServerError, BadRequest
 
+from ras_party.clients.oauth_client import OauthClient
+from ras_party.controllers.account_controller import set_user_verified
 from ras_party.controllers.queries import query_enrolment_by_business_and_survey_and_status, \
     query_pending_shares_by_business_and_survey, query_share_survey_by_batch_no, query_business_by_party_uuid, \
     query_respondent_by_party_uuid, query_business_respondent_by_respondent_id_and_business_id, \
     delete_share_survey_by_batch_no
 from ras_party.controllers.respondent_controller import get_respondent_by_email
-from ras_party.models.models import PendingShares, BusinessRespondent, Enrolment, EnrolmentStatus
-from ras_party.support.session_decorator import with_query_only_db_session, with_db_session
+from ras_party.controllers.validate import Validator, Exists
+from ras_party.models.models import PendingShares, BusinessRespondent, Enrolment, EnrolmentStatus, RespondentStatus, \
+    Respondent
+from ras_party.support.session_decorator import with_query_only_db_session, with_db_session, with_quiet_db_session
 from ras_party.support.verification import decode_email_token
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -91,8 +96,7 @@ def get_unique_pending_shares(session):
     return [unique_batch_record.to_share_dict() for unique_batch_record in unique_batch_record]
 
 
-@with_db_session
-def validate_share_survey_token(token, session):
+def validate_share_survey_token(token):
     """
     Validates the share survey token and returns the pending shares against the batch number
     :param: token
@@ -109,14 +113,22 @@ def validate_share_survey_token(token, session):
     except (BadSignature, BadData):
         logger.exception("Bad token in validate_share_survey_token")
         raise NotFound("Unknown batch number in token")
-    share_surveys = query_share_survey_by_batch_no(batch_no, session)
-    if len(share_surveys) == 0:
-        raise NotFound('Batch number does not exist')
-    return [share_survey.to_share_dict() for share_survey in share_surveys]
+    return get_share_survey_by_batch_number(batch_no)
 
 
 @with_db_session
-def accept_share_survey(batch_no, session):
+def confirm_share_survey(batch_no, session):
+    """
+    confirms share survey by creating a new db session
+    :param batch_no: share_survey batch number
+    :type batch_no: uuid
+    :param session: db session
+    :type session: session
+    """
+    accept_share_survey(session, batch_no)
+
+
+def accept_share_survey(session, batch_no, new_respondent=None):
     """
     Confirms share surveys
     Creates Enrolment records
@@ -130,8 +142,9 @@ def accept_share_survey(batch_no, session):
     if len(share_surveys) == 0:
         raise NotFound('Batch number does not exist')
     share_surveys_list = [share_survey.to_share_dict() for share_survey in share_surveys]
-    respondent = get_respondent_by_email(share_surveys_list[0]['email_address'])
-    new_respondent = query_respondent_by_party_uuid(respondent['id'], session)
+    if not new_respondent:
+        respondent = get_respondent_by_email(share_surveys_list[0]['email_address'])
+        new_respondent = query_respondent_by_party_uuid(respondent['id'], session)
 
     for pending_share_survey in share_surveys_list:
         business_id = pending_share_survey['business_id']
@@ -174,3 +187,119 @@ def is_already_enrolled(survey_id, respondent_pk, business_id, session):
                                                      Enrolment.business_id == business_id,
                                                      Enrolment.respondent_id == respondent_pk)).first()
     return False if not enrolment else True
+
+
+@with_db_session
+def get_share_survey_by_batch_number(batch_number, session):
+    """
+    gets list of share surveys against the batch number
+    :param batch_number: share survey batch number
+    :type batch_number: uuid
+    :param session: db session
+    :type session: db session
+    :return: list of pending share surveys
+    :rtype: list
+    """
+    share_surveys = query_share_survey_by_batch_no(batch_number, session)
+    if len(share_surveys) == 0:
+        raise NotFound('Batch number does not exist')
+    return [share_survey.to_share_dict() for share_survey in share_surveys]
+
+
+# flake8: noqa: C901
+@with_quiet_db_session
+def post_share_survey_respondent(party, session):
+    """
+    Register respondent for share survey. This will not create a pending enrolment and will make the respondent active
+    :param party: respondent to be created details
+    :param session
+    :return: created respondent
+    """
+
+    # Validation, curation and checks
+    expected = ('emailAddress', 'firstName', 'lastName', 'password', 'telephone', 'batch_no')
+
+    v = Validator(Exists(*expected))
+    if 'id' in party:
+        # Note: there's not strictly a requirement to be able to pass in a UUID, this is currently supported to
+        # aid with testing.
+        logger.info("'id' in respondent post message")
+        try:
+            uuid.UUID(party['id'])
+        except ValueError:
+            logger.info("Invalid respondent id type", respondent_id=party['id'])
+            raise BadRequest(f"'{party['id']}' is not a valid UUID format for property 'id'")
+
+    if not v.validate(party):
+        logger.debug(v.errors)
+        raise BadRequest(v.errors)
+
+    # Chain of enrolment processes
+    translated_party = {
+        'party_uuid': party.get('id') or str(uuid.uuid4()),
+        'email_address': party['emailAddress'].lower(),
+        'first_name': party['firstName'],
+        'last_name': party['lastName'],
+        'telephone': party['telephone'],
+        'status': RespondentStatus.ACTIVE
+    }
+
+    # This might look odd but it's done in the interest of keeping the code working in the same way.
+    # If raise_for_status in the function raises an error, it would've been caught by @with_db_session,
+    # rolled back the db and raised it.  Whether that's something we want is another question.
+    try:
+        # create new share survey respondent
+        respondent = _add_share_survey_respondent(session, translated_party, party)
+        # Accept share surveys
+        accept_share_survey(session, uuid.UUID(party['batch_no']), respondent)
+        # Verify created user
+        set_user_verified(respondent.email_address)
+    except HTTPError:
+        logger.error("adding new share survey respondent raised an HTTPError", exc_info=True)
+        session.rollback()
+        raise
+
+    return respondent.to_respondent_dict()
+
+
+def _add_share_survey_respondent(session, translated_party, party):
+    """
+    Create and persist new party entities and attempt to register with auth service.
+    Auth fails lead to party entities being rolled back.
+    The context manager commits to sub session.
+    If final commit fails an account will be in auth not party, this circumstance is unlikely but possible
+    :param session: db session
+    :type session: db session
+    :param translated_party: respondent party dict
+    :type translated_party: dict
+    :param party: respondent party
+    :type party: dict
+    """
+    try:
+        with session.begin_nested():
+
+            # Use a sub transaction to store party data
+            # Context manager will manage commits/rollback
+
+            # Create the enrolment respondent-business-survey associations
+
+            respondent = Respondent(**translated_party)
+            session.add(respondent)
+
+    except SQLAlchemyError as e:
+        logger.exception('Party service db post respondent caused exception', party_uuid=translated_party['party_uuid'])
+        raise  # re raise the exception aimed at the generic handler
+    else:
+        # Register user to auth server after successful commit
+        oauth_response = OauthClient().create_account(party['emailAddress'].lower(), party['password'])
+        if not oauth_response.status_code == 201:
+            logger.info('Registering respondent auth service responded with', status=oauth_response.status_code,
+                        content=oauth_response.content)
+
+            session.rollback()  # Rollback to SAVEPOINT
+            oauth_response.raise_for_status()
+
+        session.commit()  # Full session commit
+
+    logger.info("New user has been registered via the auth-service", party_uuid=translated_party['party_uuid'])
+    return respondent
