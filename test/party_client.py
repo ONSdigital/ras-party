@@ -325,69 +325,70 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status)
         return response.get_data(as_text=True)
 
-    def get_share_survey_users(self, business_id, survey_id, expected_status=200):
+    def get_pending_survey_users(self, business_id, survey_id, is_transfer=False, expected_status=200):
+        data = {
+            'business_id': business_id,
+            'survey_id': survey_id,
+            'is_transfer': is_transfer
+        }
+        response = self.client.get(f'/party-api/v1/pending-survey-users-count', query_string=data,
+                                   headers=self.auth_headers)
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
+    def get_pending_survey_users_not_found(self, business_id, survey_id, expected_status=404):
         data = {
             'business_id': business_id,
             'survey_id': survey_id,
         }
-        response = self.client.get(f'/party-api/v1/share-survey-users-count', query_string=data,
+        response = self.client.get(f'/party-api/v1/pending-survey-users-count', query_string=data,
                                    headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def get_share_survey_users_not_found(self, business_id, survey_id, expected_status=404):
-        data = {
-            'business_id': business_id,
-            'survey_id': survey_id,
-        }
-        response = self.client.get(f'/party-api/v1/share-survey-users-count', query_string=data,
+    def get_pending_survey_users_bad_request(self, expected_status=400):
+        response = self.client.get(f'/party-api/v1/pending-survey-users-count',
                                    headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def get_share_survey_users_bad_request(self, expected_status=400):
-        response = self.client.get(f'/party-api/v1/share-survey-users-count',
-                                   headers=self.auth_headers)
-        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
-        return json.loads(response.get_data(as_text=True))
-
-    def post_share_surveys(self, payload, expected_status=201):
-        response = self.client.post(f'/party-api/v1/pending-shares',
+    def post_pending_surveys(self, payload, expected_status=201):
+        response = self.client.post(f'/party-api/v1/pending-surveys',
                                     json=payload, headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def post_share_surveys_fail(self, payload, expected_status=400):
-        response = self.client.post(f'/party-api/v1/pending-shares',
+    def post_pending_surveys_fail(self, payload, expected_status=400):
+        response = self.client.post(f'/party-api/v1/pending-surveys',
                                     json=payload, headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def delete_share_surveys(self, expected_status=204):
-        response = self.client.delete(f'/party-api/v1/batch/pending-shares', headers=self.auth_headers)
+    def delete_pending_surveys(self, expected_status=204):
+        response = self.client.delete(f'/party-api/v1/batch/pending-surveys', headers=self.auth_headers)
         self.assertStatus(response, expected_status)
 
-    def verify_share_surveys(self, token, expected_status=200):
+    def verify_pending_surveys(self, token, expected_status=200):
         self.app.config['EMAIL_TOKEN_EXPIRY'] = 36000
-        response = self.client.get(f'/party-api/v1/share-survey/verification/{token}',
+        response = self.client.get(f'/party-api/v1/pending-survey/verification/{token}',
                                    headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def confirm_share_survey(self, batch_no, expected_status=201):
+    def confirm_pending_survey(self, batch_no, expected_status=201):
         self.app.config['EMAIL_TOKEN_EXPIRY'] = 36000
-        response = self.client.post(f'/party-api/v1/share-survey/confirm-pending-shares/{batch_no}',
+        response = self.client.post(f'/party-api/v1/pending-survey/confirm-pending-surveys/{batch_no}',
                                     headers=self.auth_headers)
         self.assertStatus(response, expected_status, response.json)
 
-    def post_share_survey_respondent(self, payload, expected_status=201):
-        response = self.client.post(f'/party-api/v1/share-survey-respondent',
+    def post_pending_survey_respondent(self, payload, expected_status=201):
+        response = self.client.post(f'/party-api/v1/pending-survey-respondent',
                                     json=payload,
                                     headers=self.auth_headers)
         self.assertStatus(response, expected_status, response.json)
 
-    def get_pending_share_with_batch_no(self, batch_no, expected_status=200, expected_quantity=1):
-        response = self.client.get(f'/party-api/v1/share-survey/{batch_no}',
+    def get_pending_surveys_with_batch_no(self, batch_no, expected_status=200, expected_quantity=1):
+        response = self.client.get(f'/party-api/v1/pending-surveys/{batch_no}',
                                    headers=self.auth_headers)
         self.assertStatus(response, expected_status)
         if expected_quantity != 0:

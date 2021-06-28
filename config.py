@@ -60,6 +60,15 @@ class Config(object):
     SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE = os.getenv('SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE',
                                                           'share_survey_access_cancellation')
 
+    TRANSFER_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE = os.getenv('TRANSFER_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE',
+                                                            'transfer_survey_access_new_account')
+
+    TRANSFER_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE = os.getenv('TRANSFER_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE',
+                                                                 'transfer_survey_access_existing_account')
+
+    TRANSFER_SURVEY_ACCESS_CANCELLATION_TEMPLATE = os.getenv('TRANSFER_SURVEY_ACCESS_CANCELLATION_TEMPLATE',
+                                                             'transfer_survey_access_cancellation')
+
     SEND_EMAIL_TO_GOV_NOTIFY = _is_true(os.getenv('SEND_EMAIL_TO_GOV_NOTIFY', True))
 
 

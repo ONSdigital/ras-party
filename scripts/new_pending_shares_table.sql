@@ -12,3 +12,10 @@ CREATE TABLE partysvc.pending_shares (
 	CONSTRAINT fk_respondent
       FOREIGN KEY(shared_by)
 	  REFERENCES partysvc.respondent(party_uuid));
+
+
+ALTER TABLE partysvc.pending_shares
+ADD COLUMN is_transfer BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE partysvc.pending_shares
+RENAME TO pending_surveys;
