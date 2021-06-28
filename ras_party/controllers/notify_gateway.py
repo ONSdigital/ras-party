@@ -25,6 +25,9 @@ class NotifyGateway:
         self.share_survey_access_new_account = config['SHARE_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE']
         self.share_survey_access_existing_account = config['SHARE_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE']
         self.share_survey_access_cancellation = config['SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE']
+        self.transfer_survey_access_new_account = config['TRANSFER_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE']
+        self.transfer_survey_access_existing_account = config['TRANSFER_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE']
+        self.transfer_survey_access_cancellation = config['TRANSFER_SURVEY_ACCESS_CANCELLATION_TEMPLATE']
         self.project_id = self.config['GOOGLE_CLOUD_PROJECT']
         self.topic_id = self.config['PUBSUB_TOPIC']
         self.publisher = None
@@ -105,7 +108,10 @@ class NotifyGateway:
                      'confirm_change_to_account_email': self.confirm_account_email_change,
                      'share_survey_access_new_account': self.share_survey_access_new_account,
                      'share_survey_access_existing_account': self.share_survey_access_existing_account,
-                     'share_survey_access_cancellation': self.share_survey_access_cancellation}
+                     'share_survey_access_cancellation': self.share_survey_access_cancellation,
+                     'transfer_survey_access_new_account': self.transfer_survey_access_new_account,
+                     'transfer_survey_access_existing_account': self.transfer_survey_access_existing_account,
+                     'transfer_survey_access_cancellation': self.transfer_survey_access_cancellation}
         if template_name in templates:
             return templates[template_name]
         else:

@@ -53,6 +53,7 @@ rollingUpdate:
 
 email:
   enabled: true
+  tokenExpiry: 306000
   templates:
     notifyAccountLockedTemplate: c69147fc-0f9c-40d4-b111-5b11acc8551f
     notifyConfirmPasswordChangeTemplate: ba41c152-ad96-4255-9456-9e42de83f510
@@ -63,6 +64,9 @@ email:
     notifyShareSurveyAccessNewAccountTemplate: 91c2f433-8dca-4f4e-93b2-6721deeb0829
     notifyShareSurveyAccessExistingAccountTemplate: 2b764ea1-0ad0-4240-b417-090067a252cf
     notifyShareSurveyAccessCancellationTemplate: 1553fb20-bb93-4577-a4c4-99e0b0744252
+    notifyTransferSurveyAccessNewAccountTemplate: 2e7a1fc3-7edf-4535-b3ba-511829bd5768
+    notifyTransferSurveyAccessExistingAccountTemplate: ff602de0-4a3a-40df-9e31-332e0030ba9b
+    notifyTransferSurveyAccessCancellationTemplate: a1aa2084-a8e4-4c33-bb3e-cde683538ca7
   callback:
     protocol: http
     host: localhost
@@ -78,7 +82,7 @@ crons:
     cron: "0 3 * * *"
     target: "party-api/v1/batch/respondents"
 
-  expiredShareSurveyScheduler:
-    name: party-scheduler-remove-expired-share-surveys
+  expiredPendingSurveyScheduler:
+    name: party-scheduler-remove-expired-pending-surveys
     cron: "*/15 * * * *"
-    target: "party-api/v1/batch/pending-shares"
+    target: "party-api/v1/batch/pending-surveys"

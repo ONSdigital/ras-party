@@ -362,14 +362,15 @@ class Enrolment(Base):
     )
 
 
-class PendingShares(Base):
-    __tablename__ = 'pending_shares'
+class PendingSurveys(Base):
+    __tablename__ = 'pending_surveys'
     email_address = Column(Text, primary_key=True)
     business_id = Column(GUID, primary_key=True)
     survey_id = Column(Text, primary_key=True)
     time_shared = Column(DateTime, default=datetime.datetime.utcnow)
     shared_by = Column(GUID)
     batch_no = Column(GUID, default=uuid.uuid4)
+    is_transfer = Column(Boolean, default=False)
     Index('pending_shares_business_idx', business_id)
     Index('pending_shares_email_address_idx', email_address)
     Index('pending_shares_survey_idx', survey_id)
@@ -383,13 +384,14 @@ class PendingShares(Base):
         UniqueConstraint('email_address', 'business_id', 'survey_id', name='u_constraint'),
     )
 
-    def to_share_dict(self):
+    def to_pending_surveys_dict(self):
         d = {
             'email_address': self.email_address,
             'business_id': self.business_id,
             'survey_id': self.survey_id,
             'shared_by': self.shared_by,
-            'batch_no': self.batch_no
+            'batch_no': self.batch_no,
+            'is_transfer': self.is_transfer
         }
 
         return filter_falsey_values(d)

@@ -15,6 +15,7 @@ class GUID(TypeDecorator):
 
     """
     impl = CHAR
+    cache_ok = True
 
     @staticmethod
     def load_dialect_impl(dialect):
