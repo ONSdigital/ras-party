@@ -64,9 +64,11 @@ email:
     notifyShareSurveyAccessNewAccountTemplate: 91c2f433-8dca-4f4e-93b2-6721deeb0829
     notifyShareSurveyAccessExistingAccountTemplate: 2b764ea1-0ad0-4240-b417-090067a252cf
     notifyShareSurveyAccessCancellationTemplate: 1553fb20-bb93-4577-a4c4-99e0b0744252
+    notifyShareSurveyAccessConfirmationTemplate: 45da9cec-cdf0-4a4b-a5ed-2c85595087e7
     notifyTransferSurveyAccessNewAccountTemplate: 2e7a1fc3-7edf-4535-b3ba-511829bd5768
     notifyTransferSurveyAccessExistingAccountTemplate: ff602de0-4a3a-40df-9e31-332e0030ba9b
     notifyTransferSurveyAccessCancellationTemplate: a1aa2084-a8e4-4c33-bb3e-cde683538ca7
+    notifyTransferSurveyAccessConfirmationTemplate: 6d3ebb5f-a870-4925-84a1-d71fdc9dc91f
   callback:
     protocol: http
     host: localhost

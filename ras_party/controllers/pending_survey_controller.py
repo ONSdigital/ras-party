@@ -134,7 +134,7 @@ def confirm_pending_survey(batch_no, session):
     :param session: db session
     :type session: session
     """
-    accept_pending_survey(session, batch_no)
+    return accept_pending_survey(session, batch_no)
 
 
 @with_db_session
@@ -205,6 +205,7 @@ def accept_pending_survey(session, batch_no, new_respondent=None):
                 logger.exception('Unable to remove previous enrolment for originator', batch_no=batch_no,
                                  party_uuid=pending_surveys_list[0]['shared_by'])
                 raise e
+        return pending_surveys_list
 
 
 @with_db_session

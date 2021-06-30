@@ -180,7 +180,29 @@ def confirm_pending_shares(batch_no):
     Confirms pending share survey
     :param batch_no
     """
-    confirm_pending_survey(batch_no)
+    pending_surveys_list = confirm_pending_survey(batch_no)
+    batch_no = str(pending_surveys_list[0]['batch_no'])
+    pending_surveys_is_transfer = pending_surveys_list[0].get('is_transfer', False)
+    try:
+        respondent = get_respondent_by_id(str(pending_surveys_list[0]['shared_by']))
+        if pending_surveys_is_transfer:
+            confirmation_email_template = 'transfer_survey_access_confirmation'
+        else:
+            confirmation_email_template = 'share_survey_access_confirmation'
+        business_list = []
+        for survey in pending_surveys_list:
+            business = get_business_by_id(str(survey['business_id']))
+            business_list.append(business['name'])
+        personalisation = {'NAME': respondent['firstName'],
+                           'COLLEAGUE_EMAIL_ADDRESS': pending_surveys_list[0]['email_address'],
+                           'BUSINESSES': business_list}
+        send_pending_survey_email(personalisation, confirmation_email_template, respondent['emailAddress'],
+                                  batch_no)
+    # Exception is used to abide by the notify controller. At this point of time the pending share has been accepted
+    # hence if the email phase fails it should not disrupt the flow.
+    except Exception as e:  # noqa
+        logger.error('Error sending confirmation email for pending share', batch_no=batch_no,
+                     email=pending_surveys_list[0]['shared_by'])
     return make_response(jsonify(), 201)
 
 

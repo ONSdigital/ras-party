@@ -336,8 +336,10 @@ class TestShareSurvey(PartyTestClient):
                                                respondent_id=self.mock_respondent_with_id['id'])  # NOQA
         self.populate_pending_share()
         self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
-        self.confirm_pending_survey(self.mock_pending_share['batch_no'])
+        with patch('ras_party.views.pending_survey_view.send_pending_survey_email') as pending_share_email:
+            self.confirm_pending_survey(self.mock_pending_share['batch_no'])
         self.assertFalse(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
+        self.assertEqual(pending_share_email.call_count, 1)
 
     def test_accept_share_survey_verification_fail(self):
         # Given

@@ -25,9 +25,11 @@ class NotifyGateway:
         self.share_survey_access_new_account = config['SHARE_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE']
         self.share_survey_access_existing_account = config['SHARE_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE']
         self.share_survey_access_cancellation = config['SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE']
+        self.share_survey_access_confirmation = config['SHARE_SURVEY_ACCESS_CONFIRMATION_TEMPLATE']
         self.transfer_survey_access_new_account = config['TRANSFER_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE']
         self.transfer_survey_access_existing_account = config['TRANSFER_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE']
         self.transfer_survey_access_cancellation = config['TRANSFER_SURVEY_ACCESS_CANCELLATION_TEMPLATE']
+        self.transfer_survey_access_confirmation = config['TRANSFER_SURVEY_ACCESS_CONFIRMATION_TEMPLATE']
         self.project_id = self.config['GOOGLE_CLOUD_PROJECT']
         self.topic_id = self.config['PUBSUB_TOPIC']
         self.publisher = None
@@ -109,9 +111,11 @@ class NotifyGateway:
                      'share_survey_access_new_account': self.share_survey_access_new_account,
                      'share_survey_access_existing_account': self.share_survey_access_existing_account,
                      'share_survey_access_cancellation': self.share_survey_access_cancellation,
+                     'share_survey_access_confirmation': self.share_survey_access_confirmation,
                      'transfer_survey_access_new_account': self.transfer_survey_access_new_account,
                      'transfer_survey_access_existing_account': self.transfer_survey_access_existing_account,
-                     'transfer_survey_access_cancellation': self.transfer_survey_access_cancellation}
+                     'transfer_survey_access_cancellation': self.transfer_survey_access_cancellation,
+                     'transfer_survey_access_confirmation': self.transfer_survey_access_confirmation}
         if template_name in templates:
             return templates[template_name]
         else:
