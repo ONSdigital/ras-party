@@ -223,12 +223,18 @@ def remove_transfer_originator_business_association(pending_surveys_list, sessio
             Enrolment.respondent_id == respondent.id).filter(
             Enrolment.business_id == business_id).filter(
             Enrolment.survey_id == survey_id).delete()
-        session.query(BusinessRespondent).filter(
-            BusinessRespondent.respondent_id == respondent.id).filter(
-            BusinessRespondent.business_id == business_id).delete()
-        logger.info("Un enrolled transfer originator for the surveys transferred",
-                    party_id=party_id,
-                    business_id=business_id, survey_id=survey_id)
+        # check if there is existing enrolment on a different survey with the same business
+        additional_enrolment_on_business = session.query(Enrolment).filter(
+            Enrolment.respondent_id == respondent.id).filter(
+            Enrolment.business_id == business_id).filter(
+            Enrolment.survey_id != survey_id).all()
+        if not additional_enrolment_on_business:
+            session.query(BusinessRespondent).filter(
+                BusinessRespondent.respondent_id == respondent.id).filter(
+                BusinessRespondent.business_id == business_id).delete()
+            logger.info("Un enrolled transfer originator for the surveys transferred",
+                        party_id=party_id,
+                        business_id=business_id, survey_id=survey_id)
 
 
 def is_already_enrolled(survey_id, respondent_pk, business_id, session):
