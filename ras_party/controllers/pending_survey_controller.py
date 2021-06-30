@@ -12,15 +12,16 @@ from werkzeug.exceptions import Conflict, NotFound, InternalServerError, BadRequ
 
 from ras_party.clients.oauth_client import OauthClient
 from ras_party.controllers.account_controller import set_user_verified, get_single_respondent_by_email
+from ras_party.controllers.business_controller import get_business_by_id
+from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import query_enrolment_by_business_and_survey_and_status, \
     query_pending_surveys_by_business_and_survey, query_pending_survey_by_batch_no, query_business_by_party_uuid, \
     query_respondent_by_party_uuid, query_business_respondent_by_respondent_id_and_business_id, \
     delete_pending_survey_by_batch_no
-from ras_party.controllers.respondent_controller import get_respondent_by_email, get_respondent_by_id, \
-    delete_respondent_by_email
+from ras_party.controllers.respondent_controller import get_respondent_by_email, get_respondent_by_id
 from ras_party.controllers.validate import Validator, Exists
 from ras_party.models.models import PendingSurveys, BusinessRespondent, Enrolment, EnrolmentStatus, RespondentStatus, \
-    Respondent, PendingEnrolment
+    Respondent
 from ras_party.support.session_decorator import with_query_only_db_session, with_db_session, with_quiet_db_session
 from ras_party.support.verification import decode_email_token
 
@@ -134,18 +135,6 @@ def confirm_pending_survey(batch_no, session):
     :param session: db session
     :type session: session
     """
-    return accept_pending_survey(session, batch_no)
-
-
-@with_db_session
-def confirm_transfer_survey(batch_no, session):
-    """
-    confirms transfer survey by creating a new db session
-    :param batch_no: transfer_survey batch number
-    :type batch_no: uuid
-    :param session: db session
-    :type session: session
-    """
     accept_pending_survey(session, batch_no)
 
 
@@ -194,18 +183,21 @@ def accept_pending_survey(session, batch_no, new_respondent=None):
         else:
             logger.info('Ignoring respondent as already enrolled', business_id=business_id, survey_id=survey_id,
                         email=pending_surveys_list[0]['email_address'])
-        delete_pending_survey_by_batch_no(batch_no, session)
-        session.commit()
-        if pending_surveys_is_transfer:
-            try:
-                logger.info('About to remove the originator association to the business', business_id=business_id,
-                            party_uuid=pending_surveys_list[0]['shared_by'])
-                remove_transfer_originator_business_association(pending_surveys_list)
-            except SQLAlchemyError as e:
-                logger.exception('Unable to remove previous enrolment for originator', batch_no=batch_no,
-                                 party_uuid=pending_surveys_list[0]['shared_by'])
-                raise e
-        return pending_surveys_list
+    delete_pending_survey_by_batch_no(batch_no, session)
+    session.commit()
+    if pending_surveys_is_transfer:
+        try:
+            logger.info('About to remove the originator association to the business', business_id=business_id,
+                        party_uuid=pending_surveys_list[0]['shared_by'])
+            remove_transfer_originator_business_association(pending_surveys_list)
+        except SQLAlchemyError as e:
+            logger.exception('Unable to remove previous enrolment for originator', batch_no=batch_no,
+                             party_uuid=pending_surveys_list[0]['shared_by'])
+            raise e
+    if pending_surveys_is_transfer:
+        send_pending_surveys_confirmation_email(pending_surveys_list, 'transfer_survey_access_confirmation')
+    else:
+        send_pending_surveys_confirmation_email(pending_surveys_list, 'share_survey_access_confirmation')
 
 
 @with_db_session
@@ -384,3 +376,40 @@ def _register_respondent_to_auth(party, session, translated_party):
         session.rollback()  # Rollback to SAVEPOINT
         oauth_response.raise_for_status()
     logger.info("New user has been registered via the auth-service", party_uuid=translated_party['party_uuid'])
+
+
+def send_pending_surveys_confirmation_email(pending_surveys_list, confirmation_email_template):
+    """
+    Sends confirmation email
+    :param pending_surveys_list:
+    :type pending_surveys_list:
+    :param confirmation_email_template:
+    :type confirmation_email_template:
+    :return:
+    :rtype:
+    """
+    batch_no = str(pending_surveys_list[0]['batch_no'])
+    logger.info('sending confirmation email for pending share', batch_no=batch_no)
+    pending_surveys_is_transfer = pending_surveys_list[0].get('is_transfer', False)
+    try:
+        respondent = get_respondent_by_id(str(pending_surveys_list[0]['shared_by']))
+        if pending_surveys_is_transfer:
+            confirmation_email_template = 'transfer_survey_access_confirmation'
+        else:
+            confirmation_email_template = 'share_survey_access_confirmation'
+        business_list = []
+        for survey in pending_surveys_list:
+            business = get_business_by_id(str(survey['business_id']))
+            business_list.append(business['name'])
+        personalisation = {'NAME': respondent['firstName'],
+                           'COLLEAGUE_EMAIL_ADDRESS': pending_surveys_list[0]['email_address'],
+                           'BUSINESSES': business_list}
+        NotifyGateway(current_app.config).request_to_notify(email=respondent['emailAddress'],
+                                                            template_name=confirmation_email_template,
+                                                            personalisation=personalisation)
+        logger.info('confirmation email for pending share send successfully', batch_no=batch_no)
+    # Exception is used to abide by the notify controller. At this point of time the pending share has been accepted
+    # hence if the email phase fails it should not disrupt the flow.
+    except Exception as e:  # noqa
+        logger.error('Error sending confirmation email for pending share', batch_no=batch_no,
+                     email=pending_surveys_list[0]['shared_by'])
