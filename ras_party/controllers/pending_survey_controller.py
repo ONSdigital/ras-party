@@ -219,22 +219,24 @@ def remove_transfer_originator_business_association(pending_surveys_list, sessio
         survey_id = pending_survey['survey_id']
         logger.info("Starting to de register transfer originator from business", party_id=party_id,
                     business_id=business_id, survey_id=survey_id)
-        session.query(Enrolment).filter(
+        existing_enrolment = session.query(Enrolment).filter(
             Enrolment.respondent_id == respondent.id).filter(
             Enrolment.business_id == business_id).filter(
-            Enrolment.survey_id == survey_id).delete()
-        # check if there is existing enrolment on a different survey with the same business
-        additional_enrolment_on_business = session.query(Enrolment).filter(
-            Enrolment.respondent_id == respondent.id).filter(
-            Enrolment.business_id == business_id).filter(
-            Enrolment.survey_id != survey_id).all()
-        if not additional_enrolment_on_business:
-            session.query(BusinessRespondent).filter(
-                BusinessRespondent.respondent_id == respondent.id).filter(
-                BusinessRespondent.business_id == business_id).delete()
-            logger.info("Un enrolled transfer originator for the surveys transferred",
-                        party_id=party_id,
-                        business_id=business_id, survey_id=survey_id)
+            Enrolment.survey_id == survey_id)
+        if existing_enrolment:
+            existing_enrolment.delete()
+            # check if there is existing enrolment on a different survey with the same business
+            additional_enrolment_on_business = session.query(Enrolment).filter(
+                Enrolment.respondent_id == respondent.id).filter(
+                Enrolment.business_id == business_id).filter(
+                Enrolment.survey_id != survey_id).all()
+            if not additional_enrolment_on_business:
+                session.query(BusinessRespondent).filter(
+                    BusinessRespondent.respondent_id == respondent.id).filter(
+                    BusinessRespondent.business_id == business_id).delete()
+                logger.info("Un enrolled transfer originator for the surveys transferred",
+                            party_id=party_id,
+                            business_id=business_id, survey_id=survey_id)
 
 
 def is_already_enrolled(survey_id, respondent_pk, business_id, session):
@@ -315,10 +317,10 @@ def post_pending_survey_respondent(party, session):
         # create new share/transfer survey respondent
         respondent = _add_pending_survey_respondent(session, translated_party, party)
         respondent_dict = respondent.to_respondent_dict()
+        # Verify created user so that if the accept share fails the account is not in inconsistent state
+        set_user_verified(respondent.email_address)
         # Accept share/transfer surveys surveys
         accept_pending_survey(session, uuid.UUID(party['batch_no']), respondent)
-        # Verify created user
-        set_user_verified(respondent.email_address)
     except HTTPError:
         logger.error("adding new share survey/transfer survey respondent raised an HTTPError", exc_info=True)
         session.rollback()
