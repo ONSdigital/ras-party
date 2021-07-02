@@ -47,7 +47,7 @@ def pending_survey_users():
         # this is just to validate that the business_id exists
         get_business_by_id(business_id)
         response = pending_survey_controller.get_users_enrolled_and_pending_survey_against_business_and_survey(
-            business_id, survey_id, is_transfer)
+            business_id=business_id, survey_id=survey_id, is_transfer=is_transfer)
         return make_response(jsonify(response), 200)
     else:
         raise BadRequest('Business id and Survey id is required for this request.')
