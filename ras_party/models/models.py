@@ -82,14 +82,6 @@ class Business(Base):
 
         self.attributes.append(ba)
 
-    def replace_versioned_attributes(self, party):
-        ba = BusinessAttributes(business_id=self.party_uuid,
-                                sample_summary_id=party['sampleSummaryId'])
-        ba.attributes = party.get('attributes')
-        self._populate_name_and_trading_as(ba)
-
-        self.attributes = ba.attributes
-
     @staticmethod
     def _populate_name_and_trading_as(ba):
         name = '{runame1} {runame2} {runame3}'.format(**ba.attributes)

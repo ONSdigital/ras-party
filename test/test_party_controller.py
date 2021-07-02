@@ -280,7 +280,7 @@ class TestParties(PartyTestClient):
         self.assertEqual(response_1['attributes']['version'], 1)
 
         mock_party.attributes(version=2)
-        response_2 = self.post_to_parties(mock_party.as_party(), 200)
+        response_2 = self.patch_to_parties(mock_party.as_party(), 200)
         self.assertEqual(len(businesses()), 1)
         self.assertEqual(response_2['attributes']['version'], 2)
 
