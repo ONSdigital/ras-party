@@ -5,7 +5,7 @@ from flask import current_app
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers.queries import query_business_by_party_uuid, query_business_by_ref
-from ras_party.controllers.queries import query_respondent_by_party_uuid
+from ras_party.controllers.queries import query_respondent_by_party_uuid, query_business_attributes_by_sample_summary_id
 from ras_party.models.models import Business, Respondent
 from ras_party.support.session_decorator import with_db_session, with_query_only_db_session
 
@@ -34,7 +34,11 @@ def parties_post(party_data, session):
     business = query_business_by_ref(party_data['sampleUnitRef'], session)
     if business:
         party_data['id'] = str(business.party_uuid)
-        business.add_versioned_attributes(party_data)
+        ba = query_business_attributes_by_sample_summary_id(business.party_uuid, party_data['sampleSummaryId'])
+        if ba:
+            business.replace_versioned_attributes(party_data)
+        else:
+            business.add_versioned_attributes(party_data)
         session.merge(business)
     else:
         business = Business.from_party_dict(party_data)

@@ -91,6 +91,23 @@ def query_business_attributes(business_id, session):
     return session.query(BusinessAttributes).filter(BusinessAttributes.business_id == business_id).all()
 
 
+def query_business_attributes_by_sample_summary_id(business_id, sample_summary_id, session):
+    """
+    Query to return all business attributes records based.  Will not error if no matches are found.
+
+    :param business_id: the id of the business
+    :param sample_summary_id: the id of the sample
+    :param session: A database session
+    :return: A list of businessAttributes that match the query parameters
+    :rtype: list of BusinessAttributes
+    """
+    logger.info('Querying business attributes by id and sample summary', business_id=business_id,
+                sample_summary_id=sample_summary_id)
+    conditions = [BusinessAttributes.business_id == business_id,
+                  BusinessAttributes.sample_summary_id == sample_summary_id]
+    return session.query(BusinessAttributes).filter(and_(*conditions)).all()
+
+
 def query_business_attributes_by_collection_exercise(business_id, collection_exercise_uuids, session):
     """
     Query to return all business attributes records based.  Will not error if no matches are found.
