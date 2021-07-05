@@ -47,7 +47,7 @@ def pending_survey_users():
         # this is just to validate that the business_id exists
         get_business_by_id(business_id)
         response = pending_survey_controller.get_users_enrolled_and_pending_survey_against_business_and_survey(
-            business_id, survey_id, is_transfer)
+            business_id=business_id, survey_id=survey_id, is_transfer=is_transfer)
         return make_response(jsonify(response), 200)
     else:
         raise BadRequest('Business id and Survey id is required for this request.')
@@ -120,10 +120,13 @@ def post_pending_surveys():
     if not respondent:
         raise BadRequest('Originator unknown')
     batch_number = uuid.uuid4()
+    # logic to extract business list
+    business_id_list = {pending_surveys['business_id'] for pending_surveys in pending_surveys}
+    for business_id in business_id_list:
+        business = get_business_by_id(business_id)
+        business_list.append(business['name'])
     try:
         for pending_survey in pending_surveys:
-            business = get_business_by_id(pending_survey['business_id'])
-            business_list.append(business['name'])
             pending_survey_controller.pending_survey_create(business_id=pending_survey['business_id'],
                                                             survey_id=pending_survey['survey_id'],
                                                             email_address=pending_survey['email_address'],
