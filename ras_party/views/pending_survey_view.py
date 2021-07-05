@@ -121,8 +121,8 @@ def post_pending_surveys():
         raise BadRequest('Originator unknown')
     batch_number = uuid.uuid4()
     # logic to extract business list
-    business_id_list = [pending_surveys['business_id'] for pending_surveys in pending_surveys]
-    for business_id in set(business_id_list):
+    business_id_list = {pending_surveys['business_id'] for pending_surveys in pending_surveys}
+    for business_id in business_id_list:
         business = get_business_by_id(business_id)
         business_list.append(business['name'])
     try:

@@ -406,8 +406,8 @@ def send_pending_surveys_confirmation_email(pending_surveys_list, confirmation_e
         else:
             confirmation_email_template = 'share_survey_access_confirmation'
         business_list = []
-        business_id_list = [pending_surveys['business_id'] for pending_surveys in pending_surveys_list]
-        for business_id in set(business_id_list):
+        business_id_list = {pending_surveys['business_id'] for pending_surveys in pending_surveys_list}
+        for business_id in business_id_list:
             business = get_business_by_id(str(business_id))
             business_list.append(business['name'])
         personalisation = {'NAME': respondent['firstName'],
