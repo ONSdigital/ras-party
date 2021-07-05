@@ -27,7 +27,7 @@ def parties_post(party_data, session):
     business = query_business_by_ref(party_data['sampleUnitRef'], session)
     if business:
         party_data['id'] = str(business.party_uuid)
-        ba = query_business_attributes_by_sample_summary_id(business.party_uuid, party_data['sampleSummaryId'])
+        ba = query_business_attributes_by_sample_summary_id(business.party_uuid, party_data['sampleSummaryId'], session)
         if ba:
             raise Conflict("party already exists for sample")
         else:
