@@ -120,10 +120,13 @@ def post_pending_surveys():
     if not respondent:
         raise BadRequest('Originator unknown')
     batch_number = uuid.uuid4()
+    # logic to extract business list
+    business_id_list = [pending_surveys['business_id'] for pending_surveys in pending_surveys]
+    for business_id in set(business_id_list):
+        business = get_business_by_id(business_id)
+        business_list.append(business['name'])
     try:
         for pending_survey in pending_surveys:
-            business = get_business_by_id(pending_survey['business_id'])
-            business_list.append(business['name'])
             pending_survey_controller.pending_survey_create(business_id=pending_survey['business_id'],
                                                             survey_id=pending_survey['survey_id'],
                                                             email_address=pending_survey['email_address'],
