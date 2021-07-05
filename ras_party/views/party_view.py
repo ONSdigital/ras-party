@@ -29,6 +29,13 @@ def post_party():
     return jsonify(response)
 
 
+@party_view.route('/parties', methods=['PATCH'])
+def patch_party():
+    payload = request.get_json() or {}
+    response = party_controller.parties_patch(payload)
+    return jsonify(response)
+
+
 @party_view.route('/parties/type/<sample_unit_type>/id/<id>', methods=['GET'])
 def get_party_by_id(sample_unit_type, id):
     survey_id = request.args.get('survey_id')
