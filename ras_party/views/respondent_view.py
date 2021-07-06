@@ -4,7 +4,7 @@ import uuid
 import structlog
 from flask import Blueprint, current_app, jsonify, make_response, request
 from flask_httpauth import HTTPBasicAuth
-from werkzeug.exceptions import BadRequest, NotFound
+from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import respondent_controller
 

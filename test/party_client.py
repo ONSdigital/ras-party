@@ -345,7 +345,7 @@ class PartyTestClient(TestCase):
         return response_data
 
     def delete_user_data_marked_for_deletion(self, expected_status=204):
-        response = self.client.delete(f"/party-api/v1/batch/respondents", headers=self.auth_headers)
+        response = self.client.delete("/party-api/v1/batch/respondents", headers=self.auth_headers)
         self.assertStatus(response, expected_status)
         return response
 
@@ -354,16 +354,14 @@ class PartyTestClient(TestCase):
         return response
 
     def batch(self, payload, expected_status=207):
-        response = self.client.post(
-            f"/party-api/v1/batch/requests", headers=self.auth_headers, data=json.dumps(payload)
-        )
+        response = self.client.post("/party-api/v1/batch/requests", headers=self.auth_headers, data=json.dumps(payload))
         self.assertStatus(response, expected_status)
         return response.get_data(as_text=True)
 
     def get_pending_survey_users(self, business_id, survey_id, is_transfer=False, expected_status=200):
         data = {"business_id": business_id, "survey_id": survey_id, "is_transfer": is_transfer}
         response = self.client.get(
-            f"/party-api/v1/pending-survey-users-count", query_string=data, headers=self.auth_headers
+            "/party-api/v1/pending-survey-users-count", query_string=data, headers=self.auth_headers
         )
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
@@ -374,28 +372,28 @@ class PartyTestClient(TestCase):
             "survey_id": survey_id,
         }
         response = self.client.get(
-            f"/party-api/v1/pending-survey-users-count", query_string=data, headers=self.auth_headers
+            "/party-api/v1/pending-survey-users-count", query_string=data, headers=self.auth_headers
         )
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def get_pending_survey_users_bad_request(self, expected_status=400):
-        response = self.client.get(f"/party-api/v1/pending-survey-users-count", headers=self.auth_headers)
+        response = self.client.get("/party-api/v1/pending-survey-users-count", headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def post_pending_surveys(self, payload, expected_status=201):
-        response = self.client.post(f"/party-api/v1/pending-surveys", json=payload, headers=self.auth_headers)
+        response = self.client.post("/party-api/v1/pending-surveys", json=payload, headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def post_pending_surveys_fail(self, payload, expected_status=400):
-        response = self.client.post(f"/party-api/v1/pending-surveys", json=payload, headers=self.auth_headers)
+        response = self.client.post("/party-api/v1/pending-surveys", json=payload, headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
     def delete_pending_surveys(self, expected_status=204):
-        response = self.client.delete(f"/party-api/v1/batch/pending-surveys", headers=self.auth_headers)
+        response = self.client.delete("/party-api/v1/batch/pending-surveys", headers=self.auth_headers)
         self.assertStatus(response, expected_status)
 
     def verify_pending_surveys(self, token, expected_status=200):
@@ -412,7 +410,7 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, response.json)
 
     def post_pending_survey_respondent(self, payload, expected_status=201):
-        response = self.client.post(f"/party-api/v1/pending-survey-respondent", json=payload, headers=self.auth_headers)
+        response = self.client.post("/party-api/v1/pending-survey-respondent", json=payload, headers=self.auth_headers)
         self.assertStatus(response, expected_status, response.json)
 
     def get_pending_surveys_with_batch_no(self, batch_no, expected_status=200, expected_quantity=1):

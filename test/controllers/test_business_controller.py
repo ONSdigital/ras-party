@@ -1,7 +1,7 @@
 import datetime
 import uuid
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from werkzeug.exceptions import BadRequest
 

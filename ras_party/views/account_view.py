@@ -1,21 +1,12 @@
 import logging
-import uuid
 
 import structlog
 from flask import Blueprint, current_app, jsonify, make_response, request
 from flask_httpauth import HTTPBasicAuth
-from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import account_controller, pending_survey_controller
-from ras_party.controllers.pending_survey_controller import (
-    get_pending_survey_by_batch_number,
-)
 from ras_party.controllers.validate import Exists, Validator
-from ras_party.views.respondent_view import (
-    delete_respondent_by_email,
-    get_respondent_by_id,
-)
 
 account_view = Blueprint("account_view", __name__)
 

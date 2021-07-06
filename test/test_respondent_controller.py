@@ -800,7 +800,7 @@ class TestRespondents(PartyTestClient):
         token = self.generate_valid_token_from_email(respondent.email_address)
         # When the resend verification with expired token endpoint is hit
         self.resend_verification_email_expired_token(token)
-        # Then a notification is sent the the respondent's email adddress
+        # Then a notification is sent the the respondent's email address
         self.assertTrue(self.mock_notify.request_to_notify.called)
 
     def test_resend_account_email_change_expired_token_sends_calls_notify(self):
@@ -808,11 +808,11 @@ class TestRespondents(PartyTestClient):
         my_respondent = MockRespondent()
         my_respondent.attributes(emailAddress="res2@example.com")
         my_respondent.attributes(pendingEmailAddress="res1@example.com")
-        respondent = self.populate_with_respondent(respondent=my_respondent.as_respondent())
+        self.populate_with_respondent(respondent=my_respondent.as_respondent())
         token = self.generate_valid_token_for_email_change("res1@example.com")
         # When the resend verification with expired token endpoint is hit
         self.resend_account_email_change_expired_token(token)
-        # Then a notification is sent the the respondent's email adddress
+        # Then a notification is sent the the respondent's email address
         self.assertTrue(self.mock_notify.request_to_notify.called)
 
     def test_resend_account_email_change_expired_token_respondent_not_found(self):
@@ -1839,12 +1839,12 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(respondent_1.mark_for_deletion, False)
         self.assertEqual(respondent_2.mark_for_deletion, False)
         request = [
-            {"method": "DELETE", "path": f"/party-api/v1/respondents/a@z.com", "headers": self.auth_headers},
-            {"method": "DELETE", "path": f"/party-api/v1/respondents/res1@example.com", "headers": self.auth_headers},
-            {"method": "DELETE", "path": f"/party-api/v1/respondents/res2@example.com", "headers": self.auth_headers},
+            {"method": "DELETE", "path": "/party-api/v1/respondents/a@z.com", "headers": self.auth_headers},
+            {"method": "DELETE", "path": "/party-api/v1/respondents/res1@example.com", "headers": self.auth_headers},
+            {"method": "DELETE", "path": "/party-api/v1/respondents/res2@example.com", "headers": self.auth_headers},
             {
                 "method": "DELETE",
-                "path": f"/party-api/v1/respondents/email/res3@example.com",
+                "path": "/party-api/v1/respondents/email/res3@example.com",
                 "headers": self.auth_headers,
             },
         ]
@@ -1891,7 +1891,7 @@ class TestRespondents(PartyTestClient):
             # This says db.session() returns an object that if commit is called on it (e.g., db.session().commit())
             # will raise an Exception.  The setup looks weird but none of the other varients seemed to work.
             db.configure_mock(**{"session.return_value": MagicMock(**{"commit.side_effect": Exception})})
-            response = self.delete_user(f"/party-api/v1/respondents/user@domain.com")
+            response = self.delete_user("/party-api/v1/respondents/user@domain.com")
             self.assertEqual(500, response.status_code)
 
     def test_delete_returns_status_code_500_on_sql_alchemy_error(self):
@@ -1911,7 +1911,7 @@ class TestRespondents(PartyTestClient):
             # This says db.session() returns an object that if commit is called on it (e.g., db.session().commit())
             # will raise an Exception.  The setup looks weird but none of the other varients seemed to work.
             db.configure_mock(**{"session.return_value": MagicMock(**{"commit.side_effect": SQLAlchemyError})})
-            response = self.delete_user(f"/party-api/v1/respondents/user@domain.com")
+            response = self.delete_user("/party-api/v1/respondents/user@domain.com")
             self.assertEqual(500, response.status_code)
 
     def test_respondent_emails_are_case_insensitive(self):

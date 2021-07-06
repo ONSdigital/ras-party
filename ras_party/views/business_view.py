@@ -3,7 +3,7 @@ import logging
 import structlog
 from flask import Blueprint, current_app, jsonify, request
 from flask_httpauth import HTTPBasicAuth
-from werkzeug.exceptions import BadRequest, NotFound
+from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import business_controller
 

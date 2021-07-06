@@ -34,6 +34,7 @@ class MockRequests:
         def __call__(self, uri, *args, **kwargs):
             self._calls[uri] += 1
 
+            survey_id = "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
             try:
                 return {
                     "http://mockhost:1111/cases/iac/fb747cq725lj": MockResponse(get_case_by_iac.response),
@@ -49,7 +50,7 @@ class MockRequests:
                     "http://mockhost:2222/collectionexercises/dab9db7f-3aa0-4866-be20-54d72ee185fb": MockResponse(
                         get_ce_by_id.response
                     ),
-                    "http://mockhost:2222/collectionexercises/survey/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87": MockResponse(
+                    f"http://mockhost:2222/collectionexercises/survey/{survey_id}": MockResponse(
                         get_ces_by_survey.response
                     ),
                     "http://mockhost:3333/surveys/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87": MockResponse(

@@ -358,7 +358,7 @@ class TestShareSurvey(PartyTestClient):
         self.associate_business_and_respondent(
             business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
         )  # NOQA
-        response = self.verify_pending_surveys(generate_email_token(str(self.mock_pending_transfer["batch_no"])), 404)
+        self.verify_pending_surveys(generate_email_token(str(self.mock_pending_transfer["batch_no"])), 404)
 
     def test_accept_transfer_survey_verification_success(self):
         # Given

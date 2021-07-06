@@ -2,7 +2,6 @@ import logging
 import uuid
 
 import structlog
-from flask import jsonify
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -118,7 +117,7 @@ def delete_respondents_marked_for_deletion(session):
 
     :param session A db session
     """
-    respondents = session.query(Respondent).filter(Respondent.mark_for_deletion == True)
+    respondents = session.query(Respondent).filter(Respondent.mark_for_deletion == True)  # noqa
     for respondent in respondents:
         session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
         session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()

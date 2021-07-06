@@ -65,7 +65,7 @@ def batch():
     """
     try:
         requests = json.loads(request.data)
-    except ValueError as e:
+    except ValueError:
         abort(400)
 
     responses = []
