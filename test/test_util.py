@@ -4,18 +4,12 @@ from ras_party.support.util import flatten_keys, obfuscate_email
 
 
 class TestUtil(TestCase):
-
     def test_flatten_keys_produces_expected_results(self):
-        d = {
-            "name": "Foo",
-            "other": {
-                "name": "Bar"
-            }
-        }
+        d = {"name": "Foo", "other": {"name": "Bar"}}
 
         actual = flatten_keys(d)
 
-        expected = ['name', 'other', 'other.name']
+        expected = ["name", "other", "other.name"]
 
         self.assertCountEqual(actual, expected)
 
@@ -33,7 +27,7 @@ class TestUtil(TestCase):
             "m@m.com": "m@m***m",
             "joe.bloggs": "j********s",
             "joe.bloggs@": "j********s",
-            "@gmail.com": "@g*******m"
+            "@gmail.com": "@g*******m",
         }
 
         for test in testAddresses:

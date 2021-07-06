@@ -26,6 +26,8 @@ requestsdefaulter = "*"
 psycopg2-binary = "*"
 
 [dev-packages]
+black = "==21.6b0"
 coverage = "*"
 flask-testing = "*"
+isort = "*"
 pytest-cov = "*"

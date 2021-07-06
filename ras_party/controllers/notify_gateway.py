@@ -15,23 +15,23 @@ class NotifyGateway:
 
     def __init__(self, config):
         self.config = config
-        self.notify_url = config['NOTIFY_URL']
-        self.email_verification_template = config['NOTIFY_EMAIL_VERIFICATION_TEMPLATE']
-        self.request_password_change_template = config['NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE']
-        self.confirm_password_change_template = config['NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE']
-        self.notify_account_locked = config['NOTIFY_ACCOUNT_LOCKED_TEMPLATE']
-        self.verify_account_email_change = config['NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE_TEMPLATE']
-        self.confirm_account_email_change = config['NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE_TEMPLATE']
-        self.share_survey_access_new_account = config['SHARE_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE']
-        self.share_survey_access_existing_account = config['SHARE_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE']
-        self.share_survey_access_cancellation = config['SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE']
-        self.share_survey_access_confirmation = config['SHARE_SURVEY_ACCESS_CONFIRMATION_TEMPLATE']
-        self.transfer_survey_access_new_account = config['TRANSFER_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE']
-        self.transfer_survey_access_existing_account = config['TRANSFER_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE']
-        self.transfer_survey_access_cancellation = config['TRANSFER_SURVEY_ACCESS_CANCELLATION_TEMPLATE']
-        self.transfer_survey_access_confirmation = config['TRANSFER_SURVEY_ACCESS_CONFIRMATION_TEMPLATE']
-        self.project_id = self.config['GOOGLE_CLOUD_PROJECT']
-        self.topic_id = self.config['PUBSUB_TOPIC']
+        self.notify_url = config["NOTIFY_URL"]
+        self.email_verification_template = config["NOTIFY_EMAIL_VERIFICATION_TEMPLATE"]
+        self.request_password_change_template = config["NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE"]
+        self.confirm_password_change_template = config["NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE"]
+        self.notify_account_locked = config["NOTIFY_ACCOUNT_LOCKED_TEMPLATE"]
+        self.verify_account_email_change = config["NOTIFY_VERIFY_ACCOUNT_EMAIL_CHANGE_TEMPLATE"]
+        self.confirm_account_email_change = config["NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE_TEMPLATE"]
+        self.share_survey_access_new_account = config["SHARE_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE"]
+        self.share_survey_access_existing_account = config["SHARE_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE"]
+        self.share_survey_access_cancellation = config["SHARE_SURVEY_ACCESS_CANCELLATION_TEMPLATE"]
+        self.share_survey_access_confirmation = config["SHARE_SURVEY_ACCESS_CONFIRMATION_TEMPLATE"]
+        self.transfer_survey_access_new_account = config["TRANSFER_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE"]
+        self.transfer_survey_access_existing_account = config["TRANSFER_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE"]
+        self.transfer_survey_access_cancellation = config["TRANSFER_SURVEY_ACCESS_CANCELLATION_TEMPLATE"]
+        self.transfer_survey_access_confirmation = config["TRANSFER_SURVEY_ACCESS_CONFIRMATION_TEMPLATE"]
+        self.project_id = self.config["GOOGLE_CLOUD_PROJECT"]
+        self.topic_id = self.config["PUBSUB_TOPIC"]
         self.publisher = None
 
     def _send_message(self, email, template_id, personalisation):
@@ -49,19 +49,13 @@ class NotifyGateway:
         """
         bound_logger = logger.bind(template_id=template_id, project_id=self.project_id, topic_id=self.topic_id)
         bound_logger.info("Sending email via pubsub")
-        if not self.config['SEND_EMAIL_TO_GOV_NOTIFY']:
+        if not self.config["SEND_EMAIL_TO_GOV_NOTIFY"]:
             bound_logger.info("Notification not sent. Notify is disabled.")
             return
 
-        payload = {
-            'notify': {
-                'email_address': email,
-                'template_id': template_id,
-                'personalisation': {}
-            }
-        }
+        payload = {"notify": {"email_address": email, "template_id": template_id, "personalisation": {}}}
         if personalisation:
-            payload['notify']['personalisation'] = personalisation
+            payload["notify"]["personalisation"] = personalisation
 
         payload_str = json.dumps(payload)
         if self.publisher is None:
@@ -79,7 +73,7 @@ class NotifyGateway:
         except TimeoutError as e:
             bound_logger.error("Publish to pubsub timed out", exc_info=True)
             raise RasNotifyError("Publish to pubsub timed out", error=e)
-        except Exception as e: # noqa
+        except Exception as e:  # noqa
             bound_logger.error("A non-timeout error was raised when publishing to pubsub", exc_info=True)
             raise RasNotifyError("A non-timeout error was raised when publishing to pubsub", error=e)
 
@@ -102,21 +96,23 @@ class NotifyGateway:
         self._send_message(email, template_id, personalisation)
 
     def _get_template_id(self, template_name):
-        templates = {'notify_account_locked': self.notify_account_locked,
-                     'confirm_password_change': self.confirm_password_change_template,
-                     'request_password_change': self.request_password_change_template,
-                     'email_verification': self.email_verification_template,
-                     'verify_account_email_change': self.verify_account_email_change,
-                     'confirm_change_to_account_email': self.confirm_account_email_change,
-                     'share_survey_access_new_account': self.share_survey_access_new_account,
-                     'share_survey_access_existing_account': self.share_survey_access_existing_account,
-                     'share_survey_access_cancellation': self.share_survey_access_cancellation,
-                     'share_survey_access_confirmation': self.share_survey_access_confirmation,
-                     'transfer_survey_access_new_account': self.transfer_survey_access_new_account,
-                     'transfer_survey_access_existing_account': self.transfer_survey_access_existing_account,
-                     'transfer_survey_access_cancellation': self.transfer_survey_access_cancellation,
-                     'transfer_survey_access_confirmation': self.transfer_survey_access_confirmation}
+        templates = {
+            "notify_account_locked": self.notify_account_locked,
+            "confirm_password_change": self.confirm_password_change_template,
+            "request_password_change": self.request_password_change_template,
+            "email_verification": self.email_verification_template,
+            "verify_account_email_change": self.verify_account_email_change,
+            "confirm_change_to_account_email": self.confirm_account_email_change,
+            "share_survey_access_new_account": self.share_survey_access_new_account,
+            "share_survey_access_existing_account": self.share_survey_access_existing_account,
+            "share_survey_access_cancellation": self.share_survey_access_cancellation,
+            "share_survey_access_confirmation": self.share_survey_access_confirmation,
+            "transfer_survey_access_new_account": self.transfer_survey_access_new_account,
+            "transfer_survey_access_existing_account": self.transfer_survey_access_existing_account,
+            "transfer_survey_access_cancellation": self.transfer_survey_access_cancellation,
+            "transfer_survey_access_confirmation": self.transfer_survey_access_confirmation,
+        }
         if template_name in templates:
             return templates[template_name]
         else:
-            raise KeyError('Template does not exist')
+            raise KeyError("Template does not exist")
