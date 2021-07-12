@@ -8,7 +8,7 @@ from ras_party.support.requests_wrapper import Requests
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
-def post_case_event(case_id, category="Default category message", desc="Default description message"):
+def post_case_event(case_id: str, category="Default category message", desc="Default description message"):
     """Posts a case event
 
     :raises HTTPError: Raised if the post returns a failure status code
@@ -24,7 +24,7 @@ def post_case_event(case_id, category="Default category message", desc="Default 
     return response.json()
 
 
-def get_cases_for_casegroup(case_group_id):
+def get_cases_for_casegroup(case_group_id: str):
     logger.info("Requesting cases for case group", casegroup_id=case_group_id)
     case_svc = current_app.config["CASE_URL"]
     get_case_url = f"{case_svc}/cases/casegroupid/{case_group_id}"
