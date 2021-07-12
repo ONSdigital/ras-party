@@ -45,7 +45,7 @@ def parties_post(party_data, session):
     return business.to_post_response_dict()
 
 
-def validate_business(party_data):
+def validate_business(party_data: dict):
     errors = Business.validate(party_data, current_app.config["PARTY_SCHEMA"])
     if errors:
         logger.info("party schema validation failed", errors=[e.split("\n")[0] for e in errors])
