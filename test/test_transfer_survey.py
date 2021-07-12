@@ -1,20 +1,41 @@
 import uuid
+from test.mocks import MockRequests
+from test.party_client import PartyTestClient
+from test.test_data.default_test_values import (
+    DEFAULT_BUSINESS_UUID,
+    DEFAULT_RESPONDENT_UUID,
+    DEFAULT_SURVEY_UUID,
+)
+from test.test_data.mock_business import MockBusiness
+from test.test_data.mock_enrolment import (
+    MockEnrolmentDisabled,
+    MockEnrolmentEnabled,
+    MockEnrolmentPending,
+)
+from test.test_data.mock_respondent import (
+    MockNewRespondentWithId,
+    MockRespondent,
+    MockRespondentWithId,
+    MockRespondentWithIdActive,
+)
 from unittest.mock import MagicMock, patch
 
 from ras_party.controllers import account_controller
-from ras_party.controllers.queries import query_business_by_party_uuid, query_respondent_by_party_uuid, \
-    query_pending_surveys_by_business_and_survey
-from ras_party.models.models import Enrolment, PendingSurveys, BusinessRespondent, RespondentStatus, Respondent
+from ras_party.controllers.queries import (
+    query_business_by_party_uuid,
+    query_pending_surveys_by_business_and_survey,
+    query_respondent_by_party_uuid,
+)
+from ras_party.models.models import (
+    BusinessRespondent,
+    Enrolment,
+    PendingSurveys,
+    Respondent,
+    RespondentStatus,
+)
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.verification import generate_email_token
-from test.mocks import MockRequests
-from test.party_client import PartyTestClient
-from test.test_data.default_test_values import DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID, DEFAULT_RESPONDENT_UUID
-from test.test_data.mock_business import MockBusiness
-from test.test_data.mock_enrolment import MockEnrolmentEnabled, MockEnrolmentDisabled, MockEnrolmentPending
-from test.test_data.mock_respondent import MockRespondent, MockRespondentWithIdActive, MockRespondentWithId, \
-    MockNewRespondentWithId
 
 
 class TestShareSurvey(PartyTestClient):
@@ -48,13 +69,13 @@ class TestShareSurvey(PartyTestClient):
         if not respondent:
             respondent = self.mock_respondent
         translated_party = {
-            'party_uuid': respondent.get('id') or str(uuid.uuid4()),
-            'email_address': respondent['emailAddress'],
-            'pending_email_address': respondent.get('pendingEmailAddress'),
-            'first_name': respondent['firstName'],
-            'last_name': respondent['lastName'],
-            'telephone': respondent['telephone'],
-            'status': respondent.get('status') or RespondentStatus.CREATED
+            "party_uuid": respondent.get("id") or str(uuid.uuid4()),
+            "email_address": respondent["emailAddress"],
+            "pending_email_address": respondent.get("pendingEmailAddress"),
+            "first_name": respondent["firstName"],
+            "last_name": respondent["lastName"],
+            "telephone": respondent["telephone"],
+            "status": respondent.get("status") or RespondentStatus.CREATED,
         }
         self.respondent = Respondent(**translated_party)
         session.add(self.respondent)
@@ -66,11 +87,11 @@ class TestShareSurvey(PartyTestClient):
         if not enrolment:
             enrolment = self.mock_enrolment_enabled
         translated_enrolment = {
-            'business_id': enrolment['business_id'],
-            'respondent_id': enrolment['respondent_id'],
-            'survey_id': enrolment['survey_id'],
-            'status': enrolment['status'],
-            'created_on': enrolment['created_on']
+            "business_id": enrolment["business_id"],
+            "respondent_id": enrolment["respondent_id"],
+            "survey_id": enrolment["survey_id"],
+            "status": enrolment["status"],
+            "created_on": enrolment["created_on"],
         }
         self.enrolment = Enrolment(**translated_enrolment)
         session.add(self.enrolment)
@@ -90,23 +111,23 @@ class TestShareSurvey(PartyTestClient):
         return True if pending_survey.count() != 0 else False
 
     def _make_business_attributes_active(self, mock_business):
-        sample_id = mock_business['sampleSummaryId']
-        put_data = {'collectionExerciseId': 'test_id'}
+        sample_id = mock_business["sampleSummaryId"]
+        put_data = {"collectionExerciseId": "test_id"}
         self.put_to_businesses_sample_link(sample_id, put_data, 200)
 
     def test_transfer_survey_users_with_no_pending_transfer(self):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         self.populate_with_enrolment()  # NOQA
         # When
-        response = self.get_pending_survey_users(DEFAULT_BUSINESS_UUID,
-                                                 DEFAULT_SURVEY_UUID)
+        response = self.get_pending_survey_users(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID)
         # Then
         self.assertEqual(response, 1)
 
@@ -114,17 +135,16 @@ class TestShareSurvey(PartyTestClient):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         self.populate_with_enrolment()  # NOQA
         self.populate_pending_transfer()
         # When
-        response = self.get_pending_survey_users(DEFAULT_BUSINESS_UUID,
-                                                 DEFAULT_SURVEY_UUID,
-                                                 True)
+        response = self.get_pending_survey_users(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID, True)
         # Then
         self.assertEqual(response, 2)
 
@@ -132,50 +152,50 @@ class TestShareSurvey(PartyTestClient):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         self.populate_with_enrolment()  # NOQA
         self.populate_pending_transfer()
         # When
         response = self.get_pending_survey_users_bad_request()
         # Then
-        self.assertEqual(response['description'], 'Business id and Survey id is required for this request.')
+        self.assertEqual(response["description"], "Business id and Survey id is required for this request.")
 
     def test_transfer_survey_users_with_pending_transfer_not_found(self):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         self.populate_with_enrolment()  # NOQA
         self.populate_pending_transfer()
         # When
-        response = self.get_pending_survey_users_not_found('3b136c4b-7a14-4904-9e01-13364dd7b973',
-                                                           DEFAULT_SURVEY_UUID)
+        response = self.get_pending_survey_users_not_found("3b136c4b-7a14-4904-9e01-13364dd7b973", DEFAULT_SURVEY_UUID)
         # Then
-        self.assertEqual(response['description'], 'Business with party id does not exist')
+        self.assertEqual(response["description"], "Business with party id does not exist")
 
     def test_transfer_survey_users_with_enrolment_disabled(self):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         self.populate_with_enrolment(enrolment=self.mock_enrolment_disabled)  # NOQA
         self.populate_pending_transfer()
         # When
-        response = self.get_pending_survey_users(DEFAULT_BUSINESS_UUID,
-                                                 DEFAULT_SURVEY_UUID,
-                                                 True)
+        response = self.get_pending_survey_users(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID, True)
         # Then
         self.assertEqual(response, 1)
 
@@ -183,17 +203,16 @@ class TestShareSurvey(PartyTestClient):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         self.populate_with_enrolment(enrolment=self.mock_enrolment_pending)  # NOQA
         self.populate_pending_transfer()
         # When
-        response = self.get_pending_survey_users(DEFAULT_BUSINESS_UUID,
-                                                 DEFAULT_SURVEY_UUID,
-                                                 True)
+        response = self.get_pending_survey_users(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID, True)
         # Then
         self.assertEqual(response, 2)
 
@@ -201,32 +220,37 @@ class TestShareSurvey(PartyTestClient):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         # When
-        payload = {"pending_transfers": [{
-            "business_id": DEFAULT_BUSINESS_UUID,
-            "survey_id": DEFAULT_SURVEY_UUID,
-            "email_address": "test@test.com",
-            "shared_by": self.mock_respondent_with_id['id']
-        },
-            {
-                "business_id": DEFAULT_BUSINESS_UUID,
-                "survey_id": 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef99',
-                "email_address": "test@test.com",
-                "shared_by": self.mock_respondent_with_id['id']
-            }]
+        payload = {
+            "pending_transfers": [
+                {
+                    "business_id": DEFAULT_BUSINESS_UUID,
+                    "survey_id": DEFAULT_SURVEY_UUID,
+                    "email_address": "test@test.com",
+                    "shared_by": self.mock_respondent_with_id["id"],
+                },
+                {
+                    "business_id": DEFAULT_BUSINESS_UUID,
+                    "survey_id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef99",
+                    "email_address": "test@test.com",
+                    "shared_by": self.mock_respondent_with_id["id"],
+                },
+            ]
         }
-        with patch('ras_party.views.pending_survey_view.send_pending_survey_email') as pending_transfer_email:
+        with patch("ras_party.views.pending_survey_view.send_pending_survey_email") as pending_transfer_email:
             response = self.post_pending_surveys(payload)
             # Then
-            self.assertEqual(response, {'created': 'success'})
+            self.assertEqual(response, {"created": "success"})
             self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
-            self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID,
-                                                              'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef99'))
+            self.assertTrue(
+                self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef99")
+            )
             pending_transfer_email.assert_called()
             pending_transfer_email.assert_called_once()
 
@@ -234,70 +258,77 @@ class TestShareSurvey(PartyTestClient):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         # When
         payload = {}
         # Then
         response = self.post_pending_surveys_fail(payload)
-        self.assertEqual(response['description'], 'Payload Invalid - Pending survey key missing')
+        self.assertEqual(response["description"], "Payload Invalid - Pending survey key missing")
 
     def test_post_pending_transfers_fail_invalid_payload_size(self):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         # When
         payload = {"pending_transfers": []}
         # Then
         response = self.post_pending_surveys_fail(payload)
-        self.assertEqual(response['description'], 'Payload Invalid - pending_surveys list is empty')
+        self.assertEqual(response["description"], "Payload Invalid - pending_surveys list is empty")
 
     def test_post_pending_transfers_fail_validation(self):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         # When
-        payload = {"pending_transfers": [{
-            "business_id": DEFAULT_BUSINESS_UUID,
-            "survey_id": DEFAULT_SURVEY_UUID,
-            "shared_by": self.mock_respondent_with_id['id']
-        },
-            {
-                "business_id": DEFAULT_BUSINESS_UUID,
-                "survey_id": 'cb0711c3-0ac8-41d3-ae0e-567e5ea1ef99',
-                "email_address": "test@test.com",
-                "shared_by": self.mock_respondent_with_id['id']
-            }]
+        payload = {
+            "pending_transfers": [
+                {
+                    "business_id": DEFAULT_BUSINESS_UUID,
+                    "survey_id": DEFAULT_SURVEY_UUID,
+                    "shared_by": self.mock_respondent_with_id["id"],
+                },
+                {
+                    "business_id": DEFAULT_BUSINESS_UUID,
+                    "survey_id": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef99",
+                    "email_address": "test@test.com",
+                    "shared_by": self.mock_respondent_with_id["id"],
+                },
+            ]
         }
         # Then
         response = self.post_pending_surveys_fail(payload)
-        self.assertEqual(response['description'], ["Required key 'email_address' is missing."])
+        self.assertEqual(response["description"], ["Required key 'email_address' is missing."])
 
     def test_delete_pending_transfers_success(self):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         self.populate_pending_transfer()
         self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
-        with patch('ras_party.views.batch_request.send_transfer_survey_cancellation_emails') as pending_transfer_email:
+        with patch("ras_party.views.batch_request.send_transfer_survey_cancellation_emails") as pending_transfer_email:
             self.delete_pending_surveys()
             pending_transfer_email.assert_called()
             pending_transfer_email.assert_called_once()
@@ -306,41 +337,44 @@ class TestShareSurvey(PartyTestClient):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         self.populate_pending_transfer()
         self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
-        response = self.verify_pending_surveys(generate_email_token(str(self.mock_pending_transfer['batch_no'])))
-        self.assertEqual(response[0]['batch_no'], str(self.mock_pending_transfer['batch_no']))
+        response = self.verify_pending_surveys(generate_email_token(str(self.mock_pending_transfer["batch_no"])))
+        self.assertEqual(response[0]["batch_no"], str(self.mock_pending_transfer["batch_no"]))
 
     def test_transfer_survey_verification_token_fail(self):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
-        response = self.verify_pending_surveys(generate_email_token(str(self.mock_pending_transfer['batch_no'])), 404)
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
+        self.verify_pending_surveys(generate_email_token(str(self.mock_pending_transfer["batch_no"])), 404)
 
     def test_accept_transfer_survey_verification_success(self):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_test_with_id)
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         self.populate_pending_transfer()
         self.assertTrue(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
-        with patch('ras_party.controllers.pending_survey_controller.NotifyGateway') as pending_transfer_email:
-            self.confirm_pending_survey(self.mock_pending_transfer['batch_no'])
+        with patch("ras_party.controllers.pending_survey_controller.NotifyGateway") as pending_transfer_email:
+            self.confirm_pending_survey(self.mock_pending_transfer["batch_no"])
         self.assertFalse(self.is_pending_survey_registered(DEFAULT_BUSINESS_UUID, DEFAULT_SURVEY_UUID))
         self.assertEqual(pending_transfer_email.call_count, 1)
 
@@ -349,39 +383,41 @@ class TestShareSurvey(PartyTestClient):
         self.populate_with_respondent(respondent=self.mock_respondent_test_with_id)
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
-        self.confirm_pending_survey(self.mock_pending_transfer['batch_no'], 404)
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
+        self.confirm_pending_survey(self.mock_pending_transfer["batch_no"], 404)
 
     def test_post_transfer_survey_respondent_success(self):
         # Given
         self.populate_with_respondent(respondent=self.mock_respondent_test_with_id)
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         self.populate_pending_transfer()
-        self.get_pending_surveys_with_batch_no(self.mock_pending_transfer['batch_no'])
+        self.get_pending_surveys_with_batch_no(self.mock_pending_transfer["batch_no"])
         payload = {
-            'emailAddress': 'testing@test.com',
-            'firstName': 'Test',
-            'lastName': 'Test',
-            'password': 'Something',
-            'telephone': '076843676789',
-            'batch_no': str(self.mock_pending_transfer['batch_no'])
+            "emailAddress": "testing@test.com",
+            "firstName": "Test",
+            "lastName": "Test",
+            "password": "Something",
+            "telephone": "076843676789",
+            "batch_no": str(self.mock_pending_transfer["batch_no"]),
         }
-        with patch('ras_party.controllers.pending_survey_controller.NotifyGateway') as pending_transfer_email:
+        with patch("ras_party.controllers.pending_survey_controller.NotifyGateway") as pending_transfer_email:
             self.post_pending_survey_respondent(payload=payload)
-        self.get_respondent_by_email(payload={'email': 'testing@test.com'})
-        self.get_pending_surveys_with_batch_no(self.mock_pending_transfer['batch_no'],
-                                               expected_status=404,
-                                               expected_quantity=0)
+        self.get_respondent_by_email(payload={"email": "testing@test.com"})
+        self.get_pending_surveys_with_batch_no(
+            self.mock_pending_transfer["batch_no"], expected_status=404, expected_quantity=0
+        )
         self.assertEqual(pending_transfer_email.call_count, 1)
 
     def test_post_transfer_survey_respondent_fail(self):
@@ -389,35 +425,36 @@ class TestShareSurvey(PartyTestClient):
         self.populate_with_respondent(respondent=self.mock_respondent_test_with_id)
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
         mock_business = MockBusiness().as_business()
-        mock_business['id'] = DEFAULT_BUSINESS_UUID
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
         self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(business_id=mock_business['id'],
-                                               respondent_id=self.mock_respondent_with_id['id'])  # NOQA
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
         self.populate_pending_transfer()
-        self.get_pending_surveys_with_batch_no(self.mock_pending_transfer['batch_no'])
+        self.get_pending_surveys_with_batch_no(self.mock_pending_transfer["batch_no"])
         payload = {
-            'emailAddress': 'testing@test.com',
-            'firstName': 'Test',
-            'lastName': 'Test',
-            'telephone': '076843676789',
-            'batch_no': str(self.mock_pending_transfer['batch_no'])
+            "emailAddress": "testing@test.com",
+            "firstName": "Test",
+            "lastName": "Test",
+            "telephone": "076843676789",
+            "batch_no": str(self.mock_pending_transfer["batch_no"]),
         }
         self.post_pending_survey_respondent(payload=payload, expected_status=400)
-        self.get_pending_surveys_with_batch_no(self.mock_pending_transfer['batch_no'],
-                                               expected_status=200,
-                                               expected_quantity=1)
+        self.get_pending_surveys_with_batch_no(
+            self.mock_pending_transfer["batch_no"], expected_status=200, expected_quantity=1
+        )
 
 
 class MockPendingtransfers:
     def __init__(self):
         self._attributes = {
-            'email_address': 'test@test.com',
-            'business_id': DEFAULT_BUSINESS_UUID,
-            'survey_id': DEFAULT_SURVEY_UUID,
-            'shared_by': DEFAULT_RESPONDENT_UUID,
-            'batch_no': uuid.uuid1(),
-            'is_transfer': True,
+            "email_address": "test@test.com",
+            "business_id": DEFAULT_BUSINESS_UUID,
+            "survey_id": DEFAULT_SURVEY_UUID,
+            "shared_by": DEFAULT_RESPONDENT_UUID,
+            "batch_no": uuid.uuid1(),
+            "is_transfer": True,
         }
 
     def attributes(self, **kwargs):

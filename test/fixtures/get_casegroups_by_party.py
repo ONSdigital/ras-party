@@ -1,4 +1,4 @@
-response = '''[
+response = """[
   {
       "collectionExerciseId": "14fb3e68-4dca-46db-bf49-04b84e07e77c",
       "id": "612f5c34-7e11-4740-8e24-cb321a86a917",
@@ -15,4 +15,4 @@ response = '''[
       "sampleUnitType": "B",
       "caseGroupStatus": "NOTSTARTED"
     }
-]'''
+]"""

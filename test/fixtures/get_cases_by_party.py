@@ -1,4 +1,4 @@
-response = '''[
+response = """[
   {
     "state": "ACTIONABLE",
     "id": "10b04906-f478-47f9-a985-783400dd8482",
@@ -43,4 +43,4 @@ response = '''[
     "responses": [],
     "caseEvents": null
   }
-]'''
+]"""

@@ -1,4 +1,4 @@
-response = '''[
+response = """[
   {
     "id": "14fb3e68-4dca-46db-bf49-04b84e07e77c",
     "actualExecutionDateTime": "2017-11-10T12:14:41.768+0000",
@@ -51,4 +51,4 @@ response = '''[
     "state": "PUBLISHED",
     "surveyId": "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
   }
-]'''
+]"""
