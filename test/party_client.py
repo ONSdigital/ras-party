@@ -123,11 +123,6 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
-    def get_party_by_ref(self, party_type, ref, expected_status=200):
-        response = self.client.get(f"/party-api/v1/parties/type/{party_type}/ref/{ref}", headers=self.auth_headers)
-        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
-        return json.loads(response.get_data(as_text=True))
-
     def get_party_by_id(self, party_type, id, expected_status=200):
         response = self.client.get(f"/party-api/v1/parties/type/{party_type}/id/{id}", headers=self.auth_headers)
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
