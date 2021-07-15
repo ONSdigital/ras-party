@@ -87,7 +87,7 @@ def get_respondent_by_id(respondent_id, session):
 
 
 @with_db_session
-def update_respondent_mark_for_deletion(email, session):
+def update_respondent_mark_for_deletion(email: str, session):
     """
     Update respondent flag mark_for_deletion
 
@@ -126,7 +126,7 @@ def delete_respondents_marked_for_deletion(session):
 
 
 @with_db_session
-def delete_respondent_by_email(email, session):
+def delete_respondent_by_email(email: str, session):
     """
     Delete a Respondent by its email
 
