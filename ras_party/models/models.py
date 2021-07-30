@@ -400,6 +400,7 @@ class PendingSurveys(Base):
             "shared_by": self.shared_by,
             "batch_no": self.batch_no,
             "is_transfer": self.is_transfer,
+            "time_shared": self.time_shared,
         }
 
         return filter_falsey_values(d)
