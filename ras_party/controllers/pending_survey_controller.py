@@ -23,6 +23,7 @@ from ras_party.controllers.queries import (
     query_business_respondent_by_respondent_id_and_business_id,
     query_enrolment_by_business_and_survey_and_status,
     query_pending_survey_by_batch_no,
+    query_pending_survey_by_shared_by,
     query_pending_surveys_by_business_and_survey,
     query_respondent_by_party_uuid,
 )
@@ -71,6 +72,28 @@ def get_users_enrolled_and_pending_survey_against_business_and_survey(business_i
     total_users = enrolled_users.count() + pending_survey_users.count()
     bound_logger.info(f"total users count {total_users}")
     return total_users
+
+
+@with_db_session
+def pending_survey_deletion(batch_no, session):
+    """
+    Delete pending survey record against batch number
+    :param batch_no: batch number
+    :type batch_no: uuid
+    :param session:
+    :type session:
+    """
+    logger.info("Retrieving pending share record against batch number", batch_no=str(batch_no))
+    pending_surveys = session.query(PendingSurveys).filter(PendingSurveys.batch_no == batch_no)
+    if pending_surveys.count() > 0:
+        try:
+            pending_surveys.delete()
+            return "pending surveys successfully deleted", 202
+        except (SQLAlchemyError, Exception) as error:
+            logger.error("error while deleting pending surveys", error)
+            return "something went wrong", 500
+    else:
+        return "pending surveys does not exists.", 404
 
 
 @with_db_session
@@ -330,6 +353,21 @@ def get_pending_survey_by_batch_number(batch_number, session):
     pending_surveys = query_pending_survey_by_batch_no(batch_number, session)
     if len(pending_surveys) == 0:
         raise NotFound("Batch number does not exist")
+    return [pending_surveys.to_pending_surveys_dict() for pending_surveys in pending_surveys]
+
+
+@with_db_session
+def get_pending_survey_by_originator_respondent_id(respondent_party_id, session):
+    """
+    gets list of pending surveys against the respondent party id
+    :param respondent_party_id: respondent party id
+    :type batch_number: uuid
+    :param session: db session
+    :type session: db session
+    :return: list of pending share surveys
+    :rtype: list
+    """
+    pending_surveys = query_pending_survey_by_shared_by(respondent_party_id, session)
     return [pending_surveys.to_pending_surveys_dict() for pending_surveys in pending_surveys]
 
 

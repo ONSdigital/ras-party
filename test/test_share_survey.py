@@ -58,10 +58,14 @@ class TestShareSurvey(PartyTestClient):
         account_controller.NotifyGateway = MagicMock(return_value=self.mock_notify)
 
     @with_db_session
-    def populate_pending_share(self, session, pending_share=None):
-        if not pending_share:
-            pending_share = self.mock_pending_share
+    def populate_pending_share(self, session):
+        pending_share = self.mock_pending_share
         self.pending_share = PendingSurveys(**pending_share)
+        session.add(self.pending_share)
+
+    @with_db_session
+    def populate_pending_survey(self, pending_survey, session):
+        self.pending_share = PendingSurveys(**pending_survey)
         session.add(self.pending_share)
 
     @with_db_session
@@ -444,6 +448,141 @@ class TestShareSurvey(PartyTestClient):
         self.get_pending_surveys_with_batch_no(
             self.mock_pending_share["batch_no"], expected_status=200, expected_quantity=1
         )
+
+    def test_get_pending_surveys_with_originator_respondent_party_id(self):
+        # Given
+        self.populate_with_respondent(respondent=self.mock_respondent_test_with_id)
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
+        mock_business = MockBusiness().as_business()
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
+        mock_business_new = MockBusiness().as_business()
+        mock_business_new["id"] = "3b136c4b-7a14-4904-9e01-13364dd7b973"
+        self.post_to_businesses(mock_business_new, 200)
+        self._make_business_attributes_active(mock_business=mock_business_new)
+        self.associate_business_and_respondent(
+            business_id=mock_business_new["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
+        batch_no = uuid.uuid1()
+        mock_pending_survey_one = {
+            "email_address": "test@test.com",
+            "business_id": DEFAULT_BUSINESS_UUID,
+            "survey_id": DEFAULT_SURVEY_UUID,
+            "shared_by": DEFAULT_RESPONDENT_UUID,
+            "batch_no": batch_no,
+        }
+        mock_pending_survey_two = {
+            "email_address": "test@test.com",
+            "business_id": "3b136c4b-7a14-4904-9e01-13364dd7b973",
+            "survey_id": DEFAULT_SURVEY_UUID,
+            "shared_by": DEFAULT_RESPONDENT_UUID,
+            "batch_no": batch_no,
+        }
+        self.populate_pending_survey(mock_pending_survey_one)
+        self.populate_pending_survey(mock_pending_survey_two)
+
+        self.get_pending_surveys_with_batch_no(batch_no, expected_status=200, expected_quantity=2)
+
+        response = self.get_pending_surveys_with_originator_party_id(
+            DEFAULT_RESPONDENT_UUID, expected_status=200, expected_quantity=2
+        )
+        self.assertEqual(response[0]["email_address"], mock_pending_survey_one["email_address"])
+        self.assertEqual(response[0]["shared_by"], DEFAULT_RESPONDENT_UUID)
+        self.assertEqual(response[1]["shared_by"], DEFAULT_RESPONDENT_UUID)
+
+    def test_delete_pending_surveys_by_batch_number(self):
+        # Given
+        self.populate_with_respondent(respondent=self.mock_respondent_test_with_id)
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
+        mock_business = MockBusiness().as_business()
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
+        mock_business_new = MockBusiness().as_business()
+        mock_business_new["id"] = "3b136c4b-7a14-4904-9e01-13364dd7b973"
+        self.post_to_businesses(mock_business_new, 200)
+        self._make_business_attributes_active(mock_business=mock_business_new)
+        self.associate_business_and_respondent(
+            business_id=mock_business_new["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
+        batch_no = uuid.uuid1()
+        mock_pending_survey_one = {
+            "email_address": "test@test.com",
+            "business_id": DEFAULT_BUSINESS_UUID,
+            "survey_id": DEFAULT_SURVEY_UUID,
+            "shared_by": DEFAULT_RESPONDENT_UUID,
+            "batch_no": batch_no,
+        }
+        mock_pending_survey_two = {
+            "email_address": "test@test.com",
+            "business_id": "3b136c4b-7a14-4904-9e01-13364dd7b973",
+            "survey_id": DEFAULT_SURVEY_UUID,
+            "shared_by": DEFAULT_RESPONDENT_UUID,
+            "batch_no": batch_no,
+        }
+        self.populate_pending_survey(mock_pending_survey_one)
+        self.populate_pending_survey(mock_pending_survey_two)
+
+        self.get_pending_surveys_with_batch_no(batch_no, expected_status=200, expected_quantity=2)
+
+        self.delete_pending_surveys_with_batch_no(batch_no)
+        self.get_pending_surveys_with_batch_no(batch_no, expected_status=404, expected_quantity=0)
+        self.delete_pending_surveys_with_batch_no(batch_no, expected_status=404)
+
+    def test_resend_pending_surveys_email(self):
+        # Given
+        self.populate_with_respondent(respondent=self.mock_respondent_test_with_id)
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
+        mock_business = MockBusiness().as_business()
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
+        self.post_to_businesses(mock_business, 200)
+        self._make_business_attributes_active(mock_business=mock_business)
+        self.associate_business_and_respondent(
+            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
+        mock_business_new = MockBusiness().as_business()
+        mock_business_new["id"] = "3b136c4b-7a14-4904-9e01-13364dd7b973"
+        self.post_to_businesses(mock_business_new, 200)
+        self._make_business_attributes_active(mock_business=mock_business_new)
+        self.associate_business_and_respondent(
+            business_id=mock_business_new["id"], respondent_id=self.mock_respondent_with_id["id"]
+        )  # NOQA
+        batch_no = uuid.uuid1()
+        mock_pending_survey_one = {
+            "email_address": "test@test.com",
+            "business_id": DEFAULT_BUSINESS_UUID,
+            "survey_id": DEFAULT_SURVEY_UUID,
+            "shared_by": DEFAULT_RESPONDENT_UUID,
+            "batch_no": batch_no,
+        }
+        mock_pending_survey_two = {
+            "email_address": "test@test.com",
+            "business_id": "3b136c4b-7a14-4904-9e01-13364dd7b973",
+            "survey_id": DEFAULT_SURVEY_UUID,
+            "shared_by": DEFAULT_RESPONDENT_UUID,
+            "batch_no": batch_no,
+        }
+        self.populate_pending_survey(mock_pending_survey_one)
+        self.populate_pending_survey(mock_pending_survey_two)
+        with patch("ras_party.views.pending_survey_view.NotifyGateway") as pending_share_email:
+            not_found_response = self.post_resend_pending_surveys_email(
+                payload={"batch_no": batch_no}, expected_status=400
+            )
+            self.assertEqual(pending_share_email.call_count, 0)
+            self.assertEqual("Invalid request - batch_number missing", not_found_response["description"])
+            invalid_request_response = self.post_resend_pending_surveys_email(
+                payload={"batch_number": uuid.uuid1()}, expected_status=404
+            )
+            self.assertEqual("Batch number does not exist", invalid_request_response["description"])
+            success_response = self.post_resend_pending_surveys_email(payload={"batch_number": batch_no})
+            self.assertEqual("success", success_response["resend_pending_surveys_email"])
 
 
 class MockPendingShares:
