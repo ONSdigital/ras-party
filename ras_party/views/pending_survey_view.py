@@ -254,10 +254,10 @@ def resend_pending_surveys_email():
     logger.info("retrieving pending surveys against batch number", batch_number=batch_number)
     response = get_pending_survey_by_batch_number(batch_number)
     logger.info("retrieving originator email address for resend email", batch_number=batch_number)
-    respondent = get_respondent_by_id(str(response[0]["shared_by"]))
-    if not respondent:
+    originator = get_respondent_by_id(str(response[0]["shared_by"]))
+    if not originator:
         raise BadRequest("Originator unknown")
-    respondent_email_address = respondent["emailAddress"]
+    respondent_email_address = response[0]["email_address"]
     if "is_transfer" in response[0]:
         verification_url = PublicWebsite().transfer_survey(batch_number)
         existing_user_email_template = "transfer_survey_access_existing_account"
@@ -279,7 +279,7 @@ def resend_pending_surveys_email():
         business_list.append(business["name"])
     personalisation = {
         "CONFIRM_EMAIL_URL": verification_url,
-        "ORIGINATOR_EMAIL_ADDRESS": respondent["emailAddress"],
+        "ORIGINATOR_EMAIL_ADDRESS": originator["emailAddress"],
         "BUSINESSES": business_list,
     }
     logger.info("calling notify to resend email for pending share", batch_number=batch_number)
