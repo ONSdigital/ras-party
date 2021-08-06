@@ -79,11 +79,11 @@ def pending_survey_deletion(batch_no, session):
     """
     Delete pending survey record against batch number
     :param batch_no: batch number
-    :type batch_no: uuid
+    :type batch_no: str
     :param session:
     :type session:
     """
-    logger.info("Retrieving pending share record against batch number", batch_no=str(batch_no))
+    logger.info("Retrieving pending share record against batch number", batch_no=batch_no)
     pending_surveys = session.query(PendingSurveys).filter(PendingSurveys.batch_no == batch_no)
     if pending_surveys.count() > 0:
         try:
@@ -357,11 +357,11 @@ def get_pending_survey_by_batch_number(batch_number, session):
 
 
 @with_db_session
-def get_pending_survey_by_originator_respondent_id(respondent_party_id, session):
+def get_pending_survey_by_originator_respondent_id(respondent_party_id: str, session):
     """
     gets list of pending surveys against the respondent party id
     :param respondent_party_id: respondent party id
-    :type batch_number: uuid
+    :type respondent_party_id: str
     :param session: db session
     :type session: db session
     :return: list of pending share surveys

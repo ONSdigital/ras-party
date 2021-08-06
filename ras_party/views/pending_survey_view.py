@@ -252,13 +252,11 @@ def resend_pending_surveys_email():
         raise BadRequest("Invalid request - batch_number missing")
     batch_number = payload["batch_number"]
     logger.info("retrieving pending surveys against batch number", batch_number=batch_number)
-    response = get_pending_survey_by_batch_number(batch_number)
+    pending_surveys = get_pending_survey_by_batch_number(batch_number)
     logger.info("retrieving originator email address for resend email", batch_number=batch_number)
-    originator = get_respondent_by_id(str(response[0]["shared_by"]))
-    if not originator:
-        raise BadRequest("Originator unknown")
-    respondent_email_address = response[0]["email_address"]
-    if "is_transfer" in response[0]:
+    originator = get_respondent_by_id(str(pending_surveys[0]["shared_by"]))
+    respondent_email_address = pending_surveys[0]["email_address"]
+    if "is_transfer" in pending_surveys[0]:
         verification_url = PublicWebsite().transfer_survey(batch_number)
         existing_user_email_template = "transfer_survey_access_existing_account"
         new_user_email_template = "transfer_survey_access_new_account"
@@ -267,13 +265,14 @@ def resend_pending_surveys_email():
         existing_user_email_template = "share_survey_access_existing_account"
         new_user_email_template = "share_survey_access_new_account"
     try:
+        # This is just to figure out if the respondent exist in our system, and hence it ignores the response.
         get_respondent_by_email(respondent_email_address)
         email_template = existing_user_email_template
     except NotFound:
         email_template = new_user_email_template
     business_list = []
     logger.info("retrieving list of business against batch number", batch_number=batch_number)
-    business_id_list = {response["business_id"] for response in response}
+    business_id_list = {pending_survey["business_id"] for pending_survey in pending_surveys}
     for business_id in business_id_list:
         business = get_business_by_id(str(business_id))
         business_list.append(business["name"])
