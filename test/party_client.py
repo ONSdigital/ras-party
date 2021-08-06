@@ -408,8 +408,26 @@ class PartyTestClient(TestCase):
         response = self.client.post("/party-api/v1/pending-survey-respondent", json=payload, headers=self.auth_headers)
         self.assertStatus(response, expected_status, response.json)
 
+    def post_resend_pending_surveys_email(self, payload, expected_status=201):
+        response = self.client.post(
+            "/party-api/v1/pending-surveys/resend-email", json=payload, headers=self.auth_headers
+        )
+        self.assertStatus(response, expected_status, response.json)
+        return response.json
+
     def get_pending_surveys_with_batch_no(self, batch_no, expected_status=200, expected_quantity=1):
         response = self.client.get(f"/party-api/v1/pending-surveys/{batch_no}", headers=self.auth_headers)
         self.assertStatus(response, expected_status)
         if expected_quantity != 0:
             self.assertEqual(len(response.json), expected_quantity)
+
+    def get_pending_surveys_with_originator_party_id(self, party_id, expected_status=200, expected_quantity=1):
+        response = self.client.get(f"/party-api/v1/pending-surveys/originator/{party_id}", headers=self.auth_headers)
+        self.assertStatus(response, expected_status)
+        if expected_quantity != 0:
+            self.assertEqual(len(response.json), expected_quantity)
+        return response.json
+
+    def delete_pending_surveys_with_batch_no(self, batch_no, expected_status=202):
+        response = self.client.delete(f"/party-api/v1/pending-surveys/{batch_no}", headers=self.auth_headers)
+        self.assertStatus(response, expected_status)

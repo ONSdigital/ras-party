@@ -357,6 +357,17 @@ def query_pending_survey_by_batch_no(batch_no, session):
     return response
 
 
+def query_pending_survey_by_shared_by(shared_by, session):
+    """
+    Query to return pending survey by shared by party id.
+    :param shared_by: UUID
+    :return: share surveys
+    """
+    logger.info("Querying share_surveys", shared_by=str(shared_by))
+    response = session.query(PendingSurveys).filter(PendingSurveys.shared_by == shared_by).all()
+    return response
+
+
 def delete_pending_survey_by_batch_no(batch_no, session):
     """
     Query to delete existing pending survey by batch no.

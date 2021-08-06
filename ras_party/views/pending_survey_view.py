@@ -12,6 +12,8 @@ from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.pending_survey_controller import (
     confirm_pending_survey,
     get_pending_survey_by_batch_number,
+    get_pending_survey_by_originator_respondent_id,
+    pending_survey_deletion,
 )
 from ras_party.controllers.respondent_controller import (
     get_respondent_by_email,
@@ -190,7 +192,7 @@ def share_survey_verification(token):
 @pending_survey_view.route("/pending-survey/confirm-pending-surveys/<batch_no>", methods=["POST"])
 def confirm_pending_shares(batch_no):
     """
-    Confirms pending share survey
+    Confirms pending survey
     :param batch_no
     """
     confirm_pending_survey(batch_no)
@@ -200,8 +202,86 @@ def confirm_pending_shares(batch_no):
 @pending_survey_view.route("/pending-surveys/<batch_no>", methods=["GET"])
 def get_pending_surveys_with_batch_no(batch_no):
     """
-    Confirms pending share survey
+    Get pending surveys by batch number
     :param batch_no
     """
     response = get_pending_survey_by_batch_number(batch_no)
     return make_response(jsonify(response), 200)
+
+
+@pending_survey_view.route("/pending-surveys/originator/<originator_respondent_party_id>", methods=["GET"])
+def get_pending_surveys_with_originator_respondent_party_id(originator_respondent_party_id):
+    """
+    Get pending surveys record against originator party id
+    :param originator_respondent_party_id: Respondent party id
+    :type originator_respondent_party_id: uuid
+    """
+    logger.info(
+        "Retrieving share survey records against originator",
+        originator_respondent_party_id=originator_respondent_party_id,
+    )
+    response = get_pending_survey_by_originator_respondent_id(originator_respondent_party_id)
+    return make_response(jsonify(response), 200)
+
+
+@pending_survey_view.route("/pending-surveys/<batch_no>", methods=["DELETE"])
+def delete_pending_surveys_by_batch_number(batch_no):
+    """
+    Delete pending surveys record against a batch_number
+    :param batch_no: batch number
+    :type batch_no: uuid
+    """
+    logger.info("Attempting to delete pending surveys record against batch number", batch_no=batch_no)
+    response = pending_survey_deletion(batch_no)
+    return response
+
+
+@pending_survey_view.route("/pending-surveys/resend-email", methods=["POST"])
+def resend_pending_surveys_email():
+    """
+    Request to resend pending share email address against a single batch_number
+    accepted payload:
+    {
+        'batch_number': #batch_number
+    }
+    """
+    logger.info("Attempting to resend email for pending survey")
+    payload = request.get_json() or {}
+    if "batch_number" not in payload:
+        logger.error("Invalid request")
+        raise BadRequest("Invalid request - batch_number missing")
+    batch_number = payload["batch_number"]
+    logger.info("retrieving pending surveys against batch number", batch_number=batch_number)
+    pending_surveys = get_pending_survey_by_batch_number(batch_number)
+    logger.info("retrieving originator email address for resend email", batch_number=batch_number)
+    originator = get_respondent_by_id(str(pending_surveys[0]["shared_by"]))
+    respondent_email_address = pending_surveys[0]["email_address"]
+    if "is_transfer" in pending_surveys[0]:
+        verification_url = PublicWebsite().transfer_survey(batch_number)
+        existing_user_email_template = "transfer_survey_access_existing_account"
+        new_user_email_template = "transfer_survey_access_new_account"
+    else:
+        verification_url = PublicWebsite().share_survey(batch_number)
+        existing_user_email_template = "share_survey_access_existing_account"
+        new_user_email_template = "share_survey_access_new_account"
+    try:
+        # This is just to figure out if the respondent exist in our system, and hence it ignores the response.
+        get_respondent_by_email(respondent_email_address)
+        email_template = existing_user_email_template
+    except NotFound:
+        email_template = new_user_email_template
+    business_list = []
+    logger.info("retrieving list of business against batch number", batch_number=batch_number)
+    business_id_list = {pending_survey["business_id"] for pending_survey in pending_surveys}
+    for business_id in business_id_list:
+        business = get_business_by_id(str(business_id))
+        business_list.append(business["name"])
+    personalisation = {
+        "CONFIRM_EMAIL_URL": verification_url,
+        "ORIGINATOR_EMAIL_ADDRESS": originator["emailAddress"],
+        "BUSINESSES": business_list,
+    }
+    logger.info("calling notify to resend email for pending share", batch_number=batch_number)
+    send_pending_survey_email(personalisation, email_template, respondent_email_address, batch_number)
+    logger.info("resend email for pending share send successfully", batch_number=batch_number)
+    return make_response(jsonify({"resend_pending_surveys_email": "success"}), 201)
