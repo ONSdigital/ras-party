@@ -114,18 +114,14 @@ def validate_respondent_claim():
     """
     respondent_id = request.args.get("respondent_id", default="").strip()
     business_id = request.args.get("business_id", default="").strip()
-    survey_id = request.args.get("survey_id", default="").strip()
 
-    if not business_id or not survey_id or not respondent_id:
+    if not business_id or not respondent_id:
         logger.info(
-            "either respondent id, business id or survey id are missing",
-            respondent_id=respondent_id,
-            business_id=business_id,
-            survey_id=survey_id,
+            "either respondent id or business id is missing", respondent_id=respondent_id, business_id=business_id
         )
-        raise BadRequest("respondent id and business id and survey id are required")
+        raise BadRequest("respondent id and business id is required")
 
-    if respondent_controller.does_user_have_claim(respondent_id, business_id, survey_id):
+    if respondent_controller.does_user_have_claim(respondent_id, business_id):
         return make_response("Valid", 200)
 
     return make_response("Invalid", 200)
