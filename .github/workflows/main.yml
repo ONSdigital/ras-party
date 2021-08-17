@@ -34,8 +34,10 @@ jobs:
           python-version: '3.9'
       - name: Get Dependencies
         run: |
+          docker-compose --verbose build
+          docker-compose up -d
           pip install pipenv
-          make build
+          pipenv install --dev
       - name: Run tests
         run: make test
       - uses: google-github-actions/setup-gcloud@master
