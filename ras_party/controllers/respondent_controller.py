@@ -2,6 +2,7 @@ import logging
 import uuid
 
 import structlog
+from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -9,6 +10,7 @@ from ras_party.controllers.account_controller import (
     change_respondent,
     get_single_respondent_by_email,
 )
+from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import (
     query_respondent_by_email,
     query_respondent_by_names_and_emails,
@@ -123,6 +125,31 @@ def delete_respondents_marked_for_deletion(session):
         session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
         session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
         session.query(Respondent).filter(Respondent.id == respondent.id).delete()
+        send_account_deletion_confirmation_email(respondent.email_address, respondent.first_name)
+
+
+def send_account_deletion_confirmation_email(email_address, name):
+    """
+    Sends email notification for account deletion confirmation.
+    :param email_address:
+    :type email_address:
+    :param name:
+    :type name:
+    :return:
+    :rtype:
+    """
+    bound_logger = logger.bind(email=obfuscate_email(email_address))
+    bound_logger.info("sending account deletion confirmation email")
+    try:
+        personalisation = {"name": name}
+        NotifyGateway(current_app.config).request_to_notify(
+            email=email_address, template_name="account_deletion_confirmation", personalisation=personalisation
+        )
+        bound_logger.info("account deletion confirmation email sent successfully")
+    # Exception is used to abide by the notify controller. At this point of time the respondent has been deleted
+    # hence if the email phase fails it should not disrupt the flow.
+    except Exception as e:  # noqa
+        bound_logger.error("Error sending confirmation email for account deletion")
 
 
 @with_db_session

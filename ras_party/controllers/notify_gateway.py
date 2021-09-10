@@ -30,6 +30,7 @@ class NotifyGateway:
         self.transfer_survey_access_existing_account = config["TRANSFER_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE"]
         self.transfer_survey_access_cancellation = config["TRANSFER_SURVEY_ACCESS_CANCELLATION_TEMPLATE"]
         self.transfer_survey_access_confirmation = config["TRANSFER_SURVEY_ACCESS_CONFIRMATION_TEMPLATE"]
+        self.account_deletion_confirmation = config["ACCOUNT_DELETION_CONFIRMATION_TEMPLATE"]
         self.project_id = self.config["GOOGLE_CLOUD_PROJECT"]
         self.topic_id = self.config["PUBSUB_TOPIC"]
         self.publisher = None
@@ -111,6 +112,7 @@ class NotifyGateway:
             "transfer_survey_access_existing_account": self.transfer_survey_access_existing_account,
             "transfer_survey_access_cancellation": self.transfer_survey_access_cancellation,
             "transfer_survey_access_confirmation": self.transfer_survey_access_confirmation,
+            "account_deletion_confirmation": self.account_deletion_confirmation,
         }
         if template_name in templates:
             return templates[template_name]

@@ -69,6 +69,7 @@ email:
     notifyTransferSurveyAccessExistingAccountTemplate: ff602de0-4a3a-40df-9e31-332e0030ba9b
     notifyTransferSurveyAccessCancellationTemplate: a1aa2084-a8e4-4c33-bb3e-cde683538ca7
     notifyTransferSurveyAccessConfirmationTemplate: 6d3ebb5f-a870-4925-84a1-d71fdc9dc91f
+    notifyAccountDeletionConfirmationTemplate: 7e232400-29f0-4304-8541-171726d94951
   callback:
     protocol: http
     host: localhost

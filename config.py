@@ -87,6 +87,10 @@ class Config(object):
         "TRANSFER_SURVEY_ACCESS_CONFIRMATION_TEMPLATE", "transfer_survey_access_confirmation"
     )
 
+    ACCOUNT_DELETION_CONFIRMATION_TEMPLATE = os.getenv(
+        "ACCOUNT_DELETION_CONFIRMATION_TEMPLATE", "account_deletion_confirmation"
+    )
+
     SEND_EMAIL_TO_GOV_NOTIFY = _is_true(os.getenv("SEND_EMAIL_TO_GOV_NOTIFY", True))
 
 

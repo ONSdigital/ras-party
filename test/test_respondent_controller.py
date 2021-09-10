@@ -1776,7 +1776,10 @@ class TestRespondents(PartyTestClient):
         respondent_controller.update_respondent_mark_for_deletion(respondent.email_address)
         response_respondent = self.get_respondent_by_id(respondent.party_uuid)
         self.assertEqual(response_respondent["markForDeletion"], True)
-        respondent_controller.delete_respondents_marked_for_deletion()
+        with patch("ras_party.controllers.respondent_controller.NotifyGateway") as respondent_mock_notify:
+            respondent_controller.delete_respondents_marked_for_deletion()
+            self.assertTrue(respondent_mock_notify.called)
+
         with self.assertRaises(Exception):
             self.get_respondent_by_id(respondent.party_uuid)
 
