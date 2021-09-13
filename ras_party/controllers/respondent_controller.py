@@ -128,15 +128,9 @@ def delete_respondents_marked_for_deletion(session):
         send_account_deletion_confirmation_email(respondent.email_address, respondent.first_name)
 
 
-def send_account_deletion_confirmation_email(email_address, name):
+def send_account_deletion_confirmation_email(email_address: str, name: str):
     """
     Sends email notification for account deletion confirmation.
-    :param email_address:
-    :type email_address:
-    :param name:
-    :type name:
-    :return:
-    :rtype:
     """
     bound_logger = logger.bind(email=obfuscate_email(email_address))
     bound_logger.info("sending account deletion confirmation email")
