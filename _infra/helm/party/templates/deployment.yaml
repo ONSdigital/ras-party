@@ -188,6 +188,8 @@ spec:
             value: "{{ .Values.email.templates.notifyVerifyAccountEmailChangeTemplate }}"
           - name: NOTIFY_CONFIRM_ACCOUNT_EMAIL_CHANGE_TEMPLATE
             value: "{{ .Values.email.templates.notifyConfirmAccountEmailChangeTemplate }}"
+          - name: ACCOUNT_DELETION_CONFIRMATION_TEMPLATE
+            value: "{{ .Values.email.templates.notifyAccountDeletionConfirmationTemplate }}"
           - name: SHARE_SURVEY_ACCESS_NEW_ACCOUNT_TEMPLATE
             value: "{{ .Values.email.templates.notifyShareSurveyAccessNewAccountTemplate }}"
           - name: SHARE_SURVEY_ACCESS_EXISTING_ACCOUNT_TEMPLATE
