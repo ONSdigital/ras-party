@@ -28,7 +28,7 @@ resources:
   application:
     requests:
       memory: "500Mi"
-      cpu: "50m"
+      cpu: "75m"
     limits:
       memory: "900Mi"
       cpu: "200m"
