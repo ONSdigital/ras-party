@@ -343,6 +343,7 @@ def change_respondent(payload, session):
 
     # check if respondent has initiated this request
     if "change_requested_by_respondent" in payload:
+        # send verification email to the new address
         verification_url = PublicWebsite().confirm_account_email_change_url(new_email_address)
         personalisation = {"CONFIRM_EMAIL_URL": verification_url, "FIRST_NAME": respondent.first_name}
         logger.info("Account change email URL for party_id", party_id=str(respondent.party_uuid), url=verification_url)
@@ -350,6 +351,15 @@ def change_respondent(payload, session):
             personalisation,
             template="verify_account_email_change",
             email=new_email_address,
+            party_id=respondent.party_uuid,
+        )
+        # send acknowledgement for this request to the old email address
+        personalisation_old = {"FIRST_NAME": respondent.first_name, "NEW_EMAIL": new_email_address}
+        logger.info("Sending change of email request ack to current email")
+        _send_account_email_change_email(
+            personalisation=personalisation_old,
+            template="confirm_change_to_account_email",
+            email=email_address,
             party_id=respondent.party_uuid,
         )
     else:
@@ -580,18 +590,7 @@ def put_email_verification(token, tran, session):
         respondent = query_respondent_by_pending_email(email_address, session)
 
         if respondent:
-            # Get old email address
-            old_email_address = respondent.email_address
             update_verified_email_address(respondent, tran)
-            # send confirmation email to old email address
-            personalisation = {"FIRST_NAME": respondent.first_name, "NEW_EMAIL": respondent.email_address}
-            logger.info("Sending change of email on account to previously held email address")
-            _send_account_email_change_email(
-                personalisation=personalisation,
-                template="confirm_change_to_account_email",
-                email=old_email_address,
-                party_id=respondent.party_uuid,
-            )
         else:
             logger.info("Unable to find respondent by pending email")
             raise NotFound("Unable to find user while checking email verification token")
