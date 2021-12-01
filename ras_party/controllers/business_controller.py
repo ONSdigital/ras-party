@@ -11,6 +11,7 @@ from ras_party.controllers.queries import (
     query_business_by_party_uuid,
     query_business_by_ref,
     query_businesses_by_party_uuids,
+    search_business_with_ru_ref,
     search_businesses,
 )
 from ras_party.controllers.validate import Exists, Validator
@@ -183,7 +184,10 @@ def businesses_sample_ce_link(sample, ce_data, session):
 
 
 @with_query_only_db_session
-def get_businesses_by_search_query(search_query, page, limit, session):
-    businesses, total_business_count = search_businesses(search_query, page, limit, session)
+def get_businesses_by_search_query(search_query, page, limit, is_ru_ref_search, session):
+    if is_ru_ref_search:
+        businesses, total_business_count = search_business_with_ru_ref(search_query, page, limit, session)
+    else:
+        businesses, total_business_count = search_businesses(search_query, page, limit, session)
     businesses = [{"ruref": business[2], "trading_as": business[1], "name": business[0]} for business in businesses]
     return businesses, total_business_count
