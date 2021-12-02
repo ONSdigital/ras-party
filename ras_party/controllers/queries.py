@@ -320,7 +320,7 @@ def search_business_with_ru_ref(search_query: str, page: int, limit: int, sessio
                 .select_from(BusinessAttributes)
                 .join(Business)
                 .filter(Business.business_ref.ilike(f"%{search_query}%"))
-                .order_by(BusinessAttributes.name.asc())
+                .order_by(Business.business_ref.asc())
                 .distinct()
                 .limit(limit)
                 .offset(offset)
