@@ -1,7 +1,8 @@
 import logging
 
 import structlog
-from sqlalchemy import and_, distinct, func, or_
+from sqlalchemy import and_, func, or_
+from sqlalchemy.sql.functions import count
 
 from ras_party.models.models import (
     Business,
@@ -286,64 +287,88 @@ def update_respondent_details(respondent_data, respondent_id, session):
     return False
 
 
-def search_businesses(search_query, page, limit, session):
+def search_business_with_ru_ref(search_query: str, page: int, limit: int, session):
     """
-    Query to return list of businesses based on search query
+    This query returns business search on ru reference
+    :return: list of businesses
+    """
+    bound_logger = logger.bind(search_query=search_query)
+    bound_logger.info("Query looks like an ru_ref, searching only on ru_ref")
+    offset = (page - 1) * limit
+    if search_query.isdigit():
+        if len(search_query) == 11:
+            bound_logger.info("Searching businesses by full ru_ref with search query")
+            result = (
+                session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
+                .select_from(BusinessAttributes)
+                .join(Business)
+                .filter(Business.business_ref == search_query)
+                .distinct()
+                .all()
+            )
+            return result, len(result)
 
-    :param search_query: a string containing space separated list of keywords to search for in name or trading as
-    :param page: page to return starting at 1
-    :param limit: the maximum number of results to return in a page
+        else:
+            bound_logger.info("Searching businesses by partial ru_ref with search query")
+            pages = (
+                session.query(count(Business.business_ref))
+                .filter(Business.business_ref.ilike(f"%{search_query}%"))
+                .distinct()
+            )
+            result = (
+                session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
+                .select_from(BusinessAttributes)
+                .join(Business)
+                .filter(Business.business_ref.ilike(f"%{search_query}%"))
+                .order_by(Business.business_ref.asc())
+                .distinct()
+                .limit(limit)
+                .offset(offset)
+            )
+            return result, pages.scalar()
+
+
+def search_businesses(search_query: str, page: int, limit: int, session):
+    """
+    Query to return list of businesses based on key word search/ business names
     :return: list of businesses
     """
     bound_logger = logger.bind(search_query=search_query)
     bound_logger.info("Searching businesses by name with search query")
-    if len(search_query) == 11 and search_query.isdigit():
-        bound_logger.info("Query looks like an ru_ref, searching only on ru_ref")
-        result = (
-            session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
-            .select_from(BusinessAttributes)
-            .join(Business)
-            .filter(Business.business_ref == search_query)
-            .distinct()
-            .all()
+    offset = (page - 1) * limit
+    pages = (
+        session.query(count(BusinessAttributes.name))
+        .filter(
+            and_(
+                or_(
+                    BusinessAttributes.name.ilike(f"%{search_query}%"),
+                    BusinessAttributes.trading_as.ilike(f"%{search_query}%"),
+                ),
+                BusinessAttributes.collection_exercise.isnot(None),
+            )
         )
-        if result:
-            return result, len(result)  # ru ref searches do not need to support pagination
-        bound_logger.info("Didn't find an ru_ref, searching everything")
-
-    filters = []
-    name_filters = []
-    trading_as_filters = []
-
-    filters.append(Business.business_ref.like(f"%{search_query}%"))
-
-    key_words = search_query.split()
-
-    for word in key_words:
-        name_filters.append(BusinessAttributes.name.ilike(f"%{word}%"))
-        trading_as_filters.append(BusinessAttributes.trading_as.ilike(f"%{word}%"))
-
-    filters.append(and_(*name_filters))
-    filters.append(and_(*trading_as_filters))
-
-    bound_logger.unbind("search_query")
-    query = (
+        .distinct()
+    )
+    result = (
         session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
         .select_from(BusinessAttributes)
         .join(Business)
-        .filter(and_(or_(*filters), BusinessAttributes.collection_exercise.isnot(None)))
+        .filter(
+            and_(
+                or_(
+                    BusinessAttributes.name.ilike(f"%{search_query}%"),
+                    BusinessAttributes.trading_as.ilike(f"%{search_query}%"),
+                ),
+                BusinessAttributes.collection_exercise.isnot(None),
+            )
+        )
+        .order_by(BusinessAttributes.name.asc())
         .distinct()
-        .order_by(BusinessAttributes.name)
-    )  # Build the query
+        .limit(limit)
+        .offset(offset)
+    )
 
-    results = query.limit(limit).offset((page - 1) * limit).all()  # Execute the query
-    if page == 1 and len(results) < limit:
-        total_business_count = len(results)
-    else:
-        count_q = query.statement.with_only_columns([func.count(distinct(Business.business_ref))]).order_by(None)
-        total_business_count = query.session.execute(count_q).scalar()
-
-    return results, total_business_count
+    return result, pages.scalar()
 
 
 def query_pending_survey_by_batch_no(batch_no, session):
