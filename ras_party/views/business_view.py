@@ -88,7 +88,8 @@ def get_party_by_search():
     page = int(request.args.get("page", default=1))
     limit = int(request.args.get("limit", default=100))
     is_ru_ref_search = eval(request.args.get("ru_search", default="False"))
+    max_rec = int(request.args.get("max_rec", default=10000))
     businesses, total_business_count = business_controller.get_businesses_by_search_query(
-        query, page, limit, is_ru_ref_search
+        query, page, limit, is_ru_ref_search, max_rec
     )
     return jsonify({"businesses": businesses, "total_business_count": total_business_count})
