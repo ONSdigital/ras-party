@@ -1,7 +1,8 @@
 import logging
+import re
 
 import structlog
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, distinct, func, or_
 from sqlalchemy.sql.functions import count
 
 from ras_party.models.models import (
@@ -287,7 +288,7 @@ def update_respondent_details(respondent_data, respondent_id, session):
     return False
 
 
-def search_business_with_ru_ref(search_query: str, page: int, limit: int, session):
+def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_rec: int, session):
     """
     This query returns business search on ru reference
     :return: list of businesses
@@ -311,7 +312,7 @@ def search_business_with_ru_ref(search_query: str, page: int, limit: int, sessio
         else:
             bound_logger.info("Searching businesses by partial ru_ref with search query")
             pages = (
-                session.query(count(Business.business_ref))
+                session.query(count(distinct(Business.business_ref)))
                 .filter(Business.business_ref.ilike(f"%{search_query}%"))
                 .distinct()
             )
@@ -325,10 +326,16 @@ def search_business_with_ru_ref(search_query: str, page: int, limit: int, sessio
                 .limit(limit)
                 .offset(offset)
             )
-            return result, pages.scalar()
+            estimated_total_records = pages.scalar()
+            # we don't want to overload database with the search which retrieves more than 10000 records
+            # as its irrelevant to show so many records as a paginated search on frontend
+            # hence this 'if' logic will avoids such searches and frontend will ask the user to refine their search
+            if pages.scalar() > max_rec:
+                return [], estimated_total_records
+            return result, estimated_total_records
 
 
-def search_businesses(search_query: str, page: int, limit: int, session):
+def search_businesses(search_query: str, page: int, limit: int, max_rec: int, session):
     """
     Query to return list of businesses based on key word search/ business names
     :return: list of businesses
@@ -336,8 +343,52 @@ def search_businesses(search_query: str, page: int, limit: int, session):
     bound_logger = logger.bind(search_query=search_query)
     bound_logger.info("Searching businesses by name with search query")
     offset = (page - 1) * limit
+    # Direct search else normal like search
+    regex = re.compile("[@_!#$%^&*()<>?/|}{~:]")
+    if len(search_query.split()) == 1 and regex.search(search_query) is None:
+        direct_pages = (
+            session.query(count(distinct(BusinessAttributes.name)))
+            .filter(
+                and_(
+                    or_(
+                        BusinessAttributes.name.ilike(f"{search_query}"),
+                        BusinessAttributes.trading_as.ilike(f"{search_query}"),
+                    ),
+                    BusinessAttributes.collection_exercise.isnot(None),
+                )
+            )
+            .distinct()
+        )
+        direct_result = (
+            session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
+            .select_from(BusinessAttributes)
+            .join(Business)
+            .filter(
+                and_(
+                    or_(
+                        BusinessAttributes.name.ilike(f"{search_query}"),
+                        BusinessAttributes.trading_as.ilike(f"{search_query}"),
+                    ),
+                    BusinessAttributes.collection_exercise.isnot(None),
+                )
+            )
+            .order_by(BusinessAttributes.name.asc())
+            .distinct()
+            .limit(limit)
+            .offset(offset)
+        )
+
+        estimated_direct_total = direct_pages.scalar()
+        # we don't want to overload database with the search which retrieves more than 10000 records
+        # as its irrelevant to show so many records as a paginated search on frontend
+        # hence this 'if' logic will avoids such searches and frontend will ask the user to refine their search
+        if estimated_direct_total > max_rec:
+            return [], estimated_direct_total
+        if estimated_direct_total != 0:
+            return direct_result, estimated_direct_total
+
     pages = (
-        session.query(count(BusinessAttributes.name))
+        session.query(count(distinct(BusinessAttributes.name)))
         .filter(
             and_(
                 or_(
@@ -367,8 +418,13 @@ def search_businesses(search_query: str, page: int, limit: int, session):
         .limit(limit)
         .offset(offset)
     )
-
-    return result, pages.scalar()
+    estimated_total_records = pages.scalar()
+    # we don't want to overload database with the search which retrieves more than 10000 records
+    # as its irrelevant to show so many records as a paginated search on frontend
+    # hence this 'if' logic will avoids such searches and frontend will ask the user to refine their search
+    if estimated_total_records > max_rec:
+        return [], estimated_total_records
+    return result, estimated_total_records
 
 
 def query_pending_survey_by_batch_no(batch_no, session):
