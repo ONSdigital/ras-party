@@ -13,7 +13,7 @@ flask-cors = "*"
 flask-httpauth = "*"
 gunicorn = "*"
 gevent = {version = "*", platform_python_implementation="=='CPython'"}
-google-cloud-pubsub = "==1.7.0"
+google-cloud-pubsub = "*"
 itsdangerous = "*"
 jsonschema = "*"
 python-dateutil = "*"
