@@ -26,7 +26,7 @@ requestsdefaulter = "*"
 psycopg2-binary = "*"
 
 [dev-packages]
-black = "==21.6b0"
+black = "==21.12b0"
 coverage = "*"
 flake8 = "*"
 flask-testing = "*"
