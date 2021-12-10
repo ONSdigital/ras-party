@@ -58,6 +58,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 NO_RESPONDENT_FOR_PARTY_ID = "There is no respondent with that party ID"
 EMAIL_VERIFICATION_SENT = "A new verification email has been sent"
+ACCOUNT_EMAIL_CHANGE_VERIFICATION_SENT = "A new account email change verification email has been sent"
 
 
 # flake8: noqa: C901
@@ -340,34 +341,31 @@ def change_respondent(payload, session):
         raise Conflict("New email address already taken")
 
     respondent.pending_email_address = new_email_address
-
-    # check if respondent has initiated this request
-    if "change_requested_by_respondent" in payload:
-        # send verification email to the new address
-        verification_url = PublicWebsite().confirm_account_email_change_url(new_email_address)
-        personalisation = {"CONFIRM_EMAIL_URL": verification_url, "FIRST_NAME": respondent.first_name}
-        logger.info("Account change email URL for party_id", party_id=str(respondent.party_uuid), url=verification_url)
-        _send_account_email_change_email(
-            personalisation,
-            template="verify_account_email_change",
-            email=new_email_address,
-            party_id=respondent.party_uuid,
-        )
-        # send acknowledgement for this request to the old email address
-        personalisation_old = {"FIRST_NAME": respondent.first_name, "NEW_EMAIL": new_email_address}
-        logger.info("Sending change of email request ack to current email")
-        _send_account_email_change_email(
-            personalisation=personalisation_old,
-            template="confirm_change_to_account_email",
-            email=email_address,
-            party_id=respondent.party_uuid,
-        )
-    else:
-        _send_email_verification(respondent.party_uuid, new_email_address)
-
-    logger.info("Verification email sent for changing respondents email", respondent_id=str(respondent.party_uuid))
-
+    _send_account_email_changed_notification(email_address, new_email_address, respondent)
     return respondent.to_respondent_dict()
+
+
+def _send_account_email_changed_notification(email_address, new_email_address, respondent):
+    # send verification email to the new address
+    verification_url = PublicWebsite().confirm_account_email_change_url(new_email_address)
+    personalisation = {"CONFIRM_EMAIL_URL": verification_url, "FIRST_NAME": respondent.first_name}
+    logger.info("Account change email URL for party_id", party_id=str(respondent.party_uuid), url=verification_url)
+    _send_account_email_change_email(
+        personalisation,
+        template="verify_account_email_change",
+        email=new_email_address,
+        party_id=respondent.party_uuid,
+    )
+    # send acknowledgement for this request to the old email address
+    personalisation_old = {"FIRST_NAME": respondent.first_name, "NEW_EMAIL": new_email_address}
+    logger.info("Sending change of email request ack to current email")
+    _send_account_email_change_email(
+        personalisation=personalisation_old,
+        template="confirm_change_to_account_email",
+        email=email_address,
+        party_id=respondent.party_uuid,
+    )
+    logger.info("Verification email sent for changing respondents email", respondent_id=str(respondent.party_uuid))
 
 
 @with_query_only_db_session
@@ -680,6 +678,33 @@ def resend_verification_email_by_uuid(party_uuid, session):
     response = _resend_verification_email(respondent)
     logger.info("Verification email successfully resent", party_uuid=party_uuid)
     return response
+
+
+@with_query_only_db_session
+def resend_account_email_change_verification_email_by_uuid(party_uuid, session):
+    """
+    Check and resend an email verification email using the party id
+    :param party_uuid: the party uuid
+    :param session: database session
+    :return: response
+
+    """
+    logger.info("Attempting to resend account email change verification email", party_uuid=party_uuid)
+
+    respondent = query_respondent_by_party_uuid(party_uuid, session)
+    if not respondent:
+        logger.info(NO_RESPONDENT_FOR_PARTY_ID, party_uuid=party_uuid)
+        raise NotFound(NO_RESPONDENT_FOR_PARTY_ID)
+    if respondent.pending_email_address:
+        _send_account_email_changed_notification(
+            email_address=respondent.email_address,
+            new_email_address=respondent.pending_email_address,
+            respondent=respondent,
+        )
+        logger.info("Verification email successfully resent", party_uuid=party_uuid)
+    else:
+        logger.info("No pending emails for the verification", party_uuid=party_uuid)
+    return {"message": ACCOUNT_EMAIL_CHANGE_VERIFICATION_SENT}
 
 
 @with_query_only_db_session

@@ -29,7 +29,7 @@ from test.test_data.mock_respondent import (
     MockRespondentWithPendingEmail,
 )
 from unittest import mock
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
@@ -839,16 +839,25 @@ class TestRespondents(PartyTestClient):
         # Given there is a respondent with a pending email address
         respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_pending_email)
         # When the resend verification email endpoint is hit
-        self.resend_verification_email(respondent.party_uuid)
+        self.resend_account_email_change_verification_email_by_uuid(respondent.party_uuid)
         # Then a notification message is sent to the pending email address and not the current one
-        pending_email = PublicWebsite().activate_account_url(respondent.pending_email_address)
-        personalisation = {"ACCOUNT_VERIFICATION_URL": pending_email}
-        self.mock_notify.request_to_notify.assert_called_once_with(
-            email=respondent.pending_email_address,
-            template_name="email_verification",
-            personalisation=personalisation,
-            reference=respondent.party_uuid,
-        )
+        pending_email = PublicWebsite().confirm_account_email_change_url(respondent.pending_email_address)
+        personalisation = {"CONFIRM_EMAIL_URL": pending_email, "FIRST_NAME": respondent.first_name}
+        self.assertEqual(2, self.mock_notify.request_to_notify.call_count)
+        personalisation_old = {"FIRST_NAME": respondent.first_name, "NEW_EMAIL": respondent.pending_email_address}
+        call_args_list = [
+            call(
+                email=respondent.pending_email_address,
+                template_name="verify_account_email_change",
+                personalisation=personalisation,
+            ),
+            call(
+                email=respondent.email_address,
+                template_name="confirm_change_to_account_email",
+                personalisation=personalisation_old,
+            ),
+        ]
+        self.assertEqual(call_args_list, self.mock_notify.request_to_notify.call_args_list)
 
     def test_request_word_change_with_valid_email(self):
         respondent = self.populate_with_respondent()
@@ -1116,15 +1125,24 @@ class TestRespondents(PartyTestClient):
         respondent = self.populate_with_respondent(respondent=self.mock_respondent)
         put_data = {"email_address": self.mock_respondent["emailAddress"], "new_email_address": "test@example.test"}
         self.put_email_to_respondents(put_data)
-        personalisation = {
-            "ACCOUNT_VERIFICATION_URL": PublicWebsite().activate_account_url("test@example.test"),
-        }
-        self.mock_notify.request_to_notify.assert_called_once_with(
-            email="test@example.test",
-            template_name="email_verification",
-            personalisation=personalisation,
-            reference=respondent.party_uuid,
-        )
+        # Then a notification message is sent to the pending email address and not the current one
+        pending_email = PublicWebsite().confirm_account_email_change_url("test@example.test")
+        personalisation = {"CONFIRM_EMAIL_URL": pending_email, "FIRST_NAME": respondent.first_name}
+        self.assertEqual(2, self.mock_notify.request_to_notify.call_count)
+        personalisation_old = {"FIRST_NAME": respondent.first_name, "NEW_EMAIL": "test@example.test"}
+        call_args_list = [
+            call(
+                email="test@example.test",
+                template_name="verify_account_email_change",
+                personalisation=personalisation,
+            ),
+            call(
+                email=self.mock_respondent["emailAddress"],
+                template_name="confirm_change_to_account_email",
+                personalisation=personalisation_old,
+            ),
+        ]
+        self.assertEqual(call_args_list, self.mock_notify.request_to_notify.call_args_list)
 
     def test_email_verification_activates_a_respondent(self):
         self.populate_with_respondent()
