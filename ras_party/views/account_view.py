@@ -76,6 +76,12 @@ def resend_verification_email(party_uuid):
     return make_response(jsonify(response), 200)
 
 
+@account_view.route("/resend-account-email-change-notification/<party_uuid>", methods=["POST"])
+def resend_account_email_change_verification(party_uuid):
+    response = account_controller.resend_account_email_change_verification_email_by_uuid(party_uuid)
+    return make_response(jsonify(response), 200)
+
+
 @account_view.route("/resend-account-email-change-expired-token/<token>", methods=["POST"])
 def resend_account_email_change_expired_token(token):
     response = account_controller.resend_account_email_change_verification_email_expired_token(token)

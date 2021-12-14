@@ -212,6 +212,13 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
+    def resend_account_email_change_verification_email_by_uuid(self, party_uuid, expected_status=200):
+        response = self.client.post(
+            f"/party-api/v1/resend-account-email-change-notification/{party_uuid}", headers=self.auth_headers
+        )
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
     def resend_verification_email_expired_token(self, token, expected_status=200):
         response = self.client.post(
             f"/party-api/v1/resend-verification-email-expired-token/{token}", headers=self.auth_headers
