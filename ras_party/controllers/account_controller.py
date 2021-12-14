@@ -58,7 +58,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 NO_RESPONDENT_FOR_PARTY_ID = "There is no respondent with that party ID"
 EMAIL_VERIFICATION_SENT = "A new verification email has been sent"
-ACCOUNT_EMAIL_CHANGE_VERIFICATION_SENT = "A new account email change verification email has been sent"
+ACCOUNT_EMAIL_CHANGE_VERIFICATION_SENT = "A verification email has been sent to change the email address on the account"
 
 
 # flake8: noqa: C901
