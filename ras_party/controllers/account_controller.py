@@ -260,7 +260,7 @@ def _change_respondent_enrolment_status(respondent, survey_id, business_id, stat
         )
     else:
         logger.info(
-            "Informing case service of change in active enrolments",
+            "Informing case service of active enrolments",
             survey_id=survey_id,
             business_id=business_id,
             respondent_id=respondent.party_uuid,
