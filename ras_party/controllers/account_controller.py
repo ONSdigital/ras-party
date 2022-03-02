@@ -258,6 +258,18 @@ def _change_respondent_enrolment_status(respondent, survey_id, business_id, stat
             category="NO_ACTIVE_ENROLMENTS",
             desc="No active enrolments remaining for case",
         )
+    else:
+        logger.info(
+            "Informing case service of change in active enrolments",
+            survey_id=survey_id,
+            business_id=business_id,
+            respondent_id=respondent.party_uuid,
+        )
+        post_case_event(
+            case_id=get_case_id_for_business_survey(survey_id, business_id),
+            category="RESPONDENT_ENROLED",
+            desc="No active enrolments remaining for case",
+        )
 
 
 @with_db_session
