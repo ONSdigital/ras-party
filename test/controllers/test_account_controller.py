@@ -3,7 +3,7 @@ import json
 import os
 import uuid
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import responses
 
@@ -24,11 +24,11 @@ class TestAccountController(TestCase):
         self.app = create_app("TestingConfig")
 
     project_root = os.path.dirname(os.path.dirname(__file__))
-    valid_business_party_id = "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c"
+    valid_business_party_id = "3b136c4b-7a14-4904-9e01-13364dd7b972"
     valid_survey_id = "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
     valid_case_id = "10b04906-f478-47f9-a985-783400dd8482"
     valid_case_group_id = "612f5c34-7e11-4740-8e24-cb321a86a917"
-    valid_respondent_id = 1
+    valid_respondent_id = "438df969-7c9c-4cd4-a89b-ac88cf0bfdf3"
     valid_payload = {
         "respondent_id": valid_respondent_id,
         "business_id": valid_business_party_id,
@@ -71,7 +71,6 @@ class TestAccountController(TestCase):
         base.status = 1  # ENABLED
         base.created_on = datetime.datetime.strptime("2021-01-30 00:00:00", "%Y-%m-%d %H:%M:%S")
 
-    @patch("ras_party.controllers.account_controller.request_casegroups_for_business")
     def test_change_respondent_enrolment_status_to_disabled(self):
         with responses.RequestsMock() as rsps:
             session = MagicMock()
@@ -88,7 +87,6 @@ class TestAccountController(TestCase):
             with self.app.app_context():
                 account_controller.change_respondent_enrolment_status.__wrapped__(self.valid_payload, session)
 
-    @patch("ras_party.controllers.account_controller.request_casegroups_for_business")
     def test_change_respondent_enrolment_status_to_enabled(self):
         with responses.RequestsMock() as rsps:
             session = MagicMock()
