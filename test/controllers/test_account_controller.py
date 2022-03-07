@@ -5,6 +5,7 @@ import uuid
 from unittest import TestCase
 from unittest.mock import MagicMock
 
+import pytest
 import responses
 
 from config import TestingConfig
@@ -86,6 +87,10 @@ class TestAccountController(TestCase):
             rsps.add(rsps.POST, self.url_change_respondent_enrolment_status, json={}, status=200)
             with self.app.app_context():
                 account_controller.change_respondent_enrolment_status.__wrapped__(self.valid_payload, session)
+            rsps.assert_call_count(self.url_request_collection_exercises_for_survey, 1)
+            rsps.assert_call_count(self.url_request_casegroups_for_business, 1)
+            rsps.assert_call_count(self.url_get_cases_for_casegroup, 1)
+            rsps.assert_call_count(self.url_request_collection_exercises_for_survey, 1)
 
     def test_change_respondent_enrolment_status_to_enabled(self):
         with responses.RequestsMock() as rsps:
@@ -102,6 +107,10 @@ class TestAccountController(TestCase):
             rsps.add(rsps.POST, self.url_change_respondent_enrolment_status, json={}, status=200)
             with self.app.app_context():
                 account_controller.change_respondent_enrolment_status.__wrapped__(self.valid_payload, session)
+            rsps.assert_call_count(self.url_request_collection_exercises_for_survey, 1)
+            rsps.assert_call_count(self.url_request_casegroups_for_business, 1)
+            rsps.assert_call_count(self.url_get_cases_for_casegroup, 1)
+            rsps.assert_call_count(self.url_request_collection_exercises_for_survey, 1)
 
 
 if __name__ == "__main__":
