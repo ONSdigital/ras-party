@@ -3,7 +3,7 @@ import json
 import os
 import uuid
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import responses
 
@@ -71,6 +71,7 @@ class TestAccountController(TestCase):
         base.status = 1  # ENABLED
         base.created_on = datetime.datetime.strptime("2021-01-30 00:00:00", "%Y-%m-%d %H:%M:%S")
 
+    @patch("ras_party.controllers.account_controller.request_casegroups_for_business")
     def test_change_respondent_enrolment_status_to_disabled(self):
         with responses.RequestsMock() as rsps:
             session = MagicMock()
@@ -87,6 +88,7 @@ class TestAccountController(TestCase):
             with self.app.app_context():
                 account_controller.change_respondent_enrolment_status.__wrapped__(self.valid_payload, session)
 
+    @patch("ras_party.controllers.account_controller.request_casegroups_for_business")
     def test_change_respondent_enrolment_status_to_enabled(self):
         with responses.RequestsMock() as rsps:
             session = MagicMock()
