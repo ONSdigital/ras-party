@@ -5,7 +5,6 @@ import uuid
 from unittest import TestCase
 from unittest.mock import MagicMock
 
-import pytest
 import responses
 
 from config import TestingConfig
