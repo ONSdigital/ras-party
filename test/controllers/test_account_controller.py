@@ -24,7 +24,7 @@ class TestAccountController(TestCase):
 
     project_root = os.path.dirname(os.path.dirname(__file__))
     valid_party_id = "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c"
-    valid_business_id = "2954b15e-f350-41be-a44f-6059b7efd7c8"
+    valid_business_id = "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c"
     valid_survey_id = "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
     valid_case_id = "10b04906-f478-47f9-a985-783400dd8482"
     valid_case_group_id = "612f5c34-7e11-4740-8e24-cb321a86a917"
