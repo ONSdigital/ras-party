@@ -1,6 +1,7 @@
 import logging
 import uuid
 
+import requests
 import structlog
 from flask import current_app
 from itsdangerous import BadData, BadSignature, SignatureExpired
@@ -996,7 +997,8 @@ def request_casegroups_for_business(business_id):
 def request_collection_exercises_for_survey(survey_id):
     logger.info("Retrieving collection exercises for survey", survey_id=survey_id)
     url = f'{current_app.config["COLLECTION_EXERCISE_URL"]}/collectionexercises/survey/{survey_id}'
-    response = Requests.get(url)
+    auth = (current_app.config["SECURITY_USER_NAME"], current_app.config["SECURITY_USER_PASSWORD"])
+    response = requests.get(url, auth=auth)
     response.raise_for_status()
     logger.info("Successfully retrieved collection exercises for survey", survey_id=survey_id)
     return response.json()

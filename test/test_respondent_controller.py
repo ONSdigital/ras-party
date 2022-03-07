@@ -31,6 +31,7 @@ from test.test_data.mock_respondent import (
 from unittest import mock
 from unittest.mock import MagicMock, call, patch
 
+import responses
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 from requests import Response
@@ -1468,7 +1469,15 @@ class TestRespondents(PartyTestClient):
             "survey_id": DEFAULT_SURVEY_UUID,
             "change_flag": "ENABLED",
         }
-        self.put_enrolment_status(request_json, 200)
+        with responses.RequestsMock() as rsps:
+            from config import TestingConfig
+
+            url_request_collection_exercises_for_survey = (
+                f"{TestingConfig.COLLECTION_EXERCISE_URL}"
+                f"/collectionexercises/survey/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+            )
+            rsps.add(rsps.GET, url_request_collection_exercises_for_survey, json={})
+            self.put_enrolment_status(request_json, 200)
 
     def test_put_change_respondent_enrolment_status_no_respondent(self):
         request_json = {
