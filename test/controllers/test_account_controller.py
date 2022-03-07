@@ -13,6 +13,7 @@ from ras_party.models.models import Enrolment, Respondent
 from run import create_app
 
 
+# noinspection DuplicatedCode
 class TestAccountController(TestCase):
     """
     Tests the functions in the account_controller.  Note, the __wrapped__ attribute allows us to get at the function
@@ -23,22 +24,21 @@ class TestAccountController(TestCase):
         self.app = create_app("TestingConfig")
 
     project_root = os.path.dirname(os.path.dirname(__file__))
-    valid_party_id = "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c"
-    valid_business_id = "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c"
+    valid_business_party_id = "b3ba864b-7cbc-4f44-84fe-88dc018a1a4c"
     valid_survey_id = "cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
     valid_case_id = "10b04906-f478-47f9-a985-783400dd8482"
     valid_case_group_id = "612f5c34-7e11-4740-8e24-cb321a86a917"
     valid_respondent_id = 1
     valid_payload = {
         "respondent_id": valid_respondent_id,
-        "business_id": valid_business_id,
+        "business_id": valid_business_party_id,
         "survey_id": valid_survey_id,
         "change_flag": "DISABLED",
     }
     url_request_collection_exercises_for_survey = (
         f"{TestingConfig.COLLECTION_EXERCISE_URL}/collectionexercises/survey/{valid_survey_id}"
     )
-    url_request_casegroups_for_business = f"{TestingConfig.CASE_URL}/casegroups/partyid/{valid_business_id}"
+    url_request_casegroups_for_business = f"{TestingConfig.CASE_URL}/casegroups/partyid/{valid_business_party_id}"
     url_get_cases_for_casegroup = f"{TestingConfig.CASE_URL}/cases/casegroupid/{valid_case_group_id}"
     url_change_respondent_enrolment_status = f"{TestingConfig.CASE_URL}/cases/{valid_case_id}/events"
 
@@ -52,7 +52,7 @@ class TestAccountController(TestCase):
     def get_respondent_object(self):
         base = Respondent()
         base.id = "id"
-        base.party_uuid = uuid.UUID(self.valid_party_id)
+        base.party_uuid = uuid.UUID(self.valid_business_party_id)
         base.status = 1  # ACTIVE
         base.email_address = "ons@fake.ons"
         base.pending_email_address = None
@@ -65,13 +65,12 @@ class TestAccountController(TestCase):
 
     def get_enrolment_object(self):
         base = Enrolment()
-        base.business_id = uuid.UUID(self.valid_business_id)
+        base.business_id = uuid.UUID(self.valid_business_party_id)
         base.respondent_id = self.get_respondent_object().id
         base.survey_id = self.valid_survey_id
         base.status = 1  # ENABLED
         base.created_on = datetime.datetime.strptime("2021-01-30 00:00:00", "%Y-%m-%d %H:%M:%S")
 
-    # noinspection DuplicatedCode
     def test_change_respondent_enrolment_status_to_disabled(self):
         with responses.RequestsMock() as rsps:
             session = MagicMock()
@@ -88,7 +87,6 @@ class TestAccountController(TestCase):
             with self.app.app_context():
                 account_controller.change_respondent_enrolment_status.__wrapped__(self.valid_payload, session)
 
-    # noinspection DuplicatedCode
     def test_change_respondent_enrolment_status_to_enabled(self):
         with responses.RequestsMock() as rsps:
             session = MagicMock()
