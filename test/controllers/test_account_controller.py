@@ -96,7 +96,7 @@ class TestAccountController(TestCase):
             rsps.assert_call_count(self.url_request_collection_exercises_for_survey, 1)
             rsps.assert_call_count(self.url_request_casegroups_for_business, 1)
             rsps.assert_call_count(self.url_get_cases_for_casegroup, 1)
-            rsps.assert_call_count(self.url_request_collection_exercises_for_survey, 1)
+            rsps.assert_call_count(self.url_change_respondent_enrolment_status, 1)
 
     def test_change_respondent_enrolment_status_to_enabled(self):
         with responses.RequestsMock() as rsps:
@@ -121,7 +121,7 @@ class TestAccountController(TestCase):
             rsps.assert_call_count(self.url_request_collection_exercises_for_survey, 1)
             rsps.assert_call_count(self.url_request_casegroups_for_business, 1)
             rsps.assert_call_count(self.url_get_cases_for_casegroup, 1)
-            rsps.assert_call_count(self.url_request_collection_exercises_for_survey, 1)
+            rsps.assert_call_count(self.url_change_respondent_enrolment_status, 1)
 
 
 if __name__ == "__main__":
