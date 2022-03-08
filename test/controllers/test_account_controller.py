@@ -6,6 +6,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 import responses
+from sqlalchemy import and_
 
 from config import TestingConfig
 from ras_party.controllers import account_controller
@@ -70,11 +71,21 @@ class TestAccountController(TestCase):
         base.survey_id = self.valid_survey_id
         base.status = 1  # ENABLED
         base.created_on = datetime.datetime.strptime("2021-01-30 00:00:00", "%Y-%m-%d %H:%M:%S")
+        return base
 
     def test_change_respondent_enrolment_status_to_disabled(self):
         with responses.RequestsMock() as rsps:
             session = MagicMock()
-            session.query().filter().first.return_value = self.get_respondent_object()
+            session.query(Respondent).filter(Respondent.party_uuid == self.valid_business_party_id).first(
+                1
+            ).return_value = self.get_respondent_object()
+            session.query(Enrolment).filter(
+                and_(
+                    Enrolment.respondent_id == self.valid_respondent_id,
+                    Enrolment.business_id == self.valid_business_party_id,
+                    Enrolment.survey_id == self.valid_survey_id,
+                )
+            ).first(2).return_value = self.get_enrolment_object()
             session.query().filter().count.return_value = 0
             rsps.add(rsps.GET, self.url_request_collection_exercises_for_survey, json=self.collex_for_survey)
             rsps.add(rsps.GET, self.url_request_casegroups_for_business, json=self.business_casegroups)
@@ -82,7 +93,6 @@ class TestAccountController(TestCase):
             rsps.add(rsps.POST, self.url_change_respondent_enrolment_status, json={}, status=200)
             with self.app.app_context():
                 account_controller.change_respondent_enrolment_status.__wrapped__(self.valid_payload, session)
-
             rsps.assert_call_count(self.url_request_collection_exercises_for_survey, 1)
             rsps.assert_call_count(self.url_request_casegroups_for_business, 1)
             rsps.assert_call_count(self.url_get_cases_for_casegroup, 1)
@@ -91,9 +101,17 @@ class TestAccountController(TestCase):
     def test_change_respondent_enrolment_status_to_enabled(self):
         with responses.RequestsMock() as rsps:
             session = MagicMock()
-            session.query().filter().first.return_value = self.get_respondent_object()
+            session.query(Respondent).filter(Respondent.party_uuid == self.valid_business_party_id).first(
+                1
+            ).return_value = self.get_respondent_object()
+            session.query(Enrolment).filter(
+                and_(
+                    Enrolment.respondent_id == self.valid_respondent_id,
+                    Enrolment.business_id == self.valid_business_party_id,
+                    Enrolment.survey_id == self.valid_survey_id,
+                )
+            ).first(2).return_value = self.get_enrolment_object()
             session.query().filter().count.return_value = 1
-
             rsps.add(rsps.GET, self.url_request_collection_exercises_for_survey, json=self.collex_for_survey)
             rsps.add(rsps.GET, self.url_request_casegroups_for_business, json=self.business_casegroups)
             rsps.add(rsps.GET, self.url_get_cases_for_casegroup, json=self.cases_for_casegroup)
