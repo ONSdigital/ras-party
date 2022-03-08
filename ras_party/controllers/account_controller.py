@@ -988,7 +988,8 @@ def request_survey(survey_id):
 def request_casegroups_for_business(business_id):
     logger.info("Retrieving casegroups for business", business_id=business_id)
     url = f'{current_app.config["CASE_URL"]}/casegroups/partyid/{business_id}'
-    response = Requests.get(url)
+    auth = (current_app.config["SECURITY_USER_NAME"], current_app.config["SECURITY_USER_PASSWORD"])
+    response = requests.get(url, auth=auth)
     response.raise_for_status()
     logger.info("Successfully retrieved casegroups for business", business_id=business_id)
     return response.json()
