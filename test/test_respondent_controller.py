@@ -1864,7 +1864,6 @@ class TestRespondents(PartyTestClient):
         with self.assertRaises(Exception):
             self.get_respondent_by_id(respondent.party_uuid)
 
-    # Abysmal performance
     def test_batch_delete_user_data_marked_for_deletion(self):
         def mock_put_iac(*args, **kwargs):
             return MockResponse('{"active": false}')
