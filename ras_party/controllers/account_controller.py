@@ -403,10 +403,6 @@ def change_respondent_password(payload, tran, session):
         logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
-    print(tokens)
-    print(payload["token"])
-    print(payload)
-
     if not payload["token"] in tokens:
         logger.info("Token already used or invalid")
         raise NotFound("Token already used or invalid")
