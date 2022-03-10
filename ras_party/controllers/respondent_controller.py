@@ -16,7 +16,8 @@ from ras_party.controllers.queries import (
     query_respondent_by_names_and_emails,
     query_respondent_by_party_uuid,
     query_respondent_by_party_uuids,
-    update_respondent_details, update_respondent_verification_tokens,
+    update_respondent_details,
+    update_respondent_verification_tokens,
 )
 from ras_party.models.models import (
     BusinessRespondent,
