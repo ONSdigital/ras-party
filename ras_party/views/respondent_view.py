@@ -125,3 +125,10 @@ def validate_respondent_claim():
         return make_response("Valid", 200)
 
     return make_response("Invalid", 200)
+
+
+@respondent_view.route("/respondents/update_verification_tokens")
+def update_verification_tokens():
+    payload = request.get_json()
+    respondent_controller.update_respondent_token(payload)
+    return make_response("Successfully updated respondent verification token", 200)

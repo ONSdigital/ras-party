@@ -16,6 +16,7 @@ from werkzeug.exceptions import (
 )
 
 from ras_party.clients.oauth_client import OauthClient
+from ras_party.controllers import respondent_controller
 from ras_party.controllers.case_controller import (
     get_cases_for_casegroup,
     post_case_event,
@@ -394,10 +395,15 @@ def change_respondent_password(payload, tran, session):
     _is_valid(payload, attribute="new_password")
 
     respondent = query_respondent_by_email(payload["email_address"], session)
+    tokens = respondent.verification_tokens
     email_address = respondent.email_address
     if not respondent:
         logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
+
+    if not payload["token"] in tokens:
+        logger.info("Token already used or invalid")
+        raise NotFound("Token already used or invalid")
 
     new_password = payload["new_password"]
 
@@ -423,6 +429,8 @@ def change_respondent_password(payload, tran, session):
             status=oauth_response.status_code,
         )
         raise InternalServerError("Failed to change respondent password")
+
+    respondent_controller.update_respondent_token(respondent.party_uuid, payload["token"], session)
 
     personalisation = {"FIRST_NAME": respondent.first_name}
 

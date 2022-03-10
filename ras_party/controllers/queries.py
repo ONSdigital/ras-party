@@ -288,6 +288,23 @@ def update_respondent_details(respondent_data, respondent_id, session):
     return False
 
 
+def update_respondent_verification_tokens(respondent_id, token, session):
+    """
+    Query to update the respondent verification tokens
+
+    :param respondent_id: id of the respondent
+    :param token: the verification token:
+    :param session:
+    :return: True on success, False on a failure
+    """
+
+    logger.info("Updating respondent verification token", respondent_id=respondent_id)
+
+    session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
+        {Respondent.verification_tokens: token}
+    )
+
+
 def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_rec: int, session):
     """
     This query returns business search on ru reference
