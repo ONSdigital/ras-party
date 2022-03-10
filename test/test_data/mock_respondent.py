@@ -14,6 +14,7 @@ class MockRespondent:
             "mark_for_deletion": False,
             "enrolmentCode": "fb747cq725lj",
             "password": "banana",
+            "verification_tokens": [],
         }
 
     def attributes(self, **kwargs):
@@ -41,6 +42,7 @@ class MockRespondentWithId:
             "mark_for_deletion": False,
             "enrolment_code": "fb747cq725lj",
             "password": "banana",
+            "verification_tokens": [],
         }
 
     def attributes(self, **kwargs):
@@ -68,6 +70,7 @@ class MockNewRespondentWithId:
             "mark_for_deletion": False,
             "enrolment_code": "fb747cq725lj",
             "password": "banana",
+            "verification_tokens": [],
         }
 
     def attributes(self, **kwargs):
@@ -96,6 +99,7 @@ class MockRespondentWithIdSuspended:
             "enrolment_code": "fb747cq725lj",
             "password": "banana",
             "status": "SUSPENDED",
+            "verification_tokens": [],
         }
 
     def attributes(self, **kwargs):
@@ -124,6 +128,7 @@ class MockRespondentWithIdActive:
             "enrolment_code": "fb747cq725lj",
             "password": "banana",
             "status": "ACTIVE",
+            "verification_tokens": [],
         }
 
     def attributes(self, **kwargs):
@@ -153,6 +158,7 @@ class MockRespondentWithPendingEmail:
             "enrolment_code": "fb747cq725lj",
             "password": "banana",
             "status": "ACTIVE",
+            "verification_tokens": [],
         }
 
     def attributes(self, **kwargs):

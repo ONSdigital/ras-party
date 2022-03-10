@@ -396,10 +396,16 @@ def change_respondent_password(payload, tran, session):
 
     respondent = query_respondent_by_email(payload["email_address"], session)
     tokens = respondent.verification_tokens
+    if not tokens:
+        tokens = []
     email_address = respondent.email_address
     if not respondent:
         logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
+
+    print(tokens)
+    print(payload["token"])
+    print(payload)
 
     if not payload["token"] in tokens:
         logger.info("Token already used or invalid")
