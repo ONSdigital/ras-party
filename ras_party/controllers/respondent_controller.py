@@ -251,6 +251,8 @@ def update_respondent_token(payload, session):
     respondent = query_respondent_by_party_uuid(respondent_id, session)
     logger.info("query success", respondent=respondent)
     tokens = respondent.verification_tokens
+    if not tokens:
+        tokens = []
     if not respondent:
         logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
         raise NotFound("Respondent id does not exist")
