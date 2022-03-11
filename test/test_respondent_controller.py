@@ -28,15 +28,18 @@ from test.test_data.mock_respondent import (
     MockRespondentWithIdSuspended,
     MockRespondentWithPendingEmail,
 )
+from test.test_party_controller import project_root
 from unittest import mock
 from unittest.mock import MagicMock, call, patch
 
+import responses
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 from requests import Response
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
 
+from config import TestingConfig
 from ras_party.controllers import account_controller, respondent_controller
 from ras_party.controllers.queries import (
     query_business_by_party_uuid,
@@ -55,6 +58,20 @@ from ras_party.support.public_website import PublicWebsite
 from ras_party.support.requests_wrapper import Requests
 from ras_party.support.session_decorator import with_db_session
 from ras_party.support.verification import generate_email_token
+
+url_request_collection_exercises_for_survey = (
+    f"{TestingConfig.COLLECTION_EXERCISE_URL}" f"/collectionexercises/survey/cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87"
+)
+url_casegroups_for_business = f"{TestingConfig.CASE_URL}/casegroups/partyid/3b136c4b-7a14-4904-9e01-13364dd7b972"
+url_get_cases_for_casegroup = f"{TestingConfig.CASE_URL}/cases/casegroupid/612f5c34-7e11-4740-8e24-cb321a86a917"
+url_change_respondent_enrolment_status = f"{TestingConfig.CASE_URL}/cases/10b04906-f478-47f9-a985-783400dd8482/events"
+
+with open(f"{project_root}/test/test_data/respondent/ces_for_survey.json") as fp:
+    ces_for_survey = json.load(fp)
+with open(f"{project_root}/test/test_data/respondent/casegroups_for_business.json") as fp:
+    business_casegroups = json.load(fp)
+with open(f"{project_root}/test/test_data/respondent/cases_for_casegroup.json") as fp:
+    cases_for_casegroup = json.load(fp)
 
 
 class TestRespondents(PartyTestClient):
@@ -1359,7 +1376,10 @@ class TestRespondents(PartyTestClient):
             "party_id": self.mock_respondent_with_id["id"],
             "enrolment_code": self.mock_respondent_with_id["enrolment_code"],
         }
-        self.add_survey(request_json, 200)
+        with responses.RequestsMock() as rsps:
+            url_post_case_event = f"{TestingConfig.CASE_URL}/cases/7bc5d41b-0549-40b3-ba76-42f6d4cf3fdb/events"
+            rsps.add(rsps.POST, url_post_case_event, json={})
+            self.add_survey(request_json, 200)
 
     def test_post_add_new_survey_respondent_business_association(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
@@ -1374,7 +1394,10 @@ class TestRespondents(PartyTestClient):
             "party_id": self.mock_respondent_with_id["id"],
             "enrolment_code": self.mock_respondent_with_id["enrolment_code"],
         }
-        self.add_survey(request_json, 200)
+        with responses.RequestsMock() as rsps:
+            url_post_case_event = f"{TestingConfig.CASE_URL}/cases/7bc5d41b-0549-40b3-ba76-42f6d4cf3fdb/events"
+            rsps.add(rsps.POST, url_post_case_event, json={})
+            self.add_survey(request_json, 200)
 
     def test_post_add_new_survey_missing_party_id_returns_error(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)
@@ -1451,7 +1474,12 @@ class TestRespondents(PartyTestClient):
             "survey_id": DEFAULT_SURVEY_UUID,
             "change_flag": "DISABLED",
         }
-        self.put_enrolment_status(request_json, 200)
+        with responses.RequestsMock() as rsps:
+            rsps.add(rsps.GET, url_request_collection_exercises_for_survey, json=ces_for_survey)
+            rsps.add(rsps.GET, url_casegroups_for_business, json=business_casegroups)
+            rsps.add(rsps.GET, url_get_cases_for_casegroup, json=cases_for_casegroup)
+            rsps.add(rsps.POST, url_change_respondent_enrolment_status, json={}, status=200)
+            self.put_enrolment_status(request_json, 200)
 
     def test_put_change_respondent_enrolment_status_enabled_success(self):
         def mock_put_iac(*args, **kwargs):
@@ -1474,7 +1502,12 @@ class TestRespondents(PartyTestClient):
             "survey_id": DEFAULT_SURVEY_UUID,
             "change_flag": "ENABLED",
         }
-        self.put_enrolment_status(request_json, 200)
+        with responses.RequestsMock() as rsps:
+            rsps.add(rsps.GET, url_request_collection_exercises_for_survey, json=ces_for_survey)
+            rsps.add(rsps.GET, url_casegroups_for_business, json=business_casegroups)
+            rsps.add(rsps.GET, url_get_cases_for_casegroup, json=cases_for_casegroup)
+            rsps.add(rsps.POST, url_change_respondent_enrolment_status, json={}, status=200)
+            self.put_enrolment_status(request_json, 200)
 
     def test_put_change_respondent_enrolment_status_no_respondent(self):
         request_json = {
@@ -1516,16 +1549,24 @@ class TestRespondents(PartyTestClient):
     @mock.patch("ras_party.controllers.account_controller.get_case_id_for_business_survey")
     @mock.patch("ras_party.controllers.case_controller.post_case_event")
     def test_disable_all_respondent_enrolments_disables_all_enrolments(self, mock_post_case, mock_get_case):
+        mock_get_case.return_value = "fdd36c0d-3037-4b80-9352-0da0f4acd777"
         respondent_email = self._create_enrolments(second_enrolment_status="PENDING")
-        response = self.patch_disable_all_respondent_enrolments(respondent_email, expected_status=200)
-        assert response == {"message": "2 enrolments removed"}
+        with responses.RequestsMock() as rsps:
+            url_post_case_event = f"{TestingConfig.CASE_URL}/cases/fdd36c0d-3037-4b80-9352-0da0f4acd777/events"
+            rsps.add(rsps.POST, url_post_case_event, json={})
+            response = self.patch_disable_all_respondent_enrolments(respondent_email, expected_status=200)
+            assert response == {"message": "2 enrolments removed"}
 
     @mock.patch("ras_party.controllers.account_controller.get_case_id_for_business_survey")
     @mock.patch("ras_party.controllers.case_controller.post_case_event")
     def test_disable_all_respondent_enrolments_ignores_already_disabled_enrolments(self, mock_post_case, mock_get_case):
+        mock_get_case.return_value = "fdd36c0d-3037-4b80-9352-0da0f4acd777"
         respondent_email = self._create_enrolments(second_enrolment_status="DISABLED")
-        response = self.patch_disable_all_respondent_enrolments(respondent_email, expected_status=200)
-        assert response == {"message": "1 enrolments removed"}
+        with responses.RequestsMock() as rsps:
+            url_post_case_event = f"{TestingConfig.CASE_URL}/cases/fdd36c0d-3037-4b80-9352-0da0f4acd777/events"
+            rsps.add(rsps.POST, url_post_case_event, json={})
+            response = self.patch_disable_all_respondent_enrolments(respondent_email, expected_status=200)
+            assert response == {"message": "1 enrolments removed"}
 
     def _create_enrolments(self, second_enrolment_status):
         def mock_put_iac(*args, **kwargs):
@@ -1572,7 +1613,11 @@ class TestRespondents(PartyTestClient):
         self.populate_with_enrolment(enrolment=enrolment)
         self.populate_with_pending_enrolment(enrolment=enrolment)
         request_json = {"status_change": "ACTIVE"}
-        self.put_respondent_account_status(request_json, respondent.party_uuid, 200)
+
+        with responses.RequestsMock() as rsps:
+            url_post_case_event = f"{TestingConfig.CASE_URL}/cases/f8d7a5db-2b72-4409-b4d2-bc47b358cbda/events"
+            rsps.add(rsps.POST, url_post_case_event, json={})
+            self.put_respondent_account_status(request_json, respondent.party_uuid, 200)
 
     def test_put_change_respondent_account_status_minus_status_change(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id)

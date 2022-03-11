@@ -1,6 +1,7 @@
 import logging
 import uuid
 
+import requests
 import structlog
 from flask import current_app
 from itsdangerous import BadData, BadSignature, SignatureExpired
@@ -257,6 +258,18 @@ def _change_respondent_enrolment_status(respondent, survey_id, business_id, stat
         post_case_event(
             case_id=get_case_id_for_business_survey(survey_id, business_id),
             category="NO_ACTIVE_ENROLMENTS",
+            desc="No active enrolments remaining for case",
+        )
+    else:
+        logger.info(
+            "Informing case service of active enrolments",
+            survey_id=survey_id,
+            business_id=business_id,
+            respondent_id=respondent.party_uuid,
+        )
+        post_case_event(
+            case_id=get_case_id_for_business_survey(survey_id, business_id),
+            category="RESPONDENT_ENROLED",
             desc="No active enrolments remaining for case",
         )
 
@@ -996,7 +1009,8 @@ def request_survey(survey_id):
 def request_casegroups_for_business(business_id):
     logger.info("Retrieving casegroups for business", business_id=business_id)
     url = f'{current_app.config["CASE_URL"]}/casegroups/partyid/{business_id}'
-    response = Requests.get(url)
+    auth = (current_app.config["SECURITY_USER_NAME"], current_app.config["SECURITY_USER_PASSWORD"])
+    response = requests.get(url, auth=auth)
     response.raise_for_status()
     logger.info("Successfully retrieved casegroups for business", business_id=business_id)
     return response.json()
@@ -1005,7 +1019,8 @@ def request_casegroups_for_business(business_id):
 def request_collection_exercises_for_survey(survey_id):
     logger.info("Retrieving collection exercises for survey", survey_id=survey_id)
     url = f'{current_app.config["COLLECTION_EXERCISE_URL"]}/collectionexercises/survey/{survey_id}'
-    response = Requests.get(url)
+    auth = (current_app.config["SECURITY_USER_NAME"], current_app.config["SECURITY_USER_PASSWORD"])
+    response = requests.get(url, auth=auth)
     response.raise_for_status()
     logger.info("Successfully retrieved collection exercises for survey", survey_id=survey_id)
     return response.json()
