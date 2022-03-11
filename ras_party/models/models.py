@@ -321,6 +321,7 @@ class Respondent(Base):
             "status": RespondentStatus(self.status).name,
             "markForDeletion": self.mark_for_deletion,
             "associations": self._get_business_associations(self.businesses),
+            "verification_tokens": self.verification_tokens,
         }
 
         return filter_falsey_values(d)
