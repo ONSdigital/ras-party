@@ -456,7 +456,7 @@ def change_respondent_password(payload, tran, session):
         if respondent.pending_enrolment:
             enrol_respondent_for_survey(respondent, session)
 
-        # We set the party as ACTIVE in this sermvice
+        # We set the party as ACTIVE in this service
         respondent.status = RespondentStatus.ACTIVE
         oauth_response = OauthClient().update_account(
             username=email_address, password=new_password, account_locked="False"
