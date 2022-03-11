@@ -164,7 +164,7 @@ def post_pending_survey_respondent():
     return make_response(jsonify(response), 201)
 
 
-@account_view.route("/respondents/update_verification_tokens", methods=["PUT"])
+@account_view.route("/respondents/update-verification-tokens", methods=["PUT"])
 def update_verification_tokens():
     payload = request.get_json()
     account_controller.update_respondent_tokens(payload)

@@ -1096,6 +1096,20 @@ Returns:
 ```
 
 ---
+### Update Respondent Tokens
+* `PUT /party-api/v1/respondents/update-verification-tokens`
+  * Updates a respondents valid verification tokens based on `party_uuid` deduced from the `email` passed.
+
+#### Example JSON payload
+
+```json
+{
+  "email": "a@b.com",
+  "token": "<token>"
+}
+```
+
+---
 
 ## Info Endpoints
 
