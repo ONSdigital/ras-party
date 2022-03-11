@@ -407,14 +407,15 @@ def update_respondent_tokens(payload, session):
     """
     Updates the respondent email_token column with valid tokens
 
-    :param payload: A dict containing the respondent_id and verification token
+    :param payload: A dict containing the respondent email and verification token
     :param session: A db session
     :return: None on success
     """
-    respondent_id = payload["party_id"]
+    email = payload["email"]
     token = payload["token"]
 
-    respondent = query_respondent_by_party_uuid(respondent_id, session)
+    respondent = query_respondent_by_email(email, session)
+    respondent_id = respondent.party_uuid
     tokens = respondent.verification_tokens
     if not tokens:
         tokens = []

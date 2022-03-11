@@ -167,6 +167,5 @@ def post_pending_survey_respondent():
 @account_view.route("/respondents/update_verification_tokens", methods=["PUT"])
 def update_verification_tokens():
     payload = request.get_json()
-    logger.info("Updating respondent tokens", respondent_id=payload["party_id"])
     account_controller.update_respondent_tokens(payload)
     return make_response(jsonify({"message": "Successfully updated token"}), 200)
