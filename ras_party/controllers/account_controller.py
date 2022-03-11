@@ -402,6 +402,33 @@ def verify_token(token, session):
     return {"response": "Ok"}
 
 
+@with_db_session
+def update_respondent_tokens(payload, session):
+    """
+    Updates the respondent email_token column with valid tokens
+
+    :param payload: A dict containing the respondent_id and verification token
+    :param session: A db session
+    :return: None on success
+    """
+    respondent_id = payload["party_id"]
+    token = payload["token"]
+
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
+    tokens = respondent.verification_tokens
+    if not tokens:
+        tokens = []
+    if not respondent:
+        logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
+        raise NotFound("Respondent id does not exist")
+
+    if token not in tokens:
+        tokens.append(token)
+    else:
+        tokens.remove(token)
+    update_respondent_verification_tokens(respondent_id, tokens, session)
+
+
 @transactional
 @with_db_session
 def change_respondent_password(payload, tran, session):
@@ -429,13 +456,15 @@ def change_respondent_password(payload, tran, session):
         if respondent.pending_enrolment:
             enrol_respondent_for_survey(respondent, session)
 
-        # We set the party as ACTIVE in this service
+        # We set the party as ACTIVE in this sermvice
         respondent.status = RespondentStatus.ACTIVE
         oauth_response = OauthClient().update_account(
             username=email_address, password=new_password, account_locked="False"
         )
     else:
         oauth_response = OauthClient().update_account(username=email_address, password=new_password)
+
+    update_respondent_tokens(payload, session)
 
     if oauth_response.status_code != 201:
         logger.error(
@@ -444,19 +473,6 @@ def change_respondent_password(payload, tran, session):
             status=oauth_response.status_code,
         )
         raise InternalServerError("Failed to change respondent password")
-
-    token = payload["token"]
-    respondent = query_respondent_by_party_uuid(respondent.party_uuid, session)
-    tokens = respondent.verification_tokens
-    if not respondent:
-        logger.info("Respondent with party id does not exist", respondent_id=respondent.party_uuid)
-        raise NotFound("Respondent id does not exist")
-
-    if token not in tokens:
-        tokens.append(token)
-    else:
-        tokens.remove(token)
-    update_respondent_verification_tokens(respondent.party_uuid, tokens, session)
 
     personalisation = {"FIRST_NAME": respondent.first_name}
 

@@ -17,7 +17,6 @@ from ras_party.controllers.queries import (
     query_respondent_by_party_uuid,
     query_respondent_by_party_uuids,
     update_respondent_details,
-    update_respondent_verification_tokens,
 )
 from ras_party.models.models import (
     BusinessRespondent,
@@ -232,33 +231,3 @@ def _is_user_associated_to_the_business(associations, business_id):
             return True
 
     return False
-
-
-@with_db_session
-def update_respondent_token(payload, session):
-    """
-    Updates the respondent email_token column with valid tokens
-
-    :param payload: A dict containing the respondent_id and verification token
-    :param session: A db session
-    :return: None on success
-    """
-    respondent_id = payload["party_id"]
-    token = payload["token"]
-    logger.info("respondent_id", respondent_id=respondent_id)
-    logger.info("token", token=token)
-
-    respondent = query_respondent_by_party_uuid(respondent_id, session)
-    logger.info("query success", respondent=respondent)
-    tokens = respondent.verification_tokens
-    if not tokens:
-        tokens = []
-    if not respondent:
-        logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
-        raise NotFound("Respondent id does not exist")
-
-    if token not in tokens:
-        tokens.append(token)
-    else:
-        tokens.remove(token)
-    update_respondent_verification_tokens(respondent_id, tokens, session)

@@ -130,5 +130,6 @@ def validate_respondent_claim():
 @respondent_view.route("/respondents/update_verification_tokens", methods=["PUT"])
 def update_verification_tokens():
     payload = request.get_json()
-    respondent_controller.update_respondent_token(payload)
+    logger.info("Updating respondent tokens", respondent_id=payload["party_id"])
+    respondent_controller.update_respondent_tokens(payload)
     return make_response(jsonify({"message": "Successfully updated token"}), 200)
