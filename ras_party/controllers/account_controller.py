@@ -436,17 +436,10 @@ def change_respondent_password(payload, tran, session):
     _is_valid(payload, attribute="new_password")
 
     respondent = query_respondent_by_email(payload["email_address"], session)
-    tokens = respondent.verification_tokens
-    if not tokens:
-        tokens = []
     email_address = respondent.email_address
     if not respondent:
         logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
-
-    if not payload["token"] in tokens:
-        logger.info("Token already used or invalid")
-        raise NotFound("Token already used or invalid")
 
     new_password = payload["new_password"]
 
@@ -464,8 +457,6 @@ def change_respondent_password(payload, tran, session):
         )
     else:
         oauth_response = OauthClient().update_account(username=email_address, password=new_password)
-
-    update_respondent_tokens(payload, session)
 
     if oauth_response.status_code != 201:
         logger.error(
