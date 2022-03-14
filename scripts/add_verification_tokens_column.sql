@@ -1,0 +1,1 @@
+ALTER TABLE partysvc.respondent add COLUMN verification_tokens text [];
