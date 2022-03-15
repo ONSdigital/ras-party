@@ -8,11 +8,12 @@ from unittest.mock import MagicMock
 
 import responses
 from requests import HTTPError
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 
 from config import TestingConfig
 from ras_party.controllers import account_controller
 from ras_party.models.models import Enrolment, Respondent
+from ras_party.support.verification import generate_email_token
 from run import create_app
 
 
@@ -67,6 +68,7 @@ class TestAccountController(TestCase):
         base.telephone = "1234567890"
         base.mark_for_deletion = False
         base.created_on = datetime.datetime.strptime("2021-01-30 00:00:00", "%Y-%m-%d %H:%M:%S")
+        base.verification_tokens = ["Im9uc190b2tlbl9lbWFpbEBmYWtlLm9ucyI.YjBxJA.50gUQJB9kajNqk2hkIK_B6EwMKw"]
         return base
 
     def get_enrolment_object(self):
@@ -190,6 +192,64 @@ class TestAccountController(TestCase):
                 content_type="application/vnd.ons.business+json",
             )
             self.assertEqual(500, response.status_code)
+
+    def test_add_verification_token(self):
+        with self.app.app_context():
+            session = MagicMock()
+            email = "ons@fake.ons"
+            respondent_id = Respondent.party_uuid
+            token = generate_email_token(email)
+            session.query(Respondent).filter(func.lower(Respondent.email_address) == email.lower()).first()
+            session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
+                {Respondent.verification_tokens: token}
+            )
+            payload = {
+                "email": email,
+                "token": token,
+            }
+            account_controller.update_respondent_tokens.__wrapped__(payload, session)
+            # Nothing to assert it's just a database modification
+
+    def test_remove_verification_token(self):
+        with self.app.app_context():
+            session = MagicMock()
+            email = "ons@fake.ons"
+            respondent_id = Respondent.party_uuid
+            token = "Im9uc190b2tlbl9lbWFpbEBmYWtlLm9ucyI.YjBxJA.50gUQJB9kajNqk2hkIK_B6EwMKw"
+            session.query(Respondent).filter(func.lower(Respondent.email_address) == email.lower()).first()
+            session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
+                {Respondent.verification_tokens: token}
+            )
+            payload = {
+                "email": email,
+                "token": token,
+            }
+            account_controller.update_respondent_tokens.__wrapped__(payload, session)
+            # Nothing to assert it's just a database modification
+
+    def test_update_verification_token_fail_respondent_query(self):
+        with self.app.app_context():
+            session = MagicMock()
+            email = "ons_fail@fake.ons"
+            respondent_id = Respondent.party_uuid
+            token = "Im9uc190b2tlbl9lbWFpbEBmYWtlLm9ucyI.YjBxJA.50gUQJB9kajNqk2hkIK_B6EwMKw"
+            session.query(Respondent).filter(func.lower(Respondent.email_address) == email.lower()).first()
+            session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
+                {Respondent.verification_tokens: token}
+            )
+            payload = {
+                "email": email,
+                "token": token,
+            }
+            account_controller.update_respondent_tokens.__wrapped__(payload, session)
+            response = self.client.put(
+                "/party-api/v1/respondents/change_enrolment_status",
+                headers=self.auth_headers,
+                data=json.dumps(payload),
+                content_type="application/vnd.ons.business+json",
+            )
+            self.assertEqual(400, response.status_code)
+            print(self.get_respondent_object)
 
 
 if __name__ == "__main__":
