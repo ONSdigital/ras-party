@@ -164,8 +164,14 @@ def post_pending_survey_respondent():
     return make_response(jsonify(response), 201)
 
 
-@account_view.route("/respondents/update-verification-tokens", methods=["PUT"])
-def update_verification_tokens():
+@account_view.route("/respondents/<respondent_id>/verification-tokens", methods=["POST"])
+def post_verification_tokens(respondent_id):
     payload = request.get_json()
-    account_controller.update_respondent_tokens(payload)
-    return make_response(jsonify({"message": "Successfully updated token"}), 200)
+    account_controller.add_respondent_token(respondent_id, payload["token"])
+    return make_response(jsonify({"message": "Successfully added token"}), 200)
+
+
+@account_view.route("/respondents/respondent_id>/verification-tokens/<token>", methods=["DELETE"])
+def delete_verification_tokens(respondent_id, token):
+    account_controller.delete_respondent_token(respondent_id, token)
+    return make_response(jsonify({"message": "Successfully removed token"}), 200)

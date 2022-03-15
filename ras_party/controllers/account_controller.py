@@ -403,19 +403,17 @@ def verify_token(token, session):
 
 
 @with_db_session
-def update_respondent_tokens(payload, session):
+def add_respondent_token(respondent_id, token, session):
     """
-    Updates the respondent email_token column with valid tokens
+    Adds the token to the respondent's verification_tokens column
 
-    :param payload: A dict containing the respondent email and verification token
+    :param respondent_id: the respondent's id
+    :param token: The verification token
     :param session: A db session
     :return: None on success
     """
-    email = payload["email"]
-    token = payload["token"]
 
-    respondent = query_respondent_by_email(email, session)
-    respondent_id = respondent.party_uuid
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
     tokens = respondent.verification_tokens
     if not tokens:
         tokens = []
@@ -426,7 +424,33 @@ def update_respondent_tokens(payload, session):
     if token not in tokens:
         tokens.append(token)
     else:
+        raise Conflict("Token already added")
+    update_respondent_verification_tokens(respondent_id, tokens, session)
+
+
+@with_db_session
+def delete_respondent_token(respondent_id, token, session):
+    """
+    Deletes the token to the respondent's verification_tokens column
+
+    :param respondent_id: the respondent's id
+    :param token: The verification token
+    :param session: A db session
+    :return: None on success
+    """
+
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
+    tokens = respondent.verification_tokens
+    if not tokens:
+        tokens = []
+    if not respondent:
+        logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
+        raise NotFound("Respondent id does not exist")
+
+    if token in tokens:
         tokens.remove(token)
+    else:
+        raise NotFound("Token not found")
     update_respondent_verification_tokens(respondent_id, tokens, session)
 
 
