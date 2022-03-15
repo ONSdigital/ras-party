@@ -987,9 +987,8 @@ class TestRespondents(PartyTestClient):
             "ras_party.controllers.account_controller.NotifyGateway"
         ):
             client().update_account().status_code = 201
-            payload = {"new_password": "abc", "email_address": "test@example.test", "token": "tmp"}
+            payload = {"new_password": "abc", "email_address": "test@example.test", "token": "test_token"}
             account_controller.change_respondent_password(payload)
-            # TODO: fix token
             query.assert_called_once_with("test@example.test", db.session())
 
     def test_resend_password_email_expired_token_calls_notify(self):
@@ -1019,9 +1018,8 @@ class TestRespondents(PartyTestClient):
         ) as notify:
             notify.side_effect = RasNotifyError(mock.Mock())
             client().update_account().status_code = 201
-            payload = {"new_password": "abc", "email_address": "test@example.test", "token": "tmp"}
+            payload = {"new_password": "abc", "email_address": "test@example.test", "token": "test_token"}
             account_controller.change_respondent_password(payload)
-            # TODO: fix token
             query.assert_called_once_with("test@example.test", db.session())
 
     def test_notify_account_lock(self):
@@ -1658,8 +1656,7 @@ class TestRespondents(PartyTestClient):
         ) as auth, patch(
             "ras_party.controllers.account_controller.Requests"
         ):
-            payload = {"new_password": "password", "email_address": "mock@email.com", "token": "tmp"}
-            # TODO: fix token
+            payload = {"new_password": "password", "email_address": "mock@email.com", "token": "test_token"}
             auth().update_account().status_code.return_value = 500
             with self.assertRaises(InternalServerError):
                 account_controller.change_respondent_password(payload)
