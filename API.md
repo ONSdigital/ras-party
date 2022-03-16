@@ -528,7 +528,8 @@ Returns:
 
 ```json
 {
-    "description": "Unknown email verification token"
+    "description": "Unknown email verification token",
+  
 }
 ```
 
@@ -1096,8 +1097,8 @@ Returns:
 ```
 
 ---
-### Update Respondent Tokens
-* `PUT /party-api/v1/respondents/update-verification-tokens`
+### Add Respondent Tokens
+* `POST /party-api/v1/respondents/<respondent_it>/verification-tokens`
   * Updates a respondents valid verification tokens based on `party_uuid` deduced from the `email` passed.
 
 #### Example JSON payload
@@ -1108,6 +1109,11 @@ Returns:
   "token": "<token>"
 }
 ```
+
+---
+### Delete Respondent Tokens
+* `DELETE /party-api/v1/respondents/respondent_id>/verification-tokens/<token>`
+  * Updates a respondents valid verification tokens based on `party_uuid` deduced from the `email` passed.
 
 ---
 

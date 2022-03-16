@@ -67,7 +67,7 @@ class TestAccountController(TestCase):
         base.telephone = "1234567890"
         base.mark_for_deletion = False
         base.created_on = datetime.datetime.strptime("2021-01-30 00:00:00", "%Y-%m-%d %H:%M:%S")
-        base.verification_tokens = ["Im9uc190b2tlbl9lbWFpbEBmYWtlLm9ucyI.YjBxJA.50gUQJB9kajNqk2hkIK_B6EwMKw"]
+        base.password_verification_token = "Im9uc190b2tlbl9lbWFpbEBmYWtlLm9ucyI.YjBxJA.50gUQJB9kajNqk2hkIK_B6EwMKw"
         return base
 
     def get_enrolment_object(self):

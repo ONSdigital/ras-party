@@ -16,7 +16,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Enum
@@ -283,7 +283,7 @@ class Respondent(Base):
     telephone = Column(Text)
     mark_for_deletion = Column(Boolean, default=False)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
-    verification_tokens = Column(ARRAY(Text))
+    password_verification_token = Column(Text)
     pending_enrolment = relationship("PendingEnrolment", back_populates="respondent")
     Index("respondent_first_name_idx", first_name)
     Index("respondent_last_name_idx", last_name)
@@ -321,7 +321,7 @@ class Respondent(Base):
             "status": RespondentStatus(self.status).name,
             "markForDeletion": self.mark_for_deletion,
             "associations": self._get_business_associations(self.businesses),
-            "verification_tokens": self.verification_tokens,
+            "password_verification_token": self.password_verification_token,
         }
 
         return filter_falsey_values(d)

@@ -24,7 +24,9 @@ from ras_party.controllers.case_controller import (
 from ras_party.controllers.iac_controller import disable_iac, request_iac
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import (
+    add_respondent_password_verification_token,
     count_enrolment_by_survey_business,
+    delete_respondent_password_verification_token,
     query_all_non_disabled_enrolments_respondent,
     query_business_by_party_uuid,
     query_business_respondent_by_respondent_id_and_business_id,
@@ -33,7 +35,6 @@ from ras_party.controllers.queries import (
     query_respondent_by_party_uuid,
     query_respondent_by_pending_email,
     query_single_respondent_by_email,
-    update_respondent_verification_tokens,
 )
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import RasNotifyError
@@ -403,9 +404,9 @@ def verify_token(token, session):
 
 
 @with_db_session
-def add_respondent_token(respondent_id, token, session):
+def add_respondent_password_token(respondent_id, token, session):
     """
-    Adds the token to the respondent's verification_tokens column
+    Adds the token to the respondent's password_verification_token column
 
     :param respondent_id: the respondent's id
     :param token: The verification token
@@ -414,44 +415,29 @@ def add_respondent_token(respondent_id, token, session):
     """
 
     respondent = query_respondent_by_party_uuid(respondent_id, session)
-    tokens = respondent.verification_tokens
-    if not tokens:
-        tokens = []
     if not respondent:
         logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
         raise NotFound("Respondent id does not exist")
 
-    if token not in tokens:
-        tokens.append(token)
-    else:
-        raise Conflict("Token already added")
-    update_respondent_verification_tokens(respondent_id, tokens, session)
+    add_respondent_password_verification_token(respondent_id, token, session)
 
 
 @with_db_session
-def delete_respondent_token(respondent_id, token, session):
+def delete_respondent_password_token(respondent_id, session):
     """
-    Deletes the token to the respondent's verification_tokens column
+    Deletes the token to the respondent's password_verification_token column
 
     :param respondent_id: the respondent's id
-    :param token: The verification token
     :param session: A db session
     :return: None on success
     """
 
     respondent = query_respondent_by_party_uuid(respondent_id, session)
-    tokens = respondent.verification_tokens
-    if not tokens:
-        tokens = []
     if not respondent:
         logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
         raise NotFound("Respondent id does not exist")
 
-    if token in tokens:
-        tokens.remove(token)
-    else:
-        raise NotFound("Token not found")
-    update_respondent_verification_tokens(respondent_id, tokens, session)
+    delete_respondent_password_verification_token(respondent_id, session)
 
 
 @transactional

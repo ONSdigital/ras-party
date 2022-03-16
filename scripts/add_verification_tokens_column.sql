@@ -1,1 +1,1 @@
-ALTER TABLE partysvc.respondent add COLUMN verification_tokens text [];
+ALTER TABLE partysvc.respondent add COLUMN password_verification_token text NULL;

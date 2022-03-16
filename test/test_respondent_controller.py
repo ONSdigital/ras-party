@@ -106,7 +106,7 @@ class TestRespondents(PartyTestClient):
             "telephone": respondent["telephone"],
             "mark_for_deletion": respondent["mark_for_deletion"],
             "status": respondent.get("status") or RespondentStatus.CREATED,
-            "verification_tokens": [self.generate_valid_token_from_email(respondent["emailAddress"])],
+            "password_verification_token": self.generate_valid_token_from_email(respondent["emailAddress"]),
         }
         self.respondent = Respondent(**translated_party)
         session.add(self.respondent)
