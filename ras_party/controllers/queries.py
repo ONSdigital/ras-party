@@ -295,7 +295,7 @@ def add_respondent_password_verification_token(respondent_id, token, session):
     :param respondent_id: id of the respondent
     :param token: the verification token:
     :param session:
-    :return: True on success, False on a failure
+    :return: None on success
     """
 
     logger.info("Updating respondent verification token", respondent_id=respondent_id)
@@ -311,7 +311,7 @@ def delete_respondent_password_verification_token(respondent_id, session):
 
     :param respondent_id: id of the respondent
     :param session:
-    :return: True on success, False on a failure
+    :return: None on success
     """
 
     logger.info("Updating respondent verification token", respondent_id=respondent_id)
