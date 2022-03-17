@@ -316,8 +316,8 @@ def delete_respondent_password_verification_token(respondent_id, session):
 
     logger.info("Updating respondent verification token", respondent_id=respondent_id)
 
-    session.query(Respondent).filter(Respondent.party_uuid == respondent_id).delete(
-        Respondent.password_verification_token
+    session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
+        {Respondent.password_verification_token: ""}
     )
 
 
