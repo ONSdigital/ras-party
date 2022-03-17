@@ -317,7 +317,7 @@ def delete_respondent_password_verification_token(respondent_id, session):
     logger.info("Removing respondent verification token", respondent_id=respondent_id)
 
     session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
-        {Respondent.password_verification_token: ""}
+        {Respondent.password_verification_token: None}
     )
 
 
