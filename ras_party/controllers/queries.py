@@ -298,7 +298,7 @@ def add_respondent_password_verification_token(respondent_id, token, session):
     :return: None on success
     """
 
-    logger.info("Updating respondent verification token", respondent_id=respondent_id)
+    logger.info("Adding respondent verification token", respondent_id=respondent_id)
 
     session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
         {Respondent.password_verification_token: token}
@@ -314,7 +314,7 @@ def delete_respondent_password_verification_token(respondent_id, session):
     :return: None on success
     """
 
-    logger.info("Updating respondent verification token", respondent_id=respondent_id)
+    logger.info("Removing respondent verification token", respondent_id=respondent_id)
 
     session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
         {Respondent.password_verification_token: ""}
