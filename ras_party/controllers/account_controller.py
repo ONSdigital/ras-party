@@ -432,12 +432,17 @@ def delete_respondent_password_token(respondent_id, session):
     :return: None on success
     """
 
+    print("query respondent")
     respondent = query_respondent_by_party_uuid(respondent_id, session)
+    print("respondent queried")
+    print(respondent)
     if not respondent:
         logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
         raise NotFound("Respondent id does not exist")
 
+    print("delete token")
     delete_respondent_password_verification_token(respondent_id, session)
+    print("token deleted")
 
 
 @transactional
