@@ -85,6 +85,8 @@ def get_respondent_by_id(respondent_id):
 @respondent_view.route("/respondents/email", methods=["GET"])
 def get_respondent_by_email():
     payload = request.get_json()
+    print("here")
+    logger.info("here", payload=payload)
     email = payload["email"]
     response = respondent_controller.get_respondent_by_email(email)
     return jsonify(response)
