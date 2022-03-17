@@ -428,7 +428,7 @@ def delete_respondent_password_token(respondent_id, token, session):
     Deletes the token to the respondent's password_verification_token column
 
     :param respondent_id: the respondent's id
-    :param token: the token to delete
+    :param token: the verification token to delete
     :param session: A db session
     :return: None on success
     """
