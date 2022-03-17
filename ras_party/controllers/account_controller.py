@@ -437,7 +437,7 @@ def delete_respondent_password_token(respondent_id, token, session):
     if not respondent:
         logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
         raise NotFound("Respondent id does not exist")
-    if not token == respondent["password_verification_token"]:
+    if not token == respondent.password_verification_token:
         logger.info("Incorrect token")
         raise NotFound("Incorrect token")
 
