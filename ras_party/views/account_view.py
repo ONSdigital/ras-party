@@ -171,7 +171,8 @@ def post_password_verification_tokens(respondent_id):
     return make_response(jsonify({"message": "Successfully added token"}), 200)
 
 
-@account_view.route("/respondents/respondent_id>/password-verification-tokens/<token>", methods=["DELETE"])
-def delete_password_verification_tokens(respondent_id, token):
-    account_controller.delete_respondent_password_token(respondent_id, token)
+@account_view.route("/respondents/respondent_id>/password-verification-tokens", methods=["DELETE"])
+def delete_password_verification_tokens(respondent_id):
+    payload = request.get_json()
+    account_controller.delete_respondent_password_token(respondent_id, payload["token"])
     return make_response(jsonify({"message": "Successfully removed token"}), 200)
