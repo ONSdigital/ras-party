@@ -172,6 +172,6 @@ def post_password_verification_tokens(respondent_id):
 
 
 @account_view.route("/respondents/<respondent_id>/password-verification-tokens/<token>", methods=["DELETE"])
-def delete_password_verification_tokens(respondent_id):
-    account_controller.delete_respondent_password_token(respondent_id)
+def delete_password_verification_tokens(respondent_id, token):
+    account_controller.delete_respondent_password_token(respondent_id, token)
     return make_response(jsonify({"message": "Successfully removed token"}), 200)

@@ -423,11 +423,12 @@ def add_respondent_password_token(respondent_id, token, session):
 
 
 @with_db_session
-def delete_respondent_password_token(respondent_id, session):
+def delete_respondent_password_token(respondent_id, token, session):
     """
     Deletes the token to the respondent's password_verification_token column
 
     :param respondent_id: the respondent's id
+    :param token: the password verification token
     :param session: A db session
     :return: None on success
     """
@@ -439,6 +440,9 @@ def delete_respondent_password_token(respondent_id, session):
     if not respondent.password_verification_token:
         logger.info("Verification token not found")
         raise NotFound("Verification token not found")
+    if not token:
+        logger.info("Verification token not received")
+        raise NotFound("Verification token not received")
 
     delete_respondent_password_verification_token(respondent_id, session)
 

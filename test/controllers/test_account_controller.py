@@ -215,13 +215,14 @@ class TestAccountController(TestCase):
         with self.app.app_context():
             session = MagicMock()
             respondent_id = Respondent.party_uuid
+            token = "Im9uc190b2tlbl9lbWFpbEBmYWtlLm9ucyI.YjBxJA.50gUQJB9kajNqk2hkIK_B6EwMKw"
             session.query(Respondent).filter(Respondent.party_uuid == respondent_id).first().return_value = [
                 self.get_respondent_object()
             ]
             session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
                 {Respondent.password_verification_token: None}
             )
-            account_controller.delete_respondent_password_token.__wrapped__(respondent_id, session)
+            account_controller.delete_respondent_password_token.__wrapped__(respondent_id, token, session)
             # Nothing to assert it's just a database modification
 
 
