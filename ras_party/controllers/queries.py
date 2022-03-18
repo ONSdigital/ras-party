@@ -288,6 +288,39 @@ def update_respondent_details(respondent_data, respondent_id, session):
     return False
 
 
+def add_respondent_password_verification_token(respondent_id, token, session):
+    """
+    Query to update the respondent password verification tokens
+
+    :param respondent_id: id of the respondent
+    :param token: the verification token:
+    :param session:
+    :return: None on success
+    """
+
+    logger.info("Adding respondent verification token", respondent_id=respondent_id)
+
+    session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
+        {Respondent.password_verification_token: token}
+    )
+
+
+def delete_respondent_password_verification_token(respondent_id, session):
+    """
+    Query to update the respondent password verification tokens
+
+    :param respondent_id: id of the respondent
+    :param session:
+    :return: None on success
+    """
+
+    logger.info("Removing respondent verification token", respondent_id=respondent_id)
+
+    session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
+        {Respondent.password_verification_token: None}
+    )
+
+
 def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_rec: int, session):
     """
     This query returns business search on ru reference

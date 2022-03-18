@@ -106,6 +106,7 @@ class TestRespondents(PartyTestClient):
             "telephone": respondent["telephone"],
             "mark_for_deletion": respondent["mark_for_deletion"],
             "status": respondent.get("status") or RespondentStatus.CREATED,
+            "password_verification_token": self.generate_valid_token_from_email(respondent["emailAddress"]),
         }
         self.respondent = Respondent(**translated_party)
         session.add(self.respondent)
@@ -966,7 +967,8 @@ class TestRespondents(PartyTestClient):
     def test_change_password_with_valid_token(self):
         # Given a valid token from the respondent
         respondent = self.populate_with_respondent()
-        payload = {"new_password": "password", "email_address": respondent.email_address}
+        token = self.generate_valid_token_from_email(respondent.email_address)
+        payload = {"new_password": "password", "email_address": respondent.email_address, "token": token}
         # When the password is changed
         self.change_password(payload, expected_status=200)
         personalisation = {"FIRST_NAME": respondent.first_name}
@@ -985,7 +987,8 @@ class TestRespondents(PartyTestClient):
             "ras_party.controllers.account_controller.NotifyGateway"
         ):
             client().update_account().status_code = 201
-            account_controller.change_respondent_password({"new_password": "abc", "email_address": "test@example.test"})
+            payload = {"new_password": "abc", "email_address": "test@example.test", "token": "test_token"}
+            account_controller.change_respondent_password(payload)
             query.assert_called_once_with("test@example.test", db.session())
 
     def test_resend_password_email_expired_token_calls_notify(self):
@@ -1015,7 +1018,8 @@ class TestRespondents(PartyTestClient):
         ) as notify:
             notify.side_effect = RasNotifyError(mock.Mock())
             client().update_account().status_code = 201
-            account_controller.change_respondent_password({"new_password": "abc", "email_address": "test@example.test"})
+            payload = {"new_password": "abc", "email_address": "test@example.test", "token": "test_token"}
+            account_controller.change_respondent_password(payload)
             query.assert_called_once_with("test@example.test", db.session())
 
     def test_notify_account_lock(self):
@@ -1652,7 +1656,7 @@ class TestRespondents(PartyTestClient):
         ) as auth, patch(
             "ras_party.controllers.account_controller.Requests"
         ):
-            payload = {"new_password": "password", "email_address": "mock@email.com"}
+            payload = {"new_password": "password", "email_address": "mock@email.com", "token": "test_token"}
             auth().update_account().status_code.return_value = 500
             with self.assertRaises(InternalServerError):
                 account_controller.change_respondent_password(payload)
