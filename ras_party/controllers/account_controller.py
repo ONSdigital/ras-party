@@ -423,12 +423,11 @@ def add_respondent_password_token(respondent_id, token, session):
 
 
 @with_db_session
-def delete_respondent_password_token(respondent_id, token, session):
+def delete_respondent_password_token(respondent_id, session):
     """
     Deletes the token to the respondent's password_verification_token column
 
     :param respondent_id: the respondent's id
-    :param token: the verification token to delete
     :param session: A db session
     :return: None on success
     """
@@ -437,7 +436,7 @@ def delete_respondent_password_token(respondent_id, token, session):
     if not respondent:
         logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
         raise NotFound("Respondent id does not exist")
-    if not token:
+    if not respondent.password_verification_token:
         logger.info("Verification token not found")
         raise NotFound("Verification token not found")
 

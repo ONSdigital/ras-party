@@ -1098,21 +1098,20 @@ Returns:
 
 ---
 ### Add Respondent Tokens
-* `POST /party-api/v1/respondents/<respondent_it>/verification-tokens`
+* `POST /party-api/v1/respondents/<respondent_id>/verification-tokens`
   * Updates a respondents valid verification tokens based on `party_uuid` deduced from the `email` passed.
 
 #### Example JSON payload
 
 ```json
 {
-  "email": "a@b.com",
   "token": "<token>"
 }
 ```
 
 ---
 ### Delete Respondent Tokens
-* `DELETE /party-api/v1/respondents/respondent_id>/verification-tokens/<token>`
+* `DELETE /party-api/v1/respondents/<respondent_id>/verification-tokens/<token>`
   * Updates a respondents valid verification tokens based on `party_uuid` deduced from the `email` passed.
 
 ---
