@@ -9,7 +9,6 @@ from unittest.mock import MagicMock
 import responses
 from requests import HTTPError
 from sqlalchemy import and_
-from werkzeug.exceptions import NotFound
 
 from config import TestingConfig
 from ras_party.controllers import account_controller
@@ -70,21 +69,6 @@ class TestAccountController(TestCase):
         base.mark_for_deletion = False
         base.created_on = datetime.datetime.strptime("2021-01-30 00:00:00", "%Y-%m-%d %H:%M:%S")
         base.password_verification_token = "Im9uc190b2tlbl9lbWFpbEBmYWtlLm9ucyI.YjBxJA.50gUQJB9kajNqk2hkIK_B6EwMKw"
-        return base
-
-    def get_not_token_respondent_object(self):
-        base = Respondent()
-        base.id = "id"
-        base.party_uuid = uuid.UUID(self.valid_business_party_id)
-        base.status = 1  # ACTIVE
-        base.email_address = "ons@fake.ons"
-        base.pending_email_address = None
-        base.first_name = "ONS"
-        base.last_name = "User"
-        base.telephone = "1234567890"
-        base.mark_for_deletion = False
-        base.created_on = datetime.datetime.strptime("2021-01-30 00:00:00", "%Y-%m-%d %H:%M:%S")
-        base.password_verification_token = None
         return base
 
     def get_enrolment_object(self):
