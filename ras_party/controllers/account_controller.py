@@ -442,7 +442,7 @@ def delete_respondent_password_token(respondent_id, token, session):
         raise NotFound("Verification token not found")
     if not token:
         logger.info("Verification token not received")
-        raise NotFound("Verification token not received")
+        raise BadRequest("Verification token not received")
 
     delete_respondent_password_verification_token(respondent_id, session)
 
