@@ -209,6 +209,11 @@ def delete_attributes_by_sample_summary_id(sample_summary_id: str, session) -> N
     :param session: A db session
     """
     logger.info("Searching for business attributes to delete by sample summary id", sample_summary_id=sample_summary_id)
+    try:
+        uuid.UUID(sample_summary_id)
+    except ValueError:
+        logger.info("Invalid sample_summary_id value", sample_summary_id=sample_summary_id)
+        raise BadRequest(f"'{sample_summary_id}' is not a valid UUID format")
     attributes = session.query(BusinessAttributes).filter(BusinessAttributes.sample_summary_id == sample_summary_id)
     attribute_count = attributes.count()
     if attribute_count > 0:

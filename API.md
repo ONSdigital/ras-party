@@ -291,6 +291,18 @@ Returns:
 
 ---
 
+### Delete business attributes by sample_summary_id
+
+* `DELETE /party-api/v1/businesses/attributes/sample-summary/<sample_summary_id>`
+  * Deletes all the attribute records that have matching sample_summary_id
+  * Will return a 204 even if there are no records with the provided id.
+
+Returns:
+  * 204 - On success, regardless of whether it deleted any records or not
+  * 400 - If the id provided isn't a valid uuid
+
+---
+
 ### Store Association Between Business, Collection & Sample
 
 * `PUT /party-api/v1/businesses/sample/link/<sampleSummaryId>`
