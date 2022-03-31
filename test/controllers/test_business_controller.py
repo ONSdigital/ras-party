@@ -32,6 +32,12 @@ class TestBusinessController(TestCase):
         base.trading_as = "trading_as"
         return base
 
+    def test_delete_attributes_by_sample_summary_id_invalid_uuid(self):
+        test_input = "not-a-uuid"
+        with self.assertRaises(BadRequest):
+            session = MagicMock()
+            business_controller.delete_attributes_by_sample_summary_id.__wrapped__(test_input, session)
+
     def test_query_business_attributes_invalid_uuid(self):
         test_input = "not-a-uuid"
         with self.assertRaises(BadRequest):
