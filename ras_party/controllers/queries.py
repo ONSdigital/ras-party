@@ -288,6 +288,21 @@ def update_respondent_details(respondent_data, respondent_id, session):
     return False
 
 
+def get_respondent_password_verification_token(respondent_id, session):
+    """
+    Query to retrieve the respondent password verification token
+
+    :param respondent_id: the id of the respondent
+    :param session:
+    :returns: verification token
+    """
+
+    logger.info("Retrieving respondent verification token", respondent_id=respondent_id)
+
+    response = session.query(Respondent).filter(Respondent.party_uuid == respondent_id).first()
+    return response.password_verification_token
+
+
 def add_respondent_password_verification_token(respondent_id, token, session):
     """
     Query to update the respondent password verification tokens
@@ -319,6 +334,56 @@ def delete_respondent_password_verification_token(respondent_id, session):
     session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
         {Respondent.password_verification_token: None}
     )
+
+
+def query_password_reset_counter(respondent_id, session):
+    """
+    Query to retrieve the respondent's password reset counter
+
+    :param respondent_id: id of the respondent
+    :param session:
+    :return: current number of password reset attempts
+    """
+
+    logger.info("Querying password reset counter", respondent_id=respondent_id)
+
+    response = session.query(Respondent).filter(Respondent.party_uuid == respondent_id).first()
+    return response.password_reset_counter
+
+
+def increase_password_reset_counter(respondent_id, counter, session):
+    """
+    Query to increase the respondent's password reset counter
+
+    :param respondent_id: id of the respondent
+    :param counter: password reset counter
+    :param session:
+    :return: None on success
+    """
+
+    logger.info("Increasing password reset counter", respondent_id=respondent_id)
+
+    session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
+        {Respondent.password_reset_counter: counter}
+    )
+    pass
+
+
+def reset_password_reset_counter(respondent_id, session):
+    """
+    Query to reset the respondent's password reset counter
+
+    :param respondent_id: id of the respondent
+    :param session:
+    :return: None on success
+    """
+
+    logger.info("Resetting password reset counter", respondent_id=respondent_id)
+
+    session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
+        {Respondent.password_reset_counter: 0}
+    )
+    pass
 
 
 def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_rec: int, session):

@@ -27,6 +27,7 @@ from ras_party.controllers.queries import (
     add_respondent_password_verification_token,
     count_enrolment_by_survey_business,
     delete_respondent_password_verification_token,
+    get_respondent_password_verification_token,
     query_all_non_disabled_enrolments_respondent,
     query_business_by_party_uuid,
     query_business_respondent_by_respondent_id_and_business_id,
@@ -403,6 +404,23 @@ def verify_token(token, session):
     return {"response": "Ok"}
 
 
+@with_query_only_db_session
+def get_respondent_password_token(respondent_id, session):
+    """
+    Retrieves the token from the respondent's password_verification_token column
+    :param respondent_id: the respondent's id
+    :param session:
+    :returns: verification token
+    """
+
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
+    if not respondent:
+        logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
+        raise NotFound("Respondent id does not exist")
+
+    return get_respondent_password_verification_token(respondent_id, session)
+
+
 @with_db_session
 def add_respondent_password_token(respondent_id, token, session):
     """
@@ -445,6 +463,59 @@ def delete_respondent_password_token(respondent_id, token, session):
         raise BadRequest("Verification token not received")
 
     delete_respondent_password_verification_token(respondent_id, session)
+
+
+@with_query_only_db_session
+def get_password_reset_counter(respondent_id, session):
+    """
+    Retrieves the respondent's password reset counter
+
+    :param respondent_id: the respondent's id
+    :param session: a db session
+    :return: current number of password reset attempts
+    """
+
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
+    if not respondent:
+        logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
+        raise NotFound("Respondent id does not exist")
+    return respondent.password_reset_counter
+
+
+@with_db_session
+def increase_password_reset_counter(respondent_id, session):
+    """
+    Increases the respondent's password reset counter
+
+    :param respondent_id: the respondent's id
+    :param session: a db session
+    :return: None on success
+    """
+
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
+    if not respondent:
+        logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
+        raise NotFound("Respondent id does not exist")
+
+    increase_password_reset_counter(respondent_id, respondent.password_reset_counter + 1, session)
+
+
+@with_db_session
+def reset_password_reset_counter(respondent_id, session):
+    """
+    Resets the respondent's password reset counter
+
+    :param respondent_id: the respondent's id
+    :param session: a db session
+    :return: None on success
+    """
+
+    respondent = query_respondent_by_party_uuid(respondent_id, session)
+    if not respondent:
+        logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
+        raise NotFound("Respondent id does not exist")
+
+    reset_password_reset_counter(respondent_id, session)
 
 
 @transactional
@@ -499,6 +570,8 @@ def change_respondent_password(payload, tran, session):
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info("Respondent has changed their password", respondent_id=party_id))
+
+    reset_password_reset_counter(party_id)
 
     return {"response": "Ok"}
 
