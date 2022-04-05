@@ -66,6 +66,12 @@ def get_business_attributes_by_id(business_id):
     return jsonify(response)
 
 
+@business_view.route("/businesses/attributes/sample-summary/<sample_summary_id>", methods=["DELETE"])
+def delete_business_attributes_by_sample_summary_id(sample_summary_id):
+    business_controller.delete_attributes_by_sample_summary_id(sample_summary_id)
+    return "", 204
+
+
 @business_view.route("/businesses/ref/<ref>", methods=["GET"])
 def get_business_by_ref(ref):
     # Temporarily map the old party url to this to aid in the transition away from /parties urls
