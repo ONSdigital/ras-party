@@ -164,7 +164,7 @@ def post_pending_survey_respondent():
     return make_response(jsonify(response), 201)
 
 
-@account_view.route("/respondents/<respondent_id>/password-verification-token", mehtods=["GET"])
+@account_view.route("/respondents/<respondent_id>/password-verification-token", methods=["GET"])
 def get_password_verification_token(respondent_id):
     token = account_controller.get_respondent_password_token(respondent_id)
     return make_response(jsonify({"token": token}), 200)
@@ -185,7 +185,7 @@ def delete_password_verification_token(respondent_id, token):
 
 @account_view.route("/respondents/<respondent_id>/password-reset-counter", methods=["GET"])
 def get_password_reset_counter(respondent_id):
-    counter = account_controller.get_password_reset_counter(respondent_id)
+    counter = account_controller.get_password_counter(respondent_id)
     return make_response(jsonify({"counter": counter}), 200)
 
 
@@ -194,11 +194,11 @@ def increase_password_reset_counter(respondent_id):
     payload = request.get_json()
     if not payload["message"] == "++":
         return make_response(jsonify({"message": "Incorrect payload"}), 403)
-    account_controller.increase_password_reset_counter(respondent_id)
+    account_controller.increase_password_counter(respondent_id)
     return make_response(jsonify({"message": "Successfully increased counter"}), 200)
 
 
 @account_view.route("/respondents/<respondent_id>/password-reset-counter", methods=["DELETE"])
 def reset_password_reset_counter(respondent_id):
-    account_controller.reset_password_reset_counter(respondent_id)
+    account_controller.reset_password_counter(respondent_id)
     return make_response(jsonify({"message": "Successfully reset counter"}), 200)

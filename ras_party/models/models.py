@@ -323,7 +323,6 @@ class Respondent(Base):
             "markForDeletion": self.mark_for_deletion,
             "associations": self._get_business_associations(self.businesses),
             "password_verification_token": self.password_verification_token,
-            "password_reset_counter": self.password_reset_counter,
         }
 
         return filter_falsey_values(d)

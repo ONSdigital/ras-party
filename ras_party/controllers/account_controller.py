@@ -28,6 +28,7 @@ from ras_party.controllers.queries import (
     count_enrolment_by_survey_business,
     delete_respondent_password_verification_token,
     get_respondent_password_verification_token,
+    increase_password_reset_counter,
     query_all_non_disabled_enrolments_respondent,
     query_business_by_party_uuid,
     query_business_respondent_by_respondent_id_and_business_id,
@@ -36,6 +37,7 @@ from ras_party.controllers.queries import (
     query_respondent_by_party_uuid,
     query_respondent_by_pending_email,
     query_single_respondent_by_email,
+    reset_password_reset_counter,
 )
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import RasNotifyError
@@ -466,7 +468,7 @@ def delete_respondent_password_token(respondent_id, token, session):
 
 
 @with_query_only_db_session
-def get_password_reset_counter(respondent_id, session):
+def get_password_counter(respondent_id, session):
     """
     Retrieves the respondent's password reset counter
 
@@ -483,7 +485,7 @@ def get_password_reset_counter(respondent_id, session):
 
 
 @with_db_session
-def increase_password_reset_counter(respondent_id, session):
+def increase_password_counter(respondent_id, session):
     """
     Increases the respondent's password reset counter
 
@@ -501,7 +503,7 @@ def increase_password_reset_counter(respondent_id, session):
 
 
 @with_db_session
-def reset_password_reset_counter(respondent_id, session):
+def reset_password_counter(respondent_id, session):
     """
     Resets the respondent's password reset counter
 
@@ -571,7 +573,7 @@ def change_respondent_password(payload, tran, session):
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info("Respondent has changed their password", respondent_id=party_id))
 
-    reset_password_reset_counter(party_id)
+    reset_password_reset_counter(party_id, session)
 
     return {"response": "Ok"}
 
