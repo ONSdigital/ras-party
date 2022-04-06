@@ -189,6 +189,15 @@ def get_password_reset_counter(respondent_id):
     return make_response(jsonify({"counter": counter}), 200)
 
 
+@account_view.route("/respondents/<respondent_id>/password-reset-counter", methods=["PUT"])
+def increase_password_reset_counter(respondent_id):
+    payload = request.get_json()
+    if not payload["message"] == "++":
+        return make_response(jsonify({"message": "Incorrect payload"}), 403)
+    account_controller.increase_password_reset_counter(respondent_id)
+    return make_response(jsonify({"message": "Successfully increased counter"}), 200)
+
+
 @account_view.route("/respondents/<respondent_id>/password-reset-counter", methods=["DELETE"])
 def reset_password_reset_counter(respondent_id):
     account_controller.reset_password_reset_counter(respondent_id)
