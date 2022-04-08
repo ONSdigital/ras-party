@@ -1094,7 +1094,7 @@ Returns:
 ### Update Respondent Info
 
 * `PUT /party-api/v1/respondents/id/<respondent_id>`
-  * Updates a respondents details (first name, last name, telephone and email) based on `party_uuid` from the respondents table.
+  * Updates a respondent's details (first name, last name, telephone and email) based on `party_uuid` from the respondents table.
 
 #### Example JSON payload
 
@@ -1109,9 +1109,21 @@ Returns:
 ```
 
 ---
-### Add Respondent Tokens
-* `POST /party-api/v1/respondents/<respondent_id>/verification-tokens`
-  * Updates a respondents valid verification tokens based on `party_uuid` deduced from the `email` passed.
+### Get Respondent Token
+* `GET /party-api/v1/respondents/<respondent_id>/verification-token`
+  * Retrieves a respondent's valid verification token based on `party_uuid`
+
+### Success
+```json
+{
+  "token": "<token>"
+}
+```
+---
+  
+### Add Respondent Token
+* `POST /party-api/v1/respondents/<respondent_id>/verification-token`
+  * Updates a respondent's valid verification token based on `party_uuid`
 
 #### Example JSON payload
 
@@ -1122,10 +1134,42 @@ Returns:
 ```
 
 ---
-### Delete Respondent Tokens
-* `DELETE /party-api/v1/respondents/<respondent_id>/verification-tokens/<token>`
-  * Updates a respondents valid verification tokens based on `party_uuid` deduced from the `email` passed.
+### Delete Respondent Token
+* `DELETE /party-api/v1/respondents/<respondent_id>/verification-token/<token>`
+  * Updates a respondent's valid verification token based on `party_uuid` deduced from the `email` passed.
 
+---
+
+---
+### Get Password Reset Counter
+* `GET /party-api/v1/respondents/<respondent_id>/password-reset-counter`
+  * Retrieves a respondent's password reset counter based on the `party_uuid`
+
+### Success
+```json
+{
+  "counter": <counter>
+}
+```
+---
+
+---
+### Put Password Reset Counter
+* `PUT /party-api/v1/respondents/<respondent_id>/password-reset-counter`
+  * Increases a respondent's password reset counter based on the `party_uuid`
+
+### Payload
+```json
+{
+  "message": "++"
+}
+```
+---
+
+---
+### Delete Password Reset Counter
+* `DELETE /party-api/v1/respondents/<respondent_id>/password-reset-counter`
+  * Resets a respondent's password reset counter based on the `party_uuid`
 ---
 
 ## Info Endpoints
