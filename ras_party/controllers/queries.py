@@ -366,7 +366,6 @@ def increase_password_reset_counter(respondent_id, counter, session):
     session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
         {Respondent.password_reset_counter: counter}
     )
-    pass
 
 
 def reset_password_reset_counter(respondent_id, session):
@@ -383,7 +382,6 @@ def reset_password_reset_counter(respondent_id, session):
     session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
         {Respondent.password_reset_counter: 0}
     )
-    pass
 
 
 def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_rec: int, session):
