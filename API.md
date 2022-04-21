@@ -1122,8 +1122,11 @@ Returns:
 ---
   
 ### Add Respondent Token
+* `POST /party-api/v1/respondents/<respondent_id>/verification-tokens`
+  * This endpoint is deprecated and will be removed in future
 * `POST /party-api/v1/respondents/<respondent_id>/verification-token`
   * Updates a respondent's valid verification token based on `party_uuid`
+  * Increases a respondent's password reset token base on `party_uuid`
 
 #### Example JSON payload
 
@@ -1135,6 +1138,8 @@ Returns:
 
 ---
 ### Delete Respondent Token
+* `DELETE /party-api/v1/respondents/<respondent_id>/verification-tokens/<token>`
+  * This endpoint is deprecated and will be removed in future
 * `DELETE /party-api/v1/respondents/<respondent_id>/verification-token/<token>`
   * Updates a respondent's valid verification token based on `party_uuid` deduced from the `email` passed.
 
@@ -1148,20 +1153,7 @@ Returns:
 ### Success
 ```json
 {
-  "counter": <counter>
-}
-```
----
-
----
-### Put Password Reset Counter
-* `PUT /party-api/v1/respondents/<respondent_id>/password-reset-counter`
-  * Increases a respondent's password reset counter based on the `party_uuid`
-
-### Payload
-```json
-{
-  "message": "++"
+  "counter": "<counter>"
 }
 ```
 ---
