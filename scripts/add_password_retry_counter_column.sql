@@ -1,0 +1,1 @@
+ALTER TABLE partysvc.respondent ADD COLUMN password_reset_counter int4 not null default 0;

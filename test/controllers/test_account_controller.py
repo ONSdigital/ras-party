@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 import responses
 from requests import HTTPError
 from sqlalchemy import and_
+from werkzeug.exceptions import NotFound
 
 from config import TestingConfig
 from ras_party.controllers import account_controller
@@ -69,6 +70,7 @@ class TestAccountController(TestCase):
         base.mark_for_deletion = False
         base.created_on = datetime.datetime.strptime("2021-01-30 00:00:00", "%Y-%m-%d %H:%M:%S")
         base.password_verification_token = "Im9uc190b2tlbl9lbWFpbEBmYWtlLm9ucyI.YjBxJA.50gUQJB9kajNqk2hkIK_B6EwMKw"
+        base.password_reset_counter = 0
         return base
 
     def get_enrolment_object(self):
@@ -197,7 +199,7 @@ class TestAccountController(TestCase):
         with self.app.app_context():
             session = MagicMock()
             email = "ons@fake.ons"
-            respondent_id = Respondent.party_uuid
+            respondent_id = self.valid_business_party_id
             token = generate_email_token(email)
             session.query(Respondent).filter(Respondent.party_uuid == respondent_id).first().return_value = [
                 self.get_respondent_object()
@@ -214,7 +216,7 @@ class TestAccountController(TestCase):
     def test_delete_verification_token(self):
         with self.app.app_context():
             session = MagicMock()
-            respondent_id = Respondent.party_uuid
+            respondent_id = self.valid_business_party_id
             token = "Im9uc190b2tlbl9lbWFpbEBmYWtlLm9ucyI.YjBxJA.50gUQJB9kajNqk2hkIK_B6EwMKw"
             session.query(Respondent).filter(Respondent.party_uuid == respondent_id).first().return_value = [
                 self.get_respondent_object()
@@ -224,6 +226,54 @@ class TestAccountController(TestCase):
             )
             account_controller.delete_respondent_password_token.__wrapped__(respondent_id, token, session)
             # Nothing to assert it's just a database modification
+
+    def test_get_password_reset_counter_success(self):
+        session = MagicMock()
+        respondent_id = self.valid_business_party_id
+        session.query().filter().first.return_value = self.get_respondent_object()
+        counter = account_controller.get_password_counter.__wrapped__(respondent_id, session)
+        self.assertEqual(0, counter)
+
+    def test_get_password_reset_counter_fail(self):
+        session = MagicMock()
+        party_uuid = self.invalid_respondent_id
+        session.query().filter().first.side_effect = NotFound
+        with self.assertRaises(NotFound):
+            account_controller.get_password_counter.__wrapped__(party_uuid, session)
+
+    def test_increase_password_reset_counter_success(self):
+        session = MagicMock()
+        respondent_id = self.valid_business_party_id
+        session.query().filter().first.return_value = self.get_respondent_object()
+        session.query().filter().update(
+            {
+                self.get_respondent_object().password_reset_counter: self.get_respondent_object().password_reset_counter
+                + 1
+            }
+        )
+        with self.app.app_context():
+            account_controller.increase_password_counter.__wrapped__(respondent_id, session)
+
+    def test_increase_password_reset_counter_fail(self):
+        session = MagicMock()
+        party_uuid = self.invalid_respondent_id
+        session.query().filter().first.side_effect = NotFound
+        with self.assertRaises(NotFound):
+            account_controller.increase_password_counter.__wrapped__(party_uuid, session)
+
+    def test_reset_password_reset_counter_success(self):
+        session = MagicMock()
+        respondent_id = self.valid_business_party_id
+        session.query().filter().first.return_value = self.get_respondent_object()
+        session.query().filter().update({self.get_respondent_object().password_reset_counter: 0})
+        account_controller.reset_password_counter.__wrapped__(respondent_id, session)
+
+    def test_reset_password_reset_counter_fail(self):
+        session = MagicMock()
+        party_uuid = self.invalid_respondent_id
+        session.query().filter().first.side_effect = NotFound
+        with self.assertRaises(NotFound):
+            account_controller.reset_password_counter.__wrapped__(party_uuid, session)
 
 
 if __name__ == "__main__":

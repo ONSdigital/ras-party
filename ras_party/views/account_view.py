@@ -164,14 +164,37 @@ def post_pending_survey_respondent():
     return make_response(jsonify(response), 201)
 
 
+@account_view.route("/respondents/<respondent_id>/password-verification-token", methods=["GET"])
+def get_password_verification_token(respondent_id):
+    token = account_controller.get_respondent_password_token(respondent_id)
+    return jsonify({"token": token})
+
+
+# /respondents/<respondent_id>/password-verification-tokens is deprecated and will be removed in future
 @account_view.route("/respondents/<respondent_id>/password-verification-tokens", methods=["POST"])
-def post_password_verification_tokens(respondent_id):
+@account_view.route("/respondents/<respondent_id>/password-verification-token", methods=["POST"])
+def post_password_verification_token(respondent_id):
     payload = request.get_json()
     account_controller.add_respondent_password_token(respondent_id, payload["token"])
-    return make_response(jsonify({"message": "Successfully added token"}), 200)
+    account_controller.increase_password_counter(respondent_id)
+    return jsonify({"message": "Successfully added token and increased password reset counter"})
 
 
+# /respondents/<respondent_id>/password-verification-tokens/<token> is deprecated and will be removed in future
 @account_view.route("/respondents/<respondent_id>/password-verification-tokens/<token>", methods=["DELETE"])
-def delete_password_verification_tokens(respondent_id, token):
+@account_view.route("/respondents/<respondent_id>/password-verification-token/<token>", methods=["DELETE"])
+def delete_password_verification_token(respondent_id, token):
     account_controller.delete_respondent_password_token(respondent_id, token)
-    return make_response(jsonify({"message": "Successfully removed token"}), 200)
+    return jsonify({"message": "Successfully removed token"})
+
+
+@account_view.route("/respondents/<respondent_id>/password-reset-counter", methods=["GET"])
+def get_password_reset_counter(respondent_id):
+    counter = account_controller.get_password_counter(respondent_id)
+    return jsonify({"counter": counter})
+
+
+@account_view.route("/respondents/<respondent_id>/password-reset-counter", methods=["DELETE"])
+def reset_password_reset_counter(respondent_id):
+    account_controller.reset_password_counter(respondent_id)
+    return jsonify({"message": "Successfully reset counter"})

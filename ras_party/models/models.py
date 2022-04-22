@@ -284,6 +284,7 @@ class Respondent(Base):
     mark_for_deletion = Column(Boolean, default=False)
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
     password_verification_token = Column(Text)
+    password_reset_counter = Column(Integer, default=0)
     pending_enrolment = relationship("PendingEnrolment", back_populates="respondent")
     Index("respondent_first_name_idx", first_name)
     Index("respondent_last_name_idx", last_name)
@@ -322,6 +323,7 @@ class Respondent(Base):
             "markForDeletion": self.mark_for_deletion,
             "associations": self._get_business_associations(self.businesses),
             "password_verification_token": self.password_verification_token,
+            "password_reset_counter": self.password_reset_counter,
         }
 
         return filter_falsey_values(d)
