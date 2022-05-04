@@ -170,8 +170,6 @@ def get_password_verification_token(respondent_id):
     return jsonify({"token": token})
 
 
-# /respondents/<respondent_id>/password-verification-tokens is deprecated and will be removed in future
-@account_view.route("/respondents/<respondent_id>/password-verification-tokens", methods=["POST"])
 @account_view.route("/respondents/<respondent_id>/password-verification-token", methods=["POST"])
 def post_password_verification_token(respondent_id):
     payload = request.get_json()
@@ -180,8 +178,6 @@ def post_password_verification_token(respondent_id):
     return jsonify({"message": "Successfully added token and increased password reset counter"})
 
 
-# /respondents/<respondent_id>/password-verification-tokens/<token> is deprecated and will be removed in future
-@account_view.route("/respondents/<respondent_id>/password-verification-tokens/<token>", methods=["DELETE"])
 @account_view.route("/respondents/<respondent_id>/password-verification-token/<token>", methods=["DELETE"])
 def delete_password_verification_token(respondent_id, token):
     account_controller.delete_respondent_password_token(respondent_id, token)
