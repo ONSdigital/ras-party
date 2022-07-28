@@ -102,8 +102,8 @@ def post_respondent(party, session):
 
     existing = query_respondent_by_email(party["emailAddress"].lower(), session)
     if existing:
-        logger.info("Email already exists", party_uuid=str(existing.party_uuid))
-        raise BadRequest("Email address already exists")
+        logger.info("Email already exists", party_uuid=str(existing.party_uuid), email=obfuscate_email(party["emailAddress"].lower()))
+        raise Conflict("Email address already exists")
 
     case_context = request_case(party["enrolmentCode"])
     case_id = case_context["id"]
