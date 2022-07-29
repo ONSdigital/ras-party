@@ -78,9 +78,7 @@ def post_respondent(party, session):
     """
 
     # Validation, curation and checks
-    expected = ("emailAddress", "firstName", "lastName", "password", "telephone", "enrolmentCode")
 
-    v = Validator(Exists(*expected))
     if "id" in party:
         # Note: there's not strictly a requirement to be able to pass in a UUID, this is currently supported to
         # aid with testing.
@@ -91,13 +89,15 @@ def post_respondent(party, session):
             logger.info("Invalid respondent id type", respondent_id=party["id"])
             raise BadRequest(f"'{party['id']}' is not a valid UUID format for property 'id'")
 
+    expected = ("emailAddress", "firstName", "lastName", "password", "telephone", "enrolmentCode")
+    v = Validator(Exists(*expected))
     if not v.validate(party):
         logger.debug(v.errors)
         raise BadRequest(v.errors)
 
     iac = request_iac(party["enrolmentCode"])
     if not iac.get("active"):
-        logger.info("Inactive enrolment code")
+        logger.info("Inactive enrolment code", enrolment_code=party["enrolmentCode"])
         raise BadRequest("Enrolment code is not active")
 
     existing = query_respondent_by_email(party["emailAddress"].lower(), session)
@@ -136,7 +136,7 @@ def post_respondent(party, session):
         "status": RespondentStatus.CREATED,
     }
 
-    # This might look odd but it's done in the interest of keeping the code working in the same way.
+    # This might look odd, but it's done in the interest of keeping the code working in the same way.
     # If raise_for_status in the function raises an error, it would've been caught by @with_db_session,
     # rolled back the db and raised it.  Whether that's something we want is another question.
     try:

@@ -61,7 +61,7 @@ def post_respondent_reset_password_by_email():
 def post_respondent():
     payload = request.get_json() or {}
     response = account_controller.post_respondent(payload)
-    return make_response(jsonify(response), 200)
+    return jsonify(response)
 
 
 @account_view.route("/emailverification/<token>", methods=["PUT"])

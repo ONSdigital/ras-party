@@ -646,6 +646,7 @@ Returns:
   * Posts a respondent to the database and generates their `sampleUnitRef`, `partyID` and `enrolments`.
   * If passed an `id` parameter it will use this instead of generating a new UUID.
   * Sets `businessRespondentStatus` to 'CREATED'.
+  * Returns a 200 on success, a 400 if data is missing or iac is invalid and 409 if the user email already exists.
 
 #### Example JSON Payload
 
@@ -658,7 +659,6 @@ Returns:
     "password" : "password",
     "telephone" : "01234567890",
     "enrolmentCode" : "<enrolmentCode>",
-    "sampleUnitType" : "BI"
   }
 ]
 

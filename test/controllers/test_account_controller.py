@@ -18,7 +18,6 @@ from ras_party.support.verification import generate_email_token
 from run import create_app
 
 
-# noinspection DuplicatedCode
 class TestAccountController(TestCase):
     """
     Tests the functions in the account_controller.  Note, the __wrapped__ attribute allows us to get at the function
