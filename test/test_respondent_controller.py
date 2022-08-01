@@ -1,5 +1,3 @@
-# pylint: disable=no-value-for-parameter
-
 import json
 import uuid
 from test.mocks import MockRequests, MockResponse
@@ -37,7 +35,7 @@ from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 from requests import Response
 from sqlalchemy.exc import SQLAlchemyError
-from werkzeug.exceptions import BadRequest, InternalServerError, NotFound
+from werkzeug.exceptions import Conflict, InternalServerError, NotFound
 
 from config import TestingConfig
 from ras_party.controllers import account_controller, respondent_controller
@@ -72,12 +70,13 @@ with open(f"{project_root}/test/test_data/respondent/casegroups_for_business.jso
     business_casegroups = json.load(fp)
 with open(f"{project_root}/test/test_data/respondent/cases_for_casegroup.json") as fp:
     cases_for_casegroup = json.load(fp)
+with open(f"{project_root}/test/test_data/get_active_iac.json") as fp:
+    active_iac_json = json.load(fp)
+with open(f"{project_root}/test/test_data/get_updated_iac.json") as fp:
+    updated_iac_json = json.load(fp)
 
 
 class TestRespondents(PartyTestClient):
-    """Tests Respondent functionality , use respondent controller and account controller
-    Python file name not changed so as to maintain git history"""
-
     def setUp(self):
         self.mock_requests = MockRequests()
         Requests._lib = self.mock_requests
@@ -1234,17 +1233,11 @@ class TestRespondents(PartyTestClient):
         self.mock_respondent["id"] = "123"
         self.post_to_respondents(self.mock_respondent, 400)
 
-    def test_post_respondent_twice_400(self):
+    def test_post_respondent_twice_409_conflict(self):
         self.populate_with_business()
         self.post_to_respondents(self.mock_respondent, 200)
-        response = self.post_to_respondents(self.mock_respondent, 400)
+        response = self.post_to_respondents(self.mock_respondent, 409)
         self.assertIn("Email address already exists", response["description"])
-
-    def test_post_respondent_twice_different_email(self):
-        self.populate_with_business()
-        self.post_to_respondents(self.mock_respondent, 200)
-        self.mock_respondent["emailAddress"] = "test@example.test"
-        self.post_to_respondents(self.mock_respondent, 200)
 
     def test_post_respondent_with_inactive_iac(self):
         # Given the IAC code is inactive
@@ -1356,12 +1349,10 @@ class TestRespondents(PartyTestClient):
                 "telephone": "111",
                 "enrolmentCode": "abc",
             }
-            with open("test/test_data/get_active_iac.json") as fp:
-                requested_iac.return_value = json.load(fp)
-            with open("test/test_data/get_updated_iac.json") as fp:
-                updated_iac.return_value = json.load(fp)
+            requested_iac.return_value = active_iac_json
+            updated_iac.return_value = updated_iac_json
             query("test@example.test", db.session()).return_value = None
-            with self.assertRaises(BadRequest):
+            with self.assertRaises(Conflict):
                 account_controller.post_respondent(payload)
             query.assert_called_once_with("test@example.test", db.session())
 
@@ -1971,4 +1962,4 @@ class TestRespondents(PartyTestClient):
         self.populate_with_respondent()
         mock_respondent = self.mock_respondent.copy()
         mock_respondent["emailAddress"] = "A@z.com"
-        self.post_to_respondents(payload=mock_respondent, expected_status=400)
+        self.post_to_respondents(payload=mock_respondent, expected_status=409)
