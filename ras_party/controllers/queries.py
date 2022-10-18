@@ -272,9 +272,9 @@ def update_respondent_details(respondent_data, respondent_id, session):
     respondent_details = query_respondent_by_party_uuid(respondent_id, session)
 
     if (
-        respondent_details.first_name != respondent_data["firstName"]
-        or respondent_details.last_name != respondent_data["lastName"]
-        or respondent_details.telephone != respondent_data["telephone"]
+            respondent_details.first_name != respondent_data["firstName"]
+            or respondent_details.last_name != respondent_data["lastName"]
+            or respondent_details.telephone != respondent_data["telephone"]
     ):
         session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
             {
@@ -400,6 +400,7 @@ def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_re
                 .select_from(BusinessAttributes)
                 .join(Business)
                 .filter(Business.business_ref == search_query)
+                .filter(BusinessAttributes.collection_exercise is not None)
                 .distinct()
                 .all()
             )
