@@ -399,7 +399,7 @@ def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_re
                 session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
                 .select_from(BusinessAttributes)
                 .join(Business)
-                .filter(Business.business_ref == search_query, Business.attributes is not None)
+                .filter(Business.business_ref == search_query, BusinessAttributes.collection_exercise is not None)
                 .distinct()
                 .all()
             )
@@ -416,7 +416,9 @@ def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_re
                 session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
                 .select_from(BusinessAttributes)
                 .join(Business)
-                .filter(Business.business_ref.ilike(f"%{search_query}%"), Business.attributes is not None)
+                .filter(
+                    Business.business_ref.ilike(f"%{search_query}%"), BusinessAttributes.collection_exercise is not None
+                )
                 .order_by(Business.business_ref.asc())
                 .distinct()
                 .limit(limit)
