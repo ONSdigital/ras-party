@@ -399,7 +399,7 @@ def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_re
                 session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
                 .select_from(BusinessAttributes)
                 .join(Business)
-                .filter(Business.business_ref == search_query, BusinessAttributes.collection_exercise is not None)
+                .filter(Business.business_ref == search_query)
                 .distinct()
                 .all()
             )
@@ -416,9 +416,7 @@ def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_re
                 session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
                 .select_from(BusinessAttributes)
                 .join(Business)
-                .filter(
-                    Business.business_ref.ilike(f"%{search_query}%"), BusinessAttributes.collection_exercise is not None
-                )
+                .filter(Business.business_ref.ilike(f"%{search_query}%"))
                 .order_by(Business.business_ref.asc())
                 .distinct()
                 .limit(limit)
@@ -430,7 +428,6 @@ def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_re
             # hence this 'if' logic will avoids such searches and frontend will ask the user to refine their search
             if pages.scalar() > max_rec:
                 return [], estimated_total_records
-            print(result)
             return result, estimated_total_records
 
 
