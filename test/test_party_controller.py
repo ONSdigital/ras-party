@@ -175,7 +175,7 @@ class TestParties(PartyTestClient):
         mock_business = MockBusiness().as_business()
         party_id = self.post_to_businesses(mock_business, 200)["id"]
 
-        self.get_business_by_id(party_id, 404)
+        self.get_business_by_id(party_id, 400)
 
     def test_get_business_by_id_and_collection_exercise_returns_correct_representation(self):
         # Post business and link to sample/collection exercise
@@ -266,7 +266,7 @@ class TestParties(PartyTestClient):
         mock_party_b = MockBusiness().as_party()
         party_id_b = self.post_to_parties(mock_party_b, 200)["id"]
 
-        self.get_party_by_id("B", party_id_b, 404)
+        self.get_party_by_id("B", party_id_b, 400)
 
     def test_existing_business_can_be_updated(self):
         mock_business = MockBusiness().attributes(version=1)
