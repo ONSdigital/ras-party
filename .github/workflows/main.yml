@@ -38,8 +38,6 @@ jobs:
           docker-compose up -d
           pip install pipenv
           pipenv install --dev
-      - name: Run tests
-        run: make test
       - name: Authenticate with Google Cloud
         id: auth
         uses: google-github-actions/auth@v0
