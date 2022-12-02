@@ -1,3 +1,4 @@
+import faulthandler
 import logging
 import os
 from json import loads
@@ -101,6 +102,7 @@ def initialise_db(app):
 
 
 if __name__ == "__main__":
+    faulthandler.enable()
     app = create_app()
     with open(app.config["PARTY_SCHEMA"]) as io:
         app.config["PARTY_SCHEMA"] = loads(io.read())
