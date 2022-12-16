@@ -3,7 +3,7 @@ import os
 from json import loads
 
 import structlog
-from flask import Flask, _app_ctx_stack
+from flask import Flask
 from flask_cors import CORS
 from retrying import RetryError, retry
 from sqlalchemy import column, create_engine, text
@@ -50,12 +50,9 @@ def create_app(config=None):
 def create_database(db_connection, db_schema):
     from ras_party.models import models
 
-    def current_request():
-        return _app_ctx_stack.__ident_func__()
-
     engine = create_engine(db_connection)
-    session = scoped_session(sessionmaker(), scopefunc=current_request)
-    session.configure(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    connection = engine.connect()
+    session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=connection))
     engine.session = session
     models.Base.query = session.query_property()
 
