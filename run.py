@@ -50,7 +50,7 @@ def create_app(config=None):
 def create_database(db_connection, db_schema):
     from ras_party.models import models
 
-    engine = create_engine(db_connection, echo=True)
+    engine = create_engine(db_connection)
     session = scoped_session(sessionmaker())
     session.configure(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
     engine.session = session
