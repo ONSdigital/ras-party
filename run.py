@@ -64,14 +64,15 @@ def create_database(db_connection, db_schema):
             t.schema = db_schema
 
         q = exists(
-            select([column("schema_name")])
+            select(column("schema_name"))
             .select_from(text("information_schema.schemata"))
             .where(text(f"schema_name = '{db_schema}'"))
         )
 
         if not session().query(q).scalar():
             logger.info("Creating schema", schema=db_schema)
-            engine.execute(f"CREATE SCHEMA {db_schema}")
+            session().execute(f"CREATE SCHEMA {db_schema}")
+            session().commit()
 
             logger.info("Creating database tables")
             models.Base.metadata.create_all(engine)

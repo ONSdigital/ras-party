@@ -12,7 +12,6 @@ from test.fixtures import (
 
 
 class MockResponse:
-
     status_code = 200
 
     def __init__(self, payload, status_code=None):
@@ -80,7 +79,6 @@ class MockRequests:
             assert self._calls.get(uri) == expected_payload
 
     class Put:
-
         status_code = 200
 
         def __init__(self, *args, **kwargs):

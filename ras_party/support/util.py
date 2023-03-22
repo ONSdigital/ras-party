@@ -29,7 +29,6 @@ def model_to_dict(model, exclude=None):
 
 
 def partition_dict(d, in_left):
-
     left = {}
     right = {}
 
@@ -43,7 +42,6 @@ def partition_dict(d, in_left):
 
 
 def flatten_keys(d, prefix=None):
-
     prefix = prefix or ""
     result = []
 

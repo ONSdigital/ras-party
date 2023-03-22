@@ -110,7 +110,6 @@ def get_party_with_enrolments_filtered_by_survey(sample_unit_type, party_id, sur
 
     filtered_associations = []
     for association in party["associations"]:
-
         filtered_association = {"partyId": association["partyId"]}
 
         filtered_enrolments = filter_enrolments(association["enrolments"], survey_id, enrolment_status)

@@ -3,7 +3,6 @@ from flask import current_app
 
 
 class Requests:
-
     _lib = requests
 
     @staticmethod

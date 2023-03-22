@@ -172,7 +172,6 @@ def _add_enrolment_and_auth(business, business_id, case_id, party, session, surv
     """
     try:
         with session.begin_nested():
-
             # Use a sub transaction to store party data
             # Context manager will manage commits/rollback
 

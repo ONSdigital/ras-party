@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 
 from flask import current_app
 from flask_testing import TestCase
+from sqlalchemy import text
 
 from logger_config import logger_initial_config
 from ras_party.models.models import Business, BusinessRespondent, Enrolment, Respondent
@@ -46,7 +47,7 @@ class PartyTestClient(TestCase):
 
     def tearDown(self):
         connection = current_app.db.connect()
-        connection.execute(f"drop schema {current_app.config['DATABASE_SCHEMA']} cascade;")
+        connection.execute(text(f"drop schema {current_app.config['DATABASE_SCHEMA']} cascade;"))
         connection.close()
 
     def populate_with_business(self, business_id=DEFAULT_BUSINESS_UUID):
@@ -161,7 +162,6 @@ class PartyTestClient(TestCase):
         return json.loads(response.get_data(as_text=True))
 
     def get_respondents_by_name_email(self, first_name, last_name, email, page=1, limit=10, expected_status=200):
-
         url_params = {}
 
         url = "/party-api/v1/respondents?"

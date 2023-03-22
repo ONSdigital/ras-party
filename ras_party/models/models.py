@@ -17,8 +17,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.types import Enum
 from werkzeug.exceptions import BadRequest
 
@@ -74,7 +73,6 @@ class Business(Base):
 
     @staticmethod
     def from_party_dict(party):
-
         b = Business(party_uuid=party.get("id", uuid.uuid4()), business_ref=party["sampleUnitRef"])
         ba = BusinessAttributes(business_id=b.party_uuid, sample_summary_id=party["sampleSummaryId"])
         ba.attributes = party.get("attributes")

@@ -448,7 +448,6 @@ def _add_pending_survey_respondent(session, translated_party, party):
     """
     try:
         with session.begin_nested():
-
             # Use a sub transaction to store party data
             # Context manager will manage commits/rollback
 
