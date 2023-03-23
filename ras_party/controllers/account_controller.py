@@ -1095,20 +1095,6 @@ def request_collection_exercise(collection_exercise_id):
     return response.json()
 
 
-def request_survey(survey_id):
-    """
-    Contact the survey service to get the details of a survey from its uuid.
-
-    :param survey_id: A uuid of a survey
-    """
-    survey_url = f'{current_app.config["SURVEY_URL"]}/surveys/{survey_id}'
-    logger.info("Retrieving survey information from the survey service", survey_id=survey_id)
-    response = Requests.get(survey_url)
-    response.raise_for_status()
-    logger.info("Successfully retrieved survey information from the survey service", survey_id=survey_id)
-    return response.json()
-
-
 def request_casegroups_for_business(business_id):
     logger.info("Retrieving casegroups for business", business_id=business_id)
     url = f'{current_app.config["CASE_URL"]}/casegroups/partyid/{business_id}'
