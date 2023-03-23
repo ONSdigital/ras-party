@@ -16,12 +16,11 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.types import Enum
 from werkzeug.exceptions import BadRequest
 
-from ras_party.models import GUID
 from ras_party.support.util import filter_falsey_values, partition_dict
 
 Base = declarative_base()
@@ -34,7 +33,7 @@ class Business(Base):
     UNIT_TYPE = "B"
 
     # TODO: consider using postgres uuid for uuid pkey
-    party_uuid = Column(GUID, unique=True, primary_key=True)
+    party_uuid = Column(UUID, unique=True, primary_key=True)
     business_ref = Column(Text, unique=True)
     respondents = relationship("BusinessRespondent", back_populates="business")
     attributes = relationship(
@@ -185,7 +184,7 @@ class BusinessAttributes(Base):
     __tablename__ = "business_attributes"
 
     id = Column("id", Integer(), primary_key=True)
-    business_id = Column(GUID, ForeignKey("business.party_uuid"))
+    business_id = Column(UUID, ForeignKey("business.party_uuid"))
     sample_summary_id = Column(Text)
     collection_exercise = Column(Text)
     attributes = Column(JSONB)
@@ -230,7 +229,7 @@ class BusinessRespondentStatus(enum.IntEnum):
 class BusinessRespondent(Base):
     __tablename__ = "business_respondent"
 
-    business_id = Column(GUID, ForeignKey("business.party_uuid"), primary_key=True)
+    business_id = Column(UUID, ForeignKey("business.party_uuid"), primary_key=True)
     respondent_id = Column(Integer, ForeignKey("respondent.id"), primary_key=True)
     status = Column("status", Enum(BusinessRespondentStatus), default=BusinessRespondentStatus.ACTIVE)
     effective_from = Column(DateTime, default=datetime.datetime.utcnow)
@@ -253,10 +252,10 @@ class PendingEnrolment(Base):
     __tablename__ = "pending_enrolment"
 
     id = Column(Integer, primary_key=True)
-    case_id = Column(GUID)
+    case_id = Column(UUID)
     respondent_id = Column(Integer, ForeignKey("respondent.id"))
-    business_id = Column(GUID)
-    survey_id = Column(GUID)
+    business_id = Column(UUID)
+    survey_id = Column(UUID)
 
     created_on = Column(DateTime, default=datetime.datetime.utcnow)
     respondent = relationship("Respondent")
@@ -272,7 +271,7 @@ class Respondent(Base):
 
     id = Column(Integer, primary_key=True)
     businesses = relationship("BusinessRespondent", back_populates="respondent")
-    party_uuid = Column(GUID, unique=True)
+    party_uuid = Column(UUID, unique=True)
     status = Column("status", Enum(RespondentStatus), default=RespondentStatus.CREATED)
     email_address = Column(Text, unique=True)
     pending_email_address = Column(Text, unique=True)
@@ -355,7 +354,7 @@ class EnrolmentStatus(enum.IntEnum):
 class Enrolment(Base):
     __tablename__ = "enrolment"
 
-    business_id = Column(GUID, primary_key=True)
+    business_id = Column(UUID, primary_key=True)
     respondent_id = Column(Integer, primary_key=True)
     survey_id = Column(Text, primary_key=True)
     status = Column("status", Enum(EnrolmentStatus), default=EnrolmentStatus.PENDING)
@@ -377,11 +376,11 @@ class Enrolment(Base):
 class PendingSurveys(Base):
     __tablename__ = "pending_surveys"
     email_address = Column(Text, primary_key=True)
-    business_id = Column(GUID, primary_key=True)
+    business_id = Column(UUID, primary_key=True)
     survey_id = Column(Text, primary_key=True)
     time_shared = Column(DateTime, default=datetime.datetime.utcnow)
-    shared_by = Column(GUID)
-    batch_no = Column(GUID, default=uuid.uuid4)
+    shared_by = Column(UUID)
+    batch_no = Column(UUID, default=uuid.uuid4)
     is_transfer = Column(Boolean, default=False)
     Index("pending_shares_business_idx", business_id)
     Index("pending_shares_email_address_idx", email_address)

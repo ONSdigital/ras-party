@@ -99,7 +99,7 @@ class TestBusinessesSearch(PartyTestClient):
         business = self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business)
 
-        # when user searches by multiple key words in name
+        # when user searches by multiple keywords in name
         response = self.get_businesses_search(
             query_string={"query": f"{business['attributes']['runame1']}" f" {business['attributes']['runame3']}"}
         )
@@ -165,7 +165,7 @@ class TestBusinessesSearch(PartyTestClient):
         self.assertEqual(len(response["businesses"]), 5)
         self.assertEqual(response["total_business_count"], setup_count)
 
-    def test_business_search_returns_empty_list_if_no_reults(self):
+    def test_business_search_returns_empty_list_if_no_results(self):
         response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=3, limit=10)
         self.assertEqual(len(response["businesses"]), 0)
 

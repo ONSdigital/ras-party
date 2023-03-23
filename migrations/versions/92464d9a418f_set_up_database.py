@@ -4,12 +4,10 @@ import sys
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 # hack to allow for imports from project directory
 sys.path.append(os.path.abspath(os.getcwd()))
-
-from ras_party.models import GUID  # NOQA # pylint: disable=wrong-import-position
 
 # revision identifiers, used by Alembic.
 
@@ -23,7 +21,7 @@ def upgrade():
     op.create_table(
         "business_attributes",
         sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("business_id", GUID),
+        sa.Column("business_id", UUID),
         sa.Column("sample_summary_id", sa.Text),
         sa.Column("collection_exercise", sa.Text),
         sa.Column("attributes", JSONB),
