@@ -60,11 +60,6 @@ class PartyTestClient(TestCase):
     def auth_headers(self):
         return {"Authorization": "Basic %s" % base64.b64encode(b"username:password").decode("ascii")}
 
-    def get_info(self, expected_status=200):
-        response = self.client.open("/info", method="GET")
-        self.assertStatus(response, expected_status)
-        return json.loads(response.get_data(as_text=True))
-
     def post_to_parties(self, payload, expected_status):
         response = self.client.post(
             "/party-api/v1/parties",
