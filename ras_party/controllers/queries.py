@@ -424,8 +424,8 @@ def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_re
             )
             estimated_total_records = pages.scalar()
             # we don't want to overload database with the search which retrieves more than 10000 records
-            # as its irrelevant to show so many records as a paginated search on frontend
-            # hence this 'if' logic will avoids such searches and frontend will ask the user to refine their search
+            # as it's irrelevant to show so many records as a paginated search on frontend
+            # hence this 'if' logic will avoid such searches and frontend will ask the user to refine their search
             if pages.scalar() > max_rec:
                 return [], estimated_total_records
             return result, estimated_total_records

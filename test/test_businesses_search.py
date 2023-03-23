@@ -1,16 +1,9 @@
 import copy
-from test.mocks import MockRequests
 from test.party_client import PartyTestClient
 from test.test_data.mock_business import DEFAULT_ATTRIBUTES, MockBusiness
 
-from ras_party.support.requests_wrapper import Requests
-
 
 class TestBusinessesSearch(PartyTestClient):
-    def setUp(self):
-        self.mock_requests = MockRequests()
-        Requests._lib = self.mock_requests
-
     def _make_business_attributes_active(self, mock_business):
         sample_id = mock_business["sampleSummaryId"]
         put_data = {"collectionExerciseId": "test_id"}
@@ -86,7 +79,7 @@ class TestBusinessesSearch(PartyTestClient):
         # when user searches by partial name
         response = self.get_businesses_search(query_string={"query": business["name"][5:]})
 
-        # then th correct business is returned
+        # then the correct business is returned
         self.assertEqual(len(response["businesses"]), 1)
         self.assertEqual(response["businesses"][0]["ruref"], business["sampleUnitRef"])
         self.assertEqual(response["businesses"][0]["name"], business["name"])
@@ -185,7 +178,7 @@ class TestBusinessesSearch(PartyTestClient):
     def test_get_business_by_search_inactive_business_attributes(self):
         mock_business = MockBusiness().as_business()
 
-        # given there is a business but it's attributes are not linked to a collection exercise (inactive)
+        # given there is a business but its attributes are not linked to a collection exercise (inactive)
         name = self.post_to_businesses(mock_business, 200)["name"]
 
         # when user searches by partial name
