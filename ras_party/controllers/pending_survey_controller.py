@@ -51,16 +51,15 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 @with_query_only_db_session
-def get_users_enrolled_and_pending_survey_against_business_and_survey(business_id, survey_id, is_transfer, session):
+def get_users_enrolled_and_pending_survey_against_business_and_survey(
+    business_id: str, survey_id: str, is_transfer: bool, session
+) -> int:
     """
     Get total users count who are already enrolled and pending share survey against business id and survey id
     Returns total user count
     :param business_id: business party id
-    :type business_id: str
     :param survey_id: survey id
-    :type survey_id: str
     :param is_transfer: if the request is to transfer share
-    :type is_transfer: bool
     :param session: db session
     :rtype: int
     """
@@ -75,13 +74,11 @@ def get_users_enrolled_and_pending_survey_against_business_and_survey(business_i
 
 
 @with_db_session
-def pending_survey_deletion(batch_no, session):
+def pending_survey_deletion(batch_no: str, session):
     """
-    Delete pending survey record against batch number
-    :param batch_no: batch number
-    :type batch_no: str
+    Delete pending survey record against batch no
+    :param batch_no: batch_no
     :param session:
-    :type session:
     """
     logger.info("Retrieving pending share record against batch number", batch_no=batch_no)
     pending_surveys = session.query(PendingSurveys).filter(PendingSurveys.batch_no == batch_no)
@@ -97,16 +94,15 @@ def pending_survey_deletion(batch_no, session):
 
 
 @with_db_session
-def pending_survey_create(business_id, survey_id, email_address, shared_by, batch_number, is_transfer, session):
+def pending_survey_create(
+    business_id: str, survey_id: str, email_address: str, shared_by, batch_number, is_transfer, session
+):
     """
     creates a new record for pending survey
     Returns void
     :param business_id: business party id
-    :type business_id: str
     :param survey_id: survey id
-    :type survey_id: str
     :param email_address: email_address
-    :type email_address: str
     :param shared_by: respondent_party_uuid
     :type shared_by: uuid
     :param session: db session
@@ -223,6 +219,8 @@ def accept_pending_survey(session, batch_no, new_respondent=None):
                 logger.error("Could not find business", business_id=business_id)
                 raise InternalServerError("Could not locate business when creating business association")
             business_respondent = BusinessRespondent(business=business, respondent=new_respondent)
+            session.add(business_respondent)
+
         if not is_already_enrolled(survey_id, new_respondent.id, business_id, session):
             try:
                 with session.begin_nested():
