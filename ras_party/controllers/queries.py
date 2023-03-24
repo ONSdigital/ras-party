@@ -1,6 +1,5 @@
 import logging
 import re
-from uuid import UUID
 
 import structlog
 from sqlalchemy import and_, distinct, func, or_
@@ -202,7 +201,7 @@ def query_respondent_by_party_uuid(party_uuid, session):
     :return: respondent or none
     """
     logger.info("Querying respondents by party_uuid", party_uuid=party_uuid)
-    return session.query(Respondent).filter(Respondent.party_uuid == UUID(party_uuid)).first()
+    return session.query(Respondent).filter(Respondent.party_uuid == party_uuid).first()
 
 
 def query_respondent_by_email(email, session):
