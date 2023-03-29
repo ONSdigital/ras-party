@@ -1668,7 +1668,6 @@ class TestRespondents(PartyTestClient):
         self.validate_respondent_claim("", "SomeBusId", "SomeSurveyId", expected_status=400)
 
     def test_validate_claim_returns_200_if_respondent_has_a_claim(self):
-
         self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
         self.populate_with_business()
         self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID, respondent_id=DEFAULT_RESPONDENT_UUID)
@@ -1699,7 +1698,6 @@ class TestRespondents(PartyTestClient):
         )
 
     def test_validate_claim_returns_invalid_if_respondent_not_active(self):
-
         self.populate_with_respondent(respondent=self.mock_respondent_with_id_suspended)
         self.populate_with_business()
         self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID, respondent_id=DEFAULT_RESPONDENT_UUID)
@@ -1715,7 +1713,6 @@ class TestRespondents(PartyTestClient):
         )
 
     def test_validate_claim_returns_invalid_if_not_associated_to_business(self):
-
         self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
         self.populate_with_business()
         self.associate_business_and_respondent(business_id=DEFAULT_BUSINESS_UUID, respondent_id=DEFAULT_RESPONDENT_UUID)

@@ -34,7 +34,6 @@ class Config(object):
     COLLECTION_EXERCISE_URL = os.getenv("COLLECTION_EXERCISE_URL")
     FRONTSTAGE_URL = os.getenv("FRONTSTAGE_URL")
     IAC_URL = os.getenv("IAC_URL")
-    SURVEY_URL = os.getenv("SURVEY_URL")
 
     GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "test-project-id")
     PUBSUB_TOPIC = os.getenv("PUBSUB_TOPIC", "ras-rm-notify-test")
@@ -113,7 +112,6 @@ class TestingConfig(DevelopmentConfig):
     COLLECTION_EXERCISE_URL = "http://mockhost:2222"
     FRONTSTAGE_URL = "http://dummy.ons.gov.uk"
     IAC_URL = "http://mockhost:6666"
-    SURVEY_URL = "http://mockhost:3333"
     NOTIFY_URL = "http://mockhost:5555/emails/"
 
     GOOGLE_CLOUD_PROJECT = "test-project-id"

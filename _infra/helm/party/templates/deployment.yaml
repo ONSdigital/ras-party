@@ -170,12 +170,6 @@ spec:
             {{- else }}
             value: "http://$(NOTIFY_GATEWAY_SERVICE_HOST):$(NOTIFY_GATEWAY_SERVICE_PORT)/emails/"
             {{- end }}
-          - name: SURVEY_URL
-            {{- if .Values.dns.enabled }}
-            value: "http://survey.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
-            {{- else }}
-            value: "http://$(SURVEY_SERVICE_HOST):$(SURVEY_SERVICE_PORT)"
-            {{- end }}
           - name: PUBSUB_TOPIC
             value: "{{ .Values.gcp.topic }}"
           - name: NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE

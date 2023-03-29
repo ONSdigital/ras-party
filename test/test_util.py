@@ -16,7 +16,7 @@ class TestUtil(TestCase):
     def test_obfuscate_email(self):
         """Test obfuscate_email correctly changes inputted emails"""
 
-        testAddresses = {
+        test_addresses = {
             "example@example.com": "e*****e@e*********m",
             "prefix@domain.co.uk": "p****x@d**********k",
             "first.name@place.gov.uk": "f********e@p**********k",
@@ -30,5 +30,5 @@ class TestUtil(TestCase):
             "@gmail.com": "@g*******m",
         }
 
-        for test in testAddresses:
-            self.assertEqual(obfuscate_email(test), testAddresses[test])
+        for test in test_addresses:
+            self.assertEqual(obfuscate_email(test), test_addresses[test])

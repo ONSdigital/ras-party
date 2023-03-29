@@ -38,11 +38,9 @@ DEFAULT_ATTRIBUTES = {
 
 
 class MockBusiness:
-
     REQUIRED_ATTRIBUTES = ["id", "sampleUnitType", "sampleUnitRef", "sampleSummaryId"]
 
     def __init__(self, attributes=DEFAULT_ATTRIBUTES):
-
         ruref = str(random.randrange(100000000, 999999999))
 
         self._attributes = copy.deepcopy(attributes)

@@ -85,14 +85,13 @@ See [Confluence](https://digitaleq.atlassian.net/wiki/display/RASB/Party) for ad
 ## Configuration
 Environment variables available for configuration are listed below:
 
-| Environment Variable    | Description                                                   | Default
-|-------------------------|---------------------------------------------------------------|-------------------------------
-| LOGGING_LEVEL           | Level of the logging                                          | 'INFO'
-| DATABASE_URI            | URI used to connect to the database                           | 'postgresql://postgres:postgres@localhost:6432/postgres'
-| AUTH_URL                | URL of the auth service                                       |
-| CASE_URL                | URL of the case service                                       |
-| COLLECTION_EXERCISE_URL | URL of the collection exercise service                        |
-| FRONTSTAGE_URL          | URL of the respondent facing website                          |
-| IAC_URL                 | URL of the iac service                                        |
-| SURVEY_URL              | URL of the survey service                                     |
-| NOTIFY_URL              | URL of the notify-gateway service                             | http://notify-gateway-service/emails/
+| Environment Variable    | Description                            | Default                                                  |
+|-------------------------|----------------------------------------|----------------------------------------------------------|
+| LOGGING_LEVEL           | Level of the logging                   | 'INFO'                                                   |
+| DATABASE_URI            | URI used to connect to the database    | 'postgresql://postgres:postgres@localhost:5432/postgres' |
+| AUTH_URL                | URL of the auth service                |                                                          |
+| CASE_URL                | URL of the case service                |                                                          |
+| COLLECTION_EXERCISE_URL | URL of the collection exercise service |                                                          |
+| FRONTSTAGE_URL          | URL of the respondent facing website   |                                                          |
+| IAC_URL                 | URL of the iac service                 |                                                          |
+| NOTIFY_URL              | URL of the notify-gateway service      | http://notify-gateway-service/emails/                    |

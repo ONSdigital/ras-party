@@ -52,7 +52,7 @@ def create_database(db_connection, db_schema):
 
     engine = create_engine(db_connection)
     session = scoped_session(sessionmaker())
-    session.configure(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)
+    session.configure(bind=engine, autoflush=False, expire_on_commit=False)
     engine.session = session
     models.Base.query = session.query_property()
 
@@ -64,14 +64,15 @@ def create_database(db_connection, db_schema):
             t.schema = db_schema
 
         q = exists(
-            select([column("schema_name")])
+            select(column("schema_name"))
             .select_from(text("information_schema.schemata"))
             .where(text(f"schema_name = '{db_schema}'"))
         )
 
         if not session().query(q).scalar():
             logger.info("Creating schema", schema=db_schema)
-            engine.execute(f"CREATE SCHEMA {db_schema}")
+            session().execute(text(f"CREATE SCHEMA {db_schema}"))
+            session().commit()
 
             logger.info("Creating database tables")
             models.Base.metadata.create_all(engine)

@@ -1,16 +1,9 @@
 import copy
-from test.mocks import MockRequests
 from test.party_client import PartyTestClient
 from test.test_data.mock_business import DEFAULT_ATTRIBUTES, MockBusiness
 
-from ras_party.support.requests_wrapper import Requests
-
 
 class TestBusinessesSearch(PartyTestClient):
-    def setUp(self):
-        self.mock_requests = MockRequests()
-        Requests._lib = self.mock_requests
-
     def _make_business_attributes_active(self, mock_business):
         sample_id = mock_business["sampleSummaryId"]
         put_data = {"collectionExerciseId": "test_id"}
@@ -86,7 +79,7 @@ class TestBusinessesSearch(PartyTestClient):
         # when user searches by partial name
         response = self.get_businesses_search(query_string={"query": business["name"][5:]})
 
-        # then th correct business is returned
+        # then the correct business is returned
         self.assertEqual(len(response["businesses"]), 1)
         self.assertEqual(response["businesses"][0]["ruref"], business["sampleUnitRef"])
         self.assertEqual(response["businesses"][0]["name"], business["name"])
@@ -99,7 +92,7 @@ class TestBusinessesSearch(PartyTestClient):
         business = self.post_to_businesses(mock_business, 200)
         self._make_business_attributes_active(mock_business)
 
-        # when user searches by multiple key words in name
+        # when user searches by multiple keywords in name
         response = self.get_businesses_search(
             query_string={"query": f"{business['attributes']['runame1']}" f" {business['attributes']['runame3']}"}
         )
@@ -165,7 +158,7 @@ class TestBusinessesSearch(PartyTestClient):
         self.assertEqual(len(response["businesses"]), 5)
         self.assertEqual(response["total_business_count"], setup_count)
 
-    def test_business_search_returns_empty_list_if_no_reults(self):
+    def test_business_search_returns_empty_list_if_no_results(self):
         response = self.get_businesses_search(200, query_string={"query": "Runame-1"}, page=3, limit=10)
         self.assertEqual(len(response["businesses"]), 0)
 
@@ -185,7 +178,7 @@ class TestBusinessesSearch(PartyTestClient):
     def test_get_business_by_search_inactive_business_attributes(self):
         mock_business = MockBusiness().as_business()
 
-        # given there is a business but it's attributes are not linked to a collection exercise (inactive)
+        # given there is a business but its attributes are not linked to a collection exercise (inactive)
         name = self.post_to_businesses(mock_business, 200)["name"]
 
         # when user searches by partial name

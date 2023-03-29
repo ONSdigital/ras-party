@@ -19,7 +19,6 @@ def random_char(y):
 
 
 try:
-
     connection = psycopg2.connect(Config.DATABASE_URI)
     cursor = connection.cursor()
     start = datetime.now()

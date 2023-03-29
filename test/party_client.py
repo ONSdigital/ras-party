@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 
 from flask import current_app
 from flask_testing import TestCase
+from sqlalchemy import text
 
 from logger_config import logger_initial_config
 from ras_party.models.models import Business, BusinessRespondent, Enrolment, Respondent
@@ -46,7 +47,8 @@ class PartyTestClient(TestCase):
 
     def tearDown(self):
         connection = current_app.db.connect()
-        connection.execute(f"drop schema {current_app.config['DATABASE_SCHEMA']} cascade;")
+        connection.execute(text(f"drop schema {current_app.config['DATABASE_SCHEMA']} cascade;"))
+        connection.commit()
         connection.close()
 
     def populate_with_business(self, business_id=DEFAULT_BUSINESS_UUID):
@@ -57,11 +59,6 @@ class PartyTestClient(TestCase):
     @property
     def auth_headers(self):
         return {"Authorization": "Basic %s" % base64.b64encode(b"username:password").decode("ascii")}
-
-    def get_info(self, expected_status=200):
-        response = self.client.open("/info", method="GET")
-        self.assertStatus(response, expected_status)
-        return json.loads(response.get_data(as_text=True))
 
     def post_to_parties(self, payload, expected_status):
         response = self.client.post(
@@ -161,7 +158,6 @@ class PartyTestClient(TestCase):
         return json.loads(response.get_data(as_text=True))
 
     def get_respondents_by_name_email(self, first_name, last_name, email, page=1, limit=10, expected_status=200):
-
         url_params = {}
 
         url = "/party-api/v1/respondents?"
@@ -277,7 +273,7 @@ class PartyTestClient(TestCase):
 
     def get_businesses_search(self, expected_status=200, query_string=None, page=1, limit=100):
         response = self.client.get(
-            f"/party-api/v1/businesses/search?" f"query_string={query_string}&page={page}&limit={limit}",
+            f"/party-api/v1/businesses/search?query_string={query_string}&page={page}&limit={limit}",
             headers=self.auth_headers,
         )
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))

@@ -24,7 +24,6 @@ class ValidatorBase:
 
 
 class Exists(ValidatorBase):
-
     ERROR_MESSAGE = "Required key '{}' is missing."
 
     def __init__(self, *keys):
