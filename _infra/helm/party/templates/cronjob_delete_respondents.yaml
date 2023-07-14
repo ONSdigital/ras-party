@@ -3,6 +3,7 @@ kind: CronJob
 metadata:
   name: {{ .Values.crons.markForDeletionScheduler.name }}
 spec:
+  suspend: true
   schedule: "{{ .Values.crons.markForDeletionScheduler.cron }}"
   jobTemplate:
     spec:
