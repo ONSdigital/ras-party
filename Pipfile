@@ -25,6 +25,7 @@ structlog = "*"
 requestsdefaulter = "*"
 psycopg2-binary = "*"
 werkzeug = "*"
+certifi = "*"
 
 [dev-packages]
 black = "*"
