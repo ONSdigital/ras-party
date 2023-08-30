@@ -746,6 +746,10 @@ def put_email_verification(token, tran, session):
         # We set the user as verified on the OAuth2 server.
         set_user_verified(email_address)
 
+    # Delete password verification token and reset the counter
+    delete_respondent_password_token(respondent.party_uuid, respondent.password_verification_token)
+    reset_password_counter(respondent.party_uuid)
+
     return respondent.to_respondent_dict()
 
 
