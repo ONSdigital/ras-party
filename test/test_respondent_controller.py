@@ -1225,6 +1225,20 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(db_respondent.password_reset_counter, 0)
         self.assertEqual(response["status"], RespondentStatus.ACTIVE.name)
 
+    def test_email_verification_no_password_reset_token(self):
+        self.populate_with_respondent()
+        db_respondent = respondents()[0]
+        self.assertIsNotNone(db_respondent.password_verification_token)
+        self.delete_password_verification_token(db_respondent.party_uuid, db_respondent.password_verification_token)
+        self.reset_password_reset_counter(db_respondent.party_uuid)
+
+        token = self.generate_valid_token_from_email(db_respondent.email_address)
+        response = self.put_email_verification(token, 200)
+        db_respondent = respondents()[0]
+        self.assertIsNone(db_respondent.password_verification_token)
+        self.assertEqual(db_respondent.password_reset_counter, 0)
+        self.assertEqual(response["status"], RespondentStatus.ACTIVE.name)
+
     def test_post_respondent_with_payload_returns_200(self):
         self.populate_with_business()
         self.post_to_respondents(self.mock_respondent, 200)
