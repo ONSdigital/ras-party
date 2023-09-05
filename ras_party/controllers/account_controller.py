@@ -723,9 +723,18 @@ def put_email_verification(token, tran, session):
         logger.info("Attempting to find respondent by pending email address")
         # When changing contact details, unverified new email is in pending_email_address
         respondent = query_respondent_by_pending_email(email_address, session)
+        print("here1")
 
         if respondent:
             update_verified_email_address(respondent, tran)
+            print("here")
+            if not respondent.pending_email_address and respondent.password_verification_token:
+                # Reset password token fields in the database since they are linked to the old email
+                print("here1")
+                delete_respondent_password_verification_token(respondent.party_uuid, session)
+                print("here2")
+                reset_password_reset_counter(respondent.party_uuid, session)
+                print("here3")
         else:
             logger.info("Unable to find respondent by pending email")
             raise NotFound("Unable to find user while checking email verification token")
@@ -745,15 +754,6 @@ def put_email_verification(token, tran, session):
 
         # We set the user as verified on the OAuth2 server.
         set_user_verified(email_address)
-
-    if not respondent.pending_email_address and respondent.password_verification_token:
-        if not respondent.password_verification_token:
-            logger.info("Verification token not found")
-            raise NotFound("Verification token not found")
-
-        # Reset password token fields in the database since they are linked to the old email
-        delete_respondent_password_verification_token(respondent.party_uuid, session)
-        reset_password_reset_counter(respondent.party_uuid, session)
 
     return respondent.to_respondent_dict()
 

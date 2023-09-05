@@ -435,30 +435,14 @@ class PartyTestClient(TestCase):
         response = self.client.delete(f"/party-api/v1/pending-surveys/{batch_no}", headers=self.auth_headers)
         self.assertStatus(response, expected_status)
 
-    def get_password_verification_token(self, party_id, expected_status=200):
-        response = self.client.get(f"/party-api/v1/respondents/{party_id}/password-verification-token")
-        self.assertStatus(response, expected_status)
-        return response.json
-
-    def post_password_verification_token(self, party_id, payload, expected_status=200):
-        response = self.client.post(
-            f"/party-api/v1/respondents/{party_id}/password-verification-token", json=payload, headers=self.auth_headers
-        )
-        self.assertStatus(response, expected_status, response.json)
-
-    def delete_password_verification_token(self, party_id, token):
+    def delete_password_verification_token(self, party_id, token, expected_status=200):
         response = self.client.delete(
             f"/party-api/v1/respondents/{party_id}/password-verification-token/{token}", headers=self.auth_headers
         )
-        self.assertStatus(response, 200)
+        self.assertStatus(response, expected_status)
 
-    def get_password_reset_counter(self, party_id):
-        response = self.client.get(f"/party-api/v1/respondents/{party_id}/password-reset-counter")
-        self.assertStatus(response, 200)
-        return response.json
-
-    def reset_password_reset_counter(self, party_id):
+    def reset_password_reset_counter(self, party_id, expected_status=200):
         response = self.client.delete(
             f"/party-api/v1/respondents/{party_id}/password-reset-counter", headers=self.auth_headers
         )
-        self.assertStatus(response, 200)
+        self.assertStatus(response, expected_status)
