@@ -1215,19 +1215,14 @@ class TestRespondents(PartyTestClient):
             account_controller.put_email_verification(token)
             query.assert_called_once_with("test@example.test", db.session())
 
-    # def test_token_removed_on_email_update(self):
-    #     respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_pending_email)
-    #     print(respondent.password_verification_token)
-    #     print(respondent.email_address)
-    #     print(respondent.pending_email_address)
-    #     token = self.generate_valid_token_from_email(respondent.email_address)
-    #     response = self.put_email_verification(token, 200)
-    #     print(response)
-    #     print(respondent.pending_email_address)
-    #     # db_respondent = respondents()[0]
-    #     print(respondent.password_verification_token)
-    #     self.assertIsNone(respondent.password_verification_token)
-    #     self.assertEqual(respondent.password_reset_counter, 0)
+    def test_token_removed_on_email_update(self):
+        self.populate_with_respondent(respondent=self.mock_respondent_with_pending_email)
+        respondent = respondents()[0]
+        token = self.generate_valid_token_from_email(respondent.pending_email_address)
+        self.put_email_verification(token, 200)
+        respondent = respondents()[0]
+        self.assertIsNone(respondent.password_verification_token)
+        self.assertEqual(respondent.password_reset_counter, 0)
 
     def test_email_verification_no_password_reset_token(self):
         respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_pending_email)
@@ -1235,7 +1230,7 @@ class TestRespondents(PartyTestClient):
         self.delete_password_verification_token(respondent.party_uuid, respondent.password_verification_token)
         self.reset_password_reset_counter(respondent.party_uuid)
 
-        token = self.generate_valid_token_from_email(respondent.email_address)
+        token = self.generate_valid_token_from_email(respondent.pending_email_address)
         self.put_email_verification(token, 200)
         db_respondent = respondents()[0]
         self.assertIsNone(db_respondent.password_verification_token)
@@ -1865,31 +1860,31 @@ class TestRespondents(PartyTestClient):
         with self.assertRaises(Exception):
             self.get_respondent_by_id(respondent.party_uuid)
 
-    # def test_batch_delete_user_data_marked_for_deletion(self):
-    #     def mock_put_iac(*args, **kwargs):
-    #         return MockResponse('{"active": false}')
-    #
-    #     self.mock_requests.put = mock_put_iac
-    #     self.populate_with_respondent(respondent=self.mock_respondent_with_id)
-    #     self.populate_with_business()
-    #     self.associate_business_and_respondent(
-    #         business_id=DEFAULT_BUSINESS_UUID, respondent_id=self.mock_respondent_with_id["id"]
-    #     )
-    #     self.populate_with_enrolment()
-    #     respondent = respondents()[0]
-    #     self.assertEqual(respondent.mark_for_deletion, False)
-    #     respondent_controller.update_respondent_mark_for_deletion(respondent.email_address)
-    #     response_respondent = self.get_respondent_by_id(respondent.party_uuid)
-    #     self.assertEqual(response_respondent["markForDeletion"], True)
-    #     respondent_1 = MockRespondent()
-    #     respondent_1.attributes(emailAddress="res1@example.com", mark_for_deletion=True)
-    #     respondent_1 = self.populate_with_respondent(respondent=respondent_1.as_respondent())
-    #     response = self.delete_user_data_marked_for_deletion()
-    #     self.assertStatus(response, 204)
-    #     with self.assertRaises(Exception):
-    #         self.get_respondent_by_id(respondent.party_uuid)
-    #     with self.assertRaises(Exception):
-    #         self.get_respondent_by_email(respondent_1.email_address)
+    def test_batch_delete_user_data_marked_for_deletion(self):
+        def mock_put_iac(*args, **kwargs):
+            return MockResponse('{"active": false}')
+
+        self.mock_requests.put = mock_put_iac
+        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
+        self.populate_with_business()
+        self.associate_business_and_respondent(
+            business_id=DEFAULT_BUSINESS_UUID, respondent_id=self.mock_respondent_with_id["id"]
+        )
+        self.populate_with_enrolment()
+        respondent = respondents()[0]
+        self.assertEqual(respondent.mark_for_deletion, False)
+        respondent_controller.update_respondent_mark_for_deletion(respondent.email_address)
+        response_respondent = self.get_respondent_by_id(respondent.party_uuid)
+        self.assertEqual(response_respondent["markForDeletion"], True)
+        respondent_1 = MockRespondent()
+        respondent_1.attributes(emailAddress="res1@example.com", mark_for_deletion=True)
+        respondent_1 = self.populate_with_respondent(respondent=respondent_1.as_respondent())
+        response = self.delete_user_data_marked_for_deletion()
+        self.assertStatus(response, 204)
+        with self.assertRaises(Exception):
+            self.get_respondent_by_id(respondent.party_uuid)
+        with self.assertRaises(Exception):
+            self.get_respondent_by_email(respondent_1.email_address)
 
     def test_batch(self):
         respondent_0 = self.populate_with_respondent()
