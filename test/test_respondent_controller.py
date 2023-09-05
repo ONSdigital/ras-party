@@ -1216,8 +1216,7 @@ class TestRespondents(PartyTestClient):
             query.assert_called_once_with("test@example.test", db.session())
 
     def test_token_removed_on_email_update(self):
-        self.populate_with_respondent(respondent=self.mock_respondent_with_pending_email)
-        respondent = respondents()[0]
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_pending_email)
         token = self.generate_valid_token_from_email(respondent.pending_email_address)
         self.put_email_verification(token, 200)
         respondent = respondents()[0]
