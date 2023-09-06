@@ -1226,8 +1226,12 @@ class TestRespondents(PartyTestClient):
     def test_email_verification_no_password_reset_token(self):
         respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_pending_email)
         self.assertIsNotNone(respondent.password_verification_token)
-        self.delete_password_verification_token(respondent.party_uuid, respondent.password_verification_token)
-        self.reset_password_reset_counter(respondent.party_uuid)
+        self.delete_password_verification_token(
+            respondent.party_uuid,
+            respondent.password_verification_token,
+            expected_response="Successfully removed token",
+        )
+        self.reset_password_reset_counter(respondent.party_uuid, expected_response="Successfully reset counter")
 
         token = self.generate_valid_token_from_email(respondent.pending_email_address)
         self.put_email_verification(token, 200)

@@ -726,7 +726,7 @@ def put_email_verification(token, tran, session):
 
         if respondent:
             update_verified_email_address(respondent, tran)
-            if not respondent.pending_email_address and respondent.password_verification_token:
+            if respondent.password_verification_token:
                 # Reset password token fields in the database since they are linked to the old email
                 delete_respondent_password_verification_token(respondent.party_uuid, session)
                 reset_password_reset_counter(respondent.party_uuid, session)
