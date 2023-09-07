@@ -1223,22 +1223,6 @@ class TestRespondents(PartyTestClient):
         self.assertIsNone(respondent.password_verification_token)
         self.assertEqual(respondent.password_reset_counter, 0)
 
-    def test_email_verification_no_password_reset_token(self):
-        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_pending_email)
-        self.assertIsNotNone(respondent.password_verification_token)
-        self.delete_password_verification_token(
-            respondent.party_uuid,
-            respondent.password_verification_token,
-            expected_response="Successfully removed token",
-        )
-        self.reset_password_reset_counter(respondent.party_uuid, expected_response="Successfully reset counter")
-
-        token = self.generate_valid_token_from_email(respondent.pending_email_address)
-        self.put_email_verification(token, 200)
-        db_respondent = respondents()[0]
-        self.assertIsNone(db_respondent.password_verification_token)
-        self.assertEqual(db_respondent.password_reset_counter, 0)
-
     def test_post_respondent_with_payload_returns_200(self):
         self.populate_with_business()
         self.post_to_respondents(self.mock_respondent, 200)

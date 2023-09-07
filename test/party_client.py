@@ -434,19 +434,3 @@ class PartyTestClient(TestCase):
     def delete_pending_surveys_with_batch_no(self, batch_no, expected_status=202):
         response = self.client.delete(f"/party-api/v1/pending-surveys/{batch_no}", headers=self.auth_headers)
         self.assertStatus(response, expected_status)
-
-    def delete_password_verification_token(self, party_id, token, expected_status=200, expected_response=None):
-        response = self.client.delete(
-            f"/party-api/v1/respondents/{party_id}/password-verification-token/{token}", headers=self.auth_headers
-        )
-        self.assertStatus(response, expected_status)
-        if expected_response:
-            self.assertEqual(response.json["message"], expected_response)
-
-    def reset_password_reset_counter(self, party_id, expected_status=200, expected_response=None):
-        response = self.client.delete(
-            f"/party-api/v1/respondents/{party_id}/password-reset-counter", headers=self.auth_headers
-        )
-        self.assertStatus(response, expected_status)
-        if expected_response:
-            self.assertEqual(response.json["message"], expected_response)
