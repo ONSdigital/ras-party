@@ -106,7 +106,7 @@ class TestRespondents(PartyTestClient):
             "mark_for_deletion": respondent["mark_for_deletion"],
             "status": respondent.get("status") or RespondentStatus.CREATED,
             "password_verification_token": self.generate_valid_token_from_email(respondent["emailAddress"]),
-            "password_reset_counter": 0,
+            "password_reset_counter": 1,
         }
         self.respondent = Respondent(**translated_party)
         session.add(self.respondent)
@@ -1214,6 +1214,14 @@ class TestRespondents(PartyTestClient):
             token = self.generate_valid_token_from_email("test@example.test")
             account_controller.put_email_verification(token)
             query.assert_called_once_with("test@example.test", db.session())
+
+    def test_token_removed_on_email_update(self):
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent_with_pending_email)
+        token = self.generate_valid_token_from_email(respondent.pending_email_address)
+        self.put_email_verification(token, 200)
+        respondent = respondents()[0]
+        self.assertIsNone(respondent.password_verification_token)
+        self.assertEqual(respondent.password_reset_counter, 0)
 
     def test_post_respondent_with_payload_returns_200(self):
         self.populate_with_business()

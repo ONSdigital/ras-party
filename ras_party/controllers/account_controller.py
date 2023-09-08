@@ -726,6 +726,10 @@ def put_email_verification(token, tran, session):
 
         if respondent:
             update_verified_email_address(respondent, tran)
+            if respondent.password_verification_token:
+                # Reset password token fields in the database since they are linked to the old email
+                delete_respondent_password_verification_token(respondent.party_uuid, session)
+                reset_password_reset_counter(respondent.party_uuid, session)
         else:
             logger.info("Unable to find respondent by pending email")
             raise NotFound("Unable to find user while checking email verification token")
