@@ -82,7 +82,7 @@ dns:
 crons:
   markForDeletionScheduler:
     name: party-scheduler-delete-respondents
-    cron: "* * * * *"
+    cron: "0 3 * * *"
     target: "party-api/v1/batch/respondents"
     suspend: true
 
