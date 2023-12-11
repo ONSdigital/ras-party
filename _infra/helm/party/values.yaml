@@ -84,6 +84,7 @@ crons:
     name: party-scheduler-delete-respondents
     cron: "0 3 * * *"
     target: "party-api/v1/batch/respondents"
+    suspend: true
 
   expiredPendingSurveyScheduler:
     name: party-scheduler-remove-expired-pending-surveys
