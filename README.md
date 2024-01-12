@@ -95,5 +95,3 @@ Environment variables available for configuration are listed below:
 | FRONTSTAGE_URL          | URL of the respondent facing website   |                                                          |
 | IAC_URL                 | URL of the iac service                 |                                                          |
 | NOTIFY_URL              | URL of the notify-gateway service      | http://notify-gateway-service/emails/                    |
-
-TODO: Revert after forcing GHA rebuild
