@@ -3,7 +3,7 @@ from functools import wraps
 
 import structlog
 from flask import current_app
-from sqlalchemy.exc import SQLAlchemyError, OperationalError
+from sqlalchemy.exc import OperationalError, SQLAlchemyError
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
