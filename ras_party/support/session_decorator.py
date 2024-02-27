@@ -3,7 +3,7 @@ from functools import wraps
 
 import structlog
 from flask import current_app
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, OperationalError
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
@@ -31,8 +31,11 @@ def handle_query_only_session(f, args, kwargs):
     try:
         result = f(*args, session=session, **kwargs)
         return result
-    except SQLAlchemyError:
-        logger.error("Something went wrong accessing database", exc_info=True)
+    except SQLAlchemyError as exc:
+        if isinstance(exc, OperationalError):
+            logger.error("Connection to database interrupted", exc_info=True)
+        else:
+            logger.error(f"Something went wrong accessing database due to {exc.__class__.__name__}", exc_info=True)
         raise
     finally:
         current_app.db.session.remove()
@@ -44,8 +47,11 @@ def handle_quiet_session(f, args, kwargs):
         result = f(*args, session=session, **kwargs)
         session.commit()
         return result
-    except SQLAlchemyError:
-        logger.error("Something went wrong accessing database", exc_info=True)
+    except SQLAlchemyError as exc:
+        if isinstance(exc, OperationalError):
+            logger.error("Connection to database interrupted", exc_info=True)
+        else:
+            logger.error(f"Something went wrong accessing database due to {exc.__class__.__name__}", exc_info=True)
         session.rollback()
         raise
     finally:
