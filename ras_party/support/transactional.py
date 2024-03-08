@@ -7,7 +7,6 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 class Transaction:
-
     """
     Provides a simple wrapper around a list of compensating actions, where each action is a function
     taking no parameters. rollback will apply each function in the order it was added to the 'transaction'.
