@@ -20,3 +20,6 @@ test: lint-check
 
 start:
 	pipenv run python3 run.py
+
+install:
+	pipenv install --dev
