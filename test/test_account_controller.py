@@ -49,11 +49,11 @@ class TestAccountController(TestCase):
     url_get_cases_for_casegroup = f"{TestingConfig.CASE_URL}/cases/casegroupid/{valid_case_group_id}"
     url_change_respondent_enrolment_status = f"{TestingConfig.CASE_URL}/cases/{valid_case_id}/events"
 
-    with open(f"{project_root}/test_data/account/collection_exercises_for_survey.json") as fp:
+    with open(f"{project_root}/test/test_data/account/collection_exercises_for_survey.json") as fp:
         collex_for_survey = json.load(fp)
-    with open(f"{project_root}/test_data/account/casegroups_for_business.json") as fp:
+    with open(f"{project_root}/test/test_data/account/casegroups_for_business.json") as fp:
         business_casegroups = json.load(fp)
-    with open(f"{project_root}/test_data/account/cases_for_casegroup.json") as fp:
+    with open(f"{project_root}/test/test_data/account/cases_for_casegroup.json") as fp:
         cases_for_casegroup = json.load(fp)
 
     def get_respondent_object(self):

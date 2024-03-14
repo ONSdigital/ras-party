@@ -68,8 +68,8 @@ Ensure dev dependencies have been installed
 pipenv install --dev
 ```
 
-Run tests with makefile
-
+Run tests with makefile (Note: it is best to run a docker postgres image as the tests expect an empty database, and 
+they will run dramatically faster)
 ```bash
 make test
 ```
