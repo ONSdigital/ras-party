@@ -15,8 +15,10 @@ from ras_party.models.models import (
     Respondent,
 )
 from ras_party.support.util import obfuscate_email
+from pprint import pformat
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
+logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
 
 
 def query_enrolment_by_business_and_survey_and_status(business_id, survey_id, session):
@@ -63,7 +65,8 @@ def query_businesses_by_party_uuids(party_uuids, session):
     :return: the businesses
     """
     logger.info("Querying businesses by party_uuids", party_uuids=party_uuids)
-    return session.query(Business).filter(Business.party_uuid.in_(party_uuids))
+    results = session.query(Business).filter(Business.party_uuid.in_(party_uuids))
+    return results
 
 
 def query_business_by_party_uuid(party_uuid, session):
@@ -157,7 +160,16 @@ def query_respondent_by_party_uuids(party_uuids, session):
     :return: respondents or empty list
     """
     logger.info("Querying respondents by party_uuids", party_uuids=party_uuids)
-    return session.query(Respondent).filter(Respondent.party_uuid.in_(party_uuids))
+    respondents = session.query(Respondent).filter(Respondent.party_uuid.in_(party_uuids))
+    logger.info(">>>>>>>>>>>>>>>>>>>>>>>>>> query_respondent_by_party_uuids")
+
+    logger.info(">>>>>>>>>>> session.query(Respondent)")
+    respondents_dict = [respondent.to_respondent_dict() for respondent in respondents]
+    logger.info(pformat(respondents_dict))
+    logger.info("<<<<<<<<<<< session.query(Respondent)")
+
+    logger.info("<<<<<<<<<<<<<<<<<<<<<<<<<< query_respondent_by_party_uuids")
+    return respondents
 
 
 def query_respondent_by_names_and_emails(first_name, last_name, email, page, limit, session):
@@ -272,9 +284,9 @@ def update_respondent_details(respondent_data, respondent_id, session):
     respondent_details = query_respondent_by_party_uuid(respondent_id, session)
 
     if (
-        respondent_details.first_name != respondent_data["firstName"]
-        or respondent_details.last_name != respondent_data["lastName"]
-        or respondent_details.telephone != respondent_data["telephone"]
+            respondent_details.first_name != respondent_data["firstName"]
+            or respondent_details.last_name != respondent_data["lastName"]
+            or respondent_details.telephone != respondent_data["telephone"]
     ):
         session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
             {
