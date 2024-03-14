@@ -1,5 +1,6 @@
 import logging
 import re
+from pprint import pformat
 
 import structlog
 from sqlalchemy import and_, distinct, func, or_
@@ -15,10 +16,9 @@ from ras_party.models.models import (
     Respondent,
 )
 from ras_party.support.util import obfuscate_email
-from pprint import pformat
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
-logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
+logging.getLogger("sqlalchemy.engine").setLevel(logging.DEBUG)
 
 
 def query_enrolment_by_business_and_survey_and_status(business_id, survey_id, session):
@@ -284,9 +284,9 @@ def update_respondent_details(respondent_data, respondent_id, session):
     respondent_details = query_respondent_by_party_uuid(respondent_id, session)
 
     if (
-            respondent_details.first_name != respondent_data["firstName"]
-            or respondent_details.last_name != respondent_data["lastName"]
-            or respondent_details.telephone != respondent_data["telephone"]
+        respondent_details.first_name != respondent_data["firstName"]
+        or respondent_details.last_name != respondent_data["lastName"]
+        or respondent_details.telephone != respondent_data["telephone"]
     ):
         session.query(Respondent).filter(Respondent.party_uuid == respondent_id).update(
             {

@@ -1,5 +1,6 @@
 import logging
 import uuid
+from pprint import pformat
 
 import structlog
 from flask import current_app
@@ -29,8 +30,6 @@ from ras_party.support.session_decorator import (
     with_query_only_db_session,
 )
 from ras_party.support.util import obfuscate_email
-
-from pprint import pformat
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 

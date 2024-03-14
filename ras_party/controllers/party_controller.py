@@ -17,7 +17,8 @@ from ras_party.support.session_decorator import (
 )
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
-logging.getLogger('sqlalchemy.engine').setLevel(logging.DEBUG)
+logging.getLogger("sqlalchemy.engine").setLevel(logging.DEBUG)
+
 
 @with_db_session
 def parties_post(party_data, session):
