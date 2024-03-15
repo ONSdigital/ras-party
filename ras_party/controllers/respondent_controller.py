@@ -1,5 +1,6 @@
 import logging
 import uuid
+from pprint import pformat
 
 import structlog
 from flask import current_app
@@ -43,8 +44,12 @@ def get_respondent_by_ids(ids, session):
     :type ids: str
     :rtype: Respondent
     """
+    logger.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> get_respondent_by_ids")
     respondents = query_respondent_by_party_uuids(ids, session)
-    return [respondent.to_respondent_dict() for respondent in respondents]
+    respondents_dict = [respondent.to_respondent_dict() for respondent in respondents]
+    logger.info(pformat(respondents_dict))
+    logger.info("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< get_respondent_by_ids")
+    return respondents_dict
 
 
 @with_query_only_db_session

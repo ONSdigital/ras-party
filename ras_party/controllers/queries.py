@@ -1,5 +1,6 @@
 import logging
 import re
+from pprint import pformat
 
 import structlog
 from sqlalchemy import and_, distinct, func, or_
@@ -17,6 +18,7 @@ from ras_party.models.models import (
 from ras_party.support.util import obfuscate_email
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
+logging.getLogger("sqlalchemy.engine").setLevel(logging.DEBUG)
 
 
 def query_enrolment_by_business_and_survey_and_status(business_id, survey_id, session):
@@ -63,7 +65,16 @@ def query_businesses_by_party_uuids(party_uuids, session):
     :return: the businesses
     """
     logger.info("Querying businesses by party_uuids", party_uuids=party_uuids)
-    return session.query(Business).filter(Business.party_uuid.in_(party_uuids))
+    results = session.query(Business).filter(Business.party_uuid.in_(party_uuids))
+    logger.info("************************** query_businesses_by_party_uuids")
+
+    logger.info("*********** session.query(Business)")
+    if results is not None:
+        logger.info(pformat(results))
+    logger.info("*********** session.query(Business)")
+
+    logger.info("************************** query_businesses_by_party_uuids")
+    return results
 
 
 def query_business_by_party_uuid(party_uuid, session):
@@ -88,7 +99,16 @@ def query_business_by_ref(business_ref, session):
     """
     logger.info("Querying businesses by business_ref", business_ref=business_ref)
 
-    return session.query(Business).filter(Business.business_ref == business_ref).first()
+    results = session.query(Business).filter(Business.business_ref == business_ref).first()
+    logger.info("************************** query_business_by_ref")
+
+    logger.info("*********** session.query(Business)")
+    if results is not None:
+        logger.info(pformat(results))
+    logger.info("*********** session.query(Business)")
+
+    logger.info("************************** query_business_by_ref")
+    return results
 
 
 def query_business_attributes(business_id, session):
@@ -157,7 +177,17 @@ def query_respondent_by_party_uuids(party_uuids, session):
     :return: respondents or empty list
     """
     logger.info("Querying respondents by party_uuids", party_uuids=party_uuids)
-    return session.query(Respondent).filter(Respondent.party_uuid.in_(party_uuids))
+    respondents = session.query(Respondent).filter(Respondent.party_uuid.in_(party_uuids))
+    logger.info(">>>>>>>>>>>>>>>>>>>>>>>>>> query_respondent_by_party_uuids")
+
+    logger.info(">>>>>>>>>>> session.query(Respondent)")
+    respondents_dict = [respondent.to_respondent_dict() for respondent in respondents]
+    logger.info(">>> Number of Elements: " + str(len(respondents_dict)))
+    logger.info(pformat(respondents_dict))
+    logger.info("<<<<<<<<<<< session.query(Respondent)")
+
+    logger.info("<<<<<<<<<<<<<<<<<<<<<<<<<< query_respondent_by_party_uuids")
+    return respondents
 
 
 def query_respondent_by_names_and_emails(first_name, last_name, email, page, limit, session):
