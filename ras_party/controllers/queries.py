@@ -182,6 +182,7 @@ def query_respondent_by_party_uuids(party_uuids, session):
 
     logger.info(">>>>>>>>>>> session.query(Respondent)")
     respondents_dict = [respondent.to_respondent_dict() for respondent in respondents]
+    logger.info(">>> Number of Elements: " + str(len(respondents_dict)))
     logger.info(pformat(respondents_dict))
     logger.info("<<<<<<<<<<< session.query(Respondent)")
 
