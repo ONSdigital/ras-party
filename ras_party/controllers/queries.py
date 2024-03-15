@@ -66,6 +66,14 @@ def query_businesses_by_party_uuids(party_uuids, session):
     """
     logger.info("Querying businesses by party_uuids", party_uuids=party_uuids)
     results = session.query(Business).filter(Business.party_uuid.in_(party_uuids))
+    logger.info("************************** query_businesses_by_party_uuids")
+
+    logger.info("*********** session.query(Respondent)")
+    results_dict = [results.to_respondent_dict() for result in results]
+    logger.info(pformat(results_dict))
+    logger.info("*********** session.query(Respondent)")
+
+    logger.info("************************** query_businesses_by_party_uuids")
     return results
 
 
