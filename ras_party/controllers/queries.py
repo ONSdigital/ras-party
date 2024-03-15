@@ -69,7 +69,8 @@ def query_businesses_by_party_uuids(party_uuids, session):
     logger.info("************************** query_businesses_by_party_uuids")
 
     logger.info("*********** session.query(Business)")
-    logger.info(pformat(results))
+    if results is not None:
+        logger.info(pformat(results))
     logger.info("*********** session.query(Business)")
 
     logger.info("************************** query_businesses_by_party_uuids")
@@ -102,7 +103,8 @@ def query_business_by_ref(business_ref, session):
     logger.info("************************** query_business_by_ref")
 
     logger.info("*********** session.query(Business)")
-    logger.info(pformat(results.to_party_dict()))
+    if results is not None:
+        logger.info(pformat(results))
     logger.info("*********** session.query(Business)")
 
     logger.info("************************** query_business_by_ref")

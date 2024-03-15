@@ -151,13 +151,30 @@ def businesses_post(business_data, session):
         raise BadRequest(errors)
 
     business = query_business_by_ref(party_data["sampleUnitRef"], session)
+
+    logger.info("++++++++++++++++++++++++++++++ DEREFERENCING BUSINESS OBJECT [ 1 ] +++++++++++++++++++++++++++")
     if business:
+        logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DEREFERENCING BUSINESS OBJECT [ 1 ] ^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+
+        logger.info("++++++++++++++++++++++++++++++ DEREFERENCING BUSINESS OBJECT [ 2 ] +++++++++++++++++++++++++++")
         party_data["id"] = str(business.party_uuid)
+        logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DEREFERENCING BUSINESS OBJECT [ 2 ] ^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+
+        logger.info("++++++++++++++++++++++++++++++ DEREFERENCING BUSINESS OBJECT [ 3 ] +++++++++++++++++++++++++++")
         business.add_versioned_attributes(party_data)
+        logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DEREFERENCING BUSINESS OBJECT [ 3 ] ^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+
+        logger.info("++++++++++++++++++++++++++++++ DEREFERENCING BUSINESS OBJECT [ 4 ] +++++++++++++++++++++++++++")
         session.merge(business)
+        logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DEREFERENCING BUSINESS OBJECT [ 4 ] ^^^^^^^^^^^^^^^^^^^^^^^^^^^")
     else:
+        logger.info("++++++++++++++++++++++++++++++ DEREFERENCING BUSINESS OBJECT [ 5 ] +++++++++++++++++++++++++++")
         business = Business.from_party_dict(party_data)
+        logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DEREFERENCING BUSINESS OBJECT [ 5 ] ^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        logger.info("++++++++++++++++++++++++++++++ DEREFERENCING BUSINESS OBJECT [ 6 ] +++++++++++++++++++++++++++")
         session.add(business)
+        logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ DEREFERENCING BUSINESS OBJECT [ 6 ] ^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+    logger.info("++++++++++++++++++++++++++++++ DEREFERENCING BUSINESS OBJECT [ 7 ] +++++++++++++++++++++++++++")
     return business.to_post_response_dict()
 
 
