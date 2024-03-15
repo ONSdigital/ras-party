@@ -68,9 +68,9 @@ def query_businesses_by_party_uuids(party_uuids, session):
     results = session.query(Business).filter(Business.party_uuid.in_(party_uuids))
     logger.info("************************** query_businesses_by_party_uuids")
 
-    logger.info("*********** session.query(Respondent)")
+    logger.info("*********** session.query(Business)")
     logger.info(pformat(results))
-    logger.info("*********** session.query(Respondent)")
+    logger.info("*********** session.query(Business)")
 
     logger.info("************************** query_businesses_by_party_uuids")
     return results
@@ -98,7 +98,15 @@ def query_business_by_ref(business_ref, session):
     """
     logger.info("Querying businesses by business_ref", business_ref=business_ref)
 
-    return session.query(Business).filter(Business.business_ref == business_ref).first()
+    results = session.query(Business).filter(Business.business_ref == business_ref).first()
+    logger.info("************************** query_business_by_ref")
+
+    logger.info("*********** session.query(Business)")
+    logger.info(pformat(results.to_party_dict()))
+    logger.info("*********** session.query(Business)")
+
+    logger.info("************************** query_business_by_ref")
+    return results
 
 
 def query_business_attributes(business_id, session):
