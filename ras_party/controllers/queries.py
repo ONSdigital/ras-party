@@ -1,7 +1,9 @@
 import logging
 import re
+from uuid import UUID
 
 import structlog
+from flask import session
 from sqlalchemy import and_, distinct, func, or_
 from sqlalchemy.sql.functions import count
 
@@ -158,6 +160,17 @@ def query_respondent_by_party_uuids(party_uuids, session):
     """
     logger.info("Querying respondents by party_uuids", party_uuids=party_uuids)
     return session.query(Respondent).filter(Respondent.party_uuid.in_(party_uuids))
+
+
+def query_respondents_by_id(ids: list, session: session) -> list:
+    """
+    Query to return respondents based on a list of ids
+
+    :param ids: list of respondent ids
+    :param session: A db session
+    :return: list or respondents
+    """
+    return [respondent.to_respondent_dict() for respondent in session.query(Respondent).filter(Respondent.id.in_(ids))]
 
 
 def query_respondent_by_names_and_emails(first_name, last_name, email, page, limit, session):
@@ -580,6 +593,24 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
         .first()
     )
     return response
+
+
+def query_respondents_enrolment_by_survey_and_business_id(survey_id: UUID, business_id: UUID, session: session) -> list:
+    """
+    Query to return enrolment based on respondent id, business id and survey
+
+    :param survey_id: the uuid of the survey
+    :param business_id: the uuid of the business
+    :param session: A db session
+    :return: list of respondent ids
+    """
+
+    return [
+        respondent_id
+        for respondent_id, in session.query(Enrolment.respondent_id).filter(
+            and_(Enrolment.survey_id == survey_id, Enrolment.business_id == business_id)
+        )
+    ]
 
 
 def query_all_non_disabled_enrolments_respondent(respondent_id, session):

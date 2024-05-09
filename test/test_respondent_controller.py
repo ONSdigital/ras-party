@@ -10,6 +10,7 @@ from test.party_client import (
 )
 from test.test_data.default_test_values import (
     ALTERNATE_SURVEY_UUID,
+    DEFAULT_BUSINESS_REF,
     DEFAULT_BUSINESS_UUID,
     DEFAULT_RESPONDENT_UUID,
     DEFAULT_SURVEY_UUID,
@@ -1970,3 +1971,29 @@ class TestRespondents(PartyTestClient):
         mock_respondent = self.mock_respondent.copy()
         mock_respondent["emailAddress"] = "A@z.com"
         self.post_to_respondents(payload=mock_respondent, expected_status=409)
+
+    def test_get_enrolments_by_survey_business_id(self):
+        respondent = self.enroll_respondent()
+        enrolled_respondents = respondent_controller.get_respondents_by_survey_and_business_id(
+            DEFAULT_SURVEY_UUID, DEFAULT_BUSINESS_UUID
+        )
+        self.assertEqual(enrolled_respondents, [respondent])
+
+    def test_get_enrolments_by_survey_business_id_no_enrolments(self):
+        enrolled_respondents = respondent_controller.get_respondents_by_survey_and_business_id(
+            DEFAULT_SURVEY_UUID, DEFAULT_BUSINESS_UUID
+        )
+        self.assertEqual(enrolled_respondents, [])
+
+    @with_db_session
+    def enroll_respondent(self, session):
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent)
+        business = Business(party_uuid=DEFAULT_BUSINESS_UUID, business_ref=DEFAULT_BUSINESS_REF)
+        session.add(business)
+        business_respondent = BusinessRespondent(business=business, respondent=respondent)
+        session.add(business_respondent)
+        enrolment = Enrolment(**self.mock_enrolment_enabled)
+        session.add(enrolment)
+        session.flush()
+        session.refresh(respondent)
+        return respondent.to_respondent_dict()
