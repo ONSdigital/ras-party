@@ -1973,20 +1973,29 @@ class TestRespondents(PartyTestClient):
         self.post_to_respondents(payload=mock_respondent, expected_status=409)
 
     def test_get_enrolments_by_survey_business_id(self):
-        respondent = self.enroll_respondent()
+        # Given that a respondent is enrolled
+        respondent = self._enroll_respondent()
+
+        # When get_respondents_by_survey_and_business_id is called with correct survey and business id
         enrolled_respondents = respondent_controller.get_respondents_by_survey_and_business_id(
             DEFAULT_SURVEY_UUID, DEFAULT_BUSINESS_UUID
         )
+
+        # Then a list is returned with the correct Respondent
         self.assertEqual(enrolled_respondents, [respondent])
 
     def test_get_enrolments_by_survey_business_id_no_enrolments(self):
+        # Given no respondents are enrolled for a survey and business
+        # When get_respondents_by_survey_and_business_id is called
         enrolled_respondents = respondent_controller.get_respondents_by_survey_and_business_id(
             DEFAULT_SURVEY_UUID, DEFAULT_BUSINESS_UUID
         )
+
+        # Then an empty list is returned
         self.assertEqual(enrolled_respondents, [])
 
     @with_db_session
-    def enroll_respondent(self, session):
+    def _enroll_respondent(self, session):
         respondent = self.populate_with_respondent(respondent=self.mock_respondent)
         business = Business(party_uuid=DEFAULT_BUSINESS_UUID, business_ref=DEFAULT_BUSINESS_REF)
         session.add(business)
