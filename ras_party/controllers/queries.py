@@ -162,15 +162,18 @@ def query_respondent_by_party_uuids(party_uuids, session):
     return session.query(Respondent).filter(Respondent.party_uuid.in_(party_uuids))
 
 
-def query_respondents_by_id(ids: list, session: session) -> list:
+def query_respondents_by_ids(respondent_ids: list, session: session) -> list:
     """
-    Query to return respondents based on a list of ids
+    Query to return respondents based on a list of respondent_ids
 
-    :param ids: list of respondent ids
+    :param respondent_ids: list of respondent ids
     :param session: A db session
     :return: list or respondents
     """
-    return [respondent.to_respondent_dict() for respondent in session.query(Respondent).filter(Respondent.id.in_(ids))]
+    return [
+        respondent.to_respondent_dict()
+        for respondent in session.query(Respondent).filter(Respondent.id.in_(respondent_ids))
+    ]
 
 
 def query_respondent_by_names_and_emails(first_name, last_name, email, page, limit, session):
@@ -597,7 +600,7 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
 
 def query_respondents_enrolment_by_survey_and_business_id(survey_id: UUID, business_id: UUID, session: session) -> list:
     """
-    Query to return enrolment based on respondent id, business id and survey
+    Query to return a list of respondent_ids enrolled in a survey for a business
 
     :param survey_id: the uuid of the survey
     :param business_id: the uuid of the business

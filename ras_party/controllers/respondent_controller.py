@@ -17,7 +17,7 @@ from ras_party.controllers.queries import (
     query_respondent_by_names_and_emails,
     query_respondent_by_party_uuid,
     query_respondent_by_party_uuids,
-    query_respondents_by_id,
+    query_respondents_by_ids,
     query_respondents_enrolment_by_survey_and_business_id,
     update_respondent_details,
 )
@@ -222,7 +222,7 @@ def change_respondent_details(respondent_data, respondent_id, session):
 @with_db_session
 def get_respondents_by_survey_and_business_id(survey_id: UUID, business_id: UUID, session: session) -> list:
     """
-    Gets a list of respondents enrolled in a survey for a specified business
+    Gets a list of Respondents enrolled in a survey for a specified business
 
     :param survey_id: the survey UUID
     :param business_id: the business UUID
@@ -233,7 +233,7 @@ def get_respondents_by_survey_and_business_id(survey_id: UUID, business_id: UUID
 
     if not enrolled_respondent_ids:
         return []
-    return query_respondents_by_id(enrolled_respondent_ids, session)
+    return query_respondents_by_ids(enrolled_respondent_ids, session)
 
 
 def does_user_have_claim(user_id, business_id):

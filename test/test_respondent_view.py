@@ -21,4 +21,4 @@ class TestParties(PartyTestClient):
     def test_get_respondents_by_business_and_survey_id_invalid_uuid(self):
         response = self.get_respondents_by_survey_and_business_id(DEFAULT_SURVEY_UUID, "invalid_uuid")
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.text, "Bad request,business or survey id not UUID")
+        self.assertEqual(response.text, "Bad request, business or survey id not UUID")
