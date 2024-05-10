@@ -1974,7 +1974,6 @@ class TestRespondents(PartyTestClient):
 
     def test_get_enrolments_by_survey_business_id(self):
         respondent = self.enroll_respondent()
-        print(respondent)
         enrolled_respondents = respondent_controller.get_respondents_by_survey_and_business_id(
             DEFAULT_SURVEY_UUID, DEFAULT_BUSINESS_UUID
         )
