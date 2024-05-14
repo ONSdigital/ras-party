@@ -598,7 +598,9 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
     return response
 
 
-def query_respondents_enrolment_by_survey_and_business_id(survey_id: UUID, business_id: UUID, session: session) -> list:
+def query_respondents_ids_enrolment_by_survey_and_business_id(
+    survey_id: UUID, business_id: UUID, session: session
+) -> list:
     """
     Query to return a list of respondent_ids enrolled in a survey for a business
 

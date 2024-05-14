@@ -18,7 +18,7 @@ from ras_party.controllers.queries import (
     query_respondent_by_party_uuid,
     query_respondent_by_party_uuids,
     query_respondents_by_ids,
-    query_respondents_enrolment_by_survey_and_business_id,
+    query_respondents_ids_enrolment_by_survey_and_business_id,
     update_respondent_details,
 )
 from ras_party.models.models import (
@@ -47,7 +47,7 @@ def get_respondent_by_ids(ids, session):
     :rtype: Respondent
     """
     respondents = query_respondent_by_party_uuids(ids, session)
-    return [respondent.to_respondent_dict() for respondent in respondents]
+    return [respondent.to_respondent_with_associations_dict() for respondent in respondents]
 
 
 @with_query_only_db_session
@@ -64,7 +64,10 @@ def get_respondents_by_name_and_email(first_name, last_name, email, page, limit,
     :return: Respondents
     """
     respondents, record_count = query_respondent_by_names_and_emails(first_name, last_name, email, page, limit, session)
-    return {"data": [respondent.to_respondent_dict() for respondent in respondents], "total": record_count}
+    return {
+        "data": [respondent.to_respondent_with_associations_dict() for respondent in respondents],
+        "total": record_count,
+    }
 
 
 @with_query_only_db_session
@@ -88,7 +91,7 @@ def get_respondent_by_id(respondent_id, session):
         logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
         raise NotFound("Respondent with party id does not exist")
 
-    return respondent.to_respondent_dict()
+    return respondent.to_respondent_with_associations_dict()
 
 
 @with_db_session
@@ -192,7 +195,7 @@ def get_respondent_by_email(email: str, session):
         logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
-    return respondent.to_respondent_dict()
+    return respondent.to_respondent_with_associations_dict()
 
 
 @with_db_session
@@ -229,7 +232,7 @@ def get_respondents_by_survey_and_business_id(survey_id: UUID, business_id: UUID
     :param session: A db session
     :return: list of respondents
     """
-    enrolled_respondent_ids = query_respondents_enrolment_by_survey_and_business_id(survey_id, business_id, session)
+    enrolled_respondent_ids = query_respondents_ids_enrolment_by_survey_and_business_id(survey_id, business_id, session)
 
     if not enrolled_respondent_ids:
         return []

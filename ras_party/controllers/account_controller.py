@@ -161,7 +161,7 @@ def post_respondent(party, session):
 
     _send_email_verification(respondent.party_uuid, party["emailAddress"].lower())
 
-    return respondent.to_respondent_dict()
+    return respondent.to_respondent_with_associations_dict()
 
 
 def _add_enrolment_and_auth(business, business_id, case_id, party, session, survey_id, translated_party):
@@ -354,7 +354,7 @@ def change_respondent(payload, session):
         raise NotFound("Respondent does not exist")
 
     if new_email_address == email_address:
-        return respondent.to_respondent_dict()
+        return respondent.to_respondent_with_associations_dict()
 
     respondent_with_new_email = query_respondent_by_email(new_email_address, session)
     if respondent_with_new_email:
@@ -363,7 +363,7 @@ def change_respondent(payload, session):
 
     respondent.pending_email_address = new_email_address
     _send_account_email_changed_notification(email_address, new_email_address, respondent)
-    return respondent.to_respondent_dict()
+    return respondent.to_respondent_with_associations_dict()
 
 
 def _send_account_email_changed_notification(email_address, new_email_address, respondent):
@@ -750,7 +750,7 @@ def put_email_verification(token, tran, session):
         # We set the user as verified on the OAuth2 server.
         set_user_verified(email_address)
 
-    return respondent.to_respondent_dict()
+    return respondent.to_respondent_with_associations_dict()
 
 
 def update_verified_email_address(respondent, tran):
