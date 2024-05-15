@@ -1983,7 +1983,7 @@ class TestRespondents(PartyTestClient):
         )
         expected_response = {
             "respondent": respondent,
-            "enrolment_status": EnrolmentStatus.ENABLED,
+            "enrolment_status": EnrolmentStatus.ENABLED.name,
         }
 
         # Then a list is returned with the correct Respondent

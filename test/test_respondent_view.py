@@ -16,7 +16,7 @@ class TestRespondentView(PartyTestClient):
     def test_get_respondents_by_business_and_survey_id(self, respondents_by_survey_and_business_id):
         # Given the return value of the controller is mocked to return a list of enrolled respondents
         respondents_enrolled = [
-            {"respondent": MockRespondent().as_respondent(), "enrolment_status": EnrolmentStatus.ENABLED}
+            {"respondent": MockRespondent().as_respondent(), "enrolment_status": EnrolmentStatus.ENABLED.name}
         ]
         respondents_by_survey_and_business_id.return_value = respondents_enrolled
 

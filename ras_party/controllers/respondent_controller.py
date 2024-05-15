@@ -238,7 +238,7 @@ def get_respondents_by_survey_and_business_id(survey_id: UUID, business_id: UUID
         respondents_enrolled.append(
             {
                 "respondent": query_respondent_by_id(enrolment.respondent_id, session).to_respondent_dict(),
-                "enrolment_status": enrolment.status,
+                "enrolment_status": enrolment.status.name,
             }
         )
 
