@@ -49,6 +49,7 @@ from ras_party.models.models import (
     Business,
     BusinessRespondent,
     Enrolment,
+    EnrolmentStatus,
     PendingEnrolment,
     Respondent,
     RespondentStatus,
@@ -1972,21 +1973,25 @@ class TestRespondents(PartyTestClient):
         mock_respondent["emailAddress"] = "A@z.com"
         self.post_to_respondents(payload=mock_respondent, expected_status=409)
 
-    def test_get_enrolments_by_survey_business_id(self):
+    def test_get_respondents_by_survey_business_id(self):
         # Given that a respondent is enrolled
         respondent = self._enroll_respondent()
 
-        # When get_respondents_by_survey_and_business_id is called with correct survey and business id
+        # When get_respondents_enrolled_by_survey_and_business_id is called with the correct survey and business id
         enrolled_respondents = respondent_controller.get_respondents_by_survey_and_business_id(
             DEFAULT_SURVEY_UUID, DEFAULT_BUSINESS_UUID
         )
+        expected_response = {
+            "respondent": respondent,
+            "enrolment_status": EnrolmentStatus.ENABLED,
+        }
 
         # Then a list is returned with the correct Respondent
-        self.assertEqual(enrolled_respondents, [respondent])
+        self.assertEqual(enrolled_respondents, [expected_response])
 
-    def test_get_enrolments_by_survey_business_id_no_enrolments(self):
+    def test_get_respondents_by_survey_business_id_no_enrolments(self):
         # Given no respondents are enrolled for a survey and business
-        # When get_respondents_by_survey_and_business_id is called
+        # When get_respondents_enrolled_by_survey_and_business_id is called
         enrolled_respondents = respondent_controller.get_respondents_by_survey_and_business_id(
             DEFAULT_SURVEY_UUID, DEFAULT_BUSINESS_UUID
         )

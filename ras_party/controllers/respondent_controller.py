@@ -13,12 +13,12 @@ from ras_party.controllers.account_controller import (
 )
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import (
+    query_enrolments_by_survey_and_business_id,
     query_respondent_by_email,
+    query_respondent_by_id,
     query_respondent_by_names_and_emails,
     query_respondent_by_party_uuid,
     query_respondent_by_party_uuids,
-    query_respondents_by_ids,
-    query_respondents_ids_enrolment_by_survey_and_business_id,
     update_respondent_details,
 )
 from ras_party.models.models import (
@@ -232,11 +232,17 @@ def get_respondents_by_survey_and_business_id(survey_id: UUID, business_id: UUID
     :param session: A db session
     :return: list of respondents
     """
-    enrolled_respondent_ids = query_respondents_ids_enrolment_by_survey_and_business_id(survey_id, business_id, session)
+    enrolments = query_enrolments_by_survey_and_business_id(survey_id, business_id, session)
+    respondents_enrolled = []
+    for enrolment in enrolments:
+        respondents_enrolled.append(
+            {
+                "respondent": query_respondent_by_id(enrolment.respondent_id, session).to_respondent_dict(),
+                "enrolment_status": enrolment.status,
+            }
+        )
 
-    if not enrolled_respondent_ids:
-        return []
-    return query_respondents_by_ids(enrolled_respondent_ids, session)
+    return respondents_enrolled
 
 
 def does_user_have_claim(user_id, business_id):

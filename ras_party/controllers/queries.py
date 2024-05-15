@@ -162,18 +162,16 @@ def query_respondent_by_party_uuids(party_uuids, session):
     return session.query(Respondent).filter(Respondent.party_uuid.in_(party_uuids))
 
 
-def query_respondents_by_ids(respondent_ids: list, session: session) -> list:
+def query_respondent_by_id(respondent_id: str, session: session) -> list:
     """
-    Query to return respondents based on a list of respondent_ids
+    Query to return respondent based on an id
 
-    :param respondent_ids: list of respondent ids
+    :param respondent_id: respondent id
     :param session: A db session
     :return: list or respondents
     """
-    return [
-        respondent.to_respondent_dict()
-        for respondent in session.query(Respondent).filter(Respondent.id.in_(respondent_ids))
-    ]
+
+    return session.query(Respondent).filter(Respondent.id == respondent_id).first()
 
 
 def query_respondent_by_names_and_emails(first_name, last_name, email, page, limit, session):
@@ -598,11 +596,9 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
     return response
 
 
-def query_respondents_ids_enrolment_by_survey_and_business_id(
-    survey_id: UUID, business_id: UUID, session: session
-) -> list:
+def query_enrolments_by_survey_and_business_id(survey_id: UUID, business_id: UUID, session: session) -> list:
     """
-    Query to return a list of respondent_ids enrolled in a survey for a business
+    Query to return a list of enrolments in a survey for a business
 
     :param survey_id: the uuid of the survey
     :param business_id: the uuid of the business
@@ -610,12 +606,11 @@ def query_respondents_ids_enrolment_by_survey_and_business_id(
     :return: list of respondent ids
     """
 
-    return [
-        respondent_id
-        for respondent_id, in session.query(Enrolment.respondent_id).filter(
-            and_(Enrolment.survey_id == survey_id, Enrolment.business_id == business_id)
-        )
-    ]
+    return (
+        session.query(Enrolment)
+        .filter(and_(Enrolment.survey_id == survey_id, Enrolment.business_id == business_id))
+        .all()
+    )
 
 
 def query_all_non_disabled_enrolments_respondent(respondent_id, session):
