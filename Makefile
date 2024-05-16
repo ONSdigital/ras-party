@@ -15,7 +15,7 @@ lint-check:
 	pipenv run black --line-length 120 --check .
 	pipenv run flake8 --exclude=./scripts
 
-test: lint-check
+test:
 	APP_SETTINGS=TestingConfig pipenv run pytest test --cov ras_party --cov-report term-missing
 
 start:

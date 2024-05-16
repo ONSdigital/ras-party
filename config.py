@@ -23,7 +23,7 @@ class Config(object):
     PARTY_SCHEMA = os.getenv("PARTY_SCHEMA", "ras_party/schemas/party_schema.json")
 
     DATABASE_SCHEMA = os.getenv("DATABASE_SCHEMA", "partysvc")
-    DATABASE_URI = os.getenv("DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres")
+    DATABASE_URI = os.getenv("DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/ras")
 
     SECURITY_USER_NAME = os.getenv("SECURITY_USER_NAME", "admin")
     SECURITY_USER_PASSWORD = os.getenv("SECURITY_USER_PASSWORD", "secret")

@@ -162,18 +162,6 @@ def query_respondent_by_party_uuids(party_uuids, session):
     return session.query(Respondent).filter(Respondent.party_uuid.in_(party_uuids))
 
 
-def query_respondent_by_id(respondent_id: str, session: session) -> list:
-    """
-    Query to return respondent based on an id
-
-    :param respondent_id: respondent id
-    :param session: A db session
-    :return: list or respondents
-    """
-
-    return session.query(Respondent).filter(Respondent.id == respondent_id).first()
-
-
 def query_respondent_by_names_and_emails(first_name, last_name, email, page, limit, session):
     """
     returns respondents which match first_name, last_name and email, ignoring case in all cases
@@ -596,9 +584,11 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
     return response
 
 
-def query_enrolments_by_survey_and_business_id(survey_id: UUID, business_id: UUID, session: session) -> list:
+def query_respondents_and_status_by_survey_and_business_id(
+    survey_id: UUID, business_id: UUID, session: session
+) -> list:
     """
-    Query to return a list of enrolments in a survey for a business
+    Query to return a list of respondents and their enrolment status in a survey for a business
 
     :param survey_id: the uuid of the survey
     :param business_id: the uuid of the business
@@ -607,7 +597,8 @@ def query_enrolments_by_survey_and_business_id(survey_id: UUID, business_id: UUI
     """
 
     return (
-        session.query(Enrolment)
+        session.query(Respondent, Enrolment.status)
+        .join(Respondent, Respondent.id == Enrolment.respondent_id)
         .filter(and_(Enrolment.survey_id == survey_id, Enrolment.business_id == business_id))
         .all()
     )
