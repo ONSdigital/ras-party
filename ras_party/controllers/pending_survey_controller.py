@@ -414,7 +414,7 @@ def post_pending_survey_respondent(party, session):
     try:
         # create new share/transfer survey respondent
         respondent = _add_pending_survey_respondent(session, translated_party, party)
-        respondent_dict = respondent.to_respondent_dict()
+        respondent_dict = respondent.to_respondent_with_associations_dict()
         # Verify created user so that if the accept share fails the account is not in inconsistent state
         set_user_verified(respondent.email_address)
         # Accept share/transfer surveys surveys

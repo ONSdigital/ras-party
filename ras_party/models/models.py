@@ -308,7 +308,7 @@ class Respondent(Base):
         return associations
 
     def to_respondent_dict(self):
-        d = {
+        return {
             "id": self.party_uuid,
             "sampleUnitType": self.UNIT_TYPE,
             "pendingEmailAddress": self.pending_email_address,
@@ -318,12 +318,14 @@ class Respondent(Base):
             "telephone": self.telephone,
             "status": RespondentStatus(self.status).name,
             "markForDeletion": self.mark_for_deletion,
-            "associations": self._get_business_associations(self.businesses),
             "password_verification_token": self.password_verification_token,
             "password_reset_counter": self.password_reset_counter,
         }
 
-        return filter_falsey_values(d)
+    def to_respondent_with_associations_dict(self):
+        respondent_dict = self.to_respondent_dict()
+        respondent_dict["associations"] = self._get_business_associations(self.businesses)
+        return filter_falsey_values(respondent_dict)
 
     def to_party_dict(self):
         d = {
