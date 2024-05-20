@@ -649,30 +649,22 @@ Returns:
 
 ```json
 [
-   {
-      "id":"0bdcda6c-5d5c-43bf-9ebd-7085b37f9035",
-      "sampleUnitType":"BI",
-      "emailAddress":"a@z.com",
-      "firstName":"A",
-      "lastName":"Z",
-      "telephone":"123",
-      "status":"CREATED",
-      "associations":[
-         {
-            "partyId":"3b136c4b-7a14-4904-9e01-13364dd7b972",
-            "sampleUnitRef":"49000000000",
-            "businessRespondentStatus":"CREATED",
-            "enrolments":[
-               {
-                  "surveyId":"cb0711c3-0ac8-41d3-ae0e-567e5ea1ef87",
-                  "enrolmentStatus":"ENABLED"
-               }
-            ]
-         }
-      ],
-      "password_verification_token":"ImFAei5jb20i.Zj3biA.PAgq3GiYIdfeUywntZS7EDeKIzY",
-      "password_reset_counter":1
-   }
+    {
+        "enrolment_status": "ENABLED",
+        "respondent": {
+            "emailAddress": "example@example.com",
+            "firstName": "john",
+            "id": "7246f10b-f7c7-47d0-8803-125a644ad38d",
+            "lastName": "doe",
+            "markForDeletion": false,
+            "password_reset_counter": 0,
+            "password_verification_token": null,
+            "pendingEmailAddress": null,
+            "sampleUnitType": "BI",
+            "status": "ACTIVE",
+            "telephone": "07772257772"
+        }
+    }
 ]
 ```
 
