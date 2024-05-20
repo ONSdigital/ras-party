@@ -640,6 +640,36 @@ Returns:
 
 ---
 
+### Respondents enrolled in a survey for a business
+
+* `GET /respondents/survey_id/<survey_id>/business_id/<business_id>`
+  * returns a list of Respondents enrolled in a survey for a specified business id.
+
+### Example JSON Response
+
+```json
+[
+    {
+        "enrolment_status": "ENABLED",
+        "respondent": {
+            "emailAddress": "example@example.com",
+            "firstName": "john",
+            "id": "7246f10b-f7c7-47d0-8803-125a644ad38d",
+            "lastName": "doe",
+            "markForDeletion": false,
+            "password_reset_counter": 0,
+            "password_verification_token": null,
+            "pendingEmailAddress": null,
+            "sampleUnitType": "BI",
+            "status": "ACTIVE",
+            "telephone": "07772257772"
+        }
+    }
+]
+```
+
+---
+
 ### Create New Party
 
 * `POST /party-api/v1/respondents`

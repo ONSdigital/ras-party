@@ -1,12 +1,13 @@
 import logging
-import uuid
+from uuid import UUID
 
 import structlog
-from flask import Blueprint, current_app, jsonify, make_response, request
+from flask import Blueprint, Response, current_app, jsonify, make_response, request
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import respondent_controller
+from ras_party.uuid_helper import is_valid_uuid4
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 respondent_view = Blueprint("respondent_view", __name__)
@@ -70,7 +71,7 @@ def _validate_get_respondent_params(ids, first_name, last_name, email):
     if ids:
         for party_id in ids:
             try:
-                uuid.UUID(party_id)
+                UUID(party_id)
             except ValueError:
                 logger.info("Invalid params: party_id value is not a valid UUID", party_id=party_id)
                 raise BadRequest(f"'{party_id}' is not a valid UUID format for property 'id'")
@@ -125,3 +126,14 @@ def validate_respondent_claim():
         return make_response("Valid", 200)
 
     return make_response("Invalid", 200)
+
+
+@respondent_view.route("/respondents/survey_id/<survey_id>/business_id/<business_id>", methods=["GET"])
+def get_respondents_by_business_and_survey_id(business_id: UUID, survey_id: UUID) -> Response:
+    """Gets a list of Respondents enrolled in a survey for a specified business"""
+
+    if is_valid_uuid4(survey_id) and is_valid_uuid4(business_id):
+        respondents = respondent_controller.get_respondents_by_survey_and_business_id(survey_id, business_id)
+        return make_response(respondents, 200)
+    else:
+        return make_response("Bad request, business or survey id not UUID", 400)

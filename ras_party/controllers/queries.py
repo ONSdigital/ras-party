@@ -1,7 +1,9 @@
 import logging
 import re
+from uuid import UUID
 
 import structlog
+from flask import session
 from sqlalchemy import and_, distinct, func, or_
 from sqlalchemy.sql.functions import count
 
@@ -580,6 +582,26 @@ def query_enrolment_by_survey_business_respondent(respondent_id, business_id, su
         .first()
     )
     return response
+
+
+def query_respondents_and_status_by_survey_and_business_id(
+    survey_id: UUID, business_id: UUID, session: session
+) -> list:
+    """
+    Query to return a list of respondents and their enrolment status in a survey for a business
+
+    :param survey_id: the uuid of the survey
+    :param business_id: the uuid of the business
+    :param session: A db session
+    :return: list of respondent ids
+    """
+
+    return (
+        session.query(Respondent, Enrolment.status)
+        .join(Respondent, Respondent.id == Enrolment.respondent_id)
+        .filter(and_(Enrolment.survey_id == survey_id, Enrolment.business_id == business_id))
+        .all()
+    )
 
 
 def query_all_non_disabled_enrolments_respondent(respondent_id, session):

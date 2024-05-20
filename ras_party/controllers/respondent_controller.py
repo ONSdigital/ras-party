@@ -1,8 +1,9 @@
 import logging
 import uuid
+from uuid import UUID
 
 import structlog
-from flask import current_app
+from flask import current_app, session
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest, NotFound
 
@@ -16,6 +17,7 @@ from ras_party.controllers.queries import (
     query_respondent_by_names_and_emails,
     query_respondent_by_party_uuid,
     query_respondent_by_party_uuids,
+    query_respondents_and_status_by_survey_and_business_id,
     update_respondent_details,
 )
 from ras_party.models.models import (
@@ -44,7 +46,7 @@ def get_respondent_by_ids(ids, session):
     :rtype: Respondent
     """
     respondents = query_respondent_by_party_uuids(ids, session)
-    return [respondent.to_respondent_dict() for respondent in respondents]
+    return [respondent.to_respondent_with_associations_dict() for respondent in respondents]
 
 
 @with_query_only_db_session
@@ -61,7 +63,10 @@ def get_respondents_by_name_and_email(first_name, last_name, email, page, limit,
     :return: Respondents
     """
     respondents, record_count = query_respondent_by_names_and_emails(first_name, last_name, email, page, limit, session)
-    return {"data": [respondent.to_respondent_dict() for respondent in respondents], "total": record_count}
+    return {
+        "data": [respondent.to_respondent_with_associations_dict() for respondent in respondents],
+        "total": record_count,
+    }
 
 
 @with_query_only_db_session
@@ -85,7 +90,7 @@ def get_respondent_by_id(respondent_id, session):
         logger.info("Respondent with party id does not exist", respondent_id=respondent_id)
         raise NotFound("Respondent with party id does not exist")
 
-    return respondent.to_respondent_dict()
+    return respondent.to_respondent_with_associations_dict()
 
 
 @with_db_session
@@ -189,7 +194,7 @@ def get_respondent_by_email(email: str, session):
         logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
-    return respondent.to_respondent_dict()
+    return respondent.to_respondent_with_associations_dict()
 
 
 @with_db_session
@@ -214,6 +219,31 @@ def change_respondent_details(respondent_data, respondent_id, session):
     if "new_email_address" in respondent_data:
         # This function only changes the respondents email address
         change_respondent(respondent_data)
+
+
+@with_db_session
+def get_respondents_by_survey_and_business_id(survey_id: UUID, business_id: UUID, session: session) -> list:
+    """
+    Gets a list of Respondents enrolled in a survey for a specified business
+
+    :param survey_id: the survey UUID
+    :param business_id: the business UUID
+    :param session: A db session
+    :return: list of respondents
+    """
+
+    respondents_and_status = query_respondents_and_status_by_survey_and_business_id(survey_id, business_id, session)
+
+    respondents_enrolled = []
+    for respondent, status in respondents_and_status:
+        respondents_enrolled.append(
+            {
+                "respondent": respondent.to_respondent_dict(),
+                "enrolment_status": status.name,
+            }
+        )
+
+    return respondents_enrolled
 
 
 def does_user_have_claim(user_id, business_id):

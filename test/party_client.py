@@ -434,3 +434,9 @@ class PartyTestClient(TestCase):
     def delete_pending_surveys_with_batch_no(self, batch_no, expected_status=202):
         response = self.client.delete(f"/party-api/v1/pending-surveys/{batch_no}", headers=self.auth_headers)
         self.assertStatus(response, expected_status)
+
+    def get_respondents_by_survey_and_business_id(self, survey_id, business_id):
+        response = self.client.get(
+            f"/party-api/v1/respondents/survey_id/{survey_id}/business_id/{business_id}", headers=self.auth_headers
+        )
+        return response
