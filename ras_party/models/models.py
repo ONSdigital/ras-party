@@ -151,8 +151,7 @@ class Business(Base):
             "sampleSummaryId": attributes.sample_summary_id,
             "attributes": attributes.attributes,
             "name": attributes.attributes.get("name"),
-            "trading_as": attributes.attributes.get("trading_as"),
-            "associations": self._get_respondents_associations(self.respondents),
+            "trading_as": attributes.attributes.get("trading_as")
         }
 
     def to_post_response_dict(self):

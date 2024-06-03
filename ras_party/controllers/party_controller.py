@@ -77,52 +77,6 @@ def parties_patch(party_data, session):
     return business.to_post_response_dict()
 
 
-@with_query_only_db_session
-def get_party_by_id(sample_unit_type, party_id, session):
-    """
-    Get a party by its party_id.  Need to provide the type of party, otherwise it will
-    return a BadRequest
-
-    :param sample_unit_type: Type of the party
-    :param party_id: uuid identifier of the party
-    :raises BadRequest: Raised if the sample_unit_type is not recognised
-    :raises NotFound: Raised if the party_id doesn't match one in the database
-    """
-    if sample_unit_type == Business.UNIT_TYPE:
-        business = query_business_by_party_uuid(party_id, session)
-        if not business:
-            logger.info("Business with id does not exist", business_id=party_id, status=404)
-            raise NotFound("Business with id does not exist")
-        return business.to_party_dict()
-    elif sample_unit_type == Respondent.UNIT_TYPE:
-        respondent = query_respondent_by_party_uuid(party_id, session)
-        if not respondent:
-            logger.info("Respondent with id does not exist", respondent_id=party_id, status=404)
-            raise NotFound("Respondent with id does not exist")
-        return respondent.to_party_dict()
-    else:
-        logger.info("Invalid sample unit type", type=sample_unit_type)
-        raise BadRequest(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']")
-
-
-def get_party_with_enrolments_filtered_by_survey(sample_unit_type, party_id, survey_id, enrolment_status=None):
-    party = get_party_by_id(sample_unit_type, party_id)
-
-    filtered_associations = []
-    for association in party["associations"]:
-        filtered_association = {"partyId": association["partyId"]}
-
-        filtered_enrolments = filter_enrolments(association["enrolments"], survey_id, enrolment_status)
-
-        if filtered_enrolments:
-            filtered_association["enrolments"] = filtered_enrolments
-            filtered_associations.append(filtered_association)
-
-    party["associations"] = filtered_associations
-
-    return party
-
-
 def filter_enrolments(existing_enrolments, survey_id, enrolment_status=None):
     filtered_enrolments = []
     for enrolment in existing_enrolments:
