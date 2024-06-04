@@ -152,7 +152,19 @@ class Business(Base):
             "attributes": attributes.attributes,
             "name": attributes.attributes.get("name"),
             "trading_as": attributes.attributes.get("trading_as"),
-            "associations": self._get_respondents_associations(self.respondents),
+        }
+
+    def to_dict_with_attributes(self):
+        attributes = self._get_attributes_for_collection_exercise()
+        dict_with_attributes = self.to_dict()
+        dict_with_attributes["attributes"] = attributes.attributes
+        return dict_with_attributes
+
+    def to_dict(self):
+        return {
+            "id": self.party_uuid,
+            "sampleUnitRef": self.business_ref,
+            "sampleUnitType": self.UNIT_TYPE,
         }
 
     def to_post_response_dict(self):
