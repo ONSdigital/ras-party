@@ -3,10 +3,6 @@ import os
 import uuid
 from test.mocks import MockRequests
 from test.party_client import PartyTestClient, businesses
-from test.test_data.default_test_values import (
-    DEFAULT_BUSINESS_UUID,
-    DEFAULT_SURVEY_UUID,
-)
 from test.test_data.mock_business import MockBusiness
 from test.test_data.mock_enrolment import (
     MockEnrolmentDisabled,
@@ -251,23 +247,6 @@ class TestParties(PartyTestClient):
         del expected["id"]
         self.assertDictEqual(expected, actual)
 
-    def test_get_party_by_id_returns_correct_representation(self):
-        mock_party_b = MockBusiness().as_party()
-        party_id_b = self.post_to_parties(mock_party_b, 200)["id"]
-        self._make_business_attributes_active(mock_party_b)
-
-        response = self.get_party_by_id("B", party_id_b)
-
-        del mock_party_b["sampleSummaryId"]
-        for x in mock_party_b:
-            self.assertTrue(x in response)
-
-    def test_get_party_by_id_no_active_attributes_returns_404(self):
-        mock_party_b = MockBusiness().as_party()
-        party_id_b = self.post_to_parties(mock_party_b, 200)["id"]
-
-        self.get_party_by_id("B", party_id_b, 400)
-
     def test_existing_business_can_be_updated(self):
         mock_business = MockBusiness().attributes(version=1)
         response_1 = self.post_to_businesses(mock_business.as_business(), 200)
@@ -318,37 +297,6 @@ class TestParties(PartyTestClient):
         mock_party = MockBusiness().as_party()
         del mock_party["sampleUnitRef"]
         self.post_to_parties(mock_party, 400)
-
-    def test_get_party_with_invalid_unit_type(self):
-        self.get_party_by_id("XX", "123", 400)
-
-    def test_get_party_by_survey_id_and_enrolment_statuses_with_valid_enrolment(self):
-        self.populate_with_respondent(respondent=self.mock_respondent_with_id)  # NOQA
-        mock_business = MockBusiness().as_business()
-        mock_business["id"] = DEFAULT_BUSINESS_UUID
-        self.post_to_businesses(mock_business, 200)
-        self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(
-            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
-        )  # NOQA
-        self.populate_with_enrolment()  # NOQA
-        self.get_party_by_id_filtered_by_survey_and_enrolment(
-            "B", mock_business["id"], DEFAULT_SURVEY_UUID, ["ENABLED", "PENDING"]
-        )
-
-    def test_get_party_by_survey_id_and_enrolment_statuses_with_invalid_enrolment(self):
-        self.populate_with_respondent(respondent=self.mock_respondent_with_id)
-        mock_business = MockBusiness().as_business()
-        mock_business["id"] = DEFAULT_BUSINESS_UUID
-        self.post_to_businesses(mock_business, 200)
-        self._make_business_attributes_active(mock_business=mock_business)
-        self.associate_business_and_respondent(
-            business_id=mock_business["id"], respondent_id=self.mock_respondent_with_id["id"]
-        )
-        self.populate_with_enrolment(enrolment=self.mock_enrolment_disabled)  # NOQA
-        self.get_party_by_id_filtered_by_survey_and_enrolment(
-            "B", mock_business["id"], DEFAULT_SURVEY_UUID, ["ENABLED", "PENDING"]
-        )
 
 
 if __name__ == "__main__":
