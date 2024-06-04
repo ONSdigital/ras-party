@@ -39,7 +39,7 @@ def get_business_by_ref(ref, session):
         logger.info("Business with reference does not exist.", ru_ref=ref)
         raise NotFound("Business with reference does not exist.")
 
-    return business.to_party_dict()
+    return business.to_dict_with_attributes()
 
 
 @with_query_only_db_session
