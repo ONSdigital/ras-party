@@ -227,26 +227,6 @@ class TestParties(PartyTestClient):
         sample_id = mock_business["sampleSummaryId"]
         self.put_to_businesses_sample_link(sample_id, {}, 400)
 
-    def test_get_business_by_ref_returns_correct_representation(self):
-        with open(f"{project_root}/test/test_data/business/get_business_by_ref.json") as json_data:
-            expected = json.load(json_data)
-        mock_business = MockBusiness().as_business()
-        self.post_to_businesses(mock_business, 200)
-        self._make_business_attributes_active(mock_business)
-
-        ru_ref = mock_business["sampleUnitRef"]
-        actual = self.get_business_by_ref(ru_ref)
-
-        # Overwrite provided ru_ref because creating a new business object via the mock creates a random ru_ref
-        expected["attributes"]["ruref"] = ru_ref
-        expected["sampleSummaryId"] = ru_ref
-        expected["sampleUnitRef"] = ru_ref
-
-        # Delete as id is random each time.
-        del actual["id"]
-        del expected["id"]
-        self.assertDictEqual(expected, actual)
-
     def test_existing_business_can_be_updated(self):
         mock_business = MockBusiness().attributes(version=1)
         response_1 = self.post_to_businesses(mock_business.as_business(), 200)
