@@ -1,4 +1,4 @@
-* Assume generally that REST principles are awful throughout, this is a long way from being a RESTful API
+* Assume generally that REST principles are not applied throughout, this requires addressing to deliver a truly RESTful API
 * PUT /respondents/email and PUT /respondents/change_email are the same endpoint
 * POST /respondents uses camel case instead of snake case for the requestBody
 * POST /respondents returns 200 for creating a respondent instead of 201
