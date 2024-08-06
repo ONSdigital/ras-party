@@ -108,8 +108,6 @@ paths:
       responses:
         200:
           description: The token is valid
-        400:
-          description: The token was not provided
         404:
           description: The token or the respondent does not exist
         409:
@@ -138,7 +136,7 @@ paths:
         200:
           description: The password has been changed
         400:
-          description: The request body was missing email_address or new_password
+          description: The request body was missing new_password
         404:
           description: The respondent does not exist
         500:
@@ -211,12 +209,12 @@ paths:
         409:
           description: The email address is already in use
         500:
-          description: The business couldn't be found to associate with
+          description: The business couldn't be found to associate with, or one of the other services had an error
     get:
       tags:
         - respondents
       summary: Get a respondent by query parameters
-      description: Get a respondent query parameters. Requires either an ID, or all of email, firstName and lastName
+      description: Get a respondent query parameters. Requires either an ID, or any of email, firstName and lastName
       parameters:
         - name: ids
           in: query
@@ -264,9 +262,18 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RespondentWithAssociations'
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/RespondentWithAssociations'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RespondentWithAssociations'
+                      total:
+                        type: integer
         400:
           description: The request was missing the ID query parameter, or the provided ID wasn't a UUID, or the request was missing one or more of email, firstName and lastName if no ID was provided
   /emailverification/{token}:
@@ -285,8 +292,6 @@ paths:
       responses:
         200:
           description: The email address has been verified
-        400:
-          description: The token was not provided
         404:
           description: The token or the respondent does not exist
         409:
@@ -408,8 +413,6 @@ paths:
           description: The respondent has been enrolled on the survey
         400:
           description: The request body was missing party_id or enrolment_code, or the enrolment code was inactive
-        404:
-          description: The respondent does not exist
         500:
           description: The business couldn't be found to associate with
   /respondents/change_enrolment_status:
@@ -535,6 +538,8 @@ paths:
           description: The request body was missing firstName, lastName or telephone
         404:
           description: The respondent does not exist
+        409:
+          description: The email address is already in use
   /respondents/survey_id/{survey_id}/business_id/{business_id}:
     get:
       tags:
@@ -603,7 +608,7 @@ paths:
                 type: string
                 enum: ['VALID', 'INVALID']
         400:
-          description: The request was missing the respondent_id or business_id, or the provided IDs weren't UUIDs
+          description: The request was missing the respondent_id or business_id, or the provided respondent_id wasn't a UUID
         404:
           description: The respondent or business does not exist
   /respondents/edit-account-status/{party_id}:
@@ -792,7 +797,7 @@ paths:
       description: Delete all respondents and associated data marked for deletion
       responses:
         204:
-          description: All respondents and associated data marked for deletion have been deleted
+          description: All respondents and associated data marked for deletion have been deleted and appropriate emails sent
   /batch/requests:
     post:
       tags:
@@ -831,6 +836,8 @@ paths:
                     status:
                       type: integer
                       example: 200
+        400:
+          description: The request body wasn't passed in as valid JSON
   /batch/pending-surveys:
     delete:
       tags:
@@ -943,9 +950,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/BusinessAttributes'
         400: 
-          description: The provided ID wasn't a UUID
-        404:
-          description: The business does not exist
+          description: The provided business ID (or collection exercise ID if provided) wasn't a UUID
   /businesses/attributes/sample-summary/{sample-summary-id}:
     delete:
       tags:
@@ -964,7 +969,7 @@ paths:
         204:
           description: The business's attributes, if they existed, have been deleted
         400:
-          description: The provided ID wasn't a UUID
+          description: The provided sample summary ID wasn't a UUID
   /businesses/ref/{ref}:
     get:
       tags:
@@ -1015,6 +1020,17 @@ paths:
       responses:
         200:
           description: The business's attributes have been updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  collectionExerciseId:
+                    type: string
+                    format: uuid
+                  sampleSummaryId:
+                    type: string
+                    format: uuid
         400:
           description: The request body was missing collectionExerciseId
   /businesses/search:
@@ -1216,7 +1232,7 @@ paths:
               schema:
                 type: integer
         400:
-          description: The request was missing the business or survey ID
+          description: The request was missing the business or survey ID, or the provided business ID wasn't a UUID
         404:
           description: The business does not exist
   /pending-surveys:
@@ -1239,7 +1255,7 @@ paths:
         400:
           description: The request body was missing or invalid, or the share/transfer is already in progress
         404:
-          description: The business or respondent does not exist
+          description: The business or respondent does not exist, or the provided business or respondent IDs weren't UUIDs
   /pending-survey/verification/{token}:
     get:
       tags:
@@ -1265,7 +1281,7 @@ paths:
       tags:
         - misc
       summary: Accepts a pending survey transfer or share
-      description: Accepts a pending survey transfer or share
+      description: Accepts a pending survey transfer or share, sending an email to confirm the acceptance
       parameters:
         - name: batch-no
           in: path
@@ -1277,9 +1293,9 @@ paths:
         201:
           description: The pending survey transfer or share has been accepted
         404:
-          description: The batch number does not exist
+          description: The batch number or the respondent does not exist
         500:
-          description: The business couldn't be found when accepting the survey transfer or share
+          description: The business couldn't be found when accepting the survey transfer or share, or there was an issue in the database
   /pending-surveys/{batch-no}:
     get:
       tags:
@@ -1366,9 +1382,9 @@ paths:
         201:
           description: The pending survey transfer/share email has been resent
         400:
-          description: The request body was missing batch_number
+          description: The request body was missing batch_number or the 
         404:
-          description: The batch number does not exist
+          description: The batch number or the respondent from the batch does not exist
 components:
   schemas:
     RespondentWithAssociations:
