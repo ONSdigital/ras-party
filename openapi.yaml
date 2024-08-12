@@ -1,0 +1,1623 @@
+openapi: 3.0.0
+info:
+  title: Party Service API
+  description: A service for interacting with businesses, respondents and enrolments
+  version: 1.0.0
+servers:
+  - url: https://localhost:8081
+    description: URL for the local service
+tags:
+  - name: respondents
+    description: Respondent endpoints
+  - name: businesses
+    description: Business endpoints
+  - name: info
+    description: Information endpoints
+  - name: misc
+    description: Miscellaneous endpoints
+paths:
+  /respondents/email:
+    put:
+      tags:
+        - respondents
+      summary: Change the email address of a respondent
+      description: Change the email address of a respondent. Also available at PUT /respondents/change_email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_address:
+                  type: string
+                  format: email
+                  description: The current email address of the respondent
+                new_email_address:
+                  type: string
+                  format: email
+                  description: The email address to change to
+      responses:
+        200:
+          description: The email address was successfully changed
+        400:
+          description: The request body was missing email_address or new_email_address
+        404:
+          description: The respondent does not exist
+        409:
+          description: The new email address is already in use by a different respondent
+    get:
+      tags:
+        - respondents
+      summary: Get a respondent by email
+      description: Get a respondent by email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: The email of the respondent
+      responses:
+        200:
+          description: The respondent has been retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespondentWithAssociations'
+        404:
+          description: The respondent does not exist
+  /respondents/{email}:
+    delete:
+      tags:
+        - respondents
+      summary: Mark a respondent for deletion by email
+      description: Mark a respondent for deletion by email
+      parameters:
+        - name: email
+          in: path
+          required: true
+          description: The email of the respondent
+          schema:
+            type: string
+            format: email
+      responses:
+        202:
+          description: The respondent has been marked for deletion
+        404:
+          description: The respondent does not exist
+        500:
+          description: A database error occured during the deletion
+  /tokens/verify/{token}:
+    get:
+      tags:
+        - respondents
+      summary: Verify a token
+      description: Verify a token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: The token to verify
+          schema:
+            type: string
+      responses:
+        200:
+          description: The token is valid
+        404:
+          description: The token or the respondent does not exist
+        409:
+          description: The token has expired
+  /respondents/change_password:
+    put:
+      tags:
+        - respondents
+      summary: Change the password of a respondent
+      description: Change the password of a respondent, and set their account to ACTIVE and enrolement to ENABLED if not currently
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_address:
+                  type: string
+                  format: email
+                  description: The email address of the respondent
+                new_password:
+                  type: string
+                  description: The password to change to
+      responses:
+        200:
+          description: The password has been changed
+        400:
+          description: The request body was missing new_password
+        404:
+          description: The respondent does not exist
+        500:
+          description: There was an error in the auth service
+  /respondents/request_password_change:
+    post:
+      tags:
+        - respondents
+      summary: Request a password change email
+      description: Request a password change email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_address:
+                  type: string
+                  format: email
+                  description: The email address of the respondent
+      responses:
+        200:
+          description: The password change email has been sent
+        400:
+          description: The request body was missing email_address
+        404:
+          description: The respondent does not exist
+  /respondents:
+    post:
+      tags:
+        - respondents
+      summary: Create a respondent
+      description: Create a respondent and set up pending enrolment before account verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emailAddress:
+                  type: string
+                  format: email
+                  description: The email address of the respondent
+                firstName:
+                  type: string
+                  description: The first name of the respondent
+                lastName:
+                  type: string
+                  description: The last name of the respondent
+                password:
+                  type: string
+                  description: The password of the respondent
+                telephone:
+                  type: string
+                  description: The telephone number of the respondent
+                enrolmentCode: 
+                  type: string
+                  description: The enrolment code the respondent is using
+      responses:
+        200:
+          description: The respondent has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespondentWithAssociations'
+        400:
+          description: There was an error in the request body, or the enrolment code was inactive
+        409:
+          description: The email address is already in use
+        500:
+          description: The business couldn't be found to associate with, or one of the other services had an error
+    get:
+      tags:
+        - respondents
+      summary: Get a respondent by query parameters
+      description: Get a respondent query parameters. Requires either an ID, or any of email, firstName and lastName
+      parameters:
+        - name: ids
+          in: query
+          required: false
+          description: The UUIDs to search for
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+        - name: firstName
+          in: query
+          required: false
+          description: The first name of the respondent
+          schema:
+            type: string
+        - name: lastName
+          in: query
+          required: false
+          description: The last name of the respondent
+          schema:
+            type: string
+        - name: email
+          in: query
+          required: false
+          description: The email address of the respondent
+          schema:
+            type: string
+            format: email
+        - name: page
+          in: query
+          required: false
+          description: The page number of results
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          description: The number of results per page
+          schema:
+            type: integer
+      responses:
+        200: 
+          description: The respondent(s) have been retrieved
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/RespondentWithAssociations'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RespondentWithAssociations'
+                      total:
+                        type: integer
+        400:
+          description: The request was missing the ID query parameter, or the provided ID wasn't a UUID, or the request was missing one or more of email, firstName and lastName if no ID was provided
+  /emailverification/{token}:
+    put:
+      tags:
+        - respondents
+      summary: Verify an email address
+      description: Verify an email address, and set their account to ACTIVE and enrolement to ENABLED if not currently
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: The token to verify
+          schema:
+            type: string
+      responses:
+        200:
+          description: The email address has been verified
+        404:
+          description: The token or the respondent does not exist
+        409:
+          description: The token has expired
+  /resend-verification-email/{party-uuid}:
+    post:
+      tags:
+        - respondents
+      summary: Resend the verification email
+      description: Resend the verification email
+      parameters:
+        - name: party-uuid
+          in: path
+          required: true
+          description: The UUID of the respondent
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: The verification email has been resent
+        404:
+          description: The respondent does not exist
+  /resend-account-email-change-notification/{party_uuid}:
+    post:
+      tags:
+        - respondents
+      summary: Resend the email change notification email
+      description: Resend the email change notification email
+      parameters:
+        - name: party_uuid
+          in: path
+          required: true
+          description: The UUID of the respondent
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: The email change notification email has been resent
+        404:
+          description: The respondent does not exist
+  /resend-account-email-change-expired-token/{token}:
+    post:
+      tags:
+        - respondents
+      summary: Resend the "expired token" email for change email
+      description: Resend the "expired token" email for change email
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: The token to resend the email for
+          schema:
+            type: string
+      responses:
+        200:
+          description: The "expired token" email for change email has been resent
+        404:
+          description: The respondent does not exist
+  /resend-verification-email-expired-token/{token}:
+    post:
+      tags:
+        - respondents
+      summary: Resend the "expired token" email for verification email
+      description: Resend the "expired token" email for verification email
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: The token to resend the email for
+          schema:
+            type: string
+      responses:
+        200:
+          description: The "expired token" email for verification email has been resent
+        404:
+          description: The respondent does not exist
+  /resend-password-email-expired-token/{token}:
+    post:
+      tags:
+        - respondents
+      summary: Resend the "expired token" email for password change
+      description: Resend the "expired token" email for password change
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: The token to resend the email for
+          schema:
+            type: string
+      responses:
+        200:
+          description: The "expired token" email for password change has been resent
+        404:
+          description: The respondent does not exist
+  /respondents/add_survey:
+    post:
+      tags:
+        - respondents
+      summary: Enrol a respondent on a new survey
+      description: Enrol a respondent on a new survey, creating any necessary associations and enrolments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                party_id:
+                  type: string
+                  format: uuid
+                  description: The UUID of the respondent
+                enrolment_code:
+                 type: string
+                 description: The enrolment code for the survey
+      responses:
+        200:
+          description: The respondent has been enrolled on the survey
+        400:
+          description: The request body was missing party_id or enrolment_code, or the enrolment code was inactive
+        500:
+          description: The business couldn't be found to associate with
+  /respondents/change_enrolment_status:
+    put:
+      tags:
+        - respondents
+      summary: Change the enrolment status of a respondent
+      description: Change the enrolment status of a respondent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                respondent_id:
+                  type: string
+                  format: uuid
+                  description: The UUID of the respondent
+                business_id:
+                  type: string
+                  format: uuid
+                  description: The UUID of the business
+                survey_id:
+                  type: string
+                  format: uuid
+                  description: The UUID of the survey
+                change_flag:
+                  type: string
+                  enum: [PENDING, ENABLED, DISABLED, SUSPENDED]
+                  description: The new status of the enrolment
+      responses:
+        200:
+          description: The enrolment status has been changed
+        400:
+          description: The request body was missing respondent_id, business_id, survey_id or change_flag
+        404:
+          description: The respondent or survey does not exist
+  /respondents/disable-user-enrolments:
+    patch:
+      tags:
+        - respondents
+      summary: Disable all enrolments for a respondent
+      description: Disable all enrolments for a respondent
+      requestBody:
+        required: true
+        content:
+          application/json:
+           schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: The email of the respondent
+      responses:
+        200:
+          description: The enrolments have been disabled
+        400:
+          description: The request body was missing an email
+        404:
+          description: The respondent does not exist
+        422:
+          description: Multiple respondents were found with that email
+  /respondents/id/{id}:
+    get:
+      tags:
+        - respondents
+      summary: Get a respondent by ID
+      description: Get a respondent by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the respondent
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: The respondent has been retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespondentWithAssociations'
+        400:
+          description: The provided ID wasn't a UUID
+        404: 
+          description: The respondent does not exist
+    put:
+      tags:
+        - respondents
+      summary: Update a respondent's details
+      description: Update a respondent's details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the respondent
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  description: The first name of the respondent
+                lastName:
+                  type: string
+                  description: The last name of the respondent
+                telephone:
+                  type: string
+                  description: The telephone number of the respondent
+      responses:
+        200:
+          description: The respondent has been updated
+        400:
+          description: The request body was missing firstName, lastName or telephone
+        404:
+          description: The respondent does not exist
+        409:
+          description: The email address is already in use
+  /respondents/survey_id/{survey_id}/business_id/{business_id}:
+    get:
+      tags:
+        - respondents
+      summary: Get respondents by survey and business
+      description: Get respondents by survey and business
+      parameters:
+        - name: survey_id
+          in: path
+          required: true
+          description: The UUID of the survey
+          schema:
+            type: string
+            format: uuid
+        - name: business_id
+          in: path
+          required: true
+          description: The UUID of the business
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: The respondents have been retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    respondent:
+                      $ref: '#/components/schemas/RespondentWithAssociations'
+                    enrolment_status:
+                      type: string
+                      enum: [PENDING, ENABLED, DISABLED, SUSPENDED]
+        400:
+          description: The survey_id or business_id was missing, or the provided IDs weren't UUIDs
+  /respondents/claim:
+    get:
+      tags:
+        - respondents
+      summary: Verifies a respondent has a claim on a specific business 
+      description: Verifies a respondent has a claim on a specific business 
+      parameters:
+        - name: respondent_id
+          in: query
+          required: true
+          description: The UUID of the respondent
+          schema:
+            type: string
+            format: uuid
+        - name: business_id
+          in: query
+          required: true
+          description: The UUID of the business
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: The information has been retrieved
+          content:
+            application/json:
+              schema:
+                type: string
+                enum: ['VALID', 'INVALID']
+        400:
+          description: The request was missing the respondent_id or business_id, or the provided respondent_id wasn't a UUID
+        404:
+          description: The respondent or business does not exist
+  /respondents/edit-account-status/{party_id}:
+    put:
+      tags:
+        - respondents
+      summary: Edit the account status of a respondent
+      description: Locks and unlocks a respondent's account, notifying them where appropriate
+      parameters:
+        - name: party_id
+          in: path
+          required: true
+          description: The UUID of the respondent
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [CREATED, ACTIVE, SUSPENDED]
+                  description: The new status of the account
+      responses:
+        200:
+          description: The account status has been changed
+        400:
+          description: The request body was missing status
+        404:
+          description: The respondent does not exist
+        500:
+          description: There was an error in the auth service
+  /pending-survey-respondent:
+    post:
+      tags:
+        - respondents
+      summary: Create a respondent for share/transfer survey 
+      description: Create a respondent for share/transfer survey and set them to ACTIVE and enrolment to ENABLED
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emailAddress:
+                  type: string
+                  format: email
+                  description: The email address of the respondent
+                firstName:
+                  type: string
+                  description: The first name of the respondent
+                lastName:
+                  type: string
+                  description: The last name of the respondent
+                password:
+                  type: string
+                  description: The password of the respondent
+                telephone:
+                  type: string
+                  description: The telephone number of the respondent
+                batch_no:
+                  type: string
+                  description: The batch number of the survey share or transfer
+      responses:
+        201:
+          description: The respondent has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespondentWithAssociations'
+        400:
+          description: There was an error in the request body
+        404:
+          description: The batch number does not exist
+        500:
+          description: The business couldn't be found to associate with
+  /respondents/{respondent_id}/password-verification-token:
+    get:
+      tags:
+        - respondents
+      summary: Get the password verification token for a respondent
+      description: Get the password verification token for a respondent
+      parameters:
+        - name: respondent_id
+          in: path
+          required: true
+          description: The UUID of the respondent
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: The password verification token has been retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        404:
+          description: The respondent does not exist
+    post:
+      tags:
+        - respondents
+      summary: Set the password verification token for a respondent
+      description: Set the password verification token for a respondent, and increment their password reset counter
+      parameters:
+        - name: respondent_id
+          in: path
+          required: true
+          description: The UUID of the respondent
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+      responses:
+        200:
+          description: The password verification token has been set
+        400:
+          description: The request body was missing a token
+        404:
+          description: The respondent does not exist
+  /respondents/{respondent_id}/password-reset-counter:
+    get:
+      tags:
+        - respondents
+      summary: Get the password reset counter for a respondent
+      description: Get the password reset counter for a respondent
+      parameters:
+        - name: respondent_id
+          in: path
+          required: true
+          description: The UUID of the respondent
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: The password reset counter has been retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  counter:
+                    type: integer
+        404:
+          description: The respondent does not exist
+    delete:
+      tags:
+        - respondents
+      summary: Reset the password reset counter for a respondent
+      description: Reset the password reset counter for a respondent
+      parameters:
+        - name: respondent_id
+          in: path
+          required: true
+          description: The UUID of the respondent
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: The password reset counter has been reset
+        404:
+          description: The respondent does not exist
+  /batch/respondents:
+    delete:
+      tags:
+        - misc
+      summary: Delete all respondents and associated data marked for deletion
+      description: Delete all respondents and associated data marked for deletion
+      responses:
+        204:
+          description: All respondents and associated data marked for deletion have been deleted and appropriate emails sent
+  /batch/requests:
+    post:
+      tags:
+        - misc
+      summary: Execute multiple requests in a batch
+      description: Execute multiple requests in a batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  method:
+                    type: string
+                    example: POST
+                  path:
+                    type: string
+                    example: /respondents
+                  body:
+                    type: object
+                  headers:
+                    type: object
+      responses:
+        207:
+          description: The requests have been executed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    status:
+                      type: integer
+                      example: 200
+        400:
+          description: The request body wasn't passed in as valid JSON
+  /batch/pending-surveys:
+    delete:
+      tags:
+        - misc
+      summary: Delete expired pending surveys
+      description: Delete expired pending surveys and sends any relevant cancellation emails
+      responses:
+        204:
+          description: All expired pending surveys have been deleted
+  /businesses:
+    post:
+      tags:
+        - businesses
+      summary: Create a business
+      description: Create a business if it doesn't already exist, otherwise update its versioned attributes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Business'
+      responses:
+        200:
+          description: The business has been created or updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessResponse'
+        400:
+          description: There was an error in the request body
+    get:
+      tags:
+        - businesses
+      summary: Get businesses
+      description: Get businesses
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: The UUIDs of the businesses
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+      responses:
+        200:
+          description: The businesses have been retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BusinessResponse'
+        400:
+          description: The request was missing the id query parameter, or wasn't a UUID
+  /businesses/id/{id}:
+    get:
+      tags:
+        - businesses
+      summary: Get a business
+      description: Get a business
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the business
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: The business has been retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessResponse'
+        400: 
+          description: The provided ID wasn't a UUID
+        404:
+          description: The business does not exist
+  /businesses/id/{id}/attributes:
+    get:
+      tags:
+        - businesses
+      summary: Get a business's attributes
+      description: Get a business's attributes, optionally filtered and keyed by collection exercise ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the business
+          schema:
+            type: string
+            format: uuid
+        - name: collection_exercise_id
+          in: query
+          required: false
+          description: The UUID of the collection exercise
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+      responses:
+        200:
+          description: The business's attributes have been retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessAttributes'
+        400: 
+          description: The provided business ID (or collection exercise ID if provided) wasn't a UUID
+  /businesses/attributes/sample-summary/{sample-summary-id}:
+    delete:
+      tags:
+        - businesses
+      summary: Delete a business's attributes
+      description: Delete a business's attributes for a given sample summary
+      parameters:
+        - name: sample-summary-id
+          in: path
+          required: true
+          description: The UUID of the sample summary
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: The business's attributes, if they existed, have been deleted
+        400:
+          description: The provided sample summary ID wasn't a UUID
+  /businesses/ref/{ref}:
+    get:
+      tags:
+        - businesses
+      summary: Get a business by RU reference
+      description: Get a business by RU reference
+      parameters:
+        - name: ref
+          in: path
+          required: true
+          description: The RU reference of the business
+          schema:
+            type: string
+      responses:
+        200:
+          description: The business has been retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessResponse'
+        404:
+          description: The business does not exist
+  /businesses/sample/link/{sample-summary-id}:
+    put:
+      tags:
+        - businesses
+      summary: Update a business's attributes with the correct collection exercise ID
+      description: Update a business's attributes with the correct collection exercise ID based on sample summary ID
+      parameters:
+        - name: sample-summary-id
+          in: path
+          required: true
+          description: The UUID of the sample summary
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                collectionExerciseId:
+                  type: string
+                  format: uuid
+                  description: The UUID of the collection exercise
+      responses:
+        200:
+          description: The business's attributes have been updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  collectionExerciseId:
+                    type: string
+                    format: uuid
+                  sampleSummaryId:
+                    type: string
+                    format: uuid
+        400:
+          description: The request body was missing collectionExerciseId
+  /businesses/search:
+    get:
+      tags:
+        - businesses
+      summary: Search for businesses
+      description: Search for businesses
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: The text to search for
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          description: The page number of results
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: true
+          description: The number of results per page
+          schema:
+            type: integer
+        - name: is_ru_ref_search
+          in: query
+          required: true
+          description: Whether the search is for an RU reference
+          schema:
+            type: boolean
+        - name: max_rec
+          in: query
+          required: true
+          description: The maximum number of records to search for in the database
+          schema:
+            type: integer
+      responses:
+        200:
+          description: The businesses have been retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  businesses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BusinessResponse'
+                  total_business_count:
+                    type: integer
+        400:
+          description: The request was missing one or more of the query parameters
+  /info:
+    get:
+      tags:
+        - info
+      summary: Get service information
+      description: Get service information
+      responses:
+        200:
+          description: The service information has been retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: ras-party
+                  version:
+                    type: string
+                    example: 1.0.0
+  /parties:
+    post:
+      tags: 
+        - businesses
+      deprecated: true
+      summary: Create a business
+      description: Create a business if it doesn't already exist, otherwise update its versioned attributes. Use POST /businesses instead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Business'
+      responses:
+        200:
+          description: The business has been created or updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessResponse'
+        400:
+          description: There was an error in the request body
+        409:
+          description: A business and its attributes already exist for that sample summary
+    patch:
+      tags:
+        - businesses
+      deprecated: true
+      summary: Create a business if it doesn't already exist, otherwise update its versioned attributes. Use POST /businesses instead
+      description: Create a business if it doesn't already exist, otherwise update its versioned attributes. Use POST /businesses instead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Business'
+      responses:
+        200:
+          description: The business's attributes have been updated
+        400:
+          description: There was an error in the request body
+  /parties/type/{sample-unit-type}/id/{id}:
+    get:
+      tags:
+        - businesses
+        - respondents
+      deprecated: true
+      summary: Get a business or respondent by ID
+      description: Get a business or respondent by ID. Use GET /businesses/id/{id} or GET /respondents/id/{respondent_id} instead
+      parameters:
+        - name: sample-unit-type
+          in: path
+          required: true
+          description: The sample unit type (B for business, BI for respondent)
+          schema:
+            type: string
+            enum: [B, BI]
+        - name: id
+          in: path
+          required: true
+          description: The UUID of the business or respondent
+          schema:
+            type: string
+            format: uuid
+        - name: survey_id
+          in: query
+          required: false
+          description: The UUID of the survey
+          schema:
+            type: string
+            format: uuid
+        - name: enrolment_status
+          in: query
+          required: false
+          description: The enrolment status
+          schema:
+            type: string
+            enum: [PENDING, ENABLED, DISABLED, SUSPENDED]
+      responses:
+        200:
+          description: The business or respondent has been retrieved
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/BusinessResponse'
+                  - $ref: '#/components/schemas/RespondentWithAssociations'
+        400:
+          description: The provided sample unit type wasn't one of B or BI
+        404:
+          description: The business or respondent does not exist
+  /pending-survey-users-count:
+    get:
+      tags:
+        - misc
+      summary: Get the count of users who are already enrolled and pending a survey transfer
+      description: Get the count of a business' users who are already enrolled and pending a survey transfer
+      parameters:
+        - name: business_id
+          in: query
+          required: true
+          description: The business ID to count for
+          schema:
+            type: string
+            format: uuid
+        - name: survey_id
+          in: query
+          required: true
+          description: The survey ID to count for
+          schema:
+            type: string
+            format: uuid
+        - name: is_transfer
+          in: query
+          required: false
+          description: Whether the user should be pending a transfer, rather than a share
+          schema:
+            type: boolean
+      responses:
+        200:
+          description: The count of users has been retrieved
+          content:
+            application/json:
+              schema:
+                type: integer
+        400:
+          description: The request was missing the business or survey ID, or the provided business ID wasn't a UUID
+        404:
+          description: The business does not exist
+  /pending-surveys:
+    post:
+      tags:
+        - misc
+      summary: Create a survey transfer or share
+      description: Create a survey transfer or share
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/SurveyShare'
+                - $ref: '#/components/schemas/SurveyTransfer'
+      responses:
+        201:
+          description: The survey transfer or share has been created
+        400:
+          description: The request body was missing or invalid, or the share/transfer is already in progress
+        404:
+          description: The business or respondent does not exist, or the provided business or respondent IDs weren't UUIDs
+  /pending-survey/verification/{token}:
+    get:
+      tags:
+        - misc
+      summary: Verify a survey transfer/share email
+      description: Verify a survey transfer/share email
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: The token to verify
+          schema:
+            type: string
+      responses:
+        200:
+          description: The token is valid
+        404:
+          description: The token or the respondent does not exist
+        409:
+          description: The token has expired
+  /pending-survey/confirm-pending-surveys/{batch-no}:
+    post:
+      tags:
+        - misc
+      summary: Accepts a pending survey transfer or share
+      description: Accepts a pending survey transfer or share, sending an email to confirm the acceptance
+      parameters:
+        - name: batch-no
+          in: path
+          required: true
+          description: The batch number of the survey transfer or share
+          schema:
+            type: integer
+      responses:
+        201:
+          description: The pending survey transfer or share has been accepted
+        404:
+          description: The batch number or the respondent does not exist
+        500:
+          description: The business couldn't be found when accepting the survey transfer or share, or there was an issue in the database
+  /pending-surveys/{batch-no}:
+    get:
+      tags:
+        - misc
+      summary: Get pending survey transfers or shares by batch number
+      description: Get pending survey transfers or shares by batch number
+      parameters:
+        - name: batch-no
+          in: path
+          required: true
+          description: The batch number to retrieve
+          schema:
+            type: integer
+      responses:
+        200:
+          description: The pending survey transfers or shares have been retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PendingSurvey'
+        404:
+          description: The batch number does not exist
+    delete:
+      tags:
+        - misc
+      summary: Delete pending survey transfers or shares by batch number
+      description: Delete pending survey transfers or shares by batch number
+      parameters:
+        - name: batch-no
+          in: path
+          required: true
+          description: The batch number to delete
+          schema:
+            type: integer
+      responses:
+        202:
+          description: The pending survey transfers or shares have been deleted
+        404:
+          description: The batch number does not exist
+        500:
+          description: A database error occured during the deletion
+  /pending-surveys/originator/{originator-respondent-id}:
+    get:
+      tags:
+        - misc
+      summary: Get pending survey transfers or shares by the respondent ID of the respondent who shared/transferred it away
+      description: Get pending survey transfers or shares by the respondent ID of the respondent who shared/transferred it away
+      parameters:
+        - name: originator-respondent-id
+          in: path
+          required: true
+          description: The UUID of the respondent who shared/transferred the survey
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: The pending survey transfers or shares have been retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PendingSurvey'
+  /pending-surveys/resend-email:
+    post:
+      tags:
+        - misc
+      summary: Resend the pending survey transfer/share email
+      description: Resend the pending survey transfer/share email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                batch_number:
+                  type: integer
+                  description: The batch number of the survey transfer or share
+      responses:
+        201:
+          description: The pending survey transfer/share email has been resent
+        400:
+          description: The request body was missing batch_number or the 
+        404:
+          description: The batch number or the respondent from the batch does not exist
+components:
+  schemas:
+    RespondentWithAssociations:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+        sampleUnitType:
+          type: string
+          example: BI
+        pendingEmailAddress:
+          type: string
+          format: email
+          example: example@ons.gov.uk
+        firstName:
+          type: string
+          example: Jane
+        lastName:
+          type: string
+          example: Doe
+        telephone:
+          type: string
+          example: 01234567890
+        status:
+          type: string
+          enum: [CREATED, ACTIVE, SUSPENDED]
+        markForDeletion:
+          type: boolean
+          example: false
+        passwordVerificationToken:
+          type: string
+        passwordResetCounter:
+          type: integer
+        associations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Association'
+    Association:
+      type: object
+      properties:
+        partyId:
+          type: string
+          format: uuid
+          example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+        sampleUnitRef:
+          type: string
+          format: string
+          example: 49900000001
+        businessRespondentStatus:
+          type: string
+          enum: [CREATED, ACTIVE, SUSPENDED]
+        enrolments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Enrolment'
+    Enrolment:
+      type: object
+      properties:
+        surveyId:
+          type: string
+          format: uuid
+          example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+        enrolmentStatus:
+          type: string
+          enum: [PENDING, ENABLED, DISABLED, SUSPENDED]
+    Business:
+      type: object
+      properties:
+        sampleUnitRef:
+          type: string
+          format: string
+          example: 49900000001
+        sampleUnitType:
+          type: string
+          enum: [B, BI]
+        sampleSummaryId:
+          type: string
+          format: uuid
+          example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+        attributes:
+          $ref: '#/components/schemas/BusinessAttributes'
+    BusinessAttributes:
+      type: object
+      properties:
+        ruref:
+          type: string
+          example: 49900000001
+        birthdate:
+          type: string
+          format: date
+          example: 1990-01-01
+        checkletter:
+          type: string
+          example: A
+        currency:
+          type: string
+          example: GBP
+        entname1:
+          type: string
+        entname2:
+          type: string
+        entname3:
+          type: string
+        entref:
+          type: string
+        entremkr:
+          type: string
+        formtype:
+          type: string
+        froempment:
+          type: integer
+        frosic2007:
+          type: string
+        frosic92:
+          type: string
+        frotover:
+          type: integer
+        inclexcl:
+          type: string
+        legalstatus:
+          type: string
+        region:
+          type: string
+        runame1:
+          type: string
+          example: Office for National Statistics
+        runame2:
+          type: string
+          example: ONS
+        runame3:
+          type: string
+          example: UK Statistics Authority
+        rusic2007:
+          type: string
+        rusic92:
+          type: string
+        seltype:
+          type: string
+        tradstyle1:
+          type: string
+        cell_no:
+          type: number
+    BusinessResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+        sampleUnitRef:
+          type: string
+          format: string
+          example: 49900000001
+        sampleUnitType:
+          type: string
+          enum: [B, BI]
+        sampleSummaryId:
+          type: string
+          format: uuid
+          example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+        attributes:
+          $ref: '#/components/schemas/BusinessAttributes'
+        name:
+          type: string
+          example: Office for National Statistics
+        trading_as:
+          type: string
+          example: ONS
+        associations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Association'
+    SurveyShare:
+      type: object
+      properties:
+        pending_shares:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyProperties'
+    SurveyTransfer:
+      type: object
+      properties:
+        pending_transfers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SurveyProperties'
+    SurveyProperties:
+      type: object
+      properties:
+        business_id:
+          type: string
+          format: uuid
+          example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+        survey_id:
+          type: string
+          format: uuid
+          example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+        email_address:
+          type: string
+          format: email
+          example: ons@ons.gov.uk
+        shared_by:
+          type: string
+          format: uuid
+          example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+    PendingSurvey:
+      type: object
+      properties:
+        email_address:
+          type: string
+          format: email
+          example: ons@ons.gov.uk
+        business_id:
+          type: string
+          format: uuid
+          example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+        survey_id:
+          type: string
+          format: uuid
+          example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+        shared_by:
+          type: string
+          format: uuid
+          example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+        batch_no:
+          type: integer
+          example: 1
+        is_transfer:
+          type: boolean
+          example: true
+        time_shared:
+          type: string
+          format: date-time
+          example: 2020-01-01T00:00:00Z
