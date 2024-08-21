@@ -337,7 +337,7 @@ def is_already_enrolled(survey_id, respondent_pk, business_id, session):
     return False if not enrolment else True
 
 
-@with_db_session
+@with_query_only_db_session
 def get_pending_survey_by_batch_number(batch_number, session):
     """
     gets list of share surveys against the batch number
