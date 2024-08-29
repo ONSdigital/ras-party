@@ -116,6 +116,7 @@ class Business(Base):
             associations.append(respondent_dict)
         return associations
 
+
     def to_business_dict(self, collection_exercise_id=None):
         """
         Gets a dict that contains both summary data and collection exercise data.  The collection exercise data will be
@@ -138,7 +139,7 @@ class Business(Base):
             "sampleSummaryId": attributes.sample_summary_id,
             "name": attributes.attributes.get("name"),
             "trading_as": attributes.attributes.get("trading_as"),
-            "associations": self._get_respondents_associations(self.respondents),
+            # "associations": self._get_respondents_associations(self.respondents),
         }
         return d
 
@@ -152,7 +153,6 @@ class Business(Base):
             "attributes": attributes.attributes,
             "name": attributes.attributes.get("name"),
             "trading_as": attributes.attributes.get("trading_as"),
-            "associations": self._get_respondents_associations(self.respondents),
         }
 
     def to_post_response_dict(self):
@@ -164,7 +164,6 @@ class Business(Base):
             "attributes": self.attributes[-1].attributes,
             "name": self.attributes[-1].name,
             "trading_as": self.attributes[-1].trading_as,
-            "associations": self._get_respondents_associations(self.respondents),
         }
 
     def _get_attributes_for_collection_exercise(self, collection_exercise_id=None):
@@ -178,6 +177,9 @@ class Business(Base):
         except StopIteration:
             logger.error("No active attributes for business", reference=self.business_ref, status=400)
             raise BadRequest("Business with reference does not have any active attributes.")
+
+    def get_respondents(self):
+        return self.respondents
 
 
 class BusinessAttributes(Base):

@@ -75,7 +75,15 @@ def delete_business_attributes_by_sample_summary_id(sample_summary_id):
 @business_view.route("/businesses/ref/<ref>", methods=["GET"])
 def get_business_by_ref(ref):
     # Temporarily map the old party url to this to aid in the transition away from /parties urls
+    include_respondents = False
     business = business_controller.get_business_by_ref(ref)
+    return jsonify(business)
+
+@business_view.route("/respondents/ref/<ref>", methods=["GET"])
+def get_business_and_respondents_by_ref(ref):
+    # Temporarily map the old party url to this to aid in the transition away from /parties urls
+    include_respondents = True
+    business = business_controller.get_business_respondent_by_ref(ref)
     return jsonify(business)
 
 

@@ -15,7 +15,7 @@ from ras_party.controllers.queries import (
     search_businesses,
 )
 from ras_party.controllers.validate import Exists, Validator
-from ras_party.models.models import Business, BusinessAttributes
+from ras_party.models.models import Business, BusinessAttributes, EnrolmentStatus
 from ras_party.support.session_decorator import (
     with_db_session,
     with_query_only_db_session,
@@ -40,6 +40,29 @@ def get_business_by_ref(ref, session):
         raise NotFound("Business with reference does not exist.")
 
     return business.to_party_dict()
+
+@with_query_only_db_session
+def get_business_respondent_by_ref(ref, session):
+    """
+    Get a Business by its unique business reference
+
+    :param ref: Reference of the Business to return
+    :type ref: str
+    :returns: A business object containing the data for the business
+    :rtype: Business
+    """
+    business = query_business_by_ref(ref, session)
+    if not business:
+        logger.info("Business with reference does not exist.", ru_ref=ref)
+        raise NotFound("Business with reference does not exist.")
+
+    party_dict = business.to_party_dict()
+    respondents = business.get_respondents()
+    associations = get_respondents_associations(respondents)
+
+    party_dict["associations"] = associations
+
+    return party_dict
 
 
 @with_query_only_db_session
@@ -185,7 +208,7 @@ def businesses_sample_ce_link(sample, ce_data, session):
 
 @with_query_only_db_session
 def get_businesses_by_search_query(
-    search_query: str, page: int, limit: int, is_ru_ref_search: bool, max_rec: int, session
+        search_query: str, page: int, limit: int, is_ru_ref_search: bool, max_rec: int, session
 ):
     """
     Controller to get the search result based on mandatory arguments
@@ -223,3 +246,22 @@ def delete_attributes_by_sample_summary_id(sample_summary_id: str, session) -> N
         )
     else:
         logger.info("No attributes to delete", sample_summary_id=sample_summary_id)
+
+
+def get_respondents_associations(respondents):
+    associations = []
+    for business_respondent in respondents:
+        respondent_dict = {
+            "partyId": business_respondent.respondent.party_uuid,
+            "businessRespondentStatus": business_respondent.respondent.status.name,
+        }
+        enrolments = business_respondent.enrolment
+        respondent_dict["enrolments"] = []
+        for enrolment in enrolments:
+            enrolments_dict = {
+                "surveyId": enrolment.survey_id,
+                "enrolmentStatus": EnrolmentStatus(enrolment.status).name,
+            }
+            respondent_dict["enrolments"].append(enrolments_dict)
+        associations.append(respondent_dict)
+    return associations
