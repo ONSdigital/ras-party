@@ -15,7 +15,7 @@ from ras_party.controllers.queries import (
     search_businesses,
 )
 from ras_party.controllers.validate import Exists, Validator
-from ras_party.models.models import Business, BusinessAttributes, EnrolmentStatus
+from ras_party.models.models import Business, BusinessAttributes
 from ras_party.support.session_decorator import (
     with_db_session,
     with_query_only_db_session,
@@ -39,31 +39,8 @@ def get_business_by_ref(ref, session):
         logger.info("Business with reference does not exist.", ru_ref=ref)
         raise NotFound("Business with reference does not exist.")
 
-    return get_multi_purpose_business_and_party_dict(business, None, False)
-
-
-
-@with_query_only_db_session
-def get_business_respondent_by_ref(ref, session):
-    """
-    Get a Business by its unique business reference
-
-    :param ref: Reference of the Business to return
-    :type ref: str
-    :returns: A business object containing the data for the business
-    :rtype: Business
-    """
-    business = query_business_by_ref(ref, session)
-    if not business:
-        logger.info("Business with reference does not exist.", ru_ref=ref)
-        raise NotFound("Business with reference does not exist.")
-
-    respondents = business.get_respondents()
-    associations = get_respondents_associations(respondents)
-
-    # respondents["associations"] = associations
-    associations_dict = {"associations": associations}
-    return associations_dict
+    # return business.to_party_dict()
+    return business.to_unified_dict()
 
 
 @with_query_only_db_session
@@ -84,8 +61,8 @@ def get_businesses_by_ids(party_uuids, session):
             raise BadRequest(f"'{party_uuid}' is not a valid UUID format for property 'id'")
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
-
-    return [get_multi_purpose_business_and_party_dict(business, None, False) for business in businesses]
+    # return [business.to_business_summary_dict() for business in businesses]
+    return [business.to_unified_dict() for business in businesses]
 
 
 @with_query_only_db_session
@@ -151,7 +128,11 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
         logger.info("Business with id does not exist", party_uuid=party_uuid)
         raise NotFound("Business with party id does not exist")
 
-    return get_multi_purpose_business_and_party_dict(business, collection_exercise_id)
+    if verbose:
+        return business.to_business_dict(collection_exercise_id=collection_exercise_id)
+
+    # return business.to_business_summary_dict(collection_exercise_id=collection_exercise_id)
+    return business.to_unified_dict(collection_exercise_id=collection_exercise_id)
 
 
 @with_db_session
@@ -207,7 +188,7 @@ def businesses_sample_ce_link(sample, ce_data, session):
 
 @with_query_only_db_session
 def get_businesses_by_search_query(
-        search_query: str, page: int, limit: int, is_ru_ref_search: bool, max_rec: int, session
+    search_query: str, page: int, limit: int, is_ru_ref_search: bool, max_rec: int, session
 ):
     """
     Controller to get the search result based on mandatory arguments
@@ -245,41 +226,3 @@ def delete_attributes_by_sample_summary_id(sample_summary_id: str, session) -> N
         )
     else:
         logger.info("No attributes to delete", sample_summary_id=sample_summary_id)
-
-
-def get_respondents_associations(respondents):
-    associations = []
-    for business_respondent in respondents:
-        respondent_dict = {
-            "partyId": business_respondent.respondent.party_uuid,
-            "businessRespondentStatus": business_respondent.respondent.status.name,
-        }
-        enrolments = business_respondent.enrolment
-        respondent_dict["enrolments"] = []
-        for enrolment in enrolments:
-            enrolments_dict = {
-                "surveyId": enrolment.survey_id,
-                "enrolmentStatus": EnrolmentStatus(enrolment.status).name,
-            }
-            respondent_dict["enrolments"].append(enrolments_dict)
-        associations.append(respondent_dict)
-    return associations
-
-
-def get_multi_purpose_business_and_party_dict(business, collection_exercise_id=None, attributes_required=True):
-    attributes = business.get_attributes_for_collection_exercise(collection_exercise_id)
-
-    business_dict = {
-        "id": business.party_uuid,
-        "sampleUnitRef": business.business_ref,
-        "sampleUnitType": business.UNIT_TYPE,
-        "sampleSummaryId": attributes.sample_summary_id,
-        "name": attributes.attributes.get("name"),
-        "trading_as": attributes.attributes.get("trading_as"),
-    }
-
-    if attributes_required and collection_exercise_id:
-        return business_dict, attributes
-
-    return business_dict
-

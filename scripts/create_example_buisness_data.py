@@ -47,7 +47,7 @@ try:
 
         cursor.execute(respondent_insert_query)
         cursor.execute(business_respondent_insert_query)
-    # cursor.execute(auth_insert_query)
+        # cursor.execute(auth_insert_query)
         # connection.commit()
         # respondent_id = cursor.execute(respondent_get_id)
 
