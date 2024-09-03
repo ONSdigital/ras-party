@@ -39,7 +39,9 @@ def get_business_by_ref(ref, session):
         logger.info("Business with reference does not exist.", ru_ref=ref)
         raise NotFound("Business with reference does not exist.")
 
-    return business.to_party_dict()
+    return get_multi_purpose_business_and_party_dict(business, None, False)
+
+
 
 @with_query_only_db_session
 def get_business_respondent_by_ref(ref, session):
@@ -56,13 +58,12 @@ def get_business_respondent_by_ref(ref, session):
         logger.info("Business with reference does not exist.", ru_ref=ref)
         raise NotFound("Business with reference does not exist.")
 
-    party_dict = business.to_party_dict()
     respondents = business.get_respondents()
     associations = get_respondents_associations(respondents)
 
-    party_dict["associations"] = associations
-
-    return party_dict
+    # respondents["associations"] = associations
+    associations_dict = {"associations": associations}
+    return associations_dict
 
 
 @with_query_only_db_session
@@ -83,7 +84,8 @@ def get_businesses_by_ids(party_uuids, session):
             raise BadRequest(f"'{party_uuid}' is not a valid UUID format for property 'id'")
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
-    return [business.to_business_summary_dict() for business in businesses]
+
+    return [get_multi_purpose_business_and_party_dict(business, None, False) for business in businesses]
 
 
 @with_query_only_db_session
@@ -149,10 +151,7 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
         logger.info("Business with id does not exist", party_uuid=party_uuid)
         raise NotFound("Business with party id does not exist")
 
-    if verbose:
-        return business.to_business_dict(collection_exercise_id=collection_exercise_id)
-
-    return business.to_business_summary_dict(collection_exercise_id=collection_exercise_id)
+    return get_multi_purpose_business_and_party_dict(business, collection_exercise_id)
 
 
 @with_db_session
@@ -265,3 +264,22 @@ def get_respondents_associations(respondents):
             respondent_dict["enrolments"].append(enrolments_dict)
         associations.append(respondent_dict)
     return associations
+
+
+def get_multi_purpose_business_and_party_dict(business, collection_exercise_id=None, attributes_required=True):
+    attributes = business.get_attributes_for_collection_exercise(collection_exercise_id)
+
+    business_dict = {
+        "id": business.party_uuid,
+        "sampleUnitRef": business.business_ref,
+        "sampleUnitType": business.UNIT_TYPE,
+        "sampleSummaryId": attributes.sample_summary_id,
+        "name": attributes.attributes.get("name"),
+        "trading_as": attributes.attributes.get("trading_as"),
+    }
+
+    if attributes_required and collection_exercise_id:
+        return business_dict, attributes
+
+    return business_dict
+

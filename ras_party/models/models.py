@@ -117,43 +117,42 @@ class Business(Base):
         return associations
 
 
-    def to_business_dict(self, collection_exercise_id=None):
-        """
-        Gets a dict that contains both summary data and collection exercise data.  The collection exercise data will be
-        for either the specified one if supplied, or the most recent one if not supplied
+    # def to_business_dict(self, collection_exercise_id=None):
+    #     """
+    #     Gets a dict that contains both summary data and collection exercise data.  The collection exercise data will be
+    #     for either the specified one if supplied, or the most recent one if not supplied
+    #
+    #     :param collection_exercise_id: A collection exercise uuid
+    #     :return: A dict containing both the summary data and business attributes for the business
+    #     :rtype: dict
+    #     """
+    #     d = self.to_business_summary_dict()
+    #     attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
+    #     return dict(d, **attributes.attributes)
 
-        :param collection_exercise_id: A collection exercise uuid
-        :return: A dict containing both the summary data and business attributes for the business
-        :rtype: dict
-        """
-        d = self.to_business_summary_dict()
-        attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
-        return dict(d, **attributes.attributes)
+    # def to_business_summary_dict(self, collection_exercise_id=None):
+    #     attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
+    #     d = {
+    #         "id": self.party_uuid,
+    #         "sampleUnitRef": self.business_ref,
+    #         "sampleUnitType": self.UNIT_TYPE,
+    #         "sampleSummaryId": attributes.sample_summary_id,
+    #         "name": attributes.attributes.get("name"),
+    #         "trading_as": attributes.attributes.get("trading_as"),
+    #     }
+    #     return d
 
-    def to_business_summary_dict(self, collection_exercise_id=None):
-        attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
-        d = {
-            "id": self.party_uuid,
-            "sampleUnitRef": self.business_ref,
-            "sampleUnitType": self.UNIT_TYPE,
-            "sampleSummaryId": attributes.sample_summary_id,
-            "name": attributes.attributes.get("name"),
-            "trading_as": attributes.attributes.get("trading_as"),
-            # "associations": self._get_respondents_associations(self.respondents),
-        }
-        return d
-
-    def to_party_dict(self):
-        attributes = self._get_attributes_for_collection_exercise()
-        return {
-            "id": self.party_uuid,
-            "sampleUnitRef": self.business_ref,
-            "sampleUnitType": self.UNIT_TYPE,
-            "sampleSummaryId": attributes.sample_summary_id,
-            "attributes": attributes.attributes,
-            "name": attributes.attributes.get("name"),
-            "trading_as": attributes.attributes.get("trading_as"),
-        }
+    # def to_party_dict(self):
+    #     attributes = self._get_attributes_for_collection_exercise()
+    #     return {
+    #         "id": self.party_uuid,
+    #         "sampleUnitRef": self.business_ref,
+    #         "sampleUnitType": self.UNIT_TYPE,
+    #         "sampleSummaryId": attributes.sample_summary_id,
+    #         "attributes": attributes.attributes,
+    #         "name": attributes.attributes.get("name"),
+    #         "trading_as": attributes.attributes.get("trading_as"),
+    #     }
 
     def to_post_response_dict(self):
         return {
@@ -166,7 +165,19 @@ class Business(Base):
             "trading_as": self.attributes[-1].trading_as,
         }
 
-    def _get_attributes_for_collection_exercise(self, collection_exercise_id=None):
+    # def _get_attributes_for_collection_exercise(self, collection_exercise_id=None):
+    #     if collection_exercise_id:
+    #         for attributes in self.attributes:
+    #             if attributes.collection_exercise == collection_exercise_id:
+    #                 return attributes
+    #
+    #     try:
+    #         return next((attributes for attributes in self.attributes if attributes.collection_exercise))
+    #     except StopIteration:
+    #         logger.error("No active attributes for business", reference=self.business_ref, status=400)
+    #         raise BadRequest("Business with reference does not have any active attributes.")
+
+    def get_attributes_for_collection_exercise(self, collection_exercise_id=None):
         if collection_exercise_id:
             for attributes in self.attributes:
                 if attributes.collection_exercise == collection_exercise_id:

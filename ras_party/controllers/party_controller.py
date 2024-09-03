@@ -93,13 +93,13 @@ def get_party_by_id(sample_unit_type, party_id, session):
         if not business:
             logger.info("Business with id does not exist", business_id=party_id, status=404)
             raise NotFound("Business with id does not exist")
-        return business.to_party_dict()
+        return get_multi_purpose_business_and_party_dict(business)
     elif sample_unit_type == Respondent.UNIT_TYPE:
         respondent = query_respondent_by_party_uuid(party_id, session)
         if not respondent:
             logger.info("Respondent with id does not exist", respondent_id=party_id, status=404)
             raise NotFound("Respondent with id does not exist")
-        return respondent.to_party_dict()
+        return get_multi_purpose_business_and_party_dict(respondent)
     else:
         logger.info("Invalid sample unit type", type=sample_unit_type)
         raise BadRequest(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']")
@@ -133,4 +133,23 @@ def filter_enrolments(existing_enrolments, survey_id, enrolment_status=None):
         for enrolment in filtered_enrolments:
             if enrolment["enrolmentStatus"] not in enrolment_status:
                 filtered_enrolments.remove(enrolment)
+
+    # enrolment_dict = {
+    #
+    # }
     return filtered_enrolments
+
+
+def get_multi_purpose_business_and_party_dict(business):
+    attributes = business.get_attributes_for_collection_exercise()
+
+    business_dict = {
+        "id": business.party_uuid,
+        "sampleUnitRef": business.business_ref,
+        "sampleUnitType": business.UNIT_TYPE,
+        "sampleSummaryId": attributes.sample_summary_id,
+        "name": attributes.attributes.get("name"),
+        "trading_as": attributes.attributes.get("trading_as"),
+    }
+
+    return business_dict
