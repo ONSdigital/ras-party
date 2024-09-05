@@ -169,7 +169,7 @@ class Business(Base):
         if attributes_required:
             unified_dict["attributes"] = attributes.attributes
         if associations_required:
-            unified_dict["associations"] = (self._get_respondents_associations(self.respondents),)
+            unified_dict["associations"] = self._get_respondents_associations(self.respondents)
 
         return unified_dict
 
