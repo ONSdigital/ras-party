@@ -4,6 +4,7 @@ import structlog
 from flask import current_app
 from werkzeug.exceptions import BadRequest, Conflict, NotFound
 
+from ras_party import unified_buisness_party_functions
 from ras_party.controllers.queries import (
     query_business_attributes_by_sample_summary_id,
     query_business_by_party_uuid,
@@ -94,14 +95,16 @@ def get_party_by_id(sample_unit_type, party_id, session):
             logger.info("Business with id does not exist", business_id=party_id, status=404)
             raise NotFound("Business with id does not exist")
         # return business.to_party_dict()
-        return business.to_unified_dict(None, attributes_required=True)
+        return unified_buisness_party_functions.to_unified_dict(business, None, True)
+        # return business.to_unified_dict(None, attributes_required=True)
     elif sample_unit_type == Respondent.UNIT_TYPE:
         respondent = query_respondent_by_party_uuid(party_id, session)
         if not respondent:
             logger.info("Respondent with id does not exist", respondent_id=party_id, status=404)
             raise NotFound("Respondent with id does not exist")
         # return respondent.to_party_dict()
-        return respondent.to_unified_dict(None, attributes_required=True)
+        return unified_buisness_party_functions.to_unified_dict(business, None, True)
+        # return respondent.to_unified_dict(None, attributes_required=True)
     else:
         logger.info("Invalid sample unit type", type=sample_unit_type)
         raise BadRequest(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']")

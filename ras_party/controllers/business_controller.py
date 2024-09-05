@@ -5,6 +5,7 @@ import structlog
 from flask import current_app
 from werkzeug.exceptions import BadRequest, NotFound
 
+from ras_party import unified_buisness_party_functions
 from ras_party.controllers.queries import (
     query_business_attributes,
     query_business_attributes_by_collection_exercise,
@@ -40,7 +41,8 @@ def get_business_by_ref(ref, session):
         raise NotFound("Business with reference does not exist.")
 
     # return business.to_party_dict()
-    return business.to_unified_dict()
+    return unified_buisness_party_functions.to_unified_dict(business)
+    # return business.to_unified_dict()
 
 
 @with_query_only_db_session
@@ -62,7 +64,8 @@ def get_businesses_by_ids(party_uuids, session):
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
     # return [business.to_business_summary_dict() for business in businesses]
-    return [business.to_unified_dict() for business in businesses]
+    # return [business.to_unified_dict() for business in businesses]
+    return [unified_buisness_party_functions.to_unified_dict(business) for business in businesses]
 
 
 @with_query_only_db_session
@@ -132,7 +135,8 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
         return business.to_business_dict(collection_exercise_id=collection_exercise_id)
 
     # return business.to_business_summary_dict(collection_exercise_id=collection_exercise_id)
-    return business.to_unified_dict(collection_exercise_id=collection_exercise_id)
+    # return business.to_unified_dict(collection_exercise_id=collection_exercise_id)
+    return unified_buisness_party_functions.to_unified_dict(business, collection_exercise_id=collection_exercise_id)
 
 
 @with_db_session
