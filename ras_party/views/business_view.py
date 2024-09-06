@@ -76,6 +76,7 @@ def delete_business_attributes_by_sample_summary_id(sample_summary_id):
 def get_business_by_ref(ref):
     # Temporarily map the old party url to this to aid in the transition away from /parties urls
     retrieve_associations = request.args.get("get_respondents")
+    retrieve_associations = True if retrieve_associations and retrieve_associations.lower() == "true" else False
     business = business_controller.get_business_by_ref(retrieve_associations, ref)
     return jsonify(business)
 
