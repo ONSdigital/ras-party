@@ -26,7 +26,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 @with_query_only_db_session
-def get_business_by_ref(ref, session):
+def get_business_by_ref(ref, session, retreive_associations=False):
     """
     Get a Business by its unique business reference
 
@@ -35,13 +35,13 @@ def get_business_by_ref(ref, session):
     :returns: A business object containing the data for the business
     :rtype: Business
     """
-    business = query_business_by_ref(ref, session)
+    business = query_business_by_ref(ref,session)
     if not business:
         logger.info("Business with reference does not exist.", ru_ref=ref)
         raise NotFound("Business with reference does not exist.")
 
     # return business.to_party_dict()
-    return unified_buisness_party_functions.to_unified_dict(business)
+    return unified_buisness_party_functions.to_unified_dict(business, None, True, retreive_associations)
     # return business.to_unified_dict()
 
 

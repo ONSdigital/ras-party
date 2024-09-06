@@ -103,7 +103,7 @@ def get_party_by_id(sample_unit_type, party_id, session):
             logger.info("Respondent with id does not exist", respondent_id=party_id, status=404)
             raise NotFound("Respondent with id does not exist")
         # return respondent.to_party_dict()
-        return unified_buisness_party_functions.to_unified_dict(business, None, True)
+        return unified_buisness_party_functions.to_unified_dict(respondent, None, True)
         # return respondent.to_unified_dict(None, attributes_required=True)
     else:
         logger.info("Invalid sample unit type", type=sample_unit_type)
