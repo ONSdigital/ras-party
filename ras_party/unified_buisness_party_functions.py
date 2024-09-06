@@ -47,12 +47,12 @@ def get_respondents_associations(respondents):
 
 def get_attributes_for_collection_exercise(model_attributes, collection_exercise_id=None):
     if collection_exercise_id:
-        for attributes in model_attributes:
+        for attributes in model_attributes.attributes:
             if attributes.collection_exercise == collection_exercise_id:
                 return attributes
 
     try:
-        return next((attributes for attributes in model_attributes if attributes.collection_exercise))
+        return next((attributes for attributes in model_attributes.attributes if attributes.collection_exercise))
     except StopIteration:
         logger.error("No active attributes for business", reference=model_attributes.business_ref, status=400)
         raise BadRequest("Business with reference does not have any active attributes.")
