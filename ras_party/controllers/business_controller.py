@@ -2,10 +2,10 @@ import logging
 import uuid
 
 import structlog
+import unified_buisness_party_functions
 from flask import current_app
 from werkzeug.exceptions import BadRequest, NotFound
 
-import unified_buisness_party_functions
 from ras_party.controllers.queries import (
     query_business_attributes,
     query_business_attributes_by_collection_exercise,
@@ -40,7 +40,9 @@ def get_business_by_ref(retrieve_associations, ref, session):
         logger.info("Business with reference does not exist.", ru_ref=ref)
         raise NotFound("Business with reference does not exist.")
 
-    return unified_buisness_party_functions.to_unified_dict(business, collection_exercise_id=None, attributes_required=True, associations_required=retrieve_associations)
+    return unified_buisness_party_functions.to_unified_dict(
+        business, collection_exercise_id=None, attributes_required=True, associations_required=retrieve_associations
+    )
 
 
 @with_query_only_db_session

@@ -1,10 +1,10 @@
 import logging
 
 import structlog
+import unified_buisness_party_functions
 from flask import current_app
 from werkzeug.exceptions import BadRequest, Conflict, NotFound
 
-import unified_buisness_party_functions
 from ras_party.controllers.queries import (
     query_business_attributes_by_sample_summary_id,
     query_business_by_party_uuid,
@@ -94,13 +94,17 @@ def get_party_by_id(sample_unit_type, party_id, session):
         if not business:
             logger.info("Business with id does not exist", business_id=party_id, status=404)
             raise NotFound("Business with id does not exist")
-        return unified_buisness_party_functions.to_unified_dict(business, collection_exercise_id=None, attributes_required=True, associations_required=True)
+        return unified_buisness_party_functions.to_unified_dict(
+            business, collection_exercise_id=None, attributes_required=True, associations_required=True
+        )
     elif sample_unit_type == Respondent.UNIT_TYPE:
         respondent = query_respondent_by_party_uuid(party_id, session)
         if not respondent:
             logger.info("Respondent with id does not exist", respondent_id=party_id, status=404)
             raise NotFound("Respondent with id does not exist")
-        return unified_buisness_party_functions.to_unified_dict(respondent, collection_exercise_id=None, attributes_required=True, associations_required=True)
+        return unified_buisness_party_functions.to_unified_dict(
+            respondent, collection_exercise_id=None, attributes_required=True, associations_required=True
+        )
     else:
         logger.info("Invalid sample unit type", type=sample_unit_type)
         raise BadRequest(f"{sample_unit_type} is not a valid value for sampleUnitType. Must be one of ['B', 'BI']")
