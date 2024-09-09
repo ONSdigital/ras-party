@@ -130,32 +130,6 @@ class Business(Base):
         attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
         return dict(d, **attributes.attributes)
 
-    def to_business_summary_dict(self, collection_exercise_id=None):
-        attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
-        d = {
-            "id": self.party_uuid,
-            "sampleUnitRef": self.business_ref,
-            "sampleUnitType": self.UNIT_TYPE,
-            "sampleSummaryId": attributes.sample_summary_id,
-            "name": attributes.attributes.get("name"),
-            "trading_as": attributes.attributes.get("trading_as"),
-            "associations": self._get_respondents_associations(self.respondents),
-        }
-        return d
-
-    def to_party_dict(self):
-        attributes = self._get_attributes_for_collection_exercise()
-        return {
-            "id": self.party_uuid,
-            "sampleUnitRef": self.business_ref,
-            "sampleUnitType": self.UNIT_TYPE,
-            "sampleSummaryId": attributes.sample_summary_id,
-            "attributes": attributes.attributes,
-            "name": attributes.attributes.get("name"),
-            "trading_as": attributes.attributes.get("trading_as"),
-            "associations": self._get_respondents_associations(self.respondents),
-        }
-
     def to_unified_dict(self, collection_exercise_id=None, attributes_required=False, associations_required=True):
         attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
         unified_dict = {

@@ -5,7 +5,7 @@ import structlog
 from flask import current_app
 from werkzeug.exceptions import BadRequest, NotFound
 
-from ras_party import unified_buisness_party_functions
+import unified_buisness_party_functions
 from ras_party.controllers.queries import (
     query_business_attributes,
     query_business_attributes_by_collection_exercise,
@@ -35,14 +35,12 @@ def get_business_by_ref(retrieve_associations, ref, session):
     :returns: A business object containing the data for the business
     :rtype: Business
     """
-    business = query_business_by_ref(ref,session)
+    business = query_business_by_ref(ref, session)
     if not business:
         logger.info("Business with reference does not exist.", ru_ref=ref)
         raise NotFound("Business with reference does not exist.")
 
-    # return business.to_party_dict()
-    return unified_buisness_party_functions.to_unified_dict(business, None, True, retrieve_associations)
-    # return business.to_unified_dict()
+    return unified_buisness_party_functions.to_unified_dict(business, collection_exercise_id=None, attributes_required=True, associations_required=retrieve_associations)
 
 
 @with_query_only_db_session
@@ -63,8 +61,6 @@ def get_businesses_by_ids(party_uuids, session):
             raise BadRequest(f"'{party_uuid}' is not a valid UUID format for property 'id'")
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
-    # return [business.to_business_summary_dict() for business in businesses]
-    # return [business.to_unified_dict() for business in businesses]
     return [unified_buisness_party_functions.to_unified_dict(business) for business in businesses]
 
 
@@ -134,8 +130,6 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
     if verbose:
         return business.to_business_dict(collection_exercise_id=collection_exercise_id)
 
-    # return business.to_business_summary_dict(collection_exercise_id=collection_exercise_id)
-    # return business.to_unified_dict(collection_exercise_id=collection_exercise_id)
     return unified_buisness_party_functions.to_unified_dict(business, collection_exercise_id=collection_exercise_id)
 
 

@@ -8,7 +8,7 @@ from ras_party.models.models import EnrolmentStatus
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
-def to_unified_dict(model, collection_exercise_id=None, attributes_required=False, associations_required=True):
+def to_unified_dict(model, collection_exercise_id=None, attributes_required=False, associations_required=False):
     attributes = get_attributes_for_collection_exercise(model, collection_exercise_id)
     unified_dict = {
         "id": model.party_uuid,
