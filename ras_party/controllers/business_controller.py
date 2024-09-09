@@ -2,7 +2,7 @@ import logging
 import uuid
 
 import structlog
-import unified_buisness_party_functions
+from ras_party import unified_buisness_party_functions
 from flask import current_app
 from werkzeug.exceptions import BadRequest, NotFound
 
