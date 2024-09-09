@@ -28,5 +28,5 @@ spec:
             args:
             - /bin/sh
             - -c
-            - curl -u $(SECURITY_USER_NAME):$(SECURITY_USER_PASSWORD) -X DELETE http://$(PARTY_SERVICE_HOST):$(PARTY_SERVICE_PORT)/$(TARGET)
+            - curl -u $(SECURITY_USER_NAME):$(SECURITY_USER_PASSWORD) -X DELETE http://$(PARTY_SERVICE_HOST):$(PARTY_SERVICE_PORT)/$(TARGET) 2> /dev/null
           restartPolicy: OnFailure
