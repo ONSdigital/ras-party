@@ -26,7 +26,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 @with_query_only_db_session
-def get_business_by_ref(ref, session):
+def get_business_by_ref(ref, session, retrieve_associations=True):
     """
     Get a Business by its unique business reference
 
@@ -41,7 +41,7 @@ def get_business_by_ref(ref, session):
         raise NotFound("Business with reference does not exist.")
 
     return unified_buisness_party_functions.to_unified_dict(
-        business, collection_exercise_id=None, attributes_required=True
+        business, collection_exercise_id=None, attributes_required=True, retrieve_associations=retrieve_associations
     )
 
 
