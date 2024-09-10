@@ -82,7 +82,7 @@ def get_business_by_ref(ref):
 @business_view.route("/businesses/ref/reporting-unit-only/<ref>", methods=["GET"])
 def get_business_by_ref_only(ref):
     # This endpoint will retrieve the reporting unit only and not the associations.
-    business = business_controller.get_business_by_ref(ref, True)
+    business = business_controller.get_business_by_ref(ref, retrieve_associations=True)
     return jsonify(business)
 
 
