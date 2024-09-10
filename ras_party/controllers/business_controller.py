@@ -5,6 +5,7 @@ import structlog
 from flask import current_app
 from werkzeug.exceptions import BadRequest, NotFound
 
+from ras_party import unified_buisness_party_functions
 from ras_party.controllers.queries import (
     query_business_attributes,
     query_business_attributes_by_collection_exercise,
@@ -25,7 +26,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 @with_query_only_db_session
-def get_business_by_ref(ref, session):
+def get_business_by_ref(ref, session, retrieve_associations=True):
     """
     Get a Business by its unique business reference
 
@@ -39,7 +40,9 @@ def get_business_by_ref(ref, session):
         logger.info("Business with reference does not exist.", ru_ref=ref)
         raise NotFound("Business with reference does not exist.")
 
-    return business.to_party_dict()
+    return unified_buisness_party_functions.to_unified_dict(
+        business, collection_exercise_id=None, attributes_required=True, retrieve_associations=retrieve_associations
+    )
 
 
 @with_query_only_db_session
@@ -60,7 +63,7 @@ def get_businesses_by_ids(party_uuids, session):
             raise BadRequest(f"'{party_uuid}' is not a valid UUID format for property 'id'")
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
-    return [business.to_business_summary_dict() for business in businesses]
+    return [unified_buisness_party_functions.to_unified_dict(business) for business in businesses]
 
 
 @with_query_only_db_session
@@ -126,10 +129,14 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
         logger.info("Business with id does not exist", party_uuid=party_uuid)
         raise NotFound("Business with party id does not exist")
 
-    if verbose:
-        return business.to_business_dict(collection_exercise_id=collection_exercise_id)
+    unified_dict = unified_buisness_party_functions.to_unified_dict(
+        business, collection_exercise_id=collection_exercise_id, attributes_required=True
+    )
 
-    return business.to_business_summary_dict(collection_exercise_id=collection_exercise_id)
+    if verbose:
+        return dict(unified_dict, **unified_dict["attributes"])
+
+    return unified_buisness_party_functions.to_unified_dict(business, collection_exercise_id=collection_exercise_id)
 
 
 @with_db_session
