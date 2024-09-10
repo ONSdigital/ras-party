@@ -129,8 +129,10 @@ def get_business_by_id(party_uuid, session, verbose=False, collection_exercise_i
         logger.info("Business with id does not exist", party_uuid=party_uuid)
         raise NotFound("Business with party id does not exist")
 
+    unified_dict = unified_buisness_party_functions.to_unified_dict(business, collection_exercise_id=collection_exercise_id, attributes_required=True)
+
     if verbose:
-        return business.to_business_dict(collection_exercise_id=collection_exercise_id)
+        return dict(unified_dict, **unified_dict["attributes"])
 
     return unified_buisness_party_functions.to_unified_dict(business, collection_exercise_id=collection_exercise_id)
 

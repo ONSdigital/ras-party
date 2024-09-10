@@ -43,7 +43,8 @@ def parties_post(party_data, session):
     else:
         business = Business.from_party_dict(party_data)
         session.add(business)
-    return business.to_post_response_dict()
+    return unified_buisness_party_functions.to_unified_dict(business, collection_exercise_id=None, attributes_required=True)
+    # return business.to_post_response_dict()
 
 
 def validate_business(party_data: dict):

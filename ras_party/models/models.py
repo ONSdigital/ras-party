@@ -116,37 +116,6 @@ class Business(Base):
             associations.append(respondent_dict)
         return associations
 
-    def to_business_dict(self, collection_exercise_id=None):
-        """
-        Gets a dict that contains both summary data and collection exercise data.  The collection exercise data will be
-        for either the specified one if supplied, or the most recent one if not supplied
-
-        :param collection_exercise_id: A collection exercise uuid
-        :return: A dict containing both the summary data and business attributes for the business
-        :rtype: dict
-        """
-        # d = self.to_business_summary_dict()
-        d = self.to_unified_dict()
-        attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
-        return dict(d, **attributes.attributes)
-
-    def to_unified_dict(self, collection_exercise_id=None, attributes_required=False, associations_required=True):
-        attributes = self._get_attributes_for_collection_exercise(collection_exercise_id)
-        unified_dict = {
-            "id": self.party_uuid,
-            "sampleUnitRef": self.business_ref,
-            "sampleUnitType": self.UNIT_TYPE,
-            "sampleSummaryId": attributes.sample_summary_id,
-            "name": attributes.attributes.get("name"),
-            "trading_as": attributes.attributes.get("trading_as"),
-        }
-        if attributes_required:
-            unified_dict["attributes"] = attributes.attributes
-        if associations_required:
-            unified_dict["associations"] = self._get_respondents_associations(self.respondents)
-
-        return unified_dict
-
     def to_post_response_dict(self):
         return {
             "id": self.party_uuid,
