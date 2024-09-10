@@ -43,8 +43,7 @@ def parties_post(party_data, session):
     else:
         business = Business.from_party_dict(party_data)
         session.add(business)
-    return unified_buisness_party_functions.to_unified_dict(business, collection_exercise_id=None, attributes_required=True)
-    # return business.to_post_response_dict()
+    return business.to_post_response_dict()
 
 
 def validate_business(party_data: dict):
@@ -96,7 +95,7 @@ def get_party_by_id(sample_unit_type, party_id, session):
             logger.info("Business with id does not exist", business_id=party_id, status=404)
             raise NotFound("Business with id does not exist")
         return unified_buisness_party_functions.to_unified_dict(
-            business, collection_exercise_id=None, attributes_required=True, associations_required=True
+            business, collection_exercise_id=None, attributes_required=True
         )
     elif sample_unit_type == Respondent.UNIT_TYPE:
         respondent = query_respondent_by_party_uuid(party_id, session)
@@ -104,7 +103,7 @@ def get_party_by_id(sample_unit_type, party_id, session):
             logger.info("Respondent with id does not exist", respondent_id=party_id, status=404)
             raise NotFound("Respondent with id does not exist")
         return unified_buisness_party_functions.to_unified_dict(
-            respondent, collection_exercise_id=None, attributes_required=True, associations_required=True
+            respondent, collection_exercise_id=None, attributes_required=True
         )
     else:
         logger.info("Invalid sample unit type", type=sample_unit_type)

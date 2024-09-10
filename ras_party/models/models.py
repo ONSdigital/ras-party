@@ -19,8 +19,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.types import Enum
-from werkzeug.exceptions import BadRequest
 
+from ras_party.models import model_functions
 from ras_party.support.util import filter_falsey_values, partition_dict
 
 Base = declarative_base()
@@ -97,25 +97,6 @@ class Business(Base):
         ba.name = name
         ba.trading_as = trading_as
 
-    @staticmethod
-    def _get_respondents_associations(respondents):
-        associations = []
-        for business_respondent in respondents:
-            respondent_dict = {
-                "partyId": business_respondent.respondent.party_uuid,
-                "businessRespondentStatus": business_respondent.respondent.status.name,
-            }
-            enrolments = business_respondent.enrolment
-            respondent_dict["enrolments"] = []
-            for enrolment in enrolments:
-                enrolments_dict = {
-                    "surveyId": enrolment.survey_id,
-                    "enrolmentStatus": EnrolmentStatus(enrolment.status).name,
-                }
-                respondent_dict["enrolments"].append(enrolments_dict)
-            associations.append(respondent_dict)
-        return associations
-
     def to_post_response_dict(self):
         return {
             "id": self.party_uuid,
@@ -125,20 +106,8 @@ class Business(Base):
             "attributes": self.attributes[-1].attributes,
             "name": self.attributes[-1].name,
             "trading_as": self.attributes[-1].trading_as,
-            "associations": self._get_respondents_associations(self.respondents),
+            "associations": model_functions.get_respondents_associations(self.respondents),
         }
-
-    def _get_attributes_for_collection_exercise(self, collection_exercise_id=None):
-        if collection_exercise_id:
-            for attributes in self.attributes:
-                if attributes.collection_exercise == collection_exercise_id:
-                    return attributes
-
-        try:
-            return next((attributes for attributes in self.attributes if attributes.collection_exercise))
-        except StopIteration:
-            logger.error("No active attributes for business", reference=self.business_ref, status=400)
-            raise BadRequest("Business with reference does not have any active attributes.")
 
 
 class BusinessAttributes(Base):
