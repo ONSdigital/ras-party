@@ -391,8 +391,8 @@ def _send_account_email_changed_notification(email_address, new_email_address, r
 
 def decode_token(token):
     """
-    Decode the email verification token outside the session context.
-    :param token: The token to decode
+    Decode the email verification token.
+    :param token: The email token to decode
     :return: The decoded email address
     """
     duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
