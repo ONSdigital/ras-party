@@ -389,18 +389,34 @@ def _send_account_email_changed_notification(email_address, new_email_address, r
     logger.info("Verification email sent for changing respondents email", respondent_id=str(respondent.party_uuid))
 
 
-@with_query_only_db_session
-def verify_token(token, session):
+def decode_token(token):
+    """
+    Decode the email verification token outside the session context.
+    :param token: The token to decode
+    :return: The decoded email address
+    """
+    duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
     try:
-        duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
         logger.info("Expired email verification token")
         raise Conflict("Expired email verification token")
     except (BadSignature, BadData):
-        logger.exception("Bad token in verify_token")
+        logger.exception("Bad token in decode_token")
         raise NotFound("Unknown email verification token")
+    return email_address
 
+
+@with_query_only_db_session
+def verify_token(token, session):
+    """
+    Verify the token and check if the respondent exists.
+    :param token: The email token for verification
+    :param session: Database session
+    :return: Verification response
+    """
+
+    email_address = decode_token(token)
     respondent = query_respondent_by_email(email_address, session)
     if not respondent:
         logger.info("Respondent with Email from token does not exist")
@@ -707,15 +723,8 @@ def put_email_verification(token, tran, session):
     :return: Verified respondent details
     """
     logger.info("Attempting to verify email", token=token)
-    try:
-        duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
-        email_address = decode_email_token(token, duration)
-    except SignatureExpired:
-        logger.info("Expired email verification token")
-        raise Conflict("Expired email verification token")
-    except (BadSignature, BadData):
-        logger.exception("Bad token in put_email_verification")
-        raise NotFound("Unknown email verification token")
+
+    email_address = decode_token(token)
 
     respondent = query_respondent_by_email(email_address, session)
 
