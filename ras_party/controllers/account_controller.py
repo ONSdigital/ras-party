@@ -410,8 +410,8 @@ def decode_token(token):
 @with_query_only_db_session
 def verify_respondent_by_email(email, session):
     """
-    Verify the email token and check if that respondent exists.
-    :param email: The email token for verification
+    Verify respondent by email address
+    :param email: The email for verification
     :param session: Database session
     :return: Verification response
     """
