@@ -393,7 +393,7 @@ def decode_token(token):
     """
     Decode the email verification token.
     :param token: The email token to decode
-    :return: The decoded email address
+    :return: Email address associated with decoded token
     """
     duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
     try:
