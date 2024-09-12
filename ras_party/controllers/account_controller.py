@@ -408,16 +408,14 @@ def decode_token(token):
 
 
 @with_query_only_db_session
-def verify_token(token, session):
+def verify_respondent_by_email(email, session):
     """
     Verify the email token and check if that respondent exists.
-    :param token: The email token for verification
+    :param email: The email token for verification
     :param session: Database session
     :return: Verification response
     """
-
-    email_address = decode_token(token)
-    respondent = query_respondent_by_email(email_address, session)
+    respondent = query_respondent_by_email(email, session)
     if not respondent:
         logger.info("Respondent with Email from token does not exist")
         raise NotFound("Respondent does not exist")
@@ -714,24 +712,22 @@ def notify_change_account_status(payload, party_id: str, session):
 
 @transactional
 @with_db_session
-def put_email_verification(token, tran, session):
+def put_email_verification(email, tran, session):
     """
     Verify email address, this method can be reached when registering or updating email address
-    :param token:
+    :param email:
     :param tran:
     :param session: db session
     :return: Verified respondent details
     """
-    logger.info("Attempting to verify email", token=token)
+    logger.info("Attempting to verify email", email=email)
 
-    email_address = decode_token(token)
-
-    respondent = query_respondent_by_email(email_address, session)
+    respondent = query_respondent_by_email(email, session)
 
     if not respondent:
         logger.info("Attempting to find respondent by pending email address")
         # When changing contact details, unverified new email is in pending_email_address
-        respondent = query_respondent_by_pending_email(email_address, session)
+        respondent = query_respondent_by_pending_email(email, session)
 
         if respondent:
             update_verified_email_address(respondent, tran)
@@ -757,7 +753,7 @@ def put_email_verification(token, tran, session):
             )
 
         # We set the user as verified on the OAuth2 server.
-        set_user_verified(email_address)
+        set_user_verified(email)
 
     return respondent.to_respondent_with_associations_dict()
 
