@@ -13,6 +13,7 @@ from ras_party.controllers.account_controller import (
 )
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import (
+    query_enrolment_by_survey_business_respondent,
     query_respondent_by_email,
     query_respondent_by_names_and_emails,
     query_respondent_by_party_uuid,
@@ -25,6 +26,7 @@ from ras_party.models.models import (
     Enrolment,
     PendingEnrolment,
     Respondent,
+    RespondentStatus,
 )
 from ras_party.support.session_decorator import (
     with_db_session,
@@ -69,15 +71,25 @@ def get_respondents_by_name_and_email(first_name, last_name, email, page, limit,
     }
 
 
+def get_respondent_by_party_uuid(party_uuid: UUID, session: session) -> Respondent:
+    try:
+        uuid.UUID(party_uuid)
+    except ValueError:
+        raise BadRequest(f"'{party_uuid}' is not a valid UUID")
+
+    respondent = query_respondent_by_party_uuid(party_uuid, session)
+    return respondent
+
+
 @with_query_only_db_session
 def get_respondent_by_id(respondent_id, session):
     """
-    Get a Respondent by its Party ID. Returns a single Party
+    Get a Respondent by its Party ID.
 
     :param respondent_id: ID of Respondent to return
     :type respondent_id: str
     :return: An object representing a respondent, if it exists.
-    :rtype: Respondent
+    :rtype: respondent dict with business associations
     """
     try:
         uuid.UUID(respondent_id)
@@ -246,18 +258,12 @@ def get_respondents_by_survey_and_business_id(survey_id: UUID, business_id: UUID
     return respondents_enrolled
 
 
-def does_user_have_claim(user_id, business_id):
-    # with_db_session function wrapper automatically injects the session parameter
-    # pylint: disable=no-value-for-parameter
-    user_details = get_respondent_by_id(user_id)
-    associations = user_details["associations"]
-    is_associated_to_business = _is_user_associated_to_the_business(associations, business_id)
-    return user_details["status"] == "ACTIVE" and is_associated_to_business
+@with_query_only_db_session
+def is_user_enrolled(party_uuid: UUID, business_id: UUID, survey_id: UUID, session: session) -> bool:
+    respondent = get_respondent_by_party_uuid(party_uuid, session)
 
-
-def _is_user_associated_to_the_business(associations, business_id):
-    for association in associations:
-        if str(association["partyId"]) == business_id:
+    if respondent and respondent.status == RespondentStatus.ACTIVE:
+        enrolment = query_enrolment_by_survey_business_respondent(respondent.id, business_id, survey_id, session)
+        if enrolment:
             return True
-
     return False

@@ -113,16 +113,14 @@ def validate_respondent_claim():
     in client services. There is an argument to use a 403 on invalid claims , but that should be a status on the
     resource not the state of the returned data and so that's stretching the use of http status codes somewhat
     """
-    respondent_id = request.args.get("respondent_id", default="").strip()
-    business_id = request.args.get("business_id", default="").strip()
+    party_uuid = request.args.get("respondent_id")
+    business_id = request.args.get("business_id")
+    survey_id = request.args.get("survey_id")
 
-    if not business_id or not respondent_id:
-        logger.info(
-            "either respondent id or business id is missing", respondent_id=respondent_id, business_id=business_id
-        )
-        raise BadRequest("respondent id and business id is required")
+    if not business_id or not party_uuid or not survey_id:
+        raise BadRequest("party_uuid, business id and survey_id are required")
 
-    if respondent_controller.does_user_have_claim(respondent_id, business_id):
+    if respondent_controller.is_user_enrolled(party_uuid, business_id, survey_id):
         return make_response("Valid", 200)
 
     return make_response("Invalid", 200)
