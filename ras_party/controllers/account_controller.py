@@ -720,7 +720,6 @@ def put_email_verification(email, tran, session):
     :param session: db session
     :return: Verified respondent details
     """
-    logger.info("Attempting to verify email", email=email)
 
     respondent = query_respondent_by_email(email, session)
 
