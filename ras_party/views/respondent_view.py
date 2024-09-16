@@ -117,8 +117,8 @@ def validate_respondent_claim():
     business_id = request.args.get("business_id")
     survey_id = request.args.get("survey_id")
 
-    if not business_id or not party_uuid or not survey_id:
-        raise BadRequest("party_uuid, business id and survey_id are required")
+    if not (is_valid_uuid4(party_uuid) and is_valid_uuid4(business_id) and is_valid_uuid4(survey_id)):
+        return make_response("Bad request, party_uuid, business or survey id not UUID", 400)
 
     if respondent_controller.is_user_enrolled(party_uuid, business_id, survey_id):
         return make_response("Valid", 200)
@@ -130,8 +130,8 @@ def validate_respondent_claim():
 def get_respondents_by_business_and_survey_id(business_id: UUID, survey_id: UUID) -> Response:
     """Gets a list of Respondents enrolled in a survey for a specified business"""
 
-    if is_valid_uuid4(survey_id) and is_valid_uuid4(business_id):
-        respondents = respondent_controller.get_respondents_by_survey_and_business_id(survey_id, business_id)
-        return make_response(respondents, 200)
-    else:
+    if not (is_valid_uuid4(survey_id) and is_valid_uuid4(business_id)):
         return make_response("Bad request, business or survey id not UUID", 400)
+
+    respondents = respondent_controller.get_respondents_by_survey_and_business_id(survey_id, business_id)
+    return make_response(respondents, 200)
