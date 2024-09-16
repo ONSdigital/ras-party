@@ -71,16 +71,6 @@ def get_respondents_by_name_and_email(first_name, last_name, email, page, limit,
     }
 
 
-def get_respondent_by_party_uuid(party_uuid: UUID, session: session) -> Respondent:
-    try:
-        uuid.UUID(party_uuid)
-    except ValueError:
-        raise BadRequest(f"'{party_uuid}' is not a valid UUID")
-
-    respondent = query_respondent_by_party_uuid(party_uuid, session)
-    return respondent
-
-
 @with_query_only_db_session
 def get_respondent_by_id(respondent_id, session):
     """
@@ -260,7 +250,7 @@ def get_respondents_by_survey_and_business_id(survey_id: UUID, business_id: UUID
 
 @with_query_only_db_session
 def is_user_enrolled(party_uuid: UUID, business_id: UUID, survey_id: UUID, session: session) -> bool:
-    respondent = get_respondent_by_party_uuid(party_uuid, session)
+    respondent = query_respondent_by_party_uuid(party_uuid, session)
 
     if respondent and respondent.status == RespondentStatus.ACTIVE:
         enrolment = query_enrolment_by_survey_business_respondent(respondent.id, business_id, survey_id, session)
