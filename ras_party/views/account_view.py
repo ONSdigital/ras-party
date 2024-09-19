@@ -39,7 +39,8 @@ def put_respondent_by_email():
 
 @account_view.route("/tokens/verify/<token>", methods=["GET"])
 def get_verify_token(token):
-    response = account_controller.verify_token(token)
+    email = account_controller.decode_token(token)
+    response = account_controller.verify_respondent_by_email(email)
     return make_response(jsonify(response), 200)
 
 
@@ -66,7 +67,8 @@ def post_respondent():
 
 @account_view.route("/emailverification/<token>", methods=["PUT"])
 def put_email_verification(token):
-    response = account_controller.put_email_verification(token)
+    email = account_controller.decode_token(token)
+    response = account_controller.put_email_verification(email)
     return make_response(jsonify(response), 200)
 
 

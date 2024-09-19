@@ -1096,7 +1096,8 @@ class TestRespondents(PartyTestClient):
             "ras_party.support.session_decorator.current_app.db"
         ) as db:
             token = generate_email_token("test@example.test")
-            account_controller.verify_token(token)
+            email = account_controller.decode_token(token)
+            account_controller.verify_respondent_by_email(email)
             query.assert_called_once_with("test@example.test", db.session())
 
     def test_put_respondent_email_returns_400_when_no_email(self):
@@ -1214,7 +1215,8 @@ class TestRespondents(PartyTestClient):
             "ras_party.support.session_decorator.current_app.db"
         ) as db:
             token = self.generate_valid_token_from_email("test@example.test")
-            account_controller.put_email_verification(token)
+            email = account_controller.decode_token(token)
+            account_controller.put_email_verification(email)
             query.assert_called_once_with("test@example.test", db.session())
 
     def test_token_removed_on_email_update(self):

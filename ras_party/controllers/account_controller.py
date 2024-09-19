@@ -389,19 +389,33 @@ def _send_account_email_changed_notification(email_address, new_email_address, r
     logger.info("Verification email sent for changing respondents email", respondent_id=str(respondent.party_uuid))
 
 
-@with_query_only_db_session
-def verify_token(token, session):
+def decode_token(token):
+    """
+    Decode the email verification token.
+    :param token: The email token to decode
+    :return: Email address associated with decoded token
+    """
+    duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
     try:
-        duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
         email_address = decode_email_token(token, duration)
     except SignatureExpired:
         logger.info("Expired email verification token")
         raise Conflict("Expired email verification token")
     except (BadSignature, BadData):
-        logger.exception("Bad token in verify_token")
+        logger.exception("Bad token in decode_token")
         raise NotFound("Unknown email verification token")
+    return email_address
 
-    respondent = query_respondent_by_email(email_address, session)
+
+@with_query_only_db_session
+def verify_respondent_by_email(email, session):
+    """
+    Verify respondent by email address
+    :param email: The email for verification
+    :param session: Database session
+    :return: Verification response
+    """
+    respondent = query_respondent_by_email(email, session)
     if not respondent:
         logger.info("Respondent with Email from token does not exist")
         raise NotFound("Respondent does not exist")
@@ -698,31 +712,21 @@ def notify_change_account_status(payload, party_id: str, session):
 
 @transactional
 @with_db_session
-def put_email_verification(token, tran, session):
+def put_email_verification(email, tran, session):
     """
     Verify email address, this method can be reached when registering or updating email address
-    :param token:
+    :param email:
     :param tran:
     :param session: db session
     :return: Verified respondent details
     """
-    logger.info("Attempting to verify email", token=token)
-    try:
-        duration = current_app.config["EMAIL_TOKEN_EXPIRY"]
-        email_address = decode_email_token(token, duration)
-    except SignatureExpired:
-        logger.info("Expired email verification token")
-        raise Conflict("Expired email verification token")
-    except (BadSignature, BadData):
-        logger.exception("Bad token in put_email_verification")
-        raise NotFound("Unknown email verification token")
 
-    respondent = query_respondent_by_email(email_address, session)
+    respondent = query_respondent_by_email(email, session)
 
     if not respondent:
         logger.info("Attempting to find respondent by pending email address")
         # When changing contact details, unverified new email is in pending_email_address
-        respondent = query_respondent_by_pending_email(email_address, session)
+        respondent = query_respondent_by_pending_email(email, session)
 
         if respondent:
             update_verified_email_address(respondent, tran)
@@ -748,7 +752,7 @@ def put_email_verification(token, tran, session):
             )
 
         # We set the user as verified on the OAuth2 server.
-        set_user_verified(email_address)
+        set_user_verified(email)
 
     return respondent.to_respondent_with_associations_dict()
 
