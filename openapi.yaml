@@ -599,6 +599,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: survey_id
+          in: query
+          required: true
+          description: The UUID of the survey
+          schema:
+            type: string
+            format: uuid
       responses:
         200:
           description: The information has been retrieved
