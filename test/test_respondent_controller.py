@@ -1694,6 +1694,14 @@ class TestRespondents(PartyTestClient):
             expected_result="Valid",
         )
 
+    def test_validate_claim_invalid_respondent_id(self):
+        self.validate_respondent_claim(
+            respondent_id="invalid",
+            business_id=DEFAULT_BUSINESS_UUID,
+            survey_id=DEFAULT_SURVEY_UUID,
+            expected_status=400,
+        )
+
     def test_validate_claim_returns_invalid_if_respondent_does_not_have_a_claim_on_specific_business(self):
         self.populate_with_respondent(respondent=self.mock_respondent_with_id_active)
         self.populate_with_business()
@@ -1703,7 +1711,7 @@ class TestRespondents(PartyTestClient):
 
         self.validate_respondent_claim(
             respondent_id=DEFAULT_RESPONDENT_UUID,
-            business_id="ADifferentBusiness",
+            business_id="feb28732-fa48-4f6d-802b-65e1215837b0",
             survey_id=DEFAULT_SURVEY_UUID,
             expected_status=200,
             expected_result="Invalid",

@@ -113,16 +113,14 @@ def validate_respondent_claim():
     in client services. There is an argument to use a 403 on invalid claims , but that should be a status on the
     resource not the state of the returned data and so that's stretching the use of http status codes somewhat
     """
-    respondent_id = request.args.get("respondent_id", default="").strip()
-    business_id = request.args.get("business_id", default="").strip()
+    party_uuid = request.args.get("respondent_id")
+    business_id = request.args.get("business_id")
+    survey_id = request.args.get("survey_id")
 
-    if not business_id or not respondent_id:
-        logger.info(
-            "either respondent id or business id is missing", respondent_id=respondent_id, business_id=business_id
-        )
-        raise BadRequest("respondent id and business id is required")
+    if not (is_valid_uuid4(party_uuid) and is_valid_uuid4(business_id) and is_valid_uuid4(survey_id)):
+        return make_response("Bad request, party_uuid, business or survey id not UUID", 400)
 
-    if respondent_controller.does_user_have_claim(respondent_id, business_id):
+    if respondent_controller.is_user_enrolled(party_uuid, business_id, survey_id):
         return make_response("Valid", 200)
 
     return make_response("Invalid", 200)
@@ -132,8 +130,8 @@ def validate_respondent_claim():
 def get_respondents_by_business_and_survey_id(business_id: UUID, survey_id: UUID) -> Response:
     """Gets a list of Respondents enrolled in a survey for a specified business"""
 
-    if is_valid_uuid4(survey_id) and is_valid_uuid4(business_id):
-        respondents = respondent_controller.get_respondents_by_survey_and_business_id(survey_id, business_id)
-        return make_response(respondents, 200)
-    else:
+    if not (is_valid_uuid4(survey_id) and is_valid_uuid4(business_id)):
         return make_response("Bad request, business or survey id not UUID", 400)
+
+    respondents = respondent_controller.get_respondents_by_survey_and_business_id(survey_id, business_id)
+    return make_response(respondents, 200)
