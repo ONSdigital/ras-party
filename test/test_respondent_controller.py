@@ -2009,6 +2009,16 @@ class TestRespondents(PartyTestClient):
         # Then an empty list is returned
         self.assertEqual(enrolled_respondents, [])
 
+    def test_get_respondent_by_party_id(self):
+        # Given there is respondent
+        respondent = self.populate_with_respondent(respondent=self.mock_respondent)
+
+        # When get_respondent_by_party_id is called with the correct party_uuid
+        respondent_by_party_id = respondent_controller.get_respondent_by_party_id(respondent.party_uuid)
+
+        # Then the respondent is returned
+        self.assertEqual(respondent.id, respondent_by_party_id.id)
+
     @with_db_session
     def _enroll_respondent(self, session):
         respondent = self.populate_with_respondent(respondent=self.mock_respondent)
