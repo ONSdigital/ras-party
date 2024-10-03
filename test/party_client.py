@@ -440,3 +440,7 @@ class PartyTestClient(TestCase):
             f"/party-api/v1/respondents/survey_id/{survey_id}/business_id/{business_id}", headers=self.auth_headers
         )
         return response
+
+    def get_respondents_by_party_id(self, party_id):
+        response = self.client.get(f"/party-api/v1/respondents/party_id/{party_id}", headers=self.auth_headers)
+        return response
