@@ -77,6 +77,18 @@ def _validate_get_respondent_params(ids, first_name, last_name, email):
                 raise BadRequest(f"'{party_id}' is not a valid UUID format for property 'id'")
 
 
+@respondent_view.route("/respondents/party_id/<party_id>", methods=["GET"])
+def get_respondent_by_party_id(party_id: UUID) -> Response:
+    if not is_valid_uuid4(party_id):
+        return make_response("party_id is not UUID", 400)
+
+    respondent = respondent_controller.get_respondent_by_party_id(party_id)
+    if respondent:
+        return make_response(respondent.to_dict(), 200)
+
+    return make_response(f"respondent not found for party_id {party_id}", 404)
+
+
 @respondent_view.route("/respondents/id/<respondent_id>", methods=["GET"])
 def get_respondent_by_id(respondent_id):
     response = respondent_controller.get_respondent_by_id(respondent_id)

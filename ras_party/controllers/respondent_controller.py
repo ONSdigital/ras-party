@@ -72,6 +72,11 @@ def get_respondents_by_name_and_email(first_name, last_name, email, page, limit,
 
 
 @with_query_only_db_session
+def get_respondent_by_party_id(party_id: UUID, session: session) -> Respondent:
+    return query_respondent_by_party_uuid(party_id, session)
+
+
+@with_query_only_db_session
 def get_respondent_by_id(respondent_id, session):
     """
     Get a Respondent by its Party ID.
