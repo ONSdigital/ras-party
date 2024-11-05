@@ -6,8 +6,8 @@ gcp:
   topic: ras-rm-notify-test
 
 image:
-  devRepo: eu.gcr.io/ons-rasrmbs-management
-  name: eu.gcr.io/ons-rasrmbs-management
+  devRepo: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images
+  name: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images
   tag: latest
   pullPolicy: Always
 
