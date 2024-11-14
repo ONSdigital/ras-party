@@ -11,6 +11,8 @@ tags:
     description: Respondent endpoints
   - name: businesses
     description: Business endpoints
+  - name: enrolments
+    description: enrolments endpoints
   - name: info
     description: Information endpoints
   - name: misc
@@ -821,6 +823,37 @@ paths:
           description: The password reset counter has been reset
         404:
           description: The respondent does not exist
+  /enrolments:
+    get:
+      tags:
+        - enrolments
+      summary: get enrolment details
+      description: returns a list of all enrolments that match given parameters
+      responses:
+        200:
+          description: list of dict enrolments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    business_id:
+                      type: string
+                      format: uuid
+                    respondent_id:
+                      type: integer
+                    status:
+                      type: string
+                      example: ENABLED
+                    survey_id:
+                      type: string
+                      format: uuid
+        400:
+          description: Missing of malformed parameters
+        404:
+          description: Respondent doesn't exist
   /batch/respondents:
     delete:
       tags:

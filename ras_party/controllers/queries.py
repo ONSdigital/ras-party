@@ -643,3 +643,23 @@ def count_enrolment_by_survey_business(business_id, survey_id, session):
         .count()
     )
     return response
+
+
+def query_enrolments_by_parameters(
+    session: session, respondent_id: int = None, business_id: UUID = None, survey_id: UUID = None, status: int = None
+) -> list[Enrolment]:
+    """
+    Query to return a list of enrolments based on parameters
+    """
+    conditions = []
+
+    if respondent_id:
+        conditions.append(Enrolment.respondent_id == respondent_id)
+    if business_id:
+        conditions.append(Enrolment.business_id == business_id)
+    if survey_id:
+        conditions.append(Enrolment.survey_id == survey_id)
+    if status:
+        conditions.append(Enrolment.status == status)
+
+    return session.query(Enrolment).filter(and_(*conditions)).all()

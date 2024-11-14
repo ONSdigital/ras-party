@@ -390,6 +390,14 @@ class Enrolment(Base):
         ),
     )
 
+    def to_dict(self) -> dict:
+        return {
+            "business_id": self.business_id,
+            "respondent_id": self.respondent_id,
+            "survey_id": self.survey_id,
+            "status": self.status.name,
+        }
+
 
 class PendingSurveys(Base):
     __tablename__ = "pending_surveys"
