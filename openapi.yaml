@@ -823,12 +823,20 @@ paths:
           description: The password reset counter has been reset
         404:
           description: The respondent does not exist
-  /enrolments:
+  /enrolments/respondent/{party_uuid}:
     get:
       tags:
         - enrolments
       summary: get enrolment details
       description: returns a list of all enrolments that match given parameters
+      parameters:
+        - name: party_uuid
+          in: path
+          required: true
+          description: The UUID of the respondent
+          schema:
+            type: string
+            format: uuid
       responses:
         200:
           description: list of dict enrolments
