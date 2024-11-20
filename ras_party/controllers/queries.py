@@ -645,21 +645,19 @@ def count_enrolment_by_survey_business(business_id, survey_id, session):
     return response
 
 
-def query_enrolments_by_parameters(
-    session: session, respondent_id: int = None, business_id: UUID = None, survey_id: UUID = None, status: int = None
+def query_respondent_enrolments(
+    session: session, respondent_id: int, business_id: UUID = None, survey_id: UUID = None, status: int = None
 ) -> list[Enrolment]:
     """
-    Query to return a list of enrolments based on parameters
+    Query to return a list of respondent Enrolments. Business_id, survey_id and status can also be added as conditions
     """
-    conditions = []
+    additional_conditions = []
 
-    if respondent_id:
-        conditions.append(Enrolment.respondent_id == respondent_id)
     if business_id:
-        conditions.append(Enrolment.business_id == business_id)
+        additional_conditions.append(Enrolment.business_id == business_id)
     if survey_id:
-        conditions.append(Enrolment.survey_id == survey_id)
+        additional_conditions.append(Enrolment.survey_id == survey_id)
     if status:
-        conditions.append(Enrolment.status == status)
+        additional_conditions.append(Enrolment.status == status)
 
-    return session.query(Enrolment).filter(and_(*conditions)).all()
+    return session.query(Enrolment).filter(and_(Enrolment.respondent_id == respondent_id, *additional_conditions)).all()

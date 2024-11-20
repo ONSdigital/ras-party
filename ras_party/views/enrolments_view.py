@@ -1,4 +1,5 @@
 import logging
+from uuid import UUID
 
 import structlog
 from flask import Blueprint, Response, current_app, make_response, request
@@ -7,7 +8,8 @@ from sqlalchemy.exc import DataError
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.exceptions import BadRequest, NotFound
 
-from ras_party.controllers.enrolments_controller import enrolments_by_parameters
+from ras_party.controllers.enrolments_controller import respondent_enrolments
+from ras_party.uuid_helper import is_valid_uuid4
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 enrolments_view = Blueprint("enrolments_view", __name__)
@@ -28,20 +30,19 @@ def get_pw(username):
         return config_password
 
 
-@enrolments_view.route("/enrolments", methods=["GET"])
-def get_enrolments() -> Response:
+@enrolments_view.route("/respondent/<party_uuid>", methods=["GET"])
+def get_respondent_enrolments(party_uuid: UUID) -> Response:
     json = request.get_json()
-    party_uuid = json.get("party_uuid")
     business_id = json.get("business_id")
     survey_id = json.get("survey_id")
     status = json.get("status")
 
-    if not (party_uuid or business_id or survey_id):
-        logger.error("No parameters passed to get_enrolments")
+    if not is_valid_uuid4(party_uuid):
+        logger.error(f"party_id not a valid uuid {party_uuid}")
         return BadRequest()
 
     try:
-        enrolments = enrolments_by_parameters(
+        enrolments = respondent_enrolments(
             party_uuid=party_uuid, business_id=business_id, survey_id=survey_id, status=status
         )
     except NoResultFound:

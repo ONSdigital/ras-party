@@ -41,7 +41,7 @@ def create_app(config=None):
     app.register_blueprint(respondent_view, url_prefix="/party-api/v1")
     app.register_blueprint(batch_request, url_prefix="/party-api/v1")
     app.register_blueprint(pending_survey_view, url_prefix="/party-api/v1")
-    app.register_blueprint(enrolments_view, url_prefix="/party-api/v1")
+    app.register_blueprint(enrolments_view, url_prefix="/party-api/v1/enrolments")
     app.register_blueprint(info_view)
     app.register_blueprint(error_handlers.blueprint)
 
