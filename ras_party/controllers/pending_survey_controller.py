@@ -1,6 +1,6 @@
 import logging
 import uuid
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from urllib.error import HTTPError
 
 import structlog

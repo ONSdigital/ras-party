@@ -1,8 +1,8 @@
 import os
 import sys
+from datetime import UTC, datetime
 
 import sqlalchemy as sa
-from datetime import datetime, UTC
 from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
