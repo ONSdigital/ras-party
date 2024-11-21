@@ -322,22 +322,6 @@ class Respondent(Base):
             "password_reset_counter": self.password_reset_counter,
         }
 
-    def to_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "party_uuid": self.party_uuid,
-            "status": RespondentStatus(self.status).name,
-            "email_address": self.email_address,
-            "pending_email_address": self.pending_email_address,
-            "first_name": self.first_name,
-            "last_name": self.last_name,
-            "telephone": self.telephone,
-            "created_on": self.created_on,
-            "mark_for_deletion": self.mark_for_deletion,
-            "password_verification_token": self.password_verification_token,
-            "password_reset_counter": self.password_reset_counter,
-        }
-
     def to_respondent_with_associations_dict(self):
         respondent_dict = self.to_respondent_dict()
         respondent_dict["associations"] = self._get_business_associations(self.businesses)
