@@ -3,7 +3,7 @@ import os
 import sys
 
 import sqlalchemy as sa
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
@@ -26,7 +26,7 @@ def upgrade():
         sa.Column("sample_summary_id", sa.Text),
         sa.Column("collection_exercise", sa.Text),
         sa.Column("attributes", JSONB),
-        sa.Column("created_on", sa.DateTime, default=datetime.datetime.utcnow),
+        sa.Column("created_on", sa.DateTime, default=datetime.datetime.now(timezone.utc)),
         sa.ForeignKeyConstraint(["business_id"], ["partysvc.business.party_uuid"]),
         schema="partysvc",
     )
