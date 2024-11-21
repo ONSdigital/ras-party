@@ -56,8 +56,8 @@ class TestEnrolments(PartyTestClient):
         enrolments = respondent_enrolments(party_uuid="b6f9d6e8-b840-4c95-a6ce-9ef145dd1f85")
 
         self.assertEqual(len(enrolments), 2)
-        self.assertIn(str(enrolments[0].business_id), "75d9af56-1225-4d43-b41d-1199f5f89daa")
-        self.assertIn(str(enrolments[1].business_id), "98e2c9dd-a760-47dd-ba18-439fd5fb93a3")
+        self.assertEqual(str(enrolments[0].business_id), "75d9af56-1225-4d43-b41d-1199f5f89daa")
+        self.assertEqual(str(enrolments[1].business_id), "98e2c9dd-a760-47dd-ba18-439fd5fb93a3")
 
     def test_get_enrolments_party_id_and_business_id_and_survey_id(self):
         enrolments = respondent_enrolments(
@@ -67,9 +67,9 @@ class TestEnrolments(PartyTestClient):
         )
 
         self.assertEqual(len(enrolments), 1)
-        self.assertIn(str(enrolments[0].respondent_id), "b6f9d6e8-b840-4c95-a6ce-9ef145dd1f85")
-        self.assertIn(str(enrolments[0].business_id), "75d9af56-1225-4d43-b41d-1199f5f89daa")
-        self.assertIn(str(enrolments[0].survey_id), "9200d295-9d6e-41fe-b541-747ae67a279f")
+        self.assertEqual(str(enrolments[0].respondent_id), "1")
+        self.assertEqual(str(enrolments[0].business_id), "75d9af56-1225-4d43-b41d-1199f5f89daa")
+        self.assertEqual(str(enrolments[0].survey_id), "9200d295-9d6e-41fe-b541-747ae67a279f")
 
     def test_get_enrolments_party_id_enabled(self):
         enrolments = respondent_enrolments(
@@ -77,8 +77,8 @@ class TestEnrolments(PartyTestClient):
         )
 
         self.assertEqual(len(enrolments), 1)
-        self.assertIn(str(enrolments[0].business_id), "af25c9d5-6893-4342-9d24-4b88509e965f")
-        self.assertIn(str(enrolments[0].survey_id), "9200d295-9d6e-41fe-b541-747ae67a279f")
+        self.assertEqual(str(enrolments[0].business_id), "af25c9d5-6893-4342-9d24-4b88509e965f")
+        self.assertEqual(str(enrolments[0].survey_id), "9200d295-9d6e-41fe-b541-747ae67a279f")
 
     def test_get_enrolments_party_id_disabled(self):
         enrolments = respondent_enrolments(
@@ -86,8 +86,8 @@ class TestEnrolments(PartyTestClient):
         )
 
         self.assertEqual(len(enrolments), 1)
-        self.assertIn(str(enrolments[0].business_id), "75d9af56-1225-4d43-b41d-1199f5f89daa")
-        self.assertIn(str(enrolments[0].survey_id), "9200d295-9d6e-41fe-b541-747ae67a279f")
+        self.assertEqual(str(enrolments[0].business_id), "75d9af56-1225-4d43-b41d-1199f5f89daa")
+        self.assertEqual(str(enrolments[0].survey_id), "9200d295-9d6e-41fe-b541-747ae67a279f")
 
     def test_get_enrolments_party_id_not_found_respondent(self):
         with self.assertRaises(NoResultFound):
