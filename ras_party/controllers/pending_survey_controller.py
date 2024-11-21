@@ -1,6 +1,7 @@
 import logging
 import uuid
 from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from urllib.error import HTTPError
 
 import structlog
@@ -129,7 +130,7 @@ def delete_pending_surveys(session):
     Deletes all the existing pending surveys which have expired
     :param session A db session
     """
-    _expired_hrs = datetime.now(UTC) - timedelta(seconds=float(current_app.config["EMAIL_TOKEN_EXPIRY"]))
+    _expired_hrs = datetime.utcnow() - timedelta(seconds=float(current_app.config["EMAIL_TOKEN_EXPIRY"]))
     pending_shares = session.query(PendingSurveys).filter(PendingSurveys.time_shared < _expired_hrs)
     pending_shares.delete()
     logger.info("Deletion complete")
@@ -143,7 +144,7 @@ def get_unique_pending_surveys(is_transfer, session):
     :type is_transfer: bool
     :param session A db session
     """
-    _expired_hrs = datetime.now(UTC) - timedelta(seconds=float(current_app.config["EMAIL_TOKEN_EXPIRY"]))
+    _expired_hrs = datetime.utcnow() - timedelta(seconds=float(current_app.config["EMAIL_TOKEN_EXPIRY"]))
     pending_shares_ready_for_deletion = (
         session.query(PendingSurveys)
         .filter(PendingSurveys.time_shared < _expired_hrs)

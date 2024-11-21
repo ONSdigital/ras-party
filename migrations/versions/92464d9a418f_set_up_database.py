@@ -1,3 +1,4 @@
+import datetime
 import os
 import sys
 from datetime import UTC, datetime
@@ -25,7 +26,7 @@ def upgrade():
         sa.Column("sample_summary_id", sa.Text),
         sa.Column("collection_exercise", sa.Text),
         sa.Column("attributes", JSONB),
-        sa.Column("created_on", sa.DateTime, default=datetime.now(UTC)),
+        sa.Column("created_on", sa.DateTime, default=datetime.datetime.utcnow),
         sa.ForeignKeyConstraint(["business_id"], ["partysvc.business.party_uuid"]),
         schema="partysvc",
     )
