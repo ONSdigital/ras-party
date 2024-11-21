@@ -2,9 +2,9 @@ import datetime
 import enum
 import logging
 import uuid
-from datetime import UTC, datetime
 
 import structlog
+from datetime import datetime, UTC
 from jsonschema import Draft4Validator
 from sqlalchemy import (
     Boolean,
