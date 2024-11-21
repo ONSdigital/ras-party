@@ -29,6 +29,7 @@ def create_app(config=None):
     from ras_party.views.account_view import account_view
     from ras_party.views.batch_request import batch_request
     from ras_party.views.business_view import business_view
+    from ras_party.views.enrolments_view import enrolments_view
     from ras_party.views.info_view import info_view
     from ras_party.views.party_view import party_view
     from ras_party.views.pending_survey_view import pending_survey_view
@@ -40,6 +41,7 @@ def create_app(config=None):
     app.register_blueprint(respondent_view, url_prefix="/party-api/v1")
     app.register_blueprint(batch_request, url_prefix="/party-api/v1")
     app.register_blueprint(pending_survey_view, url_prefix="/party-api/v1")
+    app.register_blueprint(enrolments_view, url_prefix="/party-api/v1/enrolments")
     app.register_blueprint(info_view)
     app.register_blueprint(error_handlers.blueprint)
 
