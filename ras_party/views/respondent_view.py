@@ -84,7 +84,7 @@ def get_respondent_by_party_id(party_id: UUID) -> Response:
 
     respondent = respondent_controller.get_respondent_by_party_id(party_id)
     if respondent:
-        return make_response(respondent.to_dict(), 200)
+        return make_response(respondent.to_respondent_dict(), 200)
 
     return make_response(f"respondent not found for party_id {party_id}", 404)
 

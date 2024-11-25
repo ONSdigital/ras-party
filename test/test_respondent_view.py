@@ -53,9 +53,22 @@ class TestRespondentView(PartyTestClient):
 
         # Then a 200 is returned with the correct Respondent
         json_response = json.loads(response.data)
+        expected_response = {
+            "emailAddress": "email address",
+            "firstName": "first name",
+            "id": "7ab8f3b6-f436-400d-8911-335a61ec58e5",
+            "lastName": "last name",
+            "markForDeletion": None,
+            "password_reset_counter": None,
+            "password_verification_token": None,
+            "pendingEmailAddress": None,
+            "sampleUnitType": "BI",
+            "status": "ACTIVE",
+            "telephone": "telephone",
+        }
         respondent["status"] = "ACTIVE"  # The to_dict is returning the ResponseStatus name so this needs to be updated
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json_response, json_response | respondent)
+        self.assertEqual(json_response, expected_response)
 
     def test_get_respondents_by_party_id_invalid_uuid(self):
         # Given/When the end point is called with an invalid uuid for party_id
