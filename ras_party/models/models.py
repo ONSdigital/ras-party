@@ -1,7 +1,6 @@
 import enum
 import logging
 import uuid
-from datetime import UTC, datetime
 
 import structlog
 from jsonschema import Draft4Validator
@@ -18,6 +17,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.sql import func
 from sqlalchemy.types import Enum
 from werkzeug.exceptions import BadRequest
 
@@ -39,7 +39,7 @@ class Business(Base):
     attributes = relationship(
         "BusinessAttributes", backref="business", order_by="desc(BusinessAttributes.created_on)", lazy="joined"
     )
-    created_on = Column(DateTime, default=datetime.now(UTC))
+    created_on = Column(DateTime(timezone=True), default=func.now())
 
     @staticmethod
     def validate(json_packet, schema):
@@ -188,7 +188,7 @@ class BusinessAttributes(Base):
     sample_summary_id = Column(Text)
     collection_exercise = Column(Text)
     attributes = Column(JSONB)
-    created_on = Column(DateTime, default=datetime.now(UTC))
+    created_on = Column(DateTime(timezone=True), default=func.now())
     name = Column(Text)  # New columns placed at end of list in case code uses positional rather than named references
     trading_as = Column(Text)
     Index("attributes_name_idx", name)
@@ -232,9 +232,9 @@ class BusinessRespondent(Base):
     business_id = Column(UUID, ForeignKey("business.party_uuid"), primary_key=True)
     respondent_id = Column(Integer, ForeignKey("respondent.id"), primary_key=True)
     status = Column("status", Enum(BusinessRespondentStatus), default=BusinessRespondentStatus.ACTIVE)
-    effective_from = Column(DateTime, default=datetime.now(UTC))
-    effective_to = Column(DateTime)
-    created_on = Column(DateTime, default=datetime.now(UTC))
+    effective_from = Column(DateTime(timezone=True), default=func.now())
+    effective_to = Column(DateTime(timezone=True))
+    created_on = Column(DateTime(timezone=True), default=func.now())
 
     business = relationship("Business", back_populates="respondents", lazy="joined")
     respondent = relationship("Respondent", back_populates="businesses", lazy="joined")
@@ -257,7 +257,7 @@ class PendingEnrolment(Base):
     business_id = Column(UUID)
     survey_id = Column(UUID)
 
-    created_on = Column(DateTime, default=datetime.now(UTC))
+    created_on = Column(DateTime(timezone=True), default=func.now())
     respondent = relationship("Respondent")
     Index("pending_enrolment_case_idx", case_id)
 
@@ -279,7 +279,7 @@ class Respondent(Base):
     last_name = Column(Text)
     telephone = Column(Text)
     mark_for_deletion = Column(Boolean, default=False)
-    created_on = Column(DateTime, default=datetime.now(UTC))
+    created_on = Column(DateTime(timezone=True), default=func.now())
     password_verification_token = Column(Text)
     password_reset_counter = Column(Integer, default=0)
     pending_enrolment = relationship("PendingEnrolment", back_populates="respondent")
@@ -360,7 +360,7 @@ class Enrolment(Base):
     respondent_id = Column(Integer, primary_key=True)
     survey_id = Column(Text, primary_key=True)
     status = Column("status", Enum(EnrolmentStatus), default=EnrolmentStatus.PENDING)
-    created_on = Column(DateTime, default=datetime.now(UTC))
+    created_on = Column(DateTime(timezone=True), default=func.now())
 
     business_respondent = relationship("BusinessRespondent", back_populates="enrolment", lazy="joined")
     Index("enrolment_business_idx", business_id)
@@ -387,7 +387,7 @@ class PendingSurveys(Base):
     email_address = Column(Text, primary_key=True)
     business_id = Column(UUID, primary_key=True)
     survey_id = Column(Text, primary_key=True)
-    time_shared = Column(DateTime, default=datetime.now(UTC))
+    time_shared = Column(DateTime(timezone=True), default=func.now())
     shared_by = Column(UUID)
     batch_no = Column(UUID, default=uuid.uuid4)
     is_transfer = Column(Boolean, default=False)
