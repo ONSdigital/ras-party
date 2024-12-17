@@ -13,7 +13,6 @@ from ras_party.controllers.account_controller import (
 )
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import (
-    query_enrolment_by_survey_business_respondent,
     query_respondent_by_email,
     query_respondent_by_names_and_emails,
     query_respondent_by_party_uuid,
@@ -26,7 +25,6 @@ from ras_party.models.models import (
     Enrolment,
     PendingEnrolment,
     Respondent,
-    RespondentStatus,
 )
 from ras_party.support.session_decorator import (
     with_db_session,
@@ -251,14 +249,3 @@ def get_respondents_by_survey_and_business_id(survey_id: UUID, business_id: UUID
         )
 
     return respondents_enrolled
-
-
-@with_query_only_db_session
-def is_user_enrolled(party_uuid: UUID, business_id: UUID, survey_id: UUID, session: session) -> bool:
-    respondent = query_respondent_by_party_uuid(party_uuid, session)
-
-    if respondent and respondent.status == RespondentStatus.ACTIVE:
-        enrolment = query_enrolment_by_survey_business_respondent(respondent.id, business_id, survey_id, session)
-        if enrolment:
-            return True
-    return False
