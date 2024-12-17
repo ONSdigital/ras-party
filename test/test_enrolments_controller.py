@@ -72,7 +72,6 @@ class TestEnrolments(PartyTestClient):
     def test_get_enrolments_party_id(self, get_surveys_details):
         get_surveys_details.return_value = SURVEYS_DETAILS
         enrolments = respondent_enrolments(party_uuid="b6f9d6e8-b840-4c95-a6ce-9ef145dd1f85")
-        print(enrolments)
         self.assertEqual(len(enrolments), 2)
         self.assertEqual(
             enrolments,
