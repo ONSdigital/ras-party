@@ -450,3 +450,12 @@ class PartyTestClient(TestCase):
             f"/party-api/v1/enrolments/respondent/{party_id}", json=payload, headers=self.auth_headers
         )
         return response
+
+    def get_respondent_is_enrolments(self, party_uuid, business_id, survey_id):
+        response = self.client.get(
+            f"/party-api/v1/enrolments/is_respondent_enrolled/{party_uuid}"
+            f"/business_id/{business_id}"
+            f"/survey_id/{survey_id}",
+            headers=self.auth_headers,
+        )
+        return response

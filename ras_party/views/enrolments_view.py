@@ -8,7 +8,10 @@ from sqlalchemy.exc import DataError
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.exceptions import BadRequest, NotFound
 
-from ras_party.controllers.enrolments_controller import respondent_enrolments
+from ras_party.controllers.enrolments_controller import (
+    is_respondent_enrolled,
+    respondent_enrolments,
+)
 from ras_party.uuid_helper import is_valid_uuid4
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -58,4 +61,17 @@ def get_respondent_enrolments(party_uuid: UUID) -> Response:
         )
         return BadRequest()
 
-    return make_response([enrolment.to_dict() for enrolment in enrolments], 200)
+    return make_response(enrolments, 200)
+
+
+@enrolments_view.route(
+    "/is_respondent_enrolled/<party_uuid>/business_id/<business_id>/survey_id/<survey_id>", methods=["GET"]
+)
+def get_is_respondent_enrolled(party_uuid: UUID, business_id: UUID, survey_id: UUID) -> Response:
+    if not (is_valid_uuid4(party_uuid) and is_valid_uuid4(business_id) and is_valid_uuid4(survey_id)):
+        return make_response("Bad request, party_uuid, business or survey id not UUID", 400)
+
+    enrolled_status = is_respondent_enrolled(party_uuid=party_uuid, business_id=business_id, survey_id=survey_id)
+    if enrolled_status:
+        return make_response({"enrolled": True}, 200)
+    return make_response({"enrolled": False}, 200)

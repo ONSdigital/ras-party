@@ -660,4 +660,10 @@ def query_respondent_enrolments(
     if status:
         additional_conditions.append(Enrolment.status == status)
 
-    return session.query(Enrolment).filter(and_(Enrolment.respondent_id == respondent_id, *additional_conditions)).all()
+    return (
+        session.query(Enrolment, Business.business_ref, BusinessAttributes.attributes)
+        .join(Business, Business.party_uuid == Enrolment.business_id)
+        .join(BusinessAttributes, BusinessAttributes.business_id == Enrolment.business_id)
+        .filter(and_(Enrolment.respondent_id == respondent_id, *additional_conditions))
+        .all()
+    )

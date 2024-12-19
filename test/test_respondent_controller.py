@@ -1166,6 +1166,7 @@ class TestRespondents(PartyTestClient):
                 personalisation=personalisation_old,
             ),
         ]
+
         self.assertEqual(call_args_list, self.mock_notify.request_to_notify.call_args_list)
 
     def test_email_verification_activates_a_respondent(self):
