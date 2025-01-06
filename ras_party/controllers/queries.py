@@ -653,7 +653,7 @@ def query_respondent_enrolments(
     Query to return a list of respondent Enrolments and business attributes.
     Business_id, survey_id and status can also be added as conditions
     """
-    where_clause = f"where respondent_id = {respondent_id}"
+    where_clause = f"WHERE respondent_id = {respondent_id}"
 
     if business_id:
         where_clause += f" and partysvc.enrolment.business_id='{business_id}'"
