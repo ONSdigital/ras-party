@@ -23,14 +23,23 @@ respondents_enrolments = [
             {
                 "business_id": "75d9af56-1225-4d43-b41d-1199f5f89daa",
                 "business_ref": "001",
-                "business_attributes": {"name": "Business 1", "trading_as": "1 Business"},
+                "business_attributes": {
+                    "id": "75d9af56-1225-4d43-b41d-1199f5f89daa",
+                    "name": "Business 1",
+                    "trading_as": "1 Business",
+                    "created_on": "2024-01-01 12:00:00",
+                },
                 "survey_id": "9200d295-9d6e-41fe-b541-747ae67a279f",
                 "status": EnrolmentStatus.ENABLED,
             },
             {
                 "business_id": "98e2c9dd-a760-47dd-ba18-439fd5fb93a3",
                 "business_ref": "002",
-                "business_attributes": {"name": "Business 2", "trading_as": "2 Business"},
+                "business_attributes": {
+                    "name": "Business 2",
+                    "trading_as": "2 Business",
+                    "created_on": "2025-01-01 12:00:00",
+                },
                 "survey_id": "c641f6ad-a5eb-4d82-a647-7cd586549bbc",
                 "status": EnrolmentStatus.ENABLED,
             },
@@ -42,14 +51,23 @@ respondents_enrolments = [
             {
                 "business_id": "af25c9d5-6893-4342-9d24-4b88509e965f",
                 "business_ref": "003",
-                "business_attributes": {"name": "Business 3", "trading_as": "3 Business"},
+                "business_attributes": {
+                    "name": "Business 3",
+                    "trading_as": "3 Business",
+                    "created_on": "2025-01-01 12:00:00",
+                },
                 "survey_id": "9200d295-9d6e-41fe-b541-747ae67a279f",
                 "status": EnrolmentStatus.ENABLED,
             },
             {
                 "business_id": "75d9af56-1225-4d43-b41d-1199f5f89daa",
-                "business_ref": "004",
-                "business_attributes": {"name": "Business 4", "trading_as": "4 Business"},
+                "business_ref": "001",
+                "business_attributes": {
+                    "id": "75d9af56-1225-4d43-b41d-1199f5f89daa",
+                    "name": "Business 4",
+                    "trading_as": "4 Business",
+                    "created_on": "2025-01-01 12:00:00",
+                },
                 "survey_id": "9200d295-9d6e-41fe-b541-747ae67a279f",
                 "status": EnrolmentStatus.DISABLED,
             },
@@ -80,8 +98,8 @@ class TestEnrolments(PartyTestClient):
                     "enrolment_status": "ENABLED",
                     "business_details": {
                         "id": UUID("75d9af56-1225-4d43-b41d-1199f5f89daa"),
-                        "name": "Business 1",
-                        "trading_as": "1 Business",
+                        "name": "Business 4",  # Business 4 is the latest business_attributes for 75d9af56
+                        "trading_as": "4 Business",
                         "ref": "001",
                     },
                     "survey_details": {
@@ -126,7 +144,7 @@ class TestEnrolments(PartyTestClient):
     def test_get_enrolments_party_id_enabled(self, get_surveys_details):
         get_surveys_details.return_value = SURVEYS_DETAILS
         enrolments = respondent_enrolments(
-            party_uuid="5718649e-30bf-4c25-a2c0-aaa733e54ed6", status=EnrolmentStatus.ENABLED
+            party_uuid="5718649e-30bf-4c25-a2c0-aaa733e54ed6", status=EnrolmentStatus.ENABLED.name
         )
 
         self.assertEqual(len(enrolments), 1)
@@ -137,7 +155,7 @@ class TestEnrolments(PartyTestClient):
     def test_get_enrolments_party_id_disabled(self, get_surveys_details):
         get_surveys_details.return_value = SURVEYS_DETAILS
         enrolments = respondent_enrolments(
-            party_uuid="5718649e-30bf-4c25-a2c0-aaa733e54ed6", status=EnrolmentStatus.DISABLED
+            party_uuid="5718649e-30bf-4c25-a2c0-aaa733e54ed6", status=EnrolmentStatus.DISABLED.name
         )
 
         self.assertEqual(len(enrolments), 1)
@@ -171,13 +189,14 @@ class TestEnrolments(PartyTestClient):
             for enrolment in respondent_enrolment["enrolment_details"]:
                 if not (business := businesses.get(enrolment["business_id"])):
                     business = Business(party_uuid=enrolment["business_id"], business_ref=enrolment["business_ref"])
-                    business_attributes = BusinessAttributes(
-                        business_id=business.party_uuid, attributes=enrolment["business_attributes"]
-                    )
                     session.add(business)
-                    session.add(business_attributes)
                     businesses[enrolment["business_id"]] = business
-
+                business_attributes = BusinessAttributes(
+                    business_id=business.party_uuid,
+                    attributes=enrolment["business_attributes"],
+                    created_on=enrolment["business_attributes"]["created_on"],
+                )
+                session.add(business_attributes)
                 business_respondent = BusinessRespondent(business=business, respondent=respondent)
                 session.add(business_respondent)
                 session.flush()
