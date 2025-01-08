@@ -49,7 +49,7 @@ def respondent_enrolments(
                         "ref": enrolment.business_ref,
                     },
                     "survey_details": {
-                        "id": enrolment.survey_id,
+                        "id": survey_id,
                         "long_name": surveys_details.get(survey_id)["long_name"],
                         "short_name": surveys_details.get(survey_id)["short_name"],
                         "ref": surveys_details.get(survey_id)["ref"],

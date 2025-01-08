@@ -664,9 +664,9 @@ def query_respondent_enrolments(
 
     return session.execute(
         text(
-            f"SELECT * FROM partysvc.enrolment "
+            f"SELECT business_id, status, survey_id, business_ref, attributes from partysvc.enrolment "
             f"inner join partysvc.business on partysvc.business.party_uuid = partysvc.enrolment.business_id, "
-            f"LATERAL (SELECT * FROM partysvc.business_attributes "
+            f"LATERAL (SELECT attributes FROM partysvc.business_attributes "
             f"WHERE partysvc.enrolment.business_id = partysvc.business_attributes.business_id "
             f"ORDER BY partysvc.business_attributes.created_on DESC limit 1) ba {where_clause}"
         )
