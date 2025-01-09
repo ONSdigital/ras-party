@@ -839,23 +839,11 @@ paths:
             format: uuid
       responses:
         200:
-          description: list of dict enrolments
+          description: dict of respondent enrolments and associated business and survey details
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    business_id:
-                      type: string
-                      format: uuid
-                    status:
-                      type: string
-                      example: ENABLED
-                    survey_id:
-                      type: string
-                      format: uuid
+                $ref: '#/components/schemas/RespondentEnrolments'
         400:
           description: Missing of malformed parameters
         404:
@@ -1727,3 +1715,31 @@ components:
           type: string
           format: date-time
           example: 2020-01-01T00:00:00Z
+    RespondentEnrolments:
+      type: object
+      properties:
+        enrolment_status:
+          type: string
+          enum: [PENDING, ENABLED, DISABLED, SUSPENDED]
+        business_details:
+          type: object
+          properties:
+            id:
+              format: uuid
+            name:
+              type: string
+            trading_as:
+              type: string
+            ref:
+              type: string
+        survey_details:
+          type: object
+          properties:
+            id:
+              format: uuid
+            long_name:
+              type: string
+            short_name:
+              type: string
+            ref:
+              type: string

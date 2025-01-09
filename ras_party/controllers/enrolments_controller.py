@@ -31,22 +31,22 @@ def respondent_enrolments(
 
     enrolments = query_respondent_enrolments(session, respondent.id, business_id, survey_id, status)
 
-    if not enrolments:
+    if enrolments.rowcount == 0:
         return []
 
     surveys_details = get_surveys_details()
     respondents_enrolled = []
-    for enrolment, business_ref, business_attributes in enrolments:
+    for enrolment in enrolments:
         survey_id = enrolment.survey_id
         respondents_enrolled.append(
             (
                 {
-                    "enrolment_status": enrolment.status.name,
+                    "enrolment_status": enrolment.status,
                     "business_details": {
                         "id": enrolment.business_id,
-                        "name": business_attributes["name"],
-                        "trading_as": business_attributes["trading_as"],
-                        "ref": business_ref,
+                        "name": enrolment.attributes["name"],
+                        "trading_as": enrolment.attributes["trading_as"],
+                        "ref": enrolment.business_ref,
                     },
                     "survey_details": {
                         "id": survey_id,
