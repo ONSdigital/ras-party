@@ -34,6 +34,7 @@ class Config(object):
     COLLECTION_EXERCISE_URL = os.getenv("COLLECTION_EXERCISE_URL")
     FRONTSTAGE_URL = os.getenv("FRONTSTAGE_URL")
     IAC_URL = os.getenv("IAC_URL")
+    SURVEY_URL = os.getenv("SURVEY_URL")
 
     GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "test-project-id")
     PUBSUB_TOPIC = os.getenv("PUBSUB_TOPIC", "ras-rm-notify-test")
@@ -96,6 +97,7 @@ class Config(object):
 class DevelopmentConfig(Config):
     DEBUG = True
     LOGGING_LEVEL = "DEBUG"
+    SURVEY_URL = os.getenv("SURVEY_URL", "http://localhost:8080")
 
 
 class TestingConfig(DevelopmentConfig):

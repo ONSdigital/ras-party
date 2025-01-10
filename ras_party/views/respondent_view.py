@@ -7,6 +7,7 @@ from flask_httpauth import HTTPBasicAuth
 from werkzeug.exceptions import BadRequest
 
 from ras_party.controllers import respondent_controller
+from ras_party.controllers.enrolments_controller import is_respondent_enrolled
 from ras_party.uuid_helper import is_valid_uuid4
 
 logger = structlog.wrap_logger(logging.getLogger(__name__))
@@ -84,7 +85,7 @@ def get_respondent_by_party_id(party_id: UUID) -> Response:
 
     respondent = respondent_controller.get_respondent_by_party_id(party_id)
     if respondent:
-        return make_response(respondent.to_dict(), 200)
+        return make_response(respondent.to_respondent_dict(), 200)
 
     return make_response(f"respondent not found for party_id {party_id}", 404)
 
@@ -132,7 +133,7 @@ def validate_respondent_claim():
     if not (is_valid_uuid4(party_uuid) and is_valid_uuid4(business_id) and is_valid_uuid4(survey_id)):
         return make_response("Bad request, party_uuid, business or survey id not UUID", 400)
 
-    if respondent_controller.is_user_enrolled(party_uuid, business_id, survey_id):
+    if is_respondent_enrolled(party_uuid, business_id, survey_id):
         return make_response("Valid", 200)
 
     return make_response("Invalid", 200)

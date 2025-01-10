@@ -5,6 +5,7 @@ from uuid import UUID
 import structlog
 from flask import session
 from sqlalchemy import and_, distinct, func, or_
+from sqlalchemy.sql import text
 from sqlalchemy.sql.functions import count
 
 from ras_party.models.models import (
@@ -643,3 +644,30 @@ def count_enrolment_by_survey_business(business_id, survey_id, session):
         .count()
     )
     return response
+
+
+def query_respondent_enrolments(
+    session: session, respondent_id: int, business_id: UUID = None, survey_id: UUID = None, status: int = None
+) -> list[Enrolment]:
+    """
+    Query to return a list of respondent Enrolments and business attributes.
+    Business_id, survey_id and status can also be added as conditions
+    """
+    where_clause = f"WHERE respondent_id = {respondent_id}"
+
+    if business_id:
+        where_clause += f" and partysvc.enrolment.business_id='{business_id}'"
+    if survey_id:
+        where_clause += f" and partysvc.enrolment.survey_id='{survey_id}'"
+    if status:
+        where_clause += f" and partysvc.enrolment.status='{status}'"
+
+    return session.execute(
+        text(
+            f"SELECT business_id, status, survey_id, business_ref, attributes from partysvc.enrolment "
+            f"inner join partysvc.business on partysvc.business.party_uuid = partysvc.enrolment.business_id, "
+            f"LATERAL (SELECT attributes FROM partysvc.business_attributes "
+            f"WHERE partysvc.enrolment.business_id = partysvc.business_attributes.business_id "
+            f"ORDER BY partysvc.business_attributes.created_on DESC limit 1) ba {where_clause}"
+        )
+    )
