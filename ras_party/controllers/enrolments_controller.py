@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from uuid import UUID
 
 import structlog
@@ -35,29 +36,32 @@ def respondent_enrolments(
         return []
 
     surveys_details = get_surveys_details()
-    respondents_enrolled = []
+    enrolments_map = defaultdict(_business_survey_details)
+
     for enrolment in enrolments:
+        print(enrolment)
+        business_ref = enrolment.business_ref
         survey_id = enrolment.survey_id
-        respondents_enrolled.append(
-            (
-                {
-                    "enrolment_status": enrolment.status,
-                    "business_details": {
-                        "id": enrolment.business_id,
-                        "name": enrolment.attributes["name"],
-                        "trading_as": enrolment.attributes["trading_as"],
-                        "ref": enrolment.business_ref,
-                    },
-                    "survey_details": {
-                        "id": survey_id,
-                        "long_name": surveys_details.get(survey_id)["long_name"],
-                        "short_name": surveys_details.get(survey_id)["short_name"],
-                        "ref": surveys_details.get(survey_id)["ref"],
-                    },
-                }
-            )
+
+        enrolments_map[business_ref]["business_name"] = enrolment.attributes["name"]
+        enrolments_map[business_ref]["business_id"] = enrolment.business_id
+        enrolments_map[business_ref]["ru_ref"] = enrolment.business_ref
+        enrolments_map[business_ref]["trading_as"] = enrolment.attributes["trading_as"]
+        enrolments_map[business_ref]["survey_details"].append(
+            {
+                "id": survey_id,
+                "long_name": surveys_details.get(survey_id)["long_name"],
+                "short_name": surveys_details.get(survey_id)["short_name"],
+                "ref": surveys_details.get(survey_id)["ref"],
+                "enrolment_status": enrolment.status,
+            }
         )
-    return respondents_enrolled
+
+    return list(enrolments_map.values())
+
+
+def _business_survey_details() -> dict:
+    return {"survey_details": []}
 
 
 @with_query_only_db_session
