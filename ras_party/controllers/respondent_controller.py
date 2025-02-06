@@ -4,7 +4,7 @@ from uuid import UUID
 
 import structlog
 from flask import current_app, session
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers.account_controller import (
@@ -131,11 +131,22 @@ def delete_respondents_marked_for_deletion(session):
     """
     respondents = session.query(Respondent).filter(Respondent.mark_for_deletion == True)  # noqa
     for respondent in respondents:
-        session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
-        session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
-        session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
-        session.query(Respondent).filter(Respondent.id == respondent.id).delete()
-        send_account_deletion_confirmation_email(respondent.email_address, respondent.first_name)
+        try:
+            session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
+            session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
+            session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
+            session.query(Respondent).filter(Respondent.id == respondent.id).delete()
+            send_account_deletion_confirmation_email(respondent.email_address, respondent.first_name)
+        except IntegrityError as e:
+            logger.error(
+                "An data constraint violation occurred trying to delete the respondent records",
+                respondent_id=Respondent.id,
+                error=str(e),
+            )
+        except SQLAlchemyError as e:
+            logger.error(
+                "An error occurred trying to delete the respondent records", respondent_id=Respondent.id, error=str(e)
+            )
 
 
 def send_account_deletion_confirmation_email(email_address: str, name: str):
