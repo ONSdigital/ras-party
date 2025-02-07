@@ -125,7 +125,7 @@ def update_respondent_mark_for_deletion(email: str, session):
 @with_db_session
 def delete_respondents_marked_for_deletion(session):
     """
-    Deletes all the existing respondents and there associated data which are marked for deletion
+    Deletes all the existing respondents and their associated data which are marked for deletion
 
     NOTE: We don't delete pending_surveys records as these are subject to their own scheduled deletion
     An IntegrityError exception will be logged if the respondent record cannot be deleted due
@@ -134,6 +134,8 @@ def delete_respondents_marked_for_deletion(session):
     :param session A db session
     """
     respondents = session.query(Respondent).filter(Respondent.mark_for_deletion == True)  # noqa
+    logger.info("Preparing to delete respondent records", number_to_delete=respondents.count())
+    failed_deletion_count = 0
     for respondent in respondents:
         bound_logger = logger.bind(
             email=obfuscate_email(respondent.email_address),
@@ -153,6 +155,7 @@ def delete_respondents_marked_for_deletion(session):
                 error=str(e),
             )
             session.rollback()
+            failed_deletion_count += 1
         except SQLAlchemyError as e:
             logger.error(
                 "An error occurred trying to delete the respondent records",
@@ -161,7 +164,8 @@ def delete_respondents_marked_for_deletion(session):
                 error=str(e),
             )
             session.rollback()
-
+            failed_deletion_count += 1
+    logger.info("Respondent record deletions complete", failed_deletion_count=failed_deletion_count)
 
 def delete_respondent_records(session, respondent):
     """
