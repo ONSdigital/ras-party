@@ -122,6 +122,7 @@ def update_respondent_mark_for_deletion(email: str, session):
         return "respondent does not exist", 404
 
 
+@with_db_session
 def delete_respondents_marked_for_deletion(session):
     """
     Deletes all the existing respondents and there associated data which are marked for deletion
@@ -160,12 +161,11 @@ def delete_respondents_marked_for_deletion(session):
             )
 
 
-@with_db_session
 def delete_respondent_records(session, respondent):
     """
     Deletes all records associated with a respondent.
 
-    :param session: The db session
+    :param session: The transactional db session that can be rolled back
     :param respondent: The respondent whose records are to be deleted
     :type respondent: Respondent
     :raises IntegrityError: If there is a data constraint violation
@@ -175,6 +175,7 @@ def delete_respondent_records(session, respondent):
     session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
     session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
     session.query(Respondent).filter(Respondent.id == respondent.id).delete()
+    session.commit()
 
 
 def send_account_deletion_confirmation_email(email_address: str, name: str):
