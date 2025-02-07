@@ -131,12 +131,15 @@ def delete_respondents_marked_for_deletion(session):
     """
     respondents = session.query(Respondent).filter(Respondent.mark_for_deletion == True)  # noqa
     for respondent in respondents:
+        bound_logger = logger.bind(email=obfuscate_email(respondent.email_address, respondent_id=respondent.id))
+        bound_logger.info("Attempting to delete respondent records")
         try:
             session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
             session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
             session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
             session.query(Respondent).filter(Respondent.id == respondent.id).delete()
             send_account_deletion_confirmation_email(respondent.email_address, respondent.first_name)
+            bound_logger.info("Respondent records deleted successfully")
         except IntegrityError as e:
             logger.error(
                 "An data constraint violation occurred trying to delete the respondent records",
