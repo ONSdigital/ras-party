@@ -160,7 +160,7 @@ def delete_respondents_marked_for_deletion(session):
                 "An error occurred trying to delete the respondent records",
                 respondent_id=respondent.id,
                 party_uuid=respondent.party_uuid,
-                error=str(e)
+                error=str(e),
             )
 
 
