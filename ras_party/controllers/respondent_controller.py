@@ -152,6 +152,7 @@ def delete_respondents_marked_for_deletion(session):
                 party_uuid=respondent.party_uuid,
                 error=str(e),
             )
+            session.rollback()
         except SQLAlchemyError as e:
             logger.error(
                 "An error occurred trying to delete the respondent records",
@@ -159,6 +160,7 @@ def delete_respondents_marked_for_deletion(session):
                 party_uuid=respondent.party_uuid,
                 error=str(e),
             )
+            session.rollback()
 
 
 def delete_respondent_records(session, respondent):
