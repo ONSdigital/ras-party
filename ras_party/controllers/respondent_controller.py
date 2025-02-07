@@ -122,7 +122,6 @@ def update_respondent_mark_for_deletion(email: str, session):
         return "respondent does not exist", 404
 
 
-@with_db_session
 def delete_respondents_marked_for_deletion(session):
     """
     Deletes all the existing respondents and there associated data which are marked for deletion
@@ -142,10 +141,7 @@ def delete_respondents_marked_for_deletion(session):
         )
         bound_logger.info("Attempting to delete respondent records")
         try:
-            session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
-            session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
-            session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
-            session.query(Respondent).filter(Respondent.id == respondent.id).delete()
+            delete_respondent_records(session, respondent)
             send_account_deletion_confirmation_email(respondent.email_address, respondent.first_name)
             bound_logger.info("Respondent records deleted successfully")
         except IntegrityError as e:
@@ -162,6 +158,23 @@ def delete_respondents_marked_for_deletion(session):
                 party_uuid=respondent.party_uuid,
                 error=str(e),
             )
+
+
+@with_db_session
+def delete_respondent_records(session, respondent):
+    """
+    Deletes all records associated with a respondent.
+
+    :param session: The db session
+    :param respondent: The respondent whose records are to be deleted
+    :type respondent: Respondent
+    :raises IntegrityError: If there is a data constraint violation
+    :raises SQLAlchemyError: If there is a general SQLAlchemy error
+    """
+    session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
+    session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
+    session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
+    session.query(Respondent).filter(Respondent.id == respondent.id).delete()
 
 
 def send_account_deletion_confirmation_email(email_address: str, name: str):
