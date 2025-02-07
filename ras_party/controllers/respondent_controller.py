@@ -127,6 +127,10 @@ def delete_respondents_marked_for_deletion(session):
     """
     Deletes all the existing respondents and there associated data which are marked for deletion
 
+    NOTE: We don't delete pending_surveys records as these are subject to their own scheduled deletion
+    An IntegrityError exception will be logged if the respondent record cannot be deleted due
+    to existing pending_surveys records.
+
     :param session A db session
     """
     respondents = session.query(Respondent).filter(Respondent.mark_for_deletion == True)  # noqa
