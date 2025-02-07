@@ -167,6 +167,7 @@ def delete_respondents_marked_for_deletion(session):
             failed_deletion_count += 1
     logger.info("Respondent record deletions complete", failed_deletion_count=failed_deletion_count)
 
+
 def delete_respondent_records(session, respondent):
     """
     Deletes all records associated with a respondent.
