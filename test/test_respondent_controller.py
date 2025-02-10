@@ -35,7 +35,7 @@ import responses
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 from requests import Response
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.exceptions import Conflict, InternalServerError, NotFound
 
 from config import TestingConfig
@@ -43,6 +43,9 @@ from ras_party.controllers import account_controller, respondent_controller
 from ras_party.controllers.queries import (
     query_business_by_party_uuid,
     query_respondent_by_party_uuid,
+)
+from ras_party.controllers.respondent_controller import (
+    delete_respondents_marked_for_deletion,
 )
 from ras_party.exceptions import RasNotifyError
 from ras_party.models.models import (
@@ -2032,3 +2035,84 @@ class TestRespondents(PartyTestClient):
         session.flush()
         session.refresh(respondent)
         return respondent.to_respondent_dict()
+
+    @patch("ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email")
+    @patch("ras_party.controllers.respondent_controller.session", new_callable=MagicMock)
+    def test_all_respondents_marked_are_delete(self, mock_session, mock_send_account_deletion_confirmation_email):
+        respondent_1 = Respondent()
+        respondent_1.email_address = "test1@example.com"
+        respondent_1.first_name = "One"
+
+        respondent_2 = Respondent()
+        respondent_2.email_address = "test2@example.com"
+        respondent_2.first_name = "Two"
+
+        respondent_3 = Respondent()
+        respondent_3.email_address = "test3@example.com"
+        respondent_3.first_name = "Three"
+
+        respondents_to_delete = [respondent_1, respondent_2, respondent_3]
+
+        mock_query = MagicMock()
+        mock_query.filter(Respondent.mark_for_deletion).return_value = respondents_to_delete
+        # To iterate over "for respondent in respondents" the __iter__ method needs defining for the Mock
+        mock_query.filter.return_value.__iter__.return_value = iter(respondents_to_delete)
+        mock_session.query.return_value = mock_query
+
+        # Execute
+        with self.app.app_context():
+            delete_respondents_marked_for_deletion.__wrapped__(mock_session)
+
+        # Verify
+        expected_confirmation_email_calls = [
+            call(respondent_1.email_address, respondent_1.first_name),
+            call(respondent_2.email_address, respondent_2.first_name),
+            call(respondent_3.email_address, respondent_3.first_name),
+        ]
+        mock_send_account_deletion_confirmation_email.assert_has_calls(expected_confirmation_email_calls)
+        self.assertEqual(mock_session.commit.call_count, 3)
+        mock_session.rollback.assert_not_called()
+
+    @patch("ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email")
+    @patch("ras_party.controllers.respondent_controller.session", new_callable=MagicMock)
+    def test_delete_respondents_continues_when_exception(
+        self, mock_session, mock_send_account_deletion_confirmation_email
+    ):
+        # Setup
+        respondent_1 = Respondent()
+        respondent_1.email_address = "test1@example.com"
+        respondent_1.first_name = "One"
+
+        respondent_2 = Respondent()
+        respondent_2.email_address = "test2@example.com"
+        respondent_2.first_name = "Two"
+
+        respondent_3 = Respondent()
+        respondent_3.email_address = "test3@example.com"
+        respondent_3.first_name = "Three"
+
+        respondents_to_delete = [respondent_1, respondent_2, respondent_3]
+
+        # Test currently failing, I need to work out how to throw an exception ONLY for respondent_2
+        mock_session.side_effect = IntegrityError("Integrity error", "params", "orig")
+
+        mock_query = MagicMock()
+        mock_query.filter(Respondent.mark_for_deletion).return_value = respondents_to_delete
+        # To iterate over "for respondent in respondents" the __iter__ method needs defining for the Mock
+        mock_query.filter.return_value.__iter__.return_value = iter(respondents_to_delete)
+        mock_session.query.return_value = mock_query
+
+        # Execute
+        with self.app.app_context():
+            delete_respondents_marked_for_deletion.__wrapped__(mock_session)
+
+        # Verify
+        expected_confirmation_email_calls = [
+            call(respondent_1.email_address, respondent_1.first_name),
+            call(respondent_2.email_address, respondent_2.first_name),
+            call(respondent_3.email_address, respondent_3.first_name),
+        ]
+        mock_send_account_deletion_confirmation_email.assert_has_calls(expected_confirmation_email_calls)
+        self.assertEqual(mock_send_account_deletion_confirmation_email.call_count, 2)
+        self.assertEqual(mock_session.commit.call_count, 2)
+        self.assertEqual(mock_session.rollback.commit.call_count, 1)
