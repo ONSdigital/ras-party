@@ -145,6 +145,7 @@ def delete_respondents_marked_for_deletion(session):
         bound_logger.info("Attempting to delete respondent records")
         try:
             delete_respondent_records(session, respondent)
+            session.commit()
             send_account_deletion_confirmation_email(respondent.email_address, respondent.first_name)
             bound_logger.info("Respondent records deleted successfully")
         except IntegrityError as e:
@@ -182,7 +183,6 @@ def delete_respondent_records(session, respondent):
     session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
     session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
     session.query(Respondent).filter(Respondent.id == respondent.id).delete()
-    session.commit()
 
 
 def send_account_deletion_confirmation_email(email_address: str, name: str):
