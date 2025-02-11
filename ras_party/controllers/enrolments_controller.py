@@ -39,7 +39,6 @@ def respondent_enrolments(
     enrolments_map = defaultdict(_business_survey_details)
 
     for enrolment in enrolments:
-        print(enrolment)
         business_ref = enrolment.business_ref
         survey_id = enrolment.survey_id
 
