@@ -144,7 +144,10 @@ def delete_respondents_marked_for_deletion(session):
         )
         bound_logger.info("Attempting to delete respondent records")
         try:
-            delete_respondent_records(session, respondent)
+            session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
+            session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
+            session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
+            session.query(Respondent).filter(Respondent.id == respondent.id).delete()
             session.commit()
             send_account_deletion_confirmation_email(respondent.email_address, respondent.first_name)
             bound_logger.info("Respondent records deleted successfully")
@@ -167,22 +170,6 @@ def delete_respondents_marked_for_deletion(session):
             session.rollback()
             failed_deletion_count += 1
     logger.info("Respondent record deletions complete", failed_deletion_count=failed_deletion_count)
-
-
-def delete_respondent_records(session, respondent):
-    """
-    Deletes all records associated with a respondent.
-
-    :param session: The transactional db session that can be rolled back
-    :param respondent: The respondent whose records are to be deleted
-    :type respondent: Respondent
-    :raises IntegrityError: If there is a data constraint violation
-    :raises SQLAlchemyError: If there is a general SQLAlchemy error
-    """
-    session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
-    session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
-    session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
-    session.query(Respondent).filter(Respondent.id == respondent.id).delete()
 
 
 def send_account_deletion_confirmation_email(email_address: str, name: str):

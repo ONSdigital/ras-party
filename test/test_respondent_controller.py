@@ -2073,11 +2073,10 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(mock_session.commit.call_count, 3)
         mock_session.rollback.assert_not_called()
 
-    @patch("ras_party.controllers.respondent_controller.delete_respondent_records")
     @patch("ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email")
     @patch("ras_party.controllers.respondent_controller.session", new_callable=MagicMock)
     def test_delete_respondents_continues_when_exception(
-        self, mock_session, mock_send_account_deletion_confirmation_email, mock_delete_respondent_records
+        self, mock_session, mock_send_account_deletion_confirmation_email
     ):
         # Setup
         respondent_1 = Respondent()
@@ -2094,16 +2093,16 @@ class TestRespondents(PartyTestClient):
 
         respondents_to_delete = [respondent_1, respondent_2, respondent_3]
 
-        # Ideally this test would only throw an exception for respondent_2
-        # so respondent_1 and respondent_3 would be committed and respondent_2 would be rolled back
-        # but I can't work out how to do that yet so we're throwing exceptions for all 3
-        # this is good enough to test the production bug fix as previously it was terminating after a single exception
-        mock_delete_respondent_records.side_effect = IntegrityError("Integrity error", "params", "orig")
-
         mock_query = MagicMock()
         mock_query.filter(Respondent.mark_for_deletion).return_value = respondents_to_delete
         # To iterate over "for respondent in respondents" the __iter__ method needs defining for the Mock
         mock_query.filter.return_value.__iter__.return_value = iter(respondents_to_delete)
+
+        # Ideally the following side_effect would only throw an exception for respondent_2
+        # so respondent_1 and respondent_3 would be committed and respondent_2 would be rolled back
+        # I can't get a conditional side_effect_function to act only on respondent_2
+        # this is good enough to test the production bug fix as previously it was terminating after a single exception
+        mock_query.filter.return_value.delete.side_effect = IntegrityError("Integrity error", "params", "orig")
         mock_session.query.return_value = mock_query
 
         # Execute
