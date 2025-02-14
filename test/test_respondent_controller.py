@@ -2074,9 +2074,11 @@ class TestRespondents(PartyTestClient):
         mock_session.rollback.assert_not_called()
 
     @patch("ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email")
+    @patch("ras_party.controllers.respondent_controller._delete_respondent_records")
     @patch("ras_party.controllers.respondent_controller.session", new_callable=MagicMock)
+    @patch("ras_party.controllers.respondent_controller.logger")
     def test_delete_respondents_continues_when_exception(
-        self, mock_session, mock_send_account_deletion_confirmation_email
+        self, mock_logger, mock_session, mock_delete_respondent_records, mock_send_account_deletion_confirmation_email
     ):
         # Setup
         respondent_1 = Respondent()
@@ -2102,7 +2104,7 @@ class TestRespondents(PartyTestClient):
         # so respondent_1 and respondent_3 would be committed and respondent_2 would be rolled back
         # I can't get a conditional side_effect_function to act only on respondent_2
         # this is good enough to test the production bug fix as previously it was terminating after a single exception
-        mock_query.filter.return_value.delete.side_effect = IntegrityError("Integrity error", "params", "orig")
+        mock_delete_respondent_records.side_effect = IntegrityError("Integrity error", "params", "orig")
         mock_session.query.return_value = mock_query
 
         # Execute
@@ -2115,3 +2117,11 @@ class TestRespondents(PartyTestClient):
         self.assertEqual(mock_send_account_deletion_confirmation_email.call_count, 0)
         self.assertEqual(mock_session.commit.call_count, 0)
         self.assertEqual(mock_session.rollback.call_count, 3)
+        self.assertEqual(mock_logger.error.call_count, 3)
+        mock_logger.error.assert_called_with(
+            "A data constraint violation occurred trying to delete the respondent records",
+            respondent_id=None,
+            party_uuid=None,
+            error="(builtins.str) orig\n[SQL: Integrity error]\n[parameters: 'params']\n"
+            "(Background on this error at: https://sqlalche.me/e/20/gkpj)",
+        )
