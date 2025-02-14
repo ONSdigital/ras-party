@@ -2080,7 +2080,9 @@ class TestRespondents(PartyTestClient):
         mock_logger.info.assert_called_with("Respondent record deletions complete", failed_deletion_count=0)
         mock_session.rollback.assert_not_called()
 
-    @patch("ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email")
+    @patch(
+        "ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email", new_callable=MagicMock
+    )
     @patch("ras_party.controllers.respondent_controller._delete_respondent_records")
     @patch("ras_party.controllers.respondent_controller.session", new_callable=MagicMock)
     @patch("ras_party.controllers.respondent_controller.logger.bind", new_callable=MagicMock)
@@ -2113,11 +2115,13 @@ class TestRespondents(PartyTestClient):
         # To iterate over "for respondent in respondents" the __iter__ method needs defining for the Mock
         mock_query.filter.return_value.__iter__.return_value = iter(respondents_to_delete)
 
-        # Ideally the following side_effect would only throw an exception for respondent_2
-        # so respondent_1 and respondent_3 would be committed and respondent_2 would be rolled back
-        # I can't get a conditional side_effect_function to act only on respondent_2
-        # this is good enough to test the production bug fix as previously it was terminating after a single exception
-        mock_delete_respondent_records.side_effect = IntegrityError("Integrity error", "params", "orig")
+        # Test when the second respondent of three has pending_surveys
+        def side_effect_function(respondent, session):
+            if respondent.id == 2:  # Assuming respondent_2.id is 2
+                raise IntegrityError("Integrity error", "params", "orig")
+
+        mock_delete_respondent_records.side_effect = side_effect_function
+
         mock_session.query.return_value = mock_query
 
         mock_logger = MagicMock()
@@ -2127,21 +2131,30 @@ class TestRespondents(PartyTestClient):
         with self.app.app_context():
             delete_respondents_marked_for_deletion.__wrapped__(mock_session)
 
-        # Verify
-        mock_send_account_deletion_confirmation_email.assert_not_called()
-        self.assertEqual(mock_send_account_deletion_confirmation_email.call_count, 0)
-        self.assertEqual(mock_session.commit.call_count, 0)
-        self.assertEqual(mock_session.rollback.call_count, 3)
-        mock_logger.info.assert_called_with("Respondent record deletions complete", failed_deletion_count=3)
+        # Verify two out of three respondents are deleted and emailed
+        self.assertEqual(mock_send_account_deletion_confirmation_email.call_count, 2)
+        # Verify one of the three is rolled back
+        self.assertEqual(mock_session.rollback.call_count, 1)
+        # Verify we log the failed count
+        mock_logger.info.assert_called_with("Respondent record deletions complete", failed_deletion_count=1)
 
-        expected_calls = [
-            call.error(
-                "A data constraint violation occurred trying to delete the respondent records",
-                respondent_id=1,
-                party_uuid="5bbd2117-e457-4ff7-9248-ff800bbd16c8",
-                error="(builtins.str) orig\n[SQL: Integrity error]\n[parameters: 'params']\n"
-                "(Background on this error at: https://sqlalche.me/e/20/gkpj)",
-            )
-        ]
+        # Verify respondents one and three are emailed
+        mock_send_account_deletion_confirmation_email.assert_has_calls(
+            [
+                call("test1@example.com", "One"),
+                call("test3@example.com", "Three"),
+            ]
+        )
 
-        mock_logger.error.assert_has_calls(expected_calls)
+        # Verify respondent two is logged a failed
+        mock_logger.error.assert_has_calls(
+            [
+                call.error(
+                    "A data constraint violation occurred trying to delete the respondent records",
+                    respondent_id=2,
+                    party_uuid="3be3b957-eb6d-4dec-ab9c-4b618a9e95d6",
+                    error="(builtins.str) orig\n[SQL: Integrity error]\n[parameters: 'params']\n"
+                    "(Background on this error at: https://sqlalche.me/e/20/gkpj)",
+                )
+            ]
+        )
