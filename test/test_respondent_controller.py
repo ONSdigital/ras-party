@@ -2038,7 +2038,10 @@ class TestRespondents(PartyTestClient):
 
     @patch("ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email")
     @patch("ras_party.controllers.respondent_controller.session", new_callable=MagicMock)
-    def test_all_respondents_marked_are_delete(self, mock_session, mock_send_account_deletion_confirmation_email):
+    @patch("ras_party.controllers.respondent_controller.logger.bind", new_callable=MagicMock)
+    def test_all_respondents_marked_are_delete(
+        self, mock_bind, mock_session, mock_send_account_deletion_confirmation_email
+    ):
         respondent_1 = Respondent()
         respondent_1.email_address = "test1@example.com"
         respondent_1.first_name = "One"
@@ -2059,6 +2062,9 @@ class TestRespondents(PartyTestClient):
         mock_query.filter.return_value.__iter__.return_value = iter(respondents_to_delete)
         mock_session.query.return_value = mock_query
 
+        mock_logger = MagicMock()
+        mock_bind.return_value = mock_logger
+
         # Execute
         with self.app.app_context():
             delete_respondents_marked_for_deletion.__wrapped__(mock_session)
@@ -2071,12 +2077,12 @@ class TestRespondents(PartyTestClient):
         ]
         mock_send_account_deletion_confirmation_email.assert_has_calls(expected_confirmation_email_calls)
         self.assertEqual(mock_session.commit.call_count, 3)
+        mock_logger.info.assert_called_with("Respondent record deletions complete", failed_deletion_count=0)
         mock_session.rollback.assert_not_called()
 
     @patch("ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email")
     @patch("ras_party.controllers.respondent_controller._delete_respondent_records")
     @patch("ras_party.controllers.respondent_controller.session", new_callable=MagicMock)
-    # @patch("ras_party.controllers.respondent_controller.logger")
     @patch("ras_party.controllers.respondent_controller.logger.bind", new_callable=MagicMock)
     def test_delete_respondents_continues_when_exception(
         self, mock_bind, mock_session, mock_delete_respondent_records, mock_send_account_deletion_confirmation_email
@@ -2122,17 +2128,20 @@ class TestRespondents(PartyTestClient):
             delete_respondents_marked_for_deletion.__wrapped__(mock_session)
 
         # Verify
-        expected_confirmation_email_calls = []  # empty list showing no emails sent
-        mock_send_account_deletion_confirmation_email.assert_has_calls(expected_confirmation_email_calls)
+        mock_send_account_deletion_confirmation_email.assert_not_called()
         self.assertEqual(mock_send_account_deletion_confirmation_email.call_count, 0)
         self.assertEqual(mock_session.commit.call_count, 0)
         self.assertEqual(mock_session.rollback.call_count, 3)
         mock_logger.info.assert_called_with("Respondent record deletions complete", failed_deletion_count=3)
 
-        # mock_logger.error.has_calls(
-        #     "A data constraint violation occurred trying to delete the respondent records",
-        #     respondent_id=1,
-        #     party_uuid="5bbd2117-e457-4ff7-9248-ff800bbd16c8",
-        #     error="(builtins.str) orig\n[SQL: Integrity error]\n[parameters: 'params']\n"
-        #     "(Background on this error at: https://sqlalche.me/e/20/gkpj)",
-        # )
+        expected_calls = [
+            call.error(
+                "A data constraint violation occurred trying to delete the respondent records",
+                respondent_id=1,
+                party_uuid="5bbd2117-e457-4ff7-9248-ff800bbd16c8",
+                error="(builtins.str) orig\n[SQL: Integrity error]\n[parameters: 'params']\n"
+                "(Background on this error at: https://sqlalche.me/e/20/gkpj)",
+            )
+        ]
+
+        mock_logger.error.assert_has_calls(expected_calls)
