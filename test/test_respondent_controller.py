@@ -2071,9 +2071,9 @@ class TestRespondents(PartyTestClient):
 
         # Verify
         expected_confirmation_email_calls = [
-            call(respondent_1.email_address, respondent_1.first_name),
-            call(respondent_2.email_address, respondent_2.first_name),
-            call(respondent_3.email_address, respondent_3.first_name),
+            call("test1@example.com", "One"),
+            call("test2@example.com", "Two"),
+            call("test3@example.com", "Three"),
         ]
         mock_send_account_deletion_confirmation_email.assert_has_calls(expected_confirmation_email_calls)
         self.assertEqual(mock_session.commit.call_count, 3)
