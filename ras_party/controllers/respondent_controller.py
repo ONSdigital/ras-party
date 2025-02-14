@@ -148,7 +148,7 @@ def delete_respondents_marked_for_deletion(session):
             send_account_deletion_confirmation_email(respondent.email_address, respondent.first_name)
             bound_logger.info("Respondent records deleted successfully")
         except IntegrityError as e:
-            logger.error(
+            bound_logger.error(
                 "A data constraint violation occurred trying to delete the respondent records",
                 respondent_id=respondent.id,
                 party_uuid=respondent.party_uuid,
@@ -157,7 +157,7 @@ def delete_respondents_marked_for_deletion(session):
             session.rollback()
             failed_deletion_count += 1
         except SQLAlchemyError as e:
-            logger.error(
+            bound_logger.error(
                 "An error occurred trying to delete the respondent records",
                 respondent_id=respondent.id,
                 party_uuid=respondent.party_uuid,
