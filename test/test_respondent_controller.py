@@ -2038,7 +2038,7 @@ class TestRespondents(PartyTestClient):
 
     @patch("ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email")
     @patch("ras_party.controllers.respondent_controller.session", new_callable=MagicMock)
-    @patch("ras_party.controllers.respondent_controller.logger.bind", new_callable=MagicMock)
+    @patch("ras_party.controllers.respondent_controller.logger.bind")
     def test_all_respondents_marked_are_delete(
         self, mock_bind, mock_session, mock_send_account_deletion_confirmation_email
     ):
@@ -2054,12 +2054,8 @@ class TestRespondents(PartyTestClient):
         respondent_3.email_address = "test3@example.com"
         respondent_3.first_name = "Three"
 
-        respondents_to_delete = [respondent_1, respondent_2, respondent_3]
-
         mock_query = MagicMock()
-        mock_query.filter(Respondent.mark_for_deletion).return_value = respondents_to_delete
-        # To iterate over "for respondent in respondents" the __iter__ method needs defining for the Mock
-        mock_query.filter.return_value.__iter__.return_value = iter(respondents_to_delete)
+        mock_query.filter.return_value.__iter__.return_value = [respondent_1, respondent_2, respondent_3]
         mock_session.query.return_value = mock_query
 
         mock_logger = MagicMock()
@@ -2080,12 +2076,10 @@ class TestRespondents(PartyTestClient):
         mock_logger.info.assert_called_with("Respondent record deletions complete", failed_deletion_count=0)
         mock_session.rollback.assert_not_called()
 
-    @patch(
-        "ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email", new_callable=MagicMock
-    )
+    @patch("ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email")
     @patch("ras_party.controllers.respondent_controller._delete_respondent_records")
     @patch("ras_party.controllers.respondent_controller.session", new_callable=MagicMock)
-    @patch("ras_party.controllers.respondent_controller.logger.bind", new_callable=MagicMock)
+    @patch("ras_party.controllers.respondent_controller.logger.bind")
     def test_delete_respondents_continues_when_exception(
         self, mock_bind, mock_session, mock_delete_respondent_records, mock_send_account_deletion_confirmation_email
     ):
@@ -2108,21 +2102,11 @@ class TestRespondents(PartyTestClient):
         respondent_3.id = 3
         respondent_3.party_uuid = "a2a03e6f-89b3-49c2-af82-4bd411ef3307"
 
-        respondents_to_delete = [respondent_1, respondent_2, respondent_3]
-
         mock_query = MagicMock()
-        mock_query.filter(Respondent.mark_for_deletion).return_value = respondents_to_delete
-        # To iterate over "for respondent in respondents" the __iter__ method needs defining for the Mock
-        mock_query.filter.return_value.__iter__.return_value = iter(respondents_to_delete)
-
-        # Test when the second respondent of three has pending_surveys
-        def side_effect_function(respondent, session):
-            if respondent.id == 2:  # Assuming respondent_2.id is 2
-                raise IntegrityError("Integrity error", "params", "orig")
-
-        mock_delete_respondent_records.side_effect = side_effect_function
-
+        mock_query.filter.return_value.__iter__.return_value = [respondent_1, respondent_2, respondent_3]
         mock_session.query.return_value = mock_query
+
+        mock_delete_respondent_records.side_effect = [None, IntegrityError("Integrity error", "params", "orig"), None]
 
         mock_logger = MagicMock()
         mock_bind.return_value = mock_logger
