@@ -4,7 +4,7 @@ from uuid import UUID
 
 import structlog
 from flask import current_app, session
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers.account_controller import (
@@ -125,17 +125,55 @@ def update_respondent_mark_for_deletion(email: str, session):
 @with_db_session
 def delete_respondents_marked_for_deletion(session):
     """
-    Deletes all the existing respondents and there associated data which are marked for deletion
+    Deletes all the existing respondents and their associated data which are marked for deletion
+
+    NOTE: We don't delete pending_surveys records as these are subject to their own scheduled deletion
+    An IntegrityError exception will be logged if the respondent record cannot be deleted due
+    to existing pending_surveys records.
 
     :param session A db session
     """
     respondents = session.query(Respondent).filter(Respondent.mark_for_deletion == True)  # noqa
+    logger.info("Preparing to delete respondent records", number_to_delete=respondents.count())
+    failed_deletion_count = 0
     for respondent in respondents:
-        session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
-        session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
-        session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
-        session.query(Respondent).filter(Respondent.id == respondent.id).delete()
-        send_account_deletion_confirmation_email(respondent.email_address, respondent.first_name)
+        bound_logger = logger.bind(
+            email=obfuscate_email(respondent.email_address),
+            respondent_id=respondent.id,
+            party_uuid=respondent.party_uuid,
+        )
+        bound_logger.info("Attempting to delete respondent records")
+        try:
+            _delete_respondent_records(respondent, session)
+            send_account_deletion_confirmation_email(respondent.email_address, respondent.first_name)
+            bound_logger.info("Respondent records deleted successfully")
+        except IntegrityError as e:
+            bound_logger.error(
+                "A data constraint violation occurred trying to delete the respondent records",
+                respondent_id=respondent.id,
+                party_uuid=respondent.party_uuid,
+                error=str(e),
+            )
+            session.rollback()
+            failed_deletion_count += 1
+        except SQLAlchemyError as e:
+            bound_logger.error(
+                "An error occurred trying to delete the respondent records",
+                respondent_id=respondent.id,
+                party_uuid=respondent.party_uuid,
+                error=str(e),
+            )
+            session.rollback()
+            failed_deletion_count += 1
+    logger.info("Respondent record deletions complete", failed_deletion_count=failed_deletion_count)
+
+
+def _delete_respondent_records(respondent, session):
+    session.query(Enrolment).filter(Enrolment.respondent_id == respondent.id).delete()
+    session.query(BusinessRespondent).filter(BusinessRespondent.respondent_id == respondent.id).delete()
+    session.query(PendingEnrolment).filter(PendingEnrolment.respondent_id == respondent.id).delete()
+    session.query(Respondent).filter(Respondent.id == respondent.id).delete()
+    session.commit()
 
 
 def send_account_deletion_confirmation_email(email_address: str, name: str):
