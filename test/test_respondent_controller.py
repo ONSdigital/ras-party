@@ -35,7 +35,7 @@ import responses
 from flask import current_app
 from itsdangerous import URLSafeTimedSerializer
 from requests import Response
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.exceptions import Conflict, InternalServerError, NotFound
 
 from config import TestingConfig
@@ -43,6 +43,9 @@ from ras_party.controllers import account_controller, respondent_controller
 from ras_party.controllers.queries import (
     query_business_by_party_uuid,
     query_respondent_by_party_uuid,
+)
+from ras_party.controllers.respondent_controller import (
+    delete_respondents_marked_for_deletion,
 )
 from ras_party.exceptions import RasNotifyError
 from ras_party.models.models import (
@@ -2032,3 +2035,110 @@ class TestRespondents(PartyTestClient):
         session.flush()
         session.refresh(respondent)
         return respondent.to_respondent_dict()
+
+    @patch("ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email")
+    @patch("ras_party.controllers.respondent_controller.session", new_callable=MagicMock)
+    @patch("ras_party.controllers.respondent_controller.logger.bind")
+    def test_all_respondents_marked_are_delete(
+        self, mock_bind, mock_session, mock_send_account_deletion_confirmation_email
+    ):
+        respondent_1 = Respondent()
+        respondent_1.email_address = "test1@example.com"
+        respondent_1.first_name = "One"
+
+        respondent_2 = Respondent()
+        respondent_2.email_address = "test2@example.com"
+        respondent_2.first_name = "Two"
+
+        respondent_3 = Respondent()
+        respondent_3.email_address = "test3@example.com"
+        respondent_3.first_name = "Three"
+
+        mock_query = MagicMock()
+        mock_query.filter.return_value.__iter__.return_value = [respondent_1, respondent_2, respondent_3]
+        mock_session.query.return_value = mock_query
+
+        mock_logger = MagicMock()
+        mock_bind.return_value = mock_logger
+
+        # Execute
+        with self.app.app_context():
+            delete_respondents_marked_for_deletion.__wrapped__(mock_session)
+
+        # Verify
+        expected_confirmation_email_calls = [
+            call("test1@example.com", "One"),
+            call("test2@example.com", "Two"),
+            call("test3@example.com", "Three"),
+        ]
+        mock_send_account_deletion_confirmation_email.assert_has_calls(expected_confirmation_email_calls)
+        self.assertEqual(mock_session.commit.call_count, 3)
+        mock_logger.info.assert_called_with("Respondent record deletions complete", failed_deletion_count=0)
+        mock_session.rollback.assert_not_called()
+
+    @patch("ras_party.controllers.respondent_controller.send_account_deletion_confirmation_email")
+    @patch("ras_party.controllers.respondent_controller._delete_respondent_records")
+    @patch("ras_party.controllers.respondent_controller.session", new_callable=MagicMock)
+    @patch("ras_party.controllers.respondent_controller.logger.bind")
+    def test_delete_respondents_continues_when_exception(
+        self, mock_bind, mock_session, mock_delete_respondent_records, mock_send_account_deletion_confirmation_email
+    ):
+        # Setup
+        respondent_1 = Respondent()
+        respondent_1.email_address = "test1@example.com"
+        respondent_1.first_name = "One"
+        respondent_1.id = 1
+        respondent_1.party_uuid = "5bbd2117-e457-4ff7-9248-ff800bbd16c8"
+
+        respondent_2 = Respondent()
+        respondent_2.email_address = "test2@example.com"
+        respondent_2.first_name = "Two"
+        respondent_2.id = 2
+        respondent_2.party_uuid = "3be3b957-eb6d-4dec-ab9c-4b618a9e95d6"
+
+        respondent_3 = Respondent()
+        respondent_3.email_address = "test3@example.com"
+        respondent_3.first_name = "Three"
+        respondent_3.id = 3
+        respondent_3.party_uuid = "a2a03e6f-89b3-49c2-af82-4bd411ef3307"
+
+        mock_query = MagicMock()
+        mock_query.filter.return_value.__iter__.return_value = [respondent_1, respondent_2, respondent_3]
+        mock_session.query.return_value = mock_query
+
+        mock_delete_respondent_records.side_effect = [None, IntegrityError("Integrity error", "params", "orig"), None]
+
+        mock_logger = MagicMock()
+        mock_bind.return_value = mock_logger
+
+        # Execute
+        with self.app.app_context():
+            delete_respondents_marked_for_deletion.__wrapped__(mock_session)
+
+        # Verify two out of three respondents are deleted and emailed
+        self.assertEqual(mock_send_account_deletion_confirmation_email.call_count, 2)
+        # Verify one of the three is rolled back
+        self.assertEqual(mock_session.rollback.call_count, 1)
+        # Verify we log the failed count
+        mock_logger.info.assert_called_with("Respondent record deletions complete", failed_deletion_count=1)
+
+        # Verify respondents one and three are emailed
+        mock_send_account_deletion_confirmation_email.assert_has_calls(
+            [
+                call("test1@example.com", "One"),
+                call("test3@example.com", "Three"),
+            ]
+        )
+
+        # Verify respondent two is logged a failed
+        mock_logger.error.assert_has_calls(
+            [
+                call.error(
+                    "A data constraint violation occurred trying to delete the respondent records",
+                    respondent_id=2,
+                    party_uuid="3be3b957-eb6d-4dec-ab9c-4b618a9e95d6",
+                    error="(builtins.str) orig\n[SQL: Integrity error]\n[parameters: 'params']\n"
+                    "(Background on this error at: https://sqlalche.me/e/20/gkpj)",
+                )
+            ]
+        )
