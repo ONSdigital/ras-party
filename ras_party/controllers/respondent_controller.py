@@ -237,7 +237,7 @@ def get_respondent_by_email(email: str, session):
         logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
-    return respondent.to_respondent_with_associations_dict()
+    return respondent.to_respondent_dict()
 
 
 @with_db_session
