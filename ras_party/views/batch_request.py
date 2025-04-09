@@ -127,17 +127,17 @@ def send_share_survey_cancellation_emails(unique_pending_share_to_be_emailed: li
     logger.info("sending share survey cancellation emails")
     for data in unique_pending_share_to_be_emailed:
         respondent = get_respondent_by_party_id(str(data["shared_by"]))
-        logger.info("sending share survey cancellation email", respondent=str(respondent["id"]))
+        logger.info("sending share survey cancellation email", respondent=str(respondent.id))
         verification_url = PublicWebsite().resend_share_survey(data["batch_no"])
         personalisation = {
             "RESEND_EMAIL_URL": verification_url,
             "COLLEAGUE_EMAIL_ADDRESS": data["email_address"],
-            "NAME": respondent["firstName"],
+            "NAME": respondent.first_name,
         }
         send_pending_survey_email(
-            personalisation, "share_survey_access_cancellation", respondent["emailAddress"], data["batch_no"]
+            personalisation, "share_survey_access_cancellation", respondent.email_address, data["batch_no"]
         )
-        logger.info("share survey cancellation email send successfully", respondent=str(respondent["id"]))
+        logger.info("share survey cancellation email send successfully", respondent=str(respondent.id))
     logger.info("share survey cancellation emails send successfully")
 
 
@@ -149,15 +149,15 @@ def send_transfer_survey_cancellation_emails(unique_pending_transfer_to_be_email
     logger.info("sending transfer survey cancellation emails")
     for data in unique_pending_transfer_to_be_emailed:
         respondent = get_respondent_by_party_id(str(data["shared_by"]))
-        logger.info("sending transfer survey cancellation email", respondent=str(respondent["id"]))
+        logger.info("sending transfer survey cancellation email", respondent=str(respondent.id))
         verification_url = PublicWebsite().resend_transfer_survey(data["batch_no"])
         personalisation = {
             "RESEND_EMAIL_URL": verification_url,
             "COLLEAGUE_EMAIL_ADDRESS": data["email_address"],
-            "NAME": respondent["firstName"],
+            "NAME": respondent.first_name,
         }
         send_pending_survey_email(
-            personalisation, "transfer_survey_access_cancellation", respondent["emailAddress"], data["batch_no"]
+            personalisation, "transfer_survey_access_cancellation", respondent.email_address, data["batch_no"]
         )
-        logger.info("transfer survey cancellation email send successfully", respondent=str(respondent["id"]))
+        logger.info("transfer survey cancellation email send successfully", respondent=str(respondent.id))
     logger.info("transfer survey cancellation emails send successfully")

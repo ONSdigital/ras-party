@@ -152,7 +152,7 @@ def post_pending_surveys():
         verification_url = PublicWebsite().share_survey(batch_number)
     personalisation = {
         "CONFIRM_EMAIL_URL": verification_url,
-        "ORIGINATOR_EMAIL_ADDRESS": respondent["emailAddress"],
+        "ORIGINATOR_EMAIL_ADDRESS": respondent.email_address,
         "BUSINESSES": business_list,
     }
     send_pending_survey_email(personalisation, email_template, pending_surveys[0]["email_address"], batch_number)
@@ -278,7 +278,7 @@ def resend_pending_surveys_email():
         business_list.append(business["name"])
     personalisation = {
         "CONFIRM_EMAIL_URL": verification_url,
-        "ORIGINATOR_EMAIL_ADDRESS": originator["emailAddress"],
+        "ORIGINATOR_EMAIL_ADDRESS": originator.email_address,
         "BUSINESSES": business_list,
     }
     logger.info("calling notify to resend email for pending share", batch_number=batch_number)
