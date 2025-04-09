@@ -8,7 +8,7 @@ from werkzeug.exceptions import abort
 
 from ras_party.controllers import pending_survey_controller, respondent_controller
 from ras_party.controllers.pending_survey_controller import get_unique_pending_surveys
-from ras_party.controllers.respondent_controller import get_respondent_by_id
+from ras_party.controllers.respondent_controller import get_respondent_by_party_id
 from ras_party.support.public_website import PublicWebsite
 from ras_party.views.pending_survey_view import send_pending_survey_email
 
@@ -126,7 +126,7 @@ def send_share_survey_cancellation_emails(unique_pending_share_to_be_emailed: li
     """
     logger.info("sending share survey cancellation emails")
     for data in unique_pending_share_to_be_emailed:
-        respondent = get_respondent_by_id(str(data["shared_by"]))
+        respondent = get_respondent_by_party_id(str(data["shared_by"]))
         logger.info("sending share survey cancellation email", respondent=str(respondent["id"]))
         verification_url = PublicWebsite().resend_share_survey(data["batch_no"])
         personalisation = {
@@ -148,7 +148,7 @@ def send_transfer_survey_cancellation_emails(unique_pending_transfer_to_be_email
     """
     logger.info("sending transfer survey cancellation emails")
     for data in unique_pending_transfer_to_be_emailed:
-        respondent = get_respondent_by_id(str(data["shared_by"]))
+        respondent = get_respondent_by_party_id(str(data["shared_by"]))
         logger.info("sending transfer survey cancellation email", respondent=str(respondent["id"]))
         verification_url = PublicWebsite().resend_transfer_survey(data["batch_no"])
         personalisation = {

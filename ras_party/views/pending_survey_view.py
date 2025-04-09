@@ -17,7 +17,7 @@ from ras_party.controllers.pending_survey_controller import (
 )
 from ras_party.controllers.respondent_controller import (
     get_respondent_by_email,
-    get_respondent_by_id,
+    get_respondent_by_party_id,
 )
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.exceptions import RasNotifyError
@@ -119,7 +119,7 @@ def post_pending_surveys():
         if not v.validate(survey):
             logger.debug(v.errors)
             raise BadRequest(v.errors)
-    respondent = get_respondent_by_id(pending_surveys[0]["shared_by"])
+    respondent = get_respondent_by_party_id(pending_surveys[0]["shared_by"])
     try:
         get_respondent_by_email(pending_surveys[0]["email_address"])
         email_template = existing_user_email_template
@@ -254,7 +254,7 @@ def resend_pending_surveys_email():
     logger.info("retrieving pending surveys against batch number", batch_number=batch_number)
     pending_surveys = get_pending_survey_by_batch_number(batch_number)
     logger.info("retrieving originator email address for resend email", batch_number=batch_number)
-    originator = get_respondent_by_id(str(pending_surveys[0]["shared_by"]))
+    originator = get_respondent_by_party_id(str(pending_surveys[0]["shared_by"]))
     respondent_email_address = pending_surveys[0]["email_address"]
     if "is_transfer" in pending_surveys[0]:
         verification_url = PublicWebsite().transfer_survey(batch_number)

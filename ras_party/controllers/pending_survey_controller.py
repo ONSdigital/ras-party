@@ -29,7 +29,7 @@ from ras_party.controllers.queries import (
 )
 from ras_party.controllers.respondent_controller import (
     get_respondent_by_email,
-    get_respondent_by_id,
+    get_respondent_by_party_id,
 )
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.models.models import (
@@ -275,7 +275,7 @@ def remove_transfer_originator_business_association(pending_surveys_list, sessio
     """
     party_id = pending_surveys_list[0]["shared_by"]
     logger.info("Starting to de register transfer originator from business", party_id=party_id)
-    transferred_by_respondent = get_respondent_by_id(str(party_id))
+    transferred_by_respondent = get_respondent_by_party_id(str(party_id))
     respondent = get_single_respondent_by_email(transferred_by_respondent["emailAddress"], session)
     for pending_survey in pending_surveys_list:
         business_id = pending_survey["business_id"]
@@ -503,7 +503,7 @@ def send_pending_surveys_confirmation_email(pending_surveys_list, confirmation_e
     logger.info("sending confirmation email for pending share", batch_no=batch_no)
     pending_surveys_is_transfer = pending_surveys_list[0].get("is_transfer", False)
     try:
-        respondent = get_respondent_by_id(str(pending_surveys_list[0]["shared_by"]))
+        respondent = get_respondent_by_party_id(str(pending_surveys_list[0]["shared_by"]))
         if pending_surveys_is_transfer:
             confirmation_email_template = "transfer_survey_access_confirmation"
         else:
