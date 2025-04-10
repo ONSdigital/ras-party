@@ -29,7 +29,7 @@ from ras_party.controllers.queries import (
 )
 from ras_party.controllers.respondent_controller import (
     get_respondent_by_email,
-    get_respondent_by_id,
+    get_respondent_by_party_id,
 )
 from ras_party.controllers.validate import Exists, Validator
 from ras_party.models.models import (
@@ -275,8 +275,8 @@ def remove_transfer_originator_business_association(pending_surveys_list, sessio
     """
     party_id = pending_surveys_list[0]["shared_by"]
     logger.info("Starting to de register transfer originator from business", party_id=party_id)
-    transferred_by_respondent = get_respondent_by_id(str(party_id))
-    respondent = get_single_respondent_by_email(transferred_by_respondent["emailAddress"], session)
+    transferred_by_respondent = get_respondent_by_party_id(str(party_id))
+    respondent = get_single_respondent_by_email(transferred_by_respondent.email_address, session)
     for pending_survey in pending_surveys_list:
         business_id = pending_survey["business_id"]
         survey_id = pending_survey["survey_id"]
@@ -503,7 +503,7 @@ def send_pending_surveys_confirmation_email(pending_surveys_list, confirmation_e
     logger.info("sending confirmation email for pending share", batch_no=batch_no)
     pending_surveys_is_transfer = pending_surveys_list[0].get("is_transfer", False)
     try:
-        respondent = get_respondent_by_id(str(pending_surveys_list[0]["shared_by"]))
+        respondent = get_respondent_by_party_id(str(pending_surveys_list[0]["shared_by"]))
         if pending_surveys_is_transfer:
             confirmation_email_template = "transfer_survey_access_confirmation"
         else:
@@ -514,12 +514,12 @@ def send_pending_surveys_confirmation_email(pending_surveys_list, confirmation_e
             business = get_business_by_id(str(business_id))
             business_list.append(business["name"])
         personalisation = {
-            "NAME": respondent["firstName"],
+            "NAME": respondent.first_name,
             "COLLEAGUE_EMAIL_ADDRESS": pending_surveys_list[0]["email_address"],
             "BUSINESSES": business_list,
         }
         NotifyGateway(current_app.config).request_to_notify(
-            email=respondent["emailAddress"], template_name=confirmation_email_template, personalisation=personalisation
+            email=respondent.email_address, template_name=confirmation_email_template, personalisation=personalisation
         )
         logger.info("confirmation email for pending share send successfully", batch_no=batch_no)
     # Exception is used to abide by the notify controller. At this point of time the pending share has been accepted
