@@ -1,9 +1,10 @@
+import logging
 from datetime import datetime
 
+import structlog
 from flask import Blueprint, current_app, jsonify, request
 from flask_httpauth import HTTPBasicAuth
-import logging
-import structlog
+
 from ras_party.controllers import party_controller
 
 party_view = Blueprint("party_view", __name__)
