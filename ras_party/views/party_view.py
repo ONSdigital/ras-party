@@ -1,7 +1,3 @@
-import logging
-from datetime import datetime
-
-import structlog
 from flask import Blueprint, current_app, jsonify, request
 from flask_httpauth import HTTPBasicAuth
 
@@ -9,8 +5,6 @@ from ras_party.controllers import party_controller
 
 party_view = Blueprint("party_view", __name__)
 auth = HTTPBasicAuth()
-
-logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
 @party_view.before_request
@@ -29,10 +23,8 @@ def get_pw(username):
 
 @party_view.route("/parties", methods=["POST"])
 def post_party():
-    logger.info("Started processing CSV queries at " + str(datetime.now()))
     payload = request.get_json() or {}
     response = party_controller.parties_post(payload)
-    logger.info("Finished processing CSV queries at " + str(datetime.now()))
     return jsonify(response)
 
 
