@@ -2,9 +2,9 @@
 verify_ssl = true
 name = "pypi"
 url = "https://pypi.python.org/simple"
-#
-#[requires]
-#python_version = "3.12"
+
+[requires]
+python_version = "3.12"
 
 [packages]
 alembic = "*"
