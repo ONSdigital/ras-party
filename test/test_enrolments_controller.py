@@ -95,34 +95,34 @@ class TestEnrolments(PartyTestClient):
             enrolments,
             [
                 {
-                    "enrolment_status": "ENABLED",
-                    "business_details": {
-                        "id": UUID("75d9af56-1225-4d43-b41d-1199f5f89daa"),
-                        "name": "Business 4",  # Business 4 is the latest business_attributes for 75d9af56
-                        "trading_as": "4 Business",
-                        "ref": "001",
-                    },
-                    "survey_details": {
-                        "id": "9200d295-9d6e-41fe-b541-747ae67a279f",
-                        "long_name": "Survey 2",
-                        "short_name": "S2",
-                        "ref": "S002",
-                    },
+                    "business_name": "Business 4",
+                    "business_id": UUID("75d9af56-1225-4d43-b41d-1199f5f89daa"),
+                    "ru_ref": "001",
+                    "trading_as": "4 Business",
+                    "survey_details": [
+                        {
+                            "id": "9200d295-9d6e-41fe-b541-747ae67a279f",
+                            "long_name": "Survey 2",
+                            "short_name": "S2",
+                            "ref": "S002",
+                            "enrolment_status": "ENABLED",
+                        }
+                    ],
                 },
                 {
-                    "enrolment_status": "ENABLED",
-                    "business_details": {
-                        "id": UUID("98e2c9dd-a760-47dd-ba18-439fd5fb93a3"),
-                        "name": "Business 2",
-                        "trading_as": "2 Business",
-                        "ref": "002",
-                    },
-                    "survey_details": {
-                        "id": "c641f6ad-a5eb-4d82-a647-7cd586549bbc",
-                        "long_name": "Survey 1",
-                        "short_name": "S1",
-                        "ref": "S001",
-                    },
+                    "business_name": "Business 2",
+                    "business_id": UUID("98e2c9dd-a760-47dd-ba18-439fd5fb93a3"),
+                    "ru_ref": "002",
+                    "trading_as": "2 Business",
+                    "survey_details": [
+                        {
+                            "id": "c641f6ad-a5eb-4d82-a647-7cd586549bbc",
+                            "long_name": "Survey 1",
+                            "short_name": "S1",
+                            "ref": "S001",
+                            "enrolment_status": "ENABLED",
+                        }
+                    ],
                 },
             ],
         )
@@ -137,8 +137,8 @@ class TestEnrolments(PartyTestClient):
         )
 
         self.assertEqual(len(enrolments), 1)
-        self.assertEqual(str(enrolments[0]["business_details"]["id"]), "75d9af56-1225-4d43-b41d-1199f5f89daa")
-        self.assertEqual(str(enrolments[0]["survey_details"]["id"]), "9200d295-9d6e-41fe-b541-747ae67a279f")
+        self.assertEqual(str(enrolments[0]["business_id"]), "75d9af56-1225-4d43-b41d-1199f5f89daa")
+        self.assertEqual(str(enrolments[0]["survey_details"][0]["id"]), "9200d295-9d6e-41fe-b541-747ae67a279f")
 
     @patch("ras_party.controllers.enrolments_controller.get_surveys_details")
     def test_get_enrolments_party_id_enabled(self, get_surveys_details):
@@ -148,8 +148,8 @@ class TestEnrolments(PartyTestClient):
         )
 
         self.assertEqual(len(enrolments), 1)
-        self.assertEqual(str(enrolments[0]["business_details"]["id"]), "af25c9d5-6893-4342-9d24-4b88509e965f")
-        self.assertEqual(str(enrolments[0]["survey_details"]["id"]), "9200d295-9d6e-41fe-b541-747ae67a279f")
+        self.assertEqual(str(enrolments[0]["business_id"]), "af25c9d5-6893-4342-9d24-4b88509e965f")
+        self.assertEqual(str(enrolments[0]["survey_details"][0]["id"]), "9200d295-9d6e-41fe-b541-747ae67a279f")
 
     @patch("ras_party.controllers.enrolments_controller.get_surveys_details")
     def test_get_enrolments_party_id_disabled(self, get_surveys_details):
@@ -157,10 +157,9 @@ class TestEnrolments(PartyTestClient):
         enrolments = respondent_enrolments(
             party_uuid="5718649e-30bf-4c25-a2c0-aaa733e54ed6", status=EnrolmentStatus.DISABLED.name
         )
-
         self.assertEqual(len(enrolments), 1)
-        self.assertEqual(str(enrolments[0]["business_details"]["id"]), "75d9af56-1225-4d43-b41d-1199f5f89daa")
-        self.assertEqual(str(enrolments[0]["survey_details"]["id"]), "9200d295-9d6e-41fe-b541-747ae67a279f")
+        self.assertEqual(str(enrolments[0]["business_id"]), "75d9af56-1225-4d43-b41d-1199f5f89daa")
+        self.assertEqual(str(enrolments[0]["survey_details"][0]["id"]), "9200d295-9d6e-41fe-b541-747ae67a279f")
 
     def test_get_enrolments_no_enrolments(
         self,
@@ -195,6 +194,8 @@ class TestEnrolments(PartyTestClient):
                     business_id=business.party_uuid,
                     attributes=enrolment["business_attributes"],
                     created_on=enrolment["business_attributes"]["created_on"],
+                    name=enrolment["business_attributes"]["name"],
+                    trading_as=enrolment["business_attributes"]["trading_as"],
                 )
                 session.add(business_attributes)
                 business_respondent = BusinessRespondent(business=business, respondent=respondent)

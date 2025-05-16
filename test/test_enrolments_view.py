@@ -14,21 +14,23 @@ class TestEnrolmentsView(PartyTestClient):
 
     @patch("ras_party.views.enrolments_view.respondent_enrolments")
     def test_get_enrolments(self, respondent_enrolments):
-        enrolment_details = {
-            "enrolment_status": "ENABLED",
-            "business_details": {
-                "id": "ee1e8401-b5c5-42a3-baf9-02490ce551b1",
-                "name": "business 1",
-                "trading_as": "1 business",
-                "ref": "4900000000",
-            },
-            "survey_details": {
-                "id": "4fae28f9-b4d2-4ca1-9aff-08f5ff3bda3b",
-                "long_name": "Survey 1",
-                "short_name": "S1",
-                "ref": "139",
-            },
-        }
+        enrolment_details = [
+            {
+                "business_name": "Business 1",
+                "business_id": "75d9af56-1225-4d43-b41d-1199f5f89daa",
+                "ru_ref": "001",
+                "trading_as": "1 Business",
+                "survey_details": [
+                    {
+                        "id": "9200d295-9d6e-41fe-b541-747ae67a279f",
+                        "long_name": "Survey 1",
+                        "short_name": "S1",
+                        "ref": "S001",
+                        "enrolment_status": "ENABLED",
+                    }
+                ],
+            }
+        ]
         respondent_enrolments.return_value = enrolment_details
         response = self.get_respondent_enrolments("b146f595-62a0-4d6d-ba88-ef40cffdf8a7")
 
