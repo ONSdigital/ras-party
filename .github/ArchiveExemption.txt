@@ -1,0 +1,1 @@
+This is a core microservice within ras-rm, which is responsible for the management of business respondent details and associations.
