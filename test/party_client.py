@@ -279,6 +279,15 @@ class PartyTestClient(TestCase):
         self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
         return json.loads(response.get_data(as_text=True))
 
+    def get_latest_business_details(self, payload, expected_status=200):
+        response = self.client.post(
+            "/party-api/v1/businesses/latest-business-details",
+            headers=self.auth_headers,
+            json=payload,
+        )
+        self.assertStatus(response, expected_status, "Response body is : " + response.get_data(as_text=True))
+        return json.loads(response.get_data(as_text=True))
+
     def put_enrolment_status(self, payload, expected_status=200):
         response = self.client.put(
             "/party-api/v1/respondents/change_enrolment_status",

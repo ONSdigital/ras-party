@@ -671,3 +671,17 @@ def query_respondent_enrolments(
             f"ORDER BY partysvc.business_attributes.created_on DESC limit 1) ba {where_clause}"
         )
     )
+
+
+def query_latest_business_details(session: session, party_uuids: list):
+    """
+    Query to return a list of business details. The most recent entry in the business attributes is used for each
+    """
+    return session.execute(
+        text(
+            f"SELECT party_uuid, business_ref, name from partysvc.business, "
+            f"LATERAL(SELECT * FROM partysvc.business_attributes "
+            f"WHERE party_uuid = business_id ORDER BY business_attributes.created_on DESC limit 1) ba "
+            f"WHERE party_uuid in ({', '.join(f"'{party_uuid}'" for party_uuid in party_uuids)})"
+        )
+    )

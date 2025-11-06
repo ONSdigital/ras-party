@@ -1051,6 +1051,30 @@ paths:
                 $ref: '#/components/schemas/BusinessResponse'
         404:
           description: The business does not exist
+    /businesses/latest-business-details:
+      Post:
+        tags:
+          - businesses
+        summary: returns a list of business details
+        description: Takes a list of party_uuids and returns the latest details of each business
+        parameters:
+          - name: party_uuids
+            in: body
+            required: True
+            description: a list of party_uuids
+            schema:
+              type: array
+              items:
+                type: string
+        responses:
+          200:
+            description: A list of business details
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/LatestBusinessDetails'
+          400:
+            description: A list of party_uuids should be supplied
   /businesses/sample/link/{sample-summary-id}:
     put:
       tags:
@@ -1653,6 +1677,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Association'
+    LatestBusinessDetails:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+            example: 91e0bb4f-ffad-404c-af1b-01c87037119c
+          sampleUnitRef:
+            type: string
+            format: string
+            example: 49900000001
+          name:
+            type: string
+            example: Office for National Statistics
     SurveyShare:
       type: object
       properties:
