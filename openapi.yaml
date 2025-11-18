@@ -1066,6 +1066,7 @@ paths:
               type: array
               items:
                 type: string
+                format: uuid
         responses:
           200:
             description: A list of business details
