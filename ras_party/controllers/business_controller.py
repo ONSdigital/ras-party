@@ -2,7 +2,7 @@ import logging
 import uuid
 
 import structlog
-from flask import current_app
+from flask import current_app, session
 from werkzeug.exceptions import BadRequest, NotFound
 
 from ras_party.controllers.queries import (
@@ -11,6 +11,7 @@ from ras_party.controllers.queries import (
     query_business_by_party_uuid,
     query_business_by_ref,
     query_businesses_by_party_uuids,
+    query_latest_business_details,
     search_business_with_ru_ref,
     search_businesses,
 )
@@ -61,6 +62,19 @@ def get_businesses_by_ids(party_uuids, session):
 
     businesses = query_businesses_by_party_uuids(party_uuids, session)
     return [business.to_business_summary_dict() for business in businesses]
+
+
+@with_query_only_db_session
+def get_latest_business_details(party_uuids: list, session: session) -> list:
+    business_details = []
+    businesses = query_latest_business_details(session, party_uuids)
+
+    for business in businesses:
+        business_details.append(
+            {"id": business.party_uuid, "sampleUnitRef": business.business_ref, "name": business.name}
+        )
+
+    return business_details
 
 
 @with_query_only_db_session

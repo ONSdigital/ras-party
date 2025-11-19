@@ -46,7 +46,7 @@ def get_respondent_by_ids(ids, session):
     :rtype: Respondent
     """
     respondents = query_respondent_by_party_uuids(ids, session)
-    return [respondent.to_respondent_with_associations_dict() for respondent in respondents]
+    return [respondent.to_respondent_dict() for respondent in respondents]
 
 
 @with_query_only_db_session

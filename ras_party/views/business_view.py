@@ -1,7 +1,7 @@
 import logging
 
 import structlog
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, Response, current_app, jsonify, request
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.exceptions import BadRequest
 
@@ -99,3 +99,17 @@ def get_party_by_search():
         query, page, limit, is_ru_ref_search, max_rec
     )
     return jsonify({"businesses": businesses, "total_business_count": total_business_count})
+
+
+@business_view.route("/businesses/latest-business-details", methods=["POST"])
+def get_latest_business_details() -> Response:
+    """
+    returns a list of business details. The most recent entry in the business attributes is used for each
+    """
+    party_uuids = request.get_json().get("party_uuids")
+
+    if not party_uuids:
+        raise BadRequest("A list of party_uuids should be supplied")
+
+    response = business_controller.get_latest_business_details(party_uuids)
+    return jsonify(response)

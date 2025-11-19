@@ -350,6 +350,22 @@ class TestParties(PartyTestClient):
             "B", mock_business["id"], DEFAULT_SURVEY_UUID, ["ENABLED", "PENDING"]
         )
 
+    def test_get_latest_business_details(self):
+        mock_business = MockBusiness().as_business()
+        mock_business["id"] = DEFAULT_BUSINESS_UUID
+        self.post_to_businesses(mock_business, 200)
+
+        latest_business_details = self.get_latest_business_details({"party_uuids": [DEFAULT_BUSINESS_UUID]})
+
+        self.assertEqual(len(latest_business_details), 1)
+        self.assertEqual(latest_business_details[0]["name"], mock_business["name"])
+        self.assertEqual(latest_business_details[0]["sampleUnitRef"], mock_business["sampleUnitRef"])
+
+    def test_get_latest_business_details_missing_party_uuids(self):
+        latest_business_details = self.get_latest_business_details({}, 400)
+
+        self.assertEqual(latest_business_details, {"description": "A list of party_uuids should be supplied"})
+
 
 if __name__ == "__main__":
     import unittest
