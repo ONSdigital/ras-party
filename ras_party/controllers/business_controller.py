@@ -198,15 +198,13 @@ def businesses_sample_ce_link(sample, ce_data, session):
 
 
 @with_query_only_db_session
-def get_businesses_by_search_query(
-    search_query: str, page: int, limit: int, is_ru_ref_search: bool, max_rec: int, session
-):
+def get_businesses_by_search_query(search_query: str, page: int, limit: int, max_rec: int, session):
     """
     Controller to get the search result based on mandatory arguments
     """
-    if limit is None or search_query is None or page is None or is_ru_ref_search is None or max_rec is None:
+    if limit is None or search_query is None or page is None or max_rec is None:
         raise BadRequest("limit, search_query, page, max_rec and is_ru_ref_search  are required")
-    if is_ru_ref_search:
+    if search_query.isdigit():
         businesses, total_business_count = search_business_with_ru_ref(search_query, page, limit, max_rec, session)
     else:
         businesses, total_business_count = search_businesses(search_query, page, limit, max_rec, session)

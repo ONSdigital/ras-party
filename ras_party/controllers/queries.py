@@ -395,43 +395,43 @@ def search_business_with_ru_ref(search_query: str, page: int, limit: int, max_re
     bound_logger = logger.bind(search_query=search_query)
     bound_logger.info("Query looks like an ru_ref, searching only on ru_ref")
     offset = (page - 1) * limit
-    if search_query.isdigit():
-        if len(search_query) == 11:
-            bound_logger.info("Searching businesses by full ru_ref with search query")
-            result = (
-                session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
-                .select_from(BusinessAttributes)
-                .join(Business)
-                .filter(Business.business_ref == search_query)
-                .distinct()
-                .all()
-            )
-            return result, len(result)
 
-        else:
-            bound_logger.info("Searching businesses by partial ru_ref with search query")
-            pages = (
-                session.query(count(distinct(Business.business_ref)))
-                .filter(Business.business_ref.ilike(f"%{search_query}%"))
-                .distinct()
-            )
-            result = (
-                session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
-                .select_from(BusinessAttributes)
-                .join(Business)
-                .filter(Business.business_ref.ilike(f"%{search_query}%"))
-                .order_by(Business.business_ref.asc())
-                .distinct()
-                .limit(limit)
-                .offset(offset)
-            )
-            estimated_total_records = pages.scalar()
-            # we don't want to overload database with the search which retrieves more than 10000 records
-            # as it's irrelevant to show so many records as a paginated search on frontend
-            # hence this 'if' logic will avoid such searches and frontend will ask the user to refine their search
-            if pages.scalar() > max_rec:
-                return [], estimated_total_records
-            return result, estimated_total_records
+    if len(search_query) == 11:
+        bound_logger.info("Searching businesses by full ru_ref with search query")
+        result = (
+            session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
+            .select_from(BusinessAttributes)
+            .join(Business)
+            .filter(Business.business_ref == search_query)
+            .distinct()
+            .all()
+        )
+        return result, len(result)
+
+    else:
+        bound_logger.info("Searching businesses by partial ru_ref with search query")
+        pages = (
+            session.query(count(distinct(Business.business_ref)))
+            .filter(Business.business_ref.ilike(f"%{search_query}%"))
+            .distinct()
+        )
+        result = (
+            session.query(BusinessAttributes.name, BusinessAttributes.trading_as, Business.business_ref)
+            .select_from(BusinessAttributes)
+            .join(Business)
+            .filter(Business.business_ref.ilike(f"%{search_query}%"))
+            .order_by(Business.business_ref.asc())
+            .distinct()
+            .limit(limit)
+            .offset(offset)
+        )
+        estimated_total_records = pages.scalar()
+        # we don't want to overload database with the search which retrieves more than 10000 records
+        # as it's irrelevant to show so many records as a paginated search on frontend
+        # hence this 'if' logic will avoid such searches and frontend will ask the user to refine their search
+        if pages.scalar() > max_rec:
+            return [], estimated_total_records
+        return result, estimated_total_records
 
 
 def search_businesses(search_query: str, page: int, limit: int, max_rec: int, session):
