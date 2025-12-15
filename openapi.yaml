@@ -1142,12 +1142,6 @@ paths:
           description: The number of results per page
           schema:
             type: integer
-        - name: is_ru_ref_search
-          in: query
-          required: true
-          description: Whether the search is for an RU reference
-          schema:
-            type: boolean
         - name: max_rec
           in: query
           required: true
