@@ -54,7 +54,6 @@ rollingUpdate:
 livenessProbe:
   httpGet:
     path: /info
-    port:  {{ .Values.container.port }}
   initialDelaySeconds: 1
   periodSeconds: 20
   failureThreshold: 5
