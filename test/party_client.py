@@ -42,7 +42,7 @@ class PartyTestClient(TestCase):
         logger_initial_config(log_level=app.config["LOGGING_LEVEL"])
         app.config["PARTY_SCHEMA"] = party_schema.schema
         app.db = create_database(app.config["DATABASE_URI"], app.config["DATABASE_SCHEMA"])
-        app.config["EMAIL_TOKEN_EXPIRY"] = 0
+        app.config["EMAIL_TOKEN_EXPIRY"] = 36000
         return app
 
     def tearDown(self):

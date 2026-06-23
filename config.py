@@ -1,6 +1,5 @@
 # flake8: noqa
 import os
-from distutils.util import strtobool
 
 
 def _is_true(value):

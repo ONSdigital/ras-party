@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime, timedelta
 from test.mocks import MockRequests
 from test.party_client import PartyTestClient
 from test.test_data.default_test_values import (
@@ -593,6 +594,7 @@ class MockPendingShares:
             "survey_id": DEFAULT_SURVEY_UUID,
             "shared_by": DEFAULT_RESPONDENT_UUID,
             "batch_no": uuid.uuid1(),
+            "time_shared": datetime.now(UTC) - timedelta(days=2),
         }
 
     def attributes(self, **kwargs):
