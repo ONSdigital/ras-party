@@ -3,7 +3,6 @@ import logging
 from concurrent.futures import TimeoutError
 
 import structlog
-from google.api_core.client_options import ClientOptions
 from google.cloud import pubsub_v1
 
 from ras_party.exceptions import RasNotifyError
@@ -35,21 +34,21 @@ class NotifyGateway:
         self.project_id = self.config["GOOGLE_CLOUD_PROJECT"]
         self.topic_id = self.config["PUBSUB_TOPIC"]
         self.publisher = None
-        self.pubsub_api_endpoint = self.config.get("PUBSUB_API_ENDPOINT")
-
-    def _create_publisher(self):
-        if self.pubsub_api_endpoint:
-            client_options = ClientOptions(api_endpoint=self.pubsub_api_endpoint)
-            return pubsub_v1.PublisherClient(client_options=client_options)
-        return pubsub_v1.PublisherClient()
 
     def _send_message(self, email, template_id, personalisation):
-        bound_logger = logger.bind(
-            template_id=template_id,
-            project_id=self.project_id,
-            topic_id=self.topic_id,
-            pubsub_api_endpoint=self.pubsub_api_endpoint,
-        )
+        """Sends an email via pubsub topic
+
+        :param email: Email address to send the email too
+        :type email: str
+        :param template_id: A uuid of the template_id to be used in gov notify
+        :type template_id: str
+        :param personalisation: A dictionary containing variables that will be used in the email e.g., names, ru refs
+        :type personalisation: dict
+        :raises RasNotifyError: Raised on any Exception that occurs.  Most likely will happen if there is an issue when
+                                publishing to pubsub.
+        :return: None
+        """
+        bound_logger = logger.bind(template_id=template_id, project_id=self.project_id, topic_id=self.topic_id)
         bound_logger.info("Sending email via pubsub")
         if not self.config["SEND_EMAIL_TO_GOV_NOTIFY"]:
             bound_logger.info("Notification not sent. Notify is disabled.")
@@ -61,12 +60,14 @@ class NotifyGateway:
 
         payload_str = json.dumps(payload)
         if self.publisher is None:
-            self.publisher = self._create_publisher()
+            self.publisher = pubsub_v1.PublisherClient()
         topic_path = self.publisher.topic_path(self.project_id, self.topic_id)
 
         bound_logger.info("About to publish to pubsub")
         future = self.publisher.publish(topic_path, data=payload_str.encode())
 
+        # It's okay for us to catch a broad Exception here because the documentation for future.result() says it
+        # throws either a TimeoutError or an Exception.
         try:
             msg_id = future.result()
             bound_logger.info("Publish succeeded", msg_id=msg_id)

@@ -37,7 +37,6 @@ class Config(object):
 
     GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "test-project-id")
     PUBSUB_TOPIC = os.getenv("PUBSUB_TOPIC", "ras-rm-notify-test")
-    PUBSUB_API_ENDPOINT = os.getenv("PUBSUB_API_ENDPOINT", "europe-west2-pubsub.googleapis.com:443")
 
     NOTIFY_URL = os.getenv("NOTIFY_URL", "http://notify-gateway-service/emails/")
     NOTIFY_EMAIL_VERIFICATION_TEMPLATE = os.getenv("NOTIFY_EMAIL_VERIFICATION_TEMPLATE", "email_verification_id")

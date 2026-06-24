@@ -5,10 +5,6 @@ gcp:
   project: ras-rm-sandbox
   topic: ras-rm-notify-test
 
-pubsub:
-  apiEndpoint: "europe-west2-pubsub.googleapis.com:443"
-
-
 image:
   devRepo: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images
   name: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images
