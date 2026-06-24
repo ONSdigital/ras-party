@@ -2,10 +2,8 @@ import json
 import logging
 from concurrent.futures import TimeoutError
 
-import grpc
 import structlog
 from google.api_core.client_options import ClientOptions
-from google.api_core.exceptions import DeadlineExceeded
 from google.cloud import pubsub_v1
 
 from ras_party.exceptions import RasNotifyError
@@ -39,7 +37,6 @@ class NotifyGateway:
         self.publisher = None
         self.pubsub_api_endpoint = self.config.get("PUBSUB_API_ENDPOINT")
 
-
     def _create_publisher(self):
         if self.pubsub_api_endpoint:
             client_options = ClientOptions(api_endpoint=self.pubsub_api_endpoint)
@@ -68,25 +65,14 @@ class NotifyGateway:
         topic_path = self.publisher.topic_path(self.project_id, self.topic_id)
 
         bound_logger.info("About to publish to pubsub")
-        future = self.publisher.publish(
-            topic_path,
-            data=payload_str.encode(),
-            timeout=self.pubsub_publish_timeout_seconds,
-            retry=None,
-        )
+        future = self.publisher.publish(topic_path, data=payload_str.encode())
 
         try:
-            msg_id = future.result(timeout=self.pubsub_result_timeout_seconds)
+            msg_id = future.result()
             bound_logger.info("Publish succeeded", msg_id=msg_id)
-        except (TimeoutError, DeadlineExceeded) as e:
+        except TimeoutError as e:
             bound_logger.error("Publish to pubsub timed out", exc_info=True)
             raise RasNotifyError("Publish to pubsub timed out", error=e)
-        except grpc.RpcError as e:
-            if e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
-                bound_logger.error("Publish to pubsub timed out", exc_info=True)
-                raise RasNotifyError("Publish to pubsub timed out", error=e)
-            bound_logger.error("A non-timeout error was raised when publishing to pubsub", exc_info=True)
-            raise RasNotifyError("A non-timeout error was raised when publishing to pubsub", error=e)
         except Exception as e:  # noqa
             bound_logger.error("A non-timeout error was raised when publishing to pubsub", exc_info=True)
             raise RasNotifyError("A non-timeout error was raised when publishing to pubsub", error=e)
