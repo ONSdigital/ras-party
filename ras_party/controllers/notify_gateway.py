@@ -2,7 +2,9 @@ import json
 import logging
 from concurrent.futures import TimeoutError
 
+import grpc
 import structlog
+from google.api_core.exceptions import DeadlineExceeded
 from google.cloud import pubsub_v1
 
 from ras_party.exceptions import RasNotifyError
@@ -35,19 +37,10 @@ class NotifyGateway:
         self.topic_id = self.config["PUBSUB_TOPIC"]
         self.publisher = None
 
-    def _send_message(self, email, template_id, personalisation):
-        """Sends an email via pubsub topic
+        self.pubsub_publish_timeout_seconds = float(self.config.get("PUBSUB_PUBLISH_TIMEOUT_SECONDS", 10))
+        self.pubsub_result_timeout_seconds = float(self.config.get("PUBSUB_RESULT_TIMEOUT_SECONDS", 15))
 
-        :param email: Email address to send the email too
-        :type email: str
-        :param template_id: A uuid of the template_id to be used in gov notify
-        :type template_id: str
-        :param personalisation: A dictionary containing variables that will be used in the email e.g., names, ru refs
-        :type personalisation: dict
-        :raises RasNotifyError: Raised on any Exception that occurs.  Most likely will happen if there is an issue when
-                                publishing to pubsub.
-        :return: None
-        """
+    def _send_message(self, email, template_id, personalisation):
         bound_logger = logger.bind(template_id=template_id, project_id=self.project_id, topic_id=self.topic_id)
         bound_logger.info("Sending email via pubsub")
         if not self.config["SEND_EMAIL_TO_GOV_NOTIFY"]:
@@ -64,16 +57,25 @@ class NotifyGateway:
         topic_path = self.publisher.topic_path(self.project_id, self.topic_id)
 
         bound_logger.info("About to publish to pubsub")
-        future = self.publisher.publish(topic_path, data=payload_str.encode())
+        future = self.publisher.publish(
+            topic_path,
+            data=payload_str.encode(),
+            timeout=self.pubsub_publish_timeout_seconds,
+            retry=None,
+        )
 
-        # It's okay for us to catch a broad Exception here because the documentation for future.result() says it
-        # throws either a TimeoutError or an Exception.
         try:
-            msg_id = future.result()
+            msg_id = future.result(timeout=self.pubsub_result_timeout_seconds)
             bound_logger.info("Publish succeeded", msg_id=msg_id)
-        except TimeoutError as e:
+        except (TimeoutError, DeadlineExceeded) as e:
             bound_logger.error("Publish to pubsub timed out", exc_info=True)
             raise RasNotifyError("Publish to pubsub timed out", error=e)
+        except grpc.RpcError as e:
+            if e.code() == grpc.StatusCode.DEADLINE_EXCEEDED:
+                bound_logger.error("Publish to pubsub timed out", exc_info=True)
+                raise RasNotifyError("Publish to pubsub timed out", error=e)
+            bound_logger.error("A non-timeout error was raised when publishing to pubsub", exc_info=True)
+            raise RasNotifyError("A non-timeout error was raised when publishing to pubsub", error=e)
         except Exception as e:  # noqa
             bound_logger.error("A non-timeout error was raised when publishing to pubsub", exc_info=True)
             raise RasNotifyError("A non-timeout error was raised when publishing to pubsub", error=e)
