@@ -72,16 +72,6 @@ spec:
           image: "{{ .Values.image.devRepo }}/{{ .Chart.Name }}:{{ .Values.image.tag }}"
           {{- end}}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["sh", "-c"]
-          args:
-            - >-
-              gunicorn -b 0.0.0.0:{{ .Values.container.port }}
-              --workers ${GUNICORN_WORKERS}
-              --worker-class ${GUNICORN_WORKER_CLASS}
-              --threads ${GUNICORN_THREADS}
-              --timeout ${GUNICORN_TIMEOUT}
-              --keep-alive ${GUNICORN_KEEP_ALIVE}
-              app:app
           volumeMounts:
           - name: google-cloud-key
             mountPath: /var/secrets/google
@@ -244,20 +234,6 @@ spec:
                 key: email-token-salt
           - name: PORT
             value: "{{ .Values.container.port }}"
-          - name: PUBSUB_PUBLISH_TIMEOUT_SECONDS
-            value: "{{ .Values.pubsub.publishTimeoutSeconds }}"
-          - name: PUBSUB_RESULT_TIMEOUT_SECONDS
-            value: "{{ .Values.pubsub.resultTimeoutSeconds }}"
-          - name: GUNICORN_WORKERS
-            value: "{{ .Values.gunicorn.workers }}"
-          - name: GUNICORN_WORKER_CLASS
-            value: "{{ .Values.gunicorn.workerClass }}"
-          - name: GUNICORN_THREADS
-            value: "{{ .Values.gunicorn.threads }}"
-          - name: GUNICORN_TIMEOUT
-            value: "{{ .Values.gunicorn.timeout }}"
-          - name: GUNICORN_KEEP_ALIVE
-            value: "{{ .Values.gunicorn.keepAlive }}"
           - name: SEND_EMAIL_TO_GOV_NOTIFY
             value: "{{ .Values.email.enabled }}"
           resources:

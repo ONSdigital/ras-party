@@ -8,6 +8,7 @@ gcp:
 pubsub:
   publishTimeoutSeconds: 30
   resultTimeoutSeconds: 45
+  apiEndpoint: "europe-west2-pubsub.googleapis.com:443"
 
 gunicorn:
   workers: 6

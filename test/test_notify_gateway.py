@@ -1,8 +1,10 @@
 from concurrent.futures import TimeoutError
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from flask import current_app
 from flask_testing import TestCase
+from google.api_core.client_options import ClientOptions
+from google.api_core.exceptions import FailedPrecondition
 
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.exceptions import RasNotifyError
@@ -89,3 +91,28 @@ class TestNotifyGatewayUnit(TestCase):
         notify.publisher = publisher
         with self.assertRaises(RasNotifyError):
             notify.request_to_notify("test@email.com", "notify_account_locked")
+
+    def test_request_to_notify_with_pubsub_failed_precondition_error(self):
+        """Tests if the future.result() raises a FailedPrecondition then the function raises a RasNotifyError"""
+        future = MagicMock()
+        future.result.side_effect = FailedPrecondition("bad")
+        publisher = MagicMock()
+        publisher.publish.return_value = future
+
+        notify = NotifyGateway(current_app.config)
+        notify.publisher = publisher
+
+        with self.assertRaises(RasNotifyError):
+            notify.request_to_notify("test@email.com", "notify_account_locked")
+
+    def test_create_publisher_with_api_endpoint(self):
+        notify = NotifyGateway(current_app.config)
+        notify.pubsub_api_endpoint = "europe-west2-pubsub.googleapis.com:443"
+
+        with patch("ras_party.controllers.notify_gateway.pubsub_v1.PublisherClient") as publisher_client:
+            notify._create_publisher()
+
+        publisher_client.assert_called_once()
+        client_options = publisher_client.call_args.kwargs.get("client_options")
+        self.assertIsInstance(client_options, ClientOptions)
+        self.assertEqual(client_options.api_endpoint, "europe-west2-pubsub.googleapis.com:443")

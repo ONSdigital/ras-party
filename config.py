@@ -37,6 +37,7 @@ class Config(object):
 
     GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "test-project-id")
     PUBSUB_TOPIC = os.getenv("PUBSUB_TOPIC", "ras-rm-notify-test")
+    PUBSUB_API_ENDPOINT = os.getenv("PUBSUB_API_ENDPOINT")
     PUBSUB_PUBLISH_TIMEOUT_SECONDS = float(os.getenv("PUBSUB_PUBLISH_TIMEOUT_SECONDS", "30"))
     PUBSUB_RESULT_TIMEOUT_SECONDS = float(os.getenv("PUBSUB_RESULT_TIMEOUT_SECONDS", "45"))
 

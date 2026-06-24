@@ -4,6 +4,7 @@ from concurrent.futures import TimeoutError
 
 import grpc
 import structlog
+from google.api_core.client_options import ClientOptions
 from google.api_core.exceptions import DeadlineExceeded
 from google.cloud import pubsub_v1
 
@@ -36,12 +37,24 @@ class NotifyGateway:
         self.project_id = self.config["GOOGLE_CLOUD_PROJECT"]
         self.topic_id = self.config["PUBSUB_TOPIC"]
         self.publisher = None
+        self.pubsub_api_endpoint = self.config.get("PUBSUB_API_ENDPOINT")
 
-        self.pubsub_publish_timeout_seconds = float(self.config.get("PUBSUB_PUBLISH_TIMEOUT_SECONDS", 10))
-        self.pubsub_result_timeout_seconds = float(self.config.get("PUBSUB_RESULT_TIMEOUT_SECONDS", 15))
+        self.pubsub_publish_timeout_seconds = float(self.config.get("PUBSUB_PUBLISH_TIMEOUT_SECONDS", 30))
+        self.pubsub_result_timeout_seconds = float(self.config.get("PUBSUB_RESULT_TIMEOUT_SECONDS", 45))
+
+    def _create_publisher(self):
+        if self.pubsub_api_endpoint:
+            client_options = ClientOptions(api_endpoint=self.pubsub_api_endpoint)
+            return pubsub_v1.PublisherClient(client_options=client_options)
+        return pubsub_v1.PublisherClient()
 
     def _send_message(self, email, template_id, personalisation):
-        bound_logger = logger.bind(template_id=template_id, project_id=self.project_id, topic_id=self.topic_id)
+        bound_logger = logger.bind(
+            template_id=template_id,
+            project_id=self.project_id,
+            topic_id=self.topic_id,
+            pubsub_api_endpoint=self.pubsub_api_endpoint,
+        )
         bound_logger.info("Sending email via pubsub")
         if not self.config["SEND_EMAIL_TO_GOV_NOTIFY"]:
             bound_logger.info("Notification not sent. Notify is disabled.")
@@ -53,7 +66,7 @@ class NotifyGateway:
 
         payload_str = json.dumps(payload)
         if self.publisher is None:
-            self.publisher = pubsub_v1.PublisherClient()
+            self.publisher = self._create_publisher()
         topic_path = self.publisher.topic_path(self.project_id, self.topic_id)
 
         bound_logger.info("About to publish to pubsub")
