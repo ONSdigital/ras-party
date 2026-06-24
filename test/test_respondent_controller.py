@@ -1190,6 +1190,7 @@ class TestRespondents(PartyTestClient):
 
     def test_email_verification_twice_produces_a_200(self):
         respondent = self.populate_with_respondent()
+        current_app.config["EMAIL_TOKEN_EXPIRY"] = 0
         token = self.generate_valid_token_from_email(respondent.email_address)
         self.put_email_verification(token, 200)
         response = self.put_email_verification(token, 200)

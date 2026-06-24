@@ -1,6 +1,5 @@
 # flake8: noqa
 import os
-from distutils.util import strtobool
 
 
 def _is_true(value):
@@ -123,5 +122,4 @@ class TestingConfig(DevelopmentConfig):
     NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = "request_password_change_id"
     NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = "confirm_password_change_id"
     NOTIFY_ACCOUNT_LOCKED_TEMPLATE = "account_locked_id"
-
     SEND_EMAIL_TO_GOV_NOTIFY = True
