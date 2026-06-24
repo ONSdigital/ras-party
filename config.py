@@ -125,4 +125,7 @@ class TestingConfig(DevelopmentConfig):
     NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = "confirm_password_change_id"
     NOTIFY_ACCOUNT_LOCKED_TEMPLATE = "account_locked_id"
 
+    PUBSUB_PUBLISH_TIMEOUT_SECONDS = 10.0
+    PUBSUB_RESULT_TIMEOUT_SECONDS = 15.0
+
     SEND_EMAIL_TO_GOV_NOTIFY = True
