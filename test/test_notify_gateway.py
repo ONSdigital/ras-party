@@ -45,7 +45,13 @@ class TestNotifyGatewayUnit(TestCase):
         )
 
         publisher.publish.assert_called()
-        publisher.publish.assert_called_with("projects/test-project-id/topics/ras-rm-notify-test", data=data)
+        publisher.publish.assert_called_with(
+            "projects/test-project-id/topics/ras-rm-notify-test",
+            data=data,
+            timeout=10.0,
+            retry=None,
+        )
+        publisher.publish.return_value.result.assert_called_with(timeout=15.0)
         self.assertIsNone(result)
 
     def test_request_to_notify_with_pubsub_with_personalisation(self):
@@ -62,7 +68,13 @@ class TestNotifyGatewayUnit(TestCase):
             b' "personalisation": {"first_name": "testy", "last_name": "surname"}}}'
         )
         publisher.publish.assert_called()
-        publisher.publish.assert_called_with("projects/test-project-id/topics/ras-rm-notify-test", data=data)
+        publisher.publish.assert_called_with(
+            "projects/test-project-id/topics/ras-rm-notify-test",
+            data=data,
+            timeout=10.0,
+            retry=None,
+        )
+        publisher.publish.return_value.result.assert_called_with(timeout=15.0)
         self.assertIsNone(result)
 
     def test_request_to_notify_with_pubsub_timeout_error(self):
