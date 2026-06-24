@@ -5,6 +5,17 @@ gcp:
   project: ras-rm-sandbox
   topic: ras-rm-notify-test
 
+pubsub:
+  publishTimeoutSeconds: 30
+  resultTimeoutSeconds: 45
+
+gunicorn:
+  workers: 6
+  workerClass: gthread
+  threads: 8
+  timeout: 0
+  keepAlive: 2
+
 image:
   devRepo: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images
   name: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images
