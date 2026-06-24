@@ -39,8 +39,6 @@ class NotifyGateway:
         self.publisher = None
         self.pubsub_api_endpoint = self.config.get("PUBSUB_API_ENDPOINT")
 
-        self.pubsub_publish_timeout_seconds = float(self.config.get("PUBSUB_PUBLISH_TIMEOUT_SECONDS", 30))
-        self.pubsub_result_timeout_seconds = float(self.config.get("PUBSUB_RESULT_TIMEOUT_SECONDS", 45))
 
     def _create_publisher(self):
         if self.pubsub_api_endpoint:

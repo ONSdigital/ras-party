@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, patch
 from flask import current_app
 from flask_testing import TestCase
 from google.api_core.client_options import ClientOptions
-from google.api_core.exceptions import FailedPrecondition
 
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.exceptions import RasNotifyError
@@ -46,14 +45,8 @@ class TestNotifyGatewayUnit(TestCase):
             b'"template_id": "account_locked_id", "personalisation": {}}}'
         )
 
+        publisher.publish.assert_called_with("projects/test-project-id/topics/ras-rm-notify-test", data=data)
         publisher.publish.assert_called()
-        publisher.publish.assert_called_with(
-            "projects/test-project-id/topics/ras-rm-notify-test",
-            data=data,
-            timeout=10.0,
-            retry=None,
-        )
-        publisher.publish.return_value.result.assert_called_with(timeout=15.0)
         self.assertIsNone(result)
 
     def test_request_to_notify_with_pubsub_with_personalisation(self):
@@ -70,13 +63,7 @@ class TestNotifyGatewayUnit(TestCase):
             b' "personalisation": {"first_name": "testy", "last_name": "surname"}}}'
         )
         publisher.publish.assert_called()
-        publisher.publish.assert_called_with(
-            "projects/test-project-id/topics/ras-rm-notify-test",
-            data=data,
-            timeout=10.0,
-            retry=None,
-        )
-        publisher.publish.return_value.result.assert_called_with(timeout=15.0)
+        publisher.publish.assert_called_with("projects/test-project-id/topics/ras-rm-notify-test", data=data)
         self.assertIsNone(result)
 
     def test_request_to_notify_with_pubsub_timeout_error(self):
@@ -89,19 +76,6 @@ class TestNotifyGatewayUnit(TestCase):
         # Given a mocked notify gateway
         notify = NotifyGateway(current_app.config)
         notify.publisher = publisher
-        with self.assertRaises(RasNotifyError):
-            notify.request_to_notify("test@email.com", "notify_account_locked")
-
-    def test_request_to_notify_with_pubsub_failed_precondition_error(self):
-        """Tests if the future.result() raises a FailedPrecondition then the function raises a RasNotifyError"""
-        future = MagicMock()
-        future.result.side_effect = FailedPrecondition("bad")
-        publisher = MagicMock()
-        publisher.publish.return_value = future
-
-        notify = NotifyGateway(current_app.config)
-        notify.publisher = publisher
-
         with self.assertRaises(RasNotifyError):
             notify.request_to_notify("test@email.com", "notify_account_locked")
 

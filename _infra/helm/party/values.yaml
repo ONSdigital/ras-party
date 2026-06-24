@@ -6,16 +6,8 @@ gcp:
   topic: ras-rm-notify-test
 
 pubsub:
-  publishTimeoutSeconds: 30
-  resultTimeoutSeconds: 45
   apiEndpoint: "europe-west2-pubsub.googleapis.com:443"
 
-gunicorn:
-  workers: 6
-  workerClass: gthread
-  threads: 8
-  timeout: 0
-  keepAlive: 2
 
 image:
   devRepo: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images

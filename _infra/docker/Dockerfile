@@ -9,10 +9,4 @@ WORKDIR /app
 COPY . /app
 RUN pipenv install --deploy --system
 
-ENV GUNICORN_WORKERS=6 \
-    GUNICORN_WORKER_CLASS=gthread \
-    GUNICORN_THREADS=8 \
-    GUNICORN_TIMEOUT=0 \
-    GUNICORN_KEEP_ALIVE=2
-
-CMD ["sh", "-c", "gunicorn -b 0.0.0.0:8080 --workers ${GUNICORN_WORKERS} --worker-class ${GUNICORN_WORKER_CLASS} --threads ${GUNICORN_THREADS} --timeout ${GUNICORN_TIMEOUT} --keep-alive ${GUNICORN_KEEP_ALIVE} app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "--workers", "6", "--worker-class", "gevent", "--worker-connections" ,"1000", "--timeout", "0", "--keep-alive", "2", "app:app"]
