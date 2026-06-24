@@ -4,7 +4,7 @@ name = "pypi"
 url = "https://pypi.python.org/simple"
 
 [requires]
-python_version = "3.13"
+python_version = "3.14"
 
 [packages]
 alembic = "*"
@@ -13,7 +13,7 @@ flask-cors = "*"
 flask-httpauth = "*"
 gunicorn = "*"
 gevent = "*"
-google-cloud-pubsub = "*"
+google-cloud-pubsub = "==2.39.0"
 itsdangerous = "*"
 jsonschema = "*"
 python-dateutil = "*"
