@@ -37,9 +37,7 @@ class Config(object):
 
     GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "test-project-id")
     PUBSUB_TOPIC = os.getenv("PUBSUB_TOPIC", "ras-rm-notify-test")
-    PUBSUB_API_ENDPOINT = os.getenv("PUBSUB_API_ENDPOINT")
-    PUBSUB_PUBLISH_TIMEOUT_SECONDS = float(os.getenv("PUBSUB_PUBLISH_TIMEOUT_SECONDS", "30"))
-    PUBSUB_RESULT_TIMEOUT_SECONDS = float(os.getenv("PUBSUB_RESULT_TIMEOUT_SECONDS", "45"))
+    PUBSUB_API_ENDPOINT = os.getenv("PUBSUB_API_ENDPOINT", "europe-west2-pubsub.googleapis.com:443")
 
     NOTIFY_URL = os.getenv("NOTIFY_URL", "http://notify-gateway-service/emails/")
     NOTIFY_EMAIL_VERIFICATION_TEMPLATE = os.getenv("NOTIFY_EMAIL_VERIFICATION_TEMPLATE", "email_verification_id")
@@ -125,8 +123,4 @@ class TestingConfig(DevelopmentConfig):
     NOTIFY_REQUEST_PASSWORD_CHANGE_TEMPLATE = "request_password_change_id"
     NOTIFY_CONFIRM_PASSWORD_CHANGE_TEMPLATE = "confirm_password_change_id"
     NOTIFY_ACCOUNT_LOCKED_TEMPLATE = "account_locked_id"
-
-    PUBSUB_PUBLISH_TIMEOUT_SECONDS = 10.0
-    PUBSUB_RESULT_TIMEOUT_SECONDS = 15.0
-
     SEND_EMAIL_TO_GOV_NOTIFY = True
