@@ -11,7 +11,7 @@ spec:
         spec:
           containers:
           - name: {{ .Values.crons.markForDeletionScheduler.name }}
-            image: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/alpine-curl:latest
+            image: europe-west2-docker.pkg.dev/ons-ci-rmrasbs/images/alpine-curl:3.24.1
             env:
             - name: SECURITY_USER_NAME
               valueFrom:
