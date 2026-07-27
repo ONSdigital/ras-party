@@ -1,8 +1,8 @@
-env: minikube
-namespace: minikube
+env: performance
+namespace: performance
 
 gcp:
-  project: ras-rm-sandbox
+  project: ras-rm-performance-20220908
   topic: ras-rm-notify-test
 
 image:
