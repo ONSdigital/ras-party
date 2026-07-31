@@ -1,7 +1,11 @@
-.PHONY: build test start
+.PHONY: build test start start-db
 
 build:
 	pipenv install --dev
+
+# The postgres image version is read from _infra/postgres-image, which CI uses too.
+start-db:
+	docker compose --env-file _infra/postgres-image up -d
 
 lint:
 	pipenv run isort .
