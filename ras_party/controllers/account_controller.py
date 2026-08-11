@@ -25,6 +25,7 @@ from ras_party.controllers.iac_controller import disable_iac, request_iac
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import (
     add_respondent_password_verification_token,
+    consume_respondent_password_verification_token,
     count_enrolment_by_survey_business,
     delete_respondent_password_verification_token,
     get_respondent_password_verification_token,
@@ -548,16 +549,59 @@ def change_respondent_password(payload, tran, session):
         logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
-    new_password = payload["new_password"]
+    _perform_password_change(
+        respondent=respondent,
+        new_password=payload["new_password"],
+        email_address=email_address,
+        tran=tran,
+        session=session,
+    )
 
-    # Check and see if the account is active, if not we can now set to active
+    return {"response": "Ok"}
+
+
+@transactional
+@with_db_session
+def reset_respondent_password(payload, tran, session):
+    _is_valid(payload, attribute="new_password")
+    _is_valid(payload, attribute="token")
+
+    respondent = query_respondent_by_email(payload["email_address"], session)
+    if not respondent:
+        logger.info("Respondent does not exist")
+        raise NotFound("Respondent does not exist")
+
+    token_consumed = consume_respondent_password_verification_token(
+        respondent_id=respondent.party_uuid,
+        token=payload["token"],
+        session=session,
+    )
+
+    if token_consumed != 1:
+        logger.info(
+            "Password verification token mismatch or already consumed",
+            respondent_id=respondent.party_uuid,
+        )
+        raise Conflict("Verification token is invalid or has already been used")
+
+    _perform_password_change(
+        respondent=respondent,
+        new_password=payload["new_password"],
+        email_address=respondent.email_address,
+        tran=tran,
+        session=session,
+    )
+
+    return {"response": "Ok"}
+
+
+def _perform_password_change(respondent, new_password, email_address, tran, session):
+    # Shared logic used by both reset (not logged in) and change (logged in) password paths.
     if respondent.status != RespondentStatus.ACTIVE:
-        # Checking enrolment status, if PENDING we will change it to ENABLED
         logger.info("Checking enrolment status", respondent_id=respondent.party_uuid)
         if respondent.pending_enrolment:
             enrol_respondent_for_survey(respondent, session)
 
-        # We set the party as ACTIVE in this service
         respondent.status = RespondentStatus.ACTIVE
         oauth_response = OauthClient().update_account(
             username=email_address, password=new_password, account_locked="False"
@@ -574,7 +618,6 @@ def change_respondent_password(payload, tran, session):
         raise InternalServerError("Failed to change respondent password")
 
     personalisation = {"FIRST_NAME": respondent.first_name}
-
     party_id = respondent.party_uuid
 
     try:
@@ -587,12 +630,8 @@ def change_respondent_password(payload, tran, session):
     except RasNotifyError as ras_error:
         logger.error(ras_error)
 
-    # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info("Respondent has changed their password", respondent_id=party_id))
-
     reset_password_reset_counter(party_id, session)
-
-    return {"response": "Ok"}
 
 
 @with_query_only_db_session

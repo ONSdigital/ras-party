@@ -984,6 +984,21 @@ class TestRespondents(PartyTestClient):
             reference=respondent.party_uuid,
         )
 
+    def test_reset_password_route_requires_token(self):
+        respondent = self.populate_with_respondent()
+        payload = {"new_password": "password", "email_address": respondent.email_address}
+        self.reset_password(payload, expected_status=400)
+
+    def test_reset_password_route_consumes_token_once(self):
+        respondent = self.populate_with_respondent()
+        token = self.generate_valid_token_from_email(respondent.email_address)
+        payload = {"new_password": "password", "email_address": respondent.email_address, "token": token}
+
+        self.reset_password(payload, expected_status=200)
+        self.assertIsNone(respondents()[0].password_verification_token)
+
+        self.reset_password(payload, expected_status=409)
+
     @staticmethod
     def test_change_respondent_password_uses_case_insensitive_email_query():
         with patch("ras_party.controllers.account_controller.query_respondent_by_email") as query, patch(

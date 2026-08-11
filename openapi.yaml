@@ -143,6 +143,40 @@ paths:
           description: The respondent does not exist
         500:
           description: There was an error in the auth service
+  /respondents/change_password_with_token:
+    put:
+      tags:
+        - respondents
+      summary: Change respondent password using one-time token
+      description: Atomically validates and consumes the current password verification token before changing password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email_address:
+                  type: string
+                  format: email
+                  description: The email address of the respondent
+                new_password:
+                  type: string
+                  description: The password to change to
+                token:
+                  type: string
+                  description: The expected one-time password verification token
+      responses:
+        200:
+          description: The password has been changed and the token consumed
+        400:
+          description: The request body was missing email_address, new_password, or token
+        404:
+          description: The respondent does not exist
+        409:
+          description: The verification token is invalid or has already been used
+        500:
+          description: There was an error in the auth service
   /respondents/request_password_change:
     post:
       tags:
