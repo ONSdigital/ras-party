@@ -991,7 +991,8 @@ class TestRespondents(PartyTestClient):
 
     def test_reset_password_route_consumes_token_once(self):
         respondent = self.populate_with_respondent()
-        token = self.generate_valid_token_from_email(respondent.email_address)
+        # token = self.generate_valid_token_from_email(respondent.email_address)
+        token = respondent.password_verification_token
         payload = {"new_password": "password", "email_address": respondent.email_address, "token": token}
 
         self.reset_password(payload, expected_status=200)

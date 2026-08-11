@@ -143,7 +143,7 @@ paths:
           description: The respondent does not exist
         500:
           description: There was an error in the auth service
-  /respondents/change_password_with_token:
+  /respondents/reset_password:
     put:
       tags:
         - respondents
