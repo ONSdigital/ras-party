@@ -4,12 +4,12 @@ import json
 import os
 import uuid
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import responses
 from requests import HTTPError
 from sqlalchemy import and_
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import BadRequest, NotFound
 
 from config import TestingConfig
 from ras_party.controllers import account_controller
@@ -273,6 +273,60 @@ class TestAccountController(TestCase):
         session.query().filter().first.side_effect = NotFound
         with self.assertRaises(NotFound):
             account_controller.reset_password_counter.__wrapped__(party_uuid, session)
+
+    def test_reset_respondent_password_empty_token_raises_bad_request(self):
+        payload = {
+            "email_address": "ons@fake.ons",
+            "new_password": "new-password",
+            "token": "",
+        }
+
+        with self.app.app_context():
+            with self.assertRaises(BadRequest) as ctx:
+                account_controller.reset_respondent_password.__wrapped__.__wrapped__(
+                    payload,
+                    tran=MagicMock(),
+                    session=MagicMock(),
+                )
+
+        self.assertEqual("Verification token is required", ctx.exception.description)
+
+    def test_reset_respondent_password_non_string_token_raises_bad_request(self):
+        payload = {
+            "email_address": "ons@fake.ons",
+            "new_password": "new-password",
+            "token": 123,
+        }
+
+        with self.app.app_context():
+            with self.assertRaises(BadRequest) as ctx:
+                account_controller.reset_respondent_password.__wrapped__.__wrapped__(
+                    payload,
+                    tran=MagicMock(),
+                    session=MagicMock(),
+                )
+
+        self.assertEqual("Verification token is required", ctx.exception.description)
+
+    def test_reset_respondent_password_invalid_token_stops_before_consume(self):
+        payload = {
+            "email_address": "ons@fake.ons",
+            "new_password": "new-password",
+            "token": None,
+        }
+
+        with patch(
+            "ras_party.controllers.account_controller.consume_respondent_password_verification_token"
+        ) as consume_token:
+            with self.app.app_context():
+                with self.assertRaises(BadRequest):
+                    account_controller.reset_respondent_password.__wrapped__.__wrapped__(
+                        payload,
+                        tran=MagicMock(),
+                        session=MagicMock(),
+                    )
+
+        consume_token.assert_not_called()
 
 
 if __name__ == "__main__":

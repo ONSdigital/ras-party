@@ -565,6 +565,8 @@ def change_respondent_password(payload, tran, session):
 def reset_respondent_password(payload, tran, session):
     _is_valid(payload, attribute="new_password")
     _is_valid(payload, attribute="token")
+    if not isinstance(payload["token"], str) or not payload["token"]:
+        raise BadRequest("Verification token is required")
 
     respondent = query_respondent_by_email(payload["email_address"], session)
     if not respondent:
