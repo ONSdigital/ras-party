@@ -339,32 +339,6 @@ def delete_respondent_password_verification_token(respondent_id, session):
     )
 
 
-def consume_respondent_password_verification_token(respondent_id, token, session):
-    """
-    Atomically consume a respondent password verification token.
-
-    The token is only cleared if the current token value matches the expected token.
-
-    :param respondent_id: id of the respondent
-    :param token: expected verification token
-    :param session:
-    :return: number of rows updated (0 when token mismatch/already consumed)
-    """
-
-    logger.info("Consuming respondent verification token", respondent_id=respondent_id)
-
-    return (
-        session.query(Respondent)
-        .filter(
-            and_(
-                Respondent.party_uuid == respondent_id,
-                Respondent.password_verification_token == token,
-            )
-        )
-        .update({Respondent.password_verification_token: None})
-    )
-
-
 def query_password_reset_counter(respondent_id, session):
     """
     Query to retrieve the respondent's password reset counter

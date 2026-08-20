@@ -25,7 +25,6 @@ from ras_party.controllers.iac_controller import disable_iac, request_iac
 from ras_party.controllers.notify_gateway import NotifyGateway
 from ras_party.controllers.queries import (
     add_respondent_password_verification_token,
-    consume_respondent_password_verification_token,
     count_enrolment_by_survey_business,
     delete_respondent_password_verification_token,
     get_respondent_password_verification_token,
@@ -540,7 +539,7 @@ def reset_password_counter(respondent_id, session):
 
 @transactional
 @with_db_session
-def change_respondent_password(payload, tran, session):
+def change_respondent_password(payload: dict, tran, session) -> dict:
     _is_valid(payload, attribute="new_password")
 
     respondent = query_respondent_by_email(payload["email_address"], session)
@@ -562,30 +561,25 @@ def change_respondent_password(payload, tran, session):
 
 @transactional
 @with_db_session
-def reset_respondent_password(payload, tran, session):
+def reset_respondent_password(payload: dict, tran, session) -> dict:
     _is_valid(payload, attribute="new_password")
-    _is_valid(payload, attribute="token")
-    if not isinstance(payload["token"], str) or not payload["token"]:
-        raise BadRequest("Verification token is required")
+    token = payload.get("token")
+    if not isinstance(token, str) or not token:
+        raise BadRequest("Verification token is invalid")
 
     respondent = query_respondent_by_email(payload["email_address"], session)
     if not respondent:
         logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
-    token_consumed = consume_respondent_password_verification_token(
-        respondent_id=respondent.party_uuid,
-        token=payload["token"],
-        session=session,
-    )
-
-    if token_consumed != 1:
+    if respondent.password_verification_token != token:
         logger.info(
-            "Password verification token mismatch or already consumed",
+            "Password verification token mismatch",
             respondent_id=respondent.party_uuid,
         )
-        raise Conflict("Verification token is invalid or has already been used")
+        raise Conflict("Verification token is invalid")
 
+    respondent.password_verification_token = None
     _perform_password_change(
         respondent=respondent,
         new_password=payload["new_password"],
@@ -594,11 +588,11 @@ def reset_respondent_password(payload, tran, session):
         session=session,
     )
 
-    return {"response": "Ok"}
+    return {"message": "Passowrd reset successful"}
 
 
 # Shared logic used by both reset (not logged in) and change (logged in) password paths
-def _perform_password_change(respondent, new_password, email_address, tran, session):
+def _perform_password_change(respondent: Respondent, new_password: str, email_address: str, tran, session) -> None:
     # Check and see if the account is active, if not we can now set to active
     if respondent.status != RespondentStatus.ACTIVE:
         # Checking enrolment status, if PENDING we will change it to ENABLED
