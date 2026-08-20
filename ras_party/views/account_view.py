@@ -51,7 +51,7 @@ def change_respondent_password():
     return make_response(jsonify(response), 200)
 
 
-@account_view.route("/respondents/reset_password", methods=["POST"])
+@account_view.route("/respondents/reset_password", methods=["PUT"])
 def change_respondent_password_with_token():
     payload = request.get_json() or {}
     response = account_controller.reset_respondent_password(payload)
