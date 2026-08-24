@@ -37,7 +37,7 @@ make install
 [Install Docker](https://docs.docker.com/engine/installation/)
 
 ```bash
-docker compose up
+make start-db
 ```
 
 or use the makefile to run
