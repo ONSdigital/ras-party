@@ -35,8 +35,7 @@ jobs:
           python-version: '3.12'
       - name: Get Dependencies
         run: |
-          docker compose --verbose build
-          docker compose up -d
+          make start-db
           pip install pipenv
           pipenv install --dev
       - name: Run tests
