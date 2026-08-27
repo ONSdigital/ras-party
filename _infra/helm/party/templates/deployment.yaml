@@ -38,10 +38,6 @@ spec:
           securityContext:
             runAsUser: 2  # non-root user
             allowPrivilegeEscalation: false
-          volumeMounts:
-            - name: cloudsql-instance-credentials
-              mountPath: /secrets/cloudsql
-              readOnly: true
           env:
           - name: SQL_INSTANCE_NAME
             valueFrom:
