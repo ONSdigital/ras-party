@@ -21,19 +21,9 @@ spec:
         app: {{ .Chart.Name }}
         env: {{ .Values.env }}
     spec:
-      volumes:
-      - name: google-cloud-key
-        secret:
-          secretName: google-application-credentials
-      {{- if .Values.database.sqlProxyEnabled }}
-      - name: cloudsql-instance-credentials
-        secret:
-          secretName: cloudsql-proxy-credentials
-          defaultMode: 0444
-          items:
-          - key: "credentials.json"
-            path: "credentials.json"
-      {{- end }}
+      serviceAccountName: ras-rm-k8s-services
+      imagePullSecrets:
+      - name: gar-secret
       containers:
         {{- if .Values.database.sqlProxyEnabled }}
         - name: cloudsql-proxy
@@ -41,16 +31,11 @@ spec:
           command: ["/cloud_sql_proxy",
                     "-instances=$(SQL_INSTANCE_NAME)=tcp:$(DB_PORT)",
                     "-ip_address_types=PRIVATE",
-                    "-credential_file=/secrets/cloudsql/credentials.json",
                     "-term_timeout=30s",
                     "-verbose=false"]
           securityContext:
             runAsUser: 2  # non-root user
             allowPrivilegeEscalation: false
-          volumeMounts:
-            - name: cloudsql-instance-credentials
-              mountPath: /secrets/cloudsql
-              readOnly: true
           env:
           - name: SQL_INSTANCE_NAME
             valueFrom:
@@ -72,9 +57,6 @@ spec:
           image: "{{ .Values.image.devRepo }}/{{ .Chart.Name }}:{{ .Values.image.tag }}"
           {{- end}}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          volumeMounts:
-          - name: google-cloud-key
-            mountPath: /var/secrets/google
           ports:
             - name: http-server
               containerPort: {{ .Values.container.port }}
@@ -158,8 +140,6 @@ spec:
             {{- end }}
           - name: GOOGLE_CLOUD_PROJECT
             value: "{{ .Values.gcp.project }}"
-          - name: GOOGLE_APPLICATION_CREDENTIALS
-            value: /var/secrets/google/credentials.json
           - name: IAC_URL
             {{- if .Values.dns.enabled }}
             value: "http://iac.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.dns.wellKnownPort }}"
