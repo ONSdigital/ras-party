@@ -25,6 +25,7 @@ structlog = "*"
 requestsdefaulter = "*"
 psycopg2-binary = "*"
 werkzeug = "*"
+flake8 = "*"
 
 [dev-packages]
 black = "*"
