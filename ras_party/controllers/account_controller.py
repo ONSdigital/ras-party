@@ -577,7 +577,7 @@ def reset_respondent_password(payload: dict, tran, session) -> dict:
             "Password verification token mismatch",
             respondent_id=respondent.party_uuid,
         )
-        raise Conflict("Verification token is invalid")
+        raise Conflict("Verification token does not match")
 
     respondent.password_verification_token = None
     _perform_password_change(
@@ -588,7 +588,7 @@ def reset_respondent_password(payload: dict, tran, session) -> dict:
         session=session,
     )
 
-    return {"message": "Passowrd reset successful"}
+    return {"message": "Password reset successful"}
 
 
 # Shared logic used by both reset (not logged in) and change (logged in) password paths

@@ -329,7 +329,7 @@ class TestAccountController(TestCase):
                         session=MagicMock(),
                     )
 
-        self.assertEqual(ctx.exception.description, "Verification token is invalid")
+        self.assertEqual(ctx.exception.description, "Verification token does not match")
         self.assertEqual(respondent.password_verification_token, "expected-token")
 
     def test_reset_respondent_password_success_clears_token_and_changes_password(self):
@@ -352,7 +352,7 @@ class TestAccountController(TestCase):
                         session=session,
                     )
 
-        self.assertEqual(response, {"message": "Passowrd reset successful"})
+        self.assertEqual(response, {"message": "Password reset successful"})
         self.assertIsNone(respondent.password_verification_token)
         perform_password_change.assert_called_once_with(
             respondent=respondent,
