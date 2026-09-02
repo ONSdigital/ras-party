@@ -20,7 +20,7 @@ with open(app.config["PARTY_SCHEMA"]) as io:
 
 logger_initial_config(log_level=app.config["LOGGING_LEVEL"])
 
-logger.debug("Created Flask app.")
+logger.debug("Created Flask app - testing new build.")
 
 try:
     initialise_db(app)
