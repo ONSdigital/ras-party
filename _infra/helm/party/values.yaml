@@ -1,12 +1,6 @@
 env: minikube
 namespace: minikube
 
-serviceAccount:
-  name: ras-rm-k8s-services
-
-imagePullSecrets:
-  - name: gar-secret
-
 gcp:
   project: ras-rm-sandbox
   topic: ras-rm-notify-test
