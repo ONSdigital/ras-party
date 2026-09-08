@@ -4,12 +4,12 @@ import json
 import os
 import uuid
 from unittest import TestCase
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import responses
 from requests import HTTPError
 from sqlalchemy import and_
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import BadRequest, Conflict, NotFound
 
 from config import TestingConfig
 from ras_party.controllers import account_controller
@@ -273,6 +273,94 @@ class TestAccountController(TestCase):
         session.query().filter().first.side_effect = NotFound
         with self.assertRaises(NotFound):
             account_controller.reset_password_counter.__wrapped__(party_uuid, session)
+
+    def test_reset_respondent_password_empty_token_raises_bad_request(self):
+        payload = {
+            "email_address": "ons@fake.ons",
+            "new_password": "new-password",
+            "token": "",
+        }
+        respondent = self.get_respondent_object()
+        respondent.password_verification_token = "expected-token"
+
+        with patch("ras_party.controllers.account_controller.query_respondent_by_email", return_value=respondent):
+            with self.app.app_context():
+                with self.assertRaises(BadRequest) as ctx:
+                    account_controller.reset_respondent_password.__wrapped__.__wrapped__(
+                        payload,
+                        tran=MagicMock(),
+                        session=MagicMock(),
+                    )
+
+        self.assertEqual(ctx.exception.description, "Verification token is invalid")
+
+    def test_reset_respondent_password_non_string_token_raises_bad_request(self):
+        payload = {
+            "email_address": "ons@fake.ons",
+            "new_password": "new-password",
+            "token": 123,
+        }
+
+        with self.app.app_context():
+            with self.assertRaises(BadRequest) as ctx:
+                account_controller.reset_respondent_password.__wrapped__.__wrapped__(
+                    payload,
+                    tran=MagicMock(),
+                    session=MagicMock(),
+                )
+
+        self.assertEqual(ctx.exception.description, "Verification token is invalid")
+
+    def test_reset_respondent_password_token_mismatch_raises_conflict(self):
+        payload = {
+            "email_address": "ons@fake.ons",
+            "new_password": "new-password",
+            "token": "wrong-token",
+        }
+        respondent = self.get_respondent_object()
+        respondent.password_verification_token = "expected-token"
+
+        with patch("ras_party.controllers.account_controller.query_respondent_by_email", return_value=respondent):
+            with self.app.app_context():
+                with self.assertRaises(Conflict) as ctx:
+                    account_controller.reset_respondent_password.__wrapped__.__wrapped__(
+                        payload,
+                        tran=MagicMock(),
+                        session=MagicMock(),
+                    )
+
+        self.assertEqual(ctx.exception.description, "Verification token does not match")
+        self.assertEqual(respondent.password_verification_token, "expected-token")
+
+    def test_reset_respondent_password_success_clears_token_and_changes_password(self):
+        payload = {
+            "email_address": "ons@fake.ons",
+            "new_password": "new-password",
+            "token": "expected-token",
+        }
+        tran = MagicMock()
+        session = MagicMock()
+        respondent = self.get_respondent_object()
+        respondent.password_verification_token = "expected-token"
+
+        with patch("ras_party.controllers.account_controller.query_respondent_by_email", return_value=respondent):
+            with patch("ras_party.controllers.account_controller._perform_password_change") as perform_password_change:
+                with self.app.app_context():
+                    response = account_controller.reset_respondent_password.__wrapped__.__wrapped__(
+                        payload,
+                        tran=tran,
+                        session=session,
+                    )
+
+        self.assertEqual(response, {"message": "Password reset successful"})
+        self.assertIsNone(respondent.password_verification_token)
+        perform_password_change.assert_called_once_with(
+            respondent=respondent,
+            new_password="new-password",
+            email_address="ons@fake.ons",
+            tran=tran,
+            session=session,
+        )
 
 
 if __name__ == "__main__":

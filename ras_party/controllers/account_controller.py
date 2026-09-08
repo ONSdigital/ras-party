@@ -539,7 +539,7 @@ def reset_password_counter(respondent_id, session):
 
 @transactional
 @with_db_session
-def change_respondent_password(payload, tran, session):
+def change_respondent_password(payload: dict, tran, session) -> dict:
     _is_valid(payload, attribute="new_password")
 
     respondent = query_respondent_by_email(payload["email_address"], session)
@@ -548,8 +548,51 @@ def change_respondent_password(payload, tran, session):
         logger.info("Respondent does not exist")
         raise NotFound("Respondent does not exist")
 
-    new_password = payload["new_password"]
+    _perform_password_change(
+        respondent=respondent,
+        new_password=payload["new_password"],
+        email_address=email_address,
+        tran=tran,
+        session=session,
+    )
 
+    return {"response": "Ok"}
+
+
+@transactional
+@with_db_session
+def reset_respondent_password(payload: dict, tran, session) -> dict:
+    _is_valid(payload, attribute="new_password")
+    token = payload.get("token")
+    if not isinstance(token, str) or not token:
+        raise BadRequest("Verification token is invalid")
+
+    respondent = query_respondent_by_email(payload["email_address"], session)
+    if not respondent:
+        logger.info("Respondent does not exist")
+        raise NotFound("Respondent does not exist")
+
+    if respondent.password_verification_token != token:
+        logger.info(
+            "Password verification token mismatch",
+            respondent_id=respondent.party_uuid,
+        )
+        raise Conflict("Verification token does not match")
+
+    respondent.password_verification_token = None
+    _perform_password_change(
+        respondent=respondent,
+        new_password=payload["new_password"],
+        email_address=respondent.email_address,
+        tran=tran,
+        session=session,
+    )
+
+    return {"message": "Password reset successful"}
+
+
+# Shared logic used by both reset (not logged in) and change (logged in) password paths
+def _perform_password_change(respondent: Respondent, new_password: str, email_address: str, tran, session) -> None:
     # Check and see if the account is active, if not we can now set to active
     if respondent.status != RespondentStatus.ACTIVE:
         # Checking enrolment status, if PENDING we will change it to ENABLED
@@ -574,7 +617,6 @@ def change_respondent_password(payload, tran, session):
         raise InternalServerError("Failed to change respondent password")
 
     personalisation = {"FIRST_NAME": respondent.first_name}
-
     party_id = respondent.party_uuid
 
     try:
@@ -589,10 +631,7 @@ def change_respondent_password(payload, tran, session):
 
     # This ensures the log message is only written once the DB transaction is committed
     tran.on_success(lambda: logger.info("Respondent has changed their password", respondent_id=party_id))
-
     reset_password_reset_counter(party_id, session)
-
-    return {"response": "Ok"}
 
 
 @with_query_only_db_session
