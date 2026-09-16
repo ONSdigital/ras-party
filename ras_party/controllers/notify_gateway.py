@@ -13,7 +13,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 class NotifyGateway:
     """Client for Notify gateway"""
 
-    _publisher = None  # Class-level singleton
+    _publisher = pubsub_v1.PublisherClient()  # Class-level singleton
 
     def __init__(self, config):
         self.config = config
@@ -38,9 +38,7 @@ class NotifyGateway:
 
     @classmethod
     def get_publisher(cls):
-        if cls._publisher is None:
-            cls._publisher = pubsub_v1.PublisherClient()
-        return cls._publisher
+         return cls._publisher
 
     def _send_message(self, email, template_id, personalisation):
         """Sends an email via pubsub topic
