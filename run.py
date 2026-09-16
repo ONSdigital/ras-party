@@ -24,6 +24,7 @@ def initialise_publisher(app):
         app.publisher = pubsub_v1.PublisherClient()
     except GoogleAuthError as e:
         logger.exception("Failed to initialise pubsub client", error=e)
+        app.publisher = None
 
 
 def create_app(config=None):
