@@ -21,7 +21,9 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 def initialise_publisher(app):
     try:
         # initialise the pubsub client
+        logger.info("Initialising publisher")
         app.publisher = pubsub_v1.PublisherClient()
+        logger.info("Publisher initialised", project_id=app.config["GOOGLE_CLOUD_PROJECT"], topic_id=app.config["PUBSUB_TOPIC"])
     except GoogleAuthError as e:
         logger.exception("Failed to initialise pubsub client", error=e)
         app.publisher = None
