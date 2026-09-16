@@ -518,7 +518,7 @@ def send_pending_surveys_confirmation_email(pending_surveys_list, confirmation_e
             "COLLEAGUE_EMAIL_ADDRESS": pending_surveys_list[0]["email_address"],
             "BUSINESSES": business_list,
         }
-        NotifyGateway(current_app.config).request_to_notify(
+        NotifyGateway(current_app.config, current_app.publisher).request_to_notify(
             email=respondent.email_address, template_name=confirmation_email_template, personalisation=personalisation
         )
         logger.info("confirmation email for pending share send successfully", batch_no=batch_no)

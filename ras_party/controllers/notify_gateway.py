@@ -13,9 +13,7 @@ logger = structlog.wrap_logger(logging.getLogger(__name__))
 class NotifyGateway:
     """Client for Notify gateway"""
 
-    _publisher = pubsub_v1.PublisherClient()  # Class-level singleton
-
-    def __init__(self, config):
+    def __init__(self, config, publisher=None):
         self.config = config
         self.notify_url = config["NOTIFY_URL"]
         self.email_verification_template = config["NOTIFY_EMAIL_VERIFICATION_TEMPLATE"]
@@ -35,10 +33,7 @@ class NotifyGateway:
         self.account_deletion_confirmation = config["ACCOUNT_DELETION_CONFIRMATION_TEMPLATE"]
         self.project_id = self.config["GOOGLE_CLOUD_PROJECT"]
         self.topic_id = self.config["PUBSUB_TOPIC"]
-
-    @classmethod
-    def get_publisher(cls):
-        return cls._publisher
+        self.publisher = publisher
 
     def _send_message(self, email, template_id, personalisation):
         """Sends an email via pubsub topic
@@ -64,11 +59,12 @@ class NotifyGateway:
             payload["notify"]["personalisation"] = personalisation
 
         payload_str = json.dumps(payload)
-        publisher = self.get_publisher()
-        topic_path = publisher.topic_path(self.project_id, self.topic_id)
+        if self.publisher is None:
+            self.publisher = pubsub_v1.PublisherClient()
+        topic_path = self.publisher.topic_path(self.project_id, self.topic_id)
 
         bound_logger.info("About to publish to pubsub")
-        future = publisher.publish(topic_path, data=payload_str.encode())
+        future = self.publisher.publish(topic_path, data=payload_str.encode())
 
         # It's okay for us to catch a broad Exception here because the documentation for future.result() says it
         # throws either a TimeoutError or an Exception.

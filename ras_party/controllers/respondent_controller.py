@@ -184,7 +184,7 @@ def send_account_deletion_confirmation_email(email_address: str, name: str):
     bound_logger.info("sending account deletion confirmation email")
     try:
         personalisation = {"name": name}
-        NotifyGateway(current_app.config).request_to_notify(
+        NotifyGateway(current_app.config, current_app.publisher).request_to_notify(
             email=email_address, template_name="account_deletion_confirmation", personalisation=personalisation
         )
         bound_logger.info("account deletion confirmation email sent successfully")
