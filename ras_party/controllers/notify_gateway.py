@@ -40,6 +40,7 @@ class NotifyGateway:
     def get_publisher(cls):
         if cls._publisher is None:
             cls._publisher = pubsub_v1.PublisherClient()
+            logger.info("Created new pubsub publisher client")
         return cls._publisher
 
     def _send_message(self, email, template_id, personalisation):
