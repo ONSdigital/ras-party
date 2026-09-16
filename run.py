@@ -5,7 +5,7 @@ from json import loads
 import structlog
 from flask import Flask
 from flask_cors import CORS
-from google.api_core.exceptions import GoogleAPIError
+from google.auth.exceptions import GoogleAuthError
 from google.cloud import pubsub_v1
 from retrying import RetryError, retry
 from sqlalchemy import column, create_engine, text
@@ -18,6 +18,14 @@ from logger_config import logger_initial_config
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
+def initialise_publisher(app):
+    try:
+        # initialise the pubsub client
+        app.publisher = pubsub_v1.PublisherClient()
+    except GoogleAuthError as e:
+        logger.exception("Failed to initialise pubsub client", error=e)
+
+
 def create_app(config=None):
     # create and configure the Flask app.
     app = Flask(__name__)
@@ -25,6 +33,8 @@ def create_app(config=None):
     logger.info("Creating app", name=app.name)
     app_config = f"config.{config or os.environ.get('APP_SETTINGS', 'Config')}"
     app.config.from_object(app_config)
+
+    initialise_publisher(app)
 
     # register view blueprints
     from ras_party import error_handlers
@@ -115,12 +125,6 @@ if __name__ == "__main__":
         logger.exception("Failed to initialise database")
         exit(1)
 
-    try:
-        # initialise the pubsub client
-        app.publisher = pubsub_v1.PublisherClient()
-    except GoogleAPIError as e:
-        logger.exception("Failed to initialise pubsub client", error=e)
-        exit(1)
     scheme, host, port = app.config["SCHEME"], app.config["HOST"], int(app.config["PORT"])
 
     app.run(debug=app.config["DEBUG"], host=host, port=port)
