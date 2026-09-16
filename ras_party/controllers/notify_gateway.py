@@ -38,7 +38,7 @@ class NotifyGateway:
 
     @classmethod
     def get_publisher(cls):
-         return cls._publisher
+        return cls._publisher
 
     def _send_message(self, email, template_id, personalisation):
         """Sends an email via pubsub topic
