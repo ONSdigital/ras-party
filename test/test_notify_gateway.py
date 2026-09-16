@@ -1,5 +1,5 @@
 from concurrent.futures import TimeoutError
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from flask import current_app
 from flask_testing import TestCase
@@ -17,8 +17,7 @@ class TestNotifyGatewayUnit(TestCase):
     as a dictionary as it's difficult to do otherwise.
     """
 
-    @staticmethod
-    def create_app():
+    def create_app(self):
         return create_app("TestingConfig")
 
     def test_get_template_with_fake_template_name(self):
@@ -37,8 +36,8 @@ class TestNotifyGatewayUnit(TestCase):
         publisher.topic_path.return_value = "projects/test-project-id/topics/ras-rm-notify-test"
         # Given a mocked notify gateway
         notify = NotifyGateway(current_app.config)
-        notify.publisher = publisher
-        result = notify.request_to_notify("test@email.com", "notify_account_locked")
+        with patch.object(NotifyGateway, "get_publisher", return_value=publisher):
+            result = notify.request_to_notify("test@email.com", "notify_account_locked")
         data = (
             b'{"notify": {"email_address": "test@email.com", '
             b'"template_id": "account_locked_id", "personalisation": {}}}'
@@ -54,9 +53,9 @@ class TestNotifyGatewayUnit(TestCase):
         publisher.topic_path.return_value = "projects/test-project-id/topics/ras-rm-notify-test"
         # Given a mocked notify gateway
         notify = NotifyGateway(current_app.config)
-        notify.publisher = publisher
         personalisation = {"first_name": "testy", "last_name": "surname"}
-        result = notify.request_to_notify("test@email.com", "notify_account_locked", personalisation)
+        with patch.object(NotifyGateway, "get_publisher", return_value=publisher):
+            result = notify.request_to_notify("test@email.com", "notify_account_locked", personalisation)
         data = (
             b'{"notify": {"email_address": "test@email.com", "template_id": "account_locked_id",'
             b' "personalisation": {"first_name": "testy", "last_name": "surname"}}}'
@@ -74,6 +73,6 @@ class TestNotifyGatewayUnit(TestCase):
 
         # Given a mocked notify gateway
         notify = NotifyGateway(current_app.config)
-        notify.publisher = publisher
-        with self.assertRaises(RasNotifyError):
-            notify.request_to_notify("test@email.com", "notify_account_locked")
+        with patch.object(NotifyGateway, "get_publisher", return_value=publisher):
+            with self.assertRaises(RasNotifyError):
+                notify.request_to_notify("test@email.com", "notify_account_locked")

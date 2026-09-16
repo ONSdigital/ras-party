@@ -169,7 +169,7 @@ def send_pending_survey_email(personalisation: dict, template: str, email: str, 
     """
     try:
         logger.info("sending email for share/transfer share", batch_id=str(batch_id))
-        NotifyGateway(current_app.config, current_app.publisher).request_to_notify(
+        NotifyGateway(current_app.config).request_to_notify(
             email=email, template_name=template, personalisation=personalisation
         )
         logger.info("email for share/transfer survey sent", batch_id=str(batch_id))

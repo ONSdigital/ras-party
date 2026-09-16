@@ -620,7 +620,7 @@ def _perform_password_change(respondent: Respondent, new_password: str, email_ad
     party_id = respondent.party_uuid
 
     try:
-        NotifyGateway(current_app.config, current_app.publisher).request_to_notify(
+        NotifyGateway(current_app.config).request_to_notify(
             email=email_address,
             template_name="confirm_password_change",
             personalisation=personalisation,
@@ -657,7 +657,7 @@ def request_password_change(payload, session):
     logger.info("Reset password url", url=verification_url, party_id=party_id)
 
     try:
-        NotifyGateway(current_app.config, current_app.publisher).request_to_notify(
+        NotifyGateway(current_app.config).request_to_notify(
             email=email_address,
             template_name="request_password_change",
             personalisation=personalisation,
@@ -732,7 +732,7 @@ def notify_change_account_status(payload, party_id: str, session):
         logger.info("Unlock account via password reset url", url=verification_url, party_id=party_id)
 
         try:
-            NotifyGateway(current_app.config, current_app.publisher).request_to_notify(
+            NotifyGateway(current_app.config).request_to_notify(
                 email=email_address,
                 template_name="notify_account_locked",
                 personalisation=personalisation,
@@ -1019,7 +1019,7 @@ def _send_email_verification(party_id, email):
     logger.info("Verification URL for party_id", party_id=str(party_id), url=verification_url)
 
     try:
-        NotifyGateway(current_app.config, current_app.publisher).request_to_notify(
+        NotifyGateway(current_app.config).request_to_notify(
             email=email, template_name="email_verification", personalisation=personalisation, reference=str(party_id)
         )
         logger.info("Verification email sent", party_id=str(party_id))
@@ -1034,7 +1034,7 @@ def _send_account_email_change_email(personalisation, template, email, party_id)
     """
     try:
         logger.info("sending confirmation email for respondent account change", party_id=str(party_id))
-        NotifyGateway(current_app.config, current_app.publisher).request_to_notify(
+        NotifyGateway(current_app.config).request_to_notify(
             email=email, template_name=template, personalisation=personalisation
         )
         logger.info("confirmation email for respondent account change sent", party_id=str(party_id))

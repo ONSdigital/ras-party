@@ -5,8 +5,6 @@ from json import loads
 import structlog
 from flask import Flask
 from flask_cors import CORS
-from google.auth.exceptions import GoogleAuthError
-from google.cloud import pubsub_v1
 from retrying import RetryError, retry
 from sqlalchemy import column, create_engine, text
 from sqlalchemy.exc import DatabaseError, ProgrammingError
@@ -18,19 +16,6 @@ from logger_config import logger_initial_config
 logger = structlog.wrap_logger(logging.getLogger(__name__))
 
 
-def initialise_publisher(app):
-    try:
-        # initialise the pubsub client
-        logger.info("Initialising publisher")
-        app.publisher = pubsub_v1.PublisherClient()
-        logger.info(
-            "Publisher initialised", project_id=app.config["GOOGLE_CLOUD_PROJECT"], topic_id=app.config["PUBSUB_TOPIC"]
-        )
-    except GoogleAuthError as e:
-        logger.exception("Failed to initialise pubsub client", error=e)
-        app.publisher = None
-
-
 def create_app(config=None):
     # create and configure the Flask app.
     app = Flask(__name__)
@@ -38,8 +23,6 @@ def create_app(config=None):
     logger.info("Creating app", name=app.name)
     app_config = f"config.{config or os.environ.get('APP_SETTINGS', 'Config')}"
     app.config.from_object(app_config)
-
-    initialise_publisher(app)
 
     # register view blueprints
     from ras_party import error_handlers
