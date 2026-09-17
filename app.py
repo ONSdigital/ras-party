@@ -2,11 +2,9 @@ import logging
 from json import loads
 
 import structlog
-from google.auth.exceptions import GoogleAuthError
 from retrying import RetryError
 
 from logger_config import logger_initial_config
-from ras_party.controllers.notify_gateway import NotifyGateway
 from run import create_app, initialise_db
 
 """
@@ -28,14 +26,6 @@ try:
     initialise_db(app)
 except RetryError:
     logger.exception("Failed to initialise database")
-    exit(1)
-
-try:
-    # prime the publisher and initialize it immediately
-    NotifyGateway.get_publisher()
-    logger.info("Successfully initialised pubsub publisher.")
-except GoogleAuthError as e:
-    logger.exception("Failed to initialise pubsub publisher", error=e)
     exit(1)
 
 scheme, host, port = app.config["SCHEME"], app.config["HOST"], int(app.config["PORT"])

@@ -17,7 +17,8 @@ class TestNotifyGatewayUnit(TestCase):
     as a dictionary as it's difficult to do otherwise.
     """
 
-    def create_app(self):
+    @staticmethod
+    def create_app():
         return create_app("TestingConfig")
 
     def test_get_template_with_fake_template_name(self):
@@ -36,8 +37,8 @@ class TestNotifyGatewayUnit(TestCase):
         publisher.topic_path.return_value = "projects/test-project-id/topics/ras-rm-notify-test"
         # Given a mocked notify gateway
         notify = NotifyGateway(current_app.config)
-        with patch.object(NotifyGateway, "get_publisher", return_value=publisher):
-            result = notify.request_to_notify("test@email.com", "notify_account_locked")
+        notify.publisher = publisher
+        result = notify.request_to_notify("test@email.com", "notify_account_locked")
         data = (
             b'{"notify": {"email_address": "test@email.com", '
             b'"template_id": "account_locked_id", "personalisation": {}}}'
@@ -53,9 +54,9 @@ class TestNotifyGatewayUnit(TestCase):
         publisher.topic_path.return_value = "projects/test-project-id/topics/ras-rm-notify-test"
         # Given a mocked notify gateway
         notify = NotifyGateway(current_app.config)
+        notify.publisher = publisher
         personalisation = {"first_name": "testy", "last_name": "surname"}
-        with patch.object(NotifyGateway, "get_publisher", return_value=publisher):
-            result = notify.request_to_notify("test@email.com", "notify_account_locked", personalisation)
+        result = notify.request_to_notify("test@email.com", "notify_account_locked", personalisation)
         data = (
             b'{"notify": {"email_address": "test@email.com", "template_id": "account_locked_id",'
             b' "personalisation": {"first_name": "testy", "last_name": "surname"}}}'
@@ -73,6 +74,6 @@ class TestNotifyGatewayUnit(TestCase):
 
         # Given a mocked notify gateway
         notify = NotifyGateway(current_app.config)
-        with patch.object(NotifyGateway, "get_publisher", return_value=publisher):
-            with self.assertRaises(RasNotifyError):
-                notify.request_to_notify("test@email.com", "notify_account_locked")
+        notify.publisher = publisher
+        with self.assertRaises(RasNotifyError):
+            notify.request_to_notify("test@email.com", "notify_account_locked")
