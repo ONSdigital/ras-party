@@ -73,15 +73,6 @@ class NotifyGateway:
         bound_logger.info("About to publish to pubsub")
         future = publisher.publish(topic_path, data=payload_str.encode())
 
-        def on_publish_done(fut):
-            try:
-                msg_id = fut.result()
-                bound_logger.info("Publish succeeded", msg_id=msg_id)
-            except Exception as e:
-                bound_logger.error("Publish failed", exc_info=True)
-
-        future.add_done_callback(on_publish_done)
-
         # It's okay for us to catch a broad Exception here because the documentation for future.result() says it
         # throws either a TimeoutError or an Exception.
         try:
