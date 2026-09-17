@@ -33,8 +33,9 @@ except RetryError:
 try:
     # prime the publisher and initialize it immediately
     NotifyGateway.get_publisher()
+    logger.info("Successfully initialised pubsub publisher.")
 except GoogleAuthError as e:
-    logger.exception("Failed to initialise", error=e)
+    logger.exception("Failed to initialise pubsub publisher", error=e)
     exit(1)
 
 scheme, host, port = app.config["SCHEME"], app.config["HOST"], int(app.config["PORT"])
