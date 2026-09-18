@@ -1,5 +1,11 @@
-env: minikube
-namespace: minikube
+env: dev
+namespace: dev
+
+serviceAccount:
+  name: ras-rm-k8s-services
+
+imagePullSecrets:
+  - name: gar-secret
 
 gcp:
   project: ras-rm-sandbox
