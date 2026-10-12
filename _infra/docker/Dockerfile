@@ -9,4 +9,4 @@ WORKDIR /app
 COPY . /app
 RUN pipenv install --deploy --system
 
-CMD ["gunicorn", "-b", "0.0.0.0:8080", "--workers", "6", "--timeout", "0", "app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "--workers", "4", "--timeout", "300", "app:app"]
